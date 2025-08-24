@@ -17,7 +17,13 @@ const JWT_SECRET = 'your-super-secret-key-for-jwt-in-production'; // IMPORTANT: 
 
 // --- AWS DYNAMODB CLIENT SETUP ---
 // WARNING: Hardcoding credentials is not recommended for production environments.
-
+const client = new DynamoDBClient({
+    region: 'ap-south-1',
+    credentials: {
+        accessKeyId: 'AKIATCKAN7T2MYCBT7OD',
+        secretAccessKey: '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'
+    }
+});
 const docClient = DynamoDBDocumentClient.from(client);
 
 // --- NODEMAILER TRANSPORTER SETUP ---
@@ -665,3 +671,4 @@ app.get('/api/admin/test-report/:testId', authMiddleware, async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
