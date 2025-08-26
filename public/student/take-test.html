@@ -6,6 +6,12 @@
     <title>Take Test - TESTIFY</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- AI Proctoring Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -35,19 +41,13 @@
             background-color: #10B981;
             color: white;
         }
-        /* -- MOBILE SIDEBAR STYLES -- */
-        #sidebar {
-            transition: transform 0.3s ease-in-out;
-        }
-        #sidebar.hidden-mobile {
-            transform: translateX(-100%);
-        }
     </style>
 </head>
 <body class="bg-gray-100">
 
     <div class="flex h-screen bg-gray-100">
-        <div id="sidebar" class="fixed md:relative flex flex-col w-64 bg-gray-800 text-white z-30 h-full hidden-mobile md:translate-x-0 md:flex">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
             <div class="flex items-center justify-center h-20 border-b border-gray-700">
                 <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
                 <span class="ml-3 text-2xl font-bold">TESTIFY</span>
@@ -65,53 +65,64 @@
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span class="ml-3">Test History</span>
                 </a>
+                <a href="/student/my-certificates.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span class="ml-3">My Certificates</span>
+                </a>
+                <a href="/student/my-courses.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span class="ml-3">My Courses</span>
+                </a>
             </div>
         </div>
 
+        <!-- Main content -->
         <div id="main-content" class="flex flex-col flex-1 overflow-y-auto">
-            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-4 sm:px-6">
-                 <button id="mobile-menu-btn" class="md:hidden text-gray-600 hover:text-gray-800">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-                </button>
-
-                <h1 class="text-xl sm:text-2xl font-bold text-gray-800">Available Tests</h1>
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+                <h1 class="text-2xl font-bold text-gray-800">Available Tests</h1>
                  <div class="flex items-center">
                       <div class="relative">
                            <button id="user-menu-button" class="flex items-center space-x-2">
-                               <span id="user-name" class="font-semibold text-gray-700">Student Name</span>
-                               <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                <span id="user-name" class="font-semibold text-gray-700">Student Name</span>
+                                <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                            </button>
                            <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                               <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                                <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
                            </div>
                       </div>
                  </div>
             </div>
 
-            <div class="p-4 sm:p-6">
-                <div id="test-list-container" class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
+            <div class="p-6">
+                <div id="test-list-container" class="bg-white p-6 rounded-xl shadow-md">
                     <div id="test-list" class="space-y-4">
-                        </div>
+                        <!-- Dynamically loaded tests will appear here -->
+                    </div>
                 </div>
             </div>
         </div>
         
+        <!-- Test Environment (Initially Hidden) -->
         <div id="test-environment" class="hidden bg-white">
-            <div class="flex items-center justify-between flex-wrap h-auto sm:h-20 bg-white border-b border-gray-200 px-4 py-2 sm:px-6 fixed top-0 left-0 w-full z-10">
+            <!-- Test Header -->
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6 fixed top-0 left-0 w-full z-10">
                 <div class="flex items-center">
                     <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_3wfuty3wfuty3wfu_iqsg1x.png" alt="TESTIFY Lockdown Logo">
-                    <div class="ml-3 sm:ml-4">
-                        <h1 class="text-lg sm:text-xl font-bold text-gray-800">Testify-Lockdown Portal</h1>
-                        <p id="test-title" class="text-sm text-gray-600 font-medium"></p> </div>
+                    <div class="ml-4">
+                        <h1 class="text-xl font-bold text-gray-800">Testify-Lockdown Portal</h1>
+                        <p id="test-title" class="text-sm text-gray-600 font-medium"></p> <!-- Test title will be populated here -->
+                    </div>
                 </div>
-                <div class="flex items-center space-x-4 mt-2 sm:mt-0">
+                <div class="flex items-center space-x-4">
                     <div class="text-lg font-bold text-red-600" id="timer">00:00</div>
                     <button id="submit-test-btn" class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700">Submit Test</button>
                 </div>
             </div>
 
-            <div class="pt-28 sm:pt-20 flex flex-col md:flex-row min-h-screen">
-                <div class="flex-1 p-4 md:p-8">
+            <!-- Test Body -->
+            <div class="pt-20 flex" style="height: 100vh;">
+                <!-- Question Area -->
+                <div class="flex-1 p-8 overflow-y-auto">
                     <div id="question-content"></div>
                     <div class="mt-8 flex justify-between">
                         <button id="prev-btn" class="px-6 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300">Previous</button>
@@ -119,14 +130,27 @@
                     </div>
                 </div>
 
-                <div class="w-full md:w-72 bg-gray-50 border-t md:border-t-0 md:border-l border-gray-200 p-4">
+                <!-- Question Palette -->
+                <div class="w-64 bg-gray-50 border-l border-gray-200 p-4 overflow-y-auto">
                     <h3 class="font-bold text-gray-800 mb-4">Question Palette</h3>
-                    <div id="question-palette" class="grid grid-cols-8 sm:grid-cols-10 md:grid-cols-5 gap-2"></div>
+                    <div id="question-palette" class="grid grid-cols-5 gap-2"></div>
+                </div>
+            </div>
+
+            <!-- AI PROCTORING VIEW -->
+            <div id="proctor-container" class="hidden fixed bottom-4 right-4 w-48 h-36 bg-black rounded-lg shadow-2xl z-50 border-2 border-gray-400">
+                <video id="webcam" class="w-full h-full rounded-lg object-cover" autoplay muted playsinline></video>
+                <div id="proctor-status" class="absolute bottom-0 left-0 w-full bg-black bg-opacity-60 text-white text-xs text-center py-1 font-semibold">
+                    Initializing...
                 </div>
             </div>
         </div>
     </div>
-
+  <footer class="bg-white border-t border-gray-200 p-4 mt-auto">
+    <div class="text-center text-sm text-gray-500">
+        &copy; 2025 TESTIFY. All Rights Reserved.
+    </div>
+  </footer>
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             // --- AUTHENTICATION & USER INFO ---
@@ -150,10 +174,6 @@
             const prevBtn = document.getElementById('prev-btn');
             const nextBtn = document.getElementById('next-btn');
             
-            // Mobile menu elements
-            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-            const sidebar = document.getElementById('sidebar');
-
             // --- TEST STATE ---
             let testInProgress = false;
             let timerInterval;
@@ -162,6 +182,14 @@
             let currentQuestionIndex = 0;
             let studentAnswers = [];
             let availableTests = [];
+
+            // --- AI PROCTORING STATE ---
+            let proctoringEnabled = false;
+            let videoStream = null;
+            let objectDetector = null;
+            let faceDetector = null;
+            let noFaceCounter = 0;
+            const NO_FACE_THRESHOLD = 150; // Approx 5 seconds (30fps * 5)
 
             // --- FETCH AND DISPLAY AVAILABLE TESTS ---
             async function fetchAndDisplayTests() {
@@ -175,20 +203,19 @@
 
                     testListDiv.innerHTML = '';
                     if (availableTests.length === 0) {
-                        testListDiv.innerHTML = '<p class="text-gray-500">No new tests assigned to you at the moment.</p>';
+                        testListDiv.innerHTML = '<p class="text-gray-500">No new tests assigned to you at the moment.</p><p>If you find any test missing please contact your administrator.</p>';
                         return;
                     }
 
                     availableTests.forEach(test => {
                         const testElement = document.createElement('div');
-                        // RESPONSIVE TEST ITEM: 'flex-col' stacks test info on mobile, 'sm:flex-row' aligns it on larger screens.
-                        testElement.className = 'flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200';
+                        testElement.className = 'flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200';
                         testElement.innerHTML = `
                             <div>
                                 <p class="font-semibold text-gray-800">${test.title}</p>
                                 <p class="text-sm text-gray-600">Duration: ${test.duration} minutes | Questions: ${test.questions.length}</p>
                             </div>
-                            <button class="start-test-btn mt-3 sm:mt-0 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-indigo-700" data-testid="${test.testId}">
+                            <button class="start-test-btn px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-indigo-700" data-testid="${test.testId}">
                                 Start Test
                             </button>
                         `;
@@ -199,26 +226,32 @@
                     testListDiv.innerHTML = '<p class="text-red-500">Could not load available tests.</p>';
                 }
             }
-            await fetchAndDisplayTests();
-
+            
             // --- EVENT LISTENERS ---
             userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
             logoutButton.addEventListener('click', logout);
             submitTestBtn.addEventListener('click', () => submitTest('Are you sure you want to submit the test?'));
             
-            // JAVASCRIPT FOR MOBILE MENU
-            mobileMenuBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('hidden-mobile');
-            });
-
-            testListDiv.addEventListener('click', (e) => {
+            testListDiv.addEventListener('click', async (e) => {
                 if (e.target.classList.contains('start-test-btn')) {
-                    const testId = e.target.dataset.testid;
-                    const selectedTest = availableTests.find(t => t.testId === testId);
-                    if (selectedTest) {
-                        startTest(selectedTest);
-                    } else {
-                        alert('Error: Could not find the selected test.');
+                    const startButton = e.target;
+                    const originalButtonText = startButton.textContent;
+                    
+                    startButton.disabled = true;
+                    startButton.textContent = 'Initializing...';
+
+                    try {
+                        const testId = startButton.dataset.testid;
+                        const selectedTest = availableTests.find(t => t.testId === testId);
+                        if (selectedTest) {
+                            await startTest(selectedTest);
+                        }
+                    } catch (error) {
+                        console.error('Failed to start test:', error.message);
+                        if (!testInProgress) {
+                            startButton.disabled = false;
+                            startButton.textContent = originalButtonText;
+                        }
                     }
                 }
             });
@@ -233,62 +266,107 @@
             }
 
             // --- TEST LOGIC ---
-            function startTest(testData) {
-                if (!confirm('This test will start in fullscreen mode. You cannot exit fullscreen or switch tabs. Are you ready to begin?')) return;
+            async function startTest(testData) {
+                const proctoringConsent = confirm(
+                    'This test requires AI proctoring.\n\n' +
+                    'Your webcam will be activated to monitor for the following violations:\n' +
+                    '- Use of a mobile phone\n' +
+                    '- More than one person in view\n' +
+                    '- Looking away or leaving the test area\n\n' +
+                    'A violation will result in automatic submission. This test will also start in fullscreen mode. Are you ready to begin?'
+                );
                 
-                currentTest = testData;
-                studentAnswers = new Array(currentTest.questions.length).fill(null);
-                currentQuestionIndex = 0;
-                testInProgress = true;
-
-                mainContent.classList.add('hidden');
-                sidebar.classList.add('md:hidden'); // Hide sidebar completely during test
-                testEnvironment.classList.remove('hidden');
-                testEnvironment.classList.add('fullscreen');
+                if (!proctoringConsent) {
+                    throw new Error("User cancelled the test.");
+                }
                 
-                document.getElementById('test-title').textContent = currentTest.title;
-                
+                // **FIX:** Enter fullscreen immediately after user consent
                 enterFullScreen();
-                startTimer(currentTest.duration * 60);
-                renderQuestion();
-                renderPalette();
 
-                document.addEventListener('fullscreenchange', handleFullScreenChange);
-                document.addEventListener('visibilitychange', handleVisibilityChange);
+                try {
+                    // Now, set up the test environment and proctoring
+                    mainContent.classList.add('hidden');
+                    testEnvironment.classList.remove('hidden');
+                    testEnvironment.classList.add('fullscreen');
+                    
+                    await initializeProctoring();
+
+                    currentTest = testData;
+                    studentAnswers = new Array(currentTest.questions.length).fill(null);
+                    currentQuestionIndex = 0;
+                    testInProgress = true;
+                    
+                    document.getElementById('test-title').textContent = currentTest.title;
+                    
+                    startTimer(currentTest.duration * 60);
+                    renderQuestion();
+                    renderPalette();
+
+                    document.addEventListener('fullscreenchange', handleFullScreenChange);
+                    document.addEventListener('visibilitychange', handleVisibilityChange);
+                } catch (error) {
+                    // If something fails after entering fullscreen, exit it
+                    exitFullScreen();
+                    alert(`Failed to initialize proctoring. The test cannot start.\nError: ${error.message}`);
+                    throw error;
+                }
             }
 
+            // This function is for MANUAL submission by the user (cancellable)
             async function submitTest(message) {
-                if (confirm(message)) {
-                    saveAnswer();
-                    testInProgress = false;
-                    clearInterval(timerInterval);
-                    exitFullScreen();
-                    
-                    document.removeEventListener('fullscreenchange', handleFullScreenChange);
-                    document.removeEventListener('visibilitychange', handleVisibilityChange);
-                    
-                    const payload = {
-                        testId: currentTest.testId,
-                        answers: studentAnswers,
-                        timeTaken: timeTaken
-                    };
+                if (window.isSubmitting) return;
+                
+                const shouldSubmit = confirm(message);
 
-                    try {
-                        const response = await fetch('/api/student/submit-test', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'x-auth-token': token
-                            },
-                            body: JSON.stringify(payload)
-                        });
-                        if (!response.ok) throw new Error('Submission failed');
-                        alert('Test submitted successfully!');
-                        window.location.href = '/student/dashboard.html';
-                    } catch (error) {
-                        alert('An error occurred during submission. Please try again.');
-                        console.error('Submission Error:', error);
-                    }
+                if (shouldSubmit) {
+                    window.isSubmitting = true;
+                    await performSubmission();
+                }
+            }
+
+            // This function is for FORCED submission by the system (NOT cancellable)
+            async function forceSubmitTest(message) {
+                if (window.isSubmitting) return;
+                window.isSubmitting = true;
+
+                alert(message); // Inform the user, but don't ask for confirmation
+                await performSubmission();
+            }
+
+            // Centralized submission logic used by both manual and forced submissions
+            async function performSubmission() {
+                saveAnswer(); 
+                testInProgress = false;
+                clearInterval(timerInterval);
+                
+                stopProctoring(); 
+                
+                exitFullScreen();
+                document.removeEventListener('fullscreenchange', handleFullScreenChange);
+                document.removeEventListener('visibilitychange', handleVisibilityChange);
+                
+                const payload = {
+                    testId: currentTest.testId,
+                    answers: studentAnswers,
+                    timeTaken: timeTaken
+                };
+
+                try {
+                    const response = await fetch('/api/student/submit-test', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-auth-token': token
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error('Submission failed');
+                    alert('Test submitted successfully!');
+                    window.location.href = '/student/dashboard.html';
+                } catch (error) {
+                    alert('An error occurred during submission. Please try again.');
+                    console.error('Submission Error:', error);
+                    window.isSubmitting = false; // Only reset if submission fails
                 }
             }
 
@@ -304,7 +382,7 @@
                     timerDisplay.textContent = `${minutes}:${seconds}`;
                     if (--timer < 0) {
                         clearInterval(timerInterval);
-                        submitTest('Time is up! The test will now be submitted.');
+                        forceSubmitTest('Time is up! The test will now be submitted.');
                     }
                 }, 1000);
             }
@@ -331,7 +409,7 @@
                         </label>
                     `).join('');
                 } else { // fill-blank
-                    optionsHtml = `<input type="text" name="q${currentQuestionIndex}" class="w-full px-4 py-3 bg-gray-50 border-gray-300 rounded-lg" value="${savedAnswer || ''}">`;
+                    optionsHtml = `<input type="text" name="q${currentQuestionIndex}" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg" value="${savedAnswer || ''}">`;
                 }
 
                 questionContent.innerHTML = `
@@ -370,7 +448,7 @@
             function updatePalette() {
                 document.querySelectorAll('.palette-btn').forEach((btn, i) => {
                     btn.classList.remove('active', 'answered');
-                    if (studentAnswers[i] !== null && studentAnswers[i] !== '' && (!Array.isArray(studentAnswers[i]) || studentAnswers[i].length > 0)) {
+                    if (studentAnswers[i] !== null && (!Array.isArray(studentAnswers[i]) || studentAnswers[i].length > 0)) {
                         btn.classList.add('answered');
                     }
                     if (i === currentQuestionIndex) {
@@ -380,7 +458,7 @@
             }
 
             function saveAnswer() {
-                if(!currentTest) return;
+                if (!currentTest) return;
                 const question = currentTest.questions[currentQuestionIndex];
                 const inputs = document.getElementsByName(`q${currentQuestionIndex}`);
                 if (question.type === 'mcq-single') {
@@ -390,7 +468,7 @@
                     const checked = Array.from(inputs).filter(i => i.checked).map(i => i.value);
                     studentAnswers[currentQuestionIndex] = checked.length > 0 ? checked : null;
                 } else { // fill-blank
-                    studentAnswers[currentQuestionIndex] = inputs[0].value.trim() !== '' ? inputs[0].value.trim() : null;
+                    studentAnswers[currentQuestionIndex] = inputs[0].value.trim() ? inputs[0].value.trim() : null;
                 }
             }
 
@@ -410,16 +488,95 @@
                 }
             }
 
-            // --- SECURITY & FULLSCREEN ---
+            // --- AI PROCTORING & SECURITY ---
+            async function initializeProctoring() {
+                const proctorContainer = document.getElementById('proctor-container');
+                const proctorStatus = document.getElementById('proctor-status');
+                const videoElement = document.getElementById('webcam');
+
+                proctorStatus.textContent = 'Requesting camera...';
+                
+                try {
+                    videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    videoElement.srcObject = videoStream;
+                    proctorContainer.classList.remove('hidden');
+                    
+                    proctorStatus.textContent = 'Connecting to Server...';
+                    [objectDetector, faceDetector] = await Promise.all([
+                        cocoSsd.load(),
+                        blazeface.load()
+                    ]);
+                    
+                    proctorStatus.innerHTML = '<span class="text-green-400">Proctoring Active</span>';
+                    proctoringEnabled = true;
+                    runProctoring();
+                } catch (err) {
+                    console.error("Proctoring Error:", err);
+                    stopProctoring();
+                    throw new Error("Webcam access denied or AI models failed to load.");
+                }
+            }
+
+            async function runProctoring() {
+                if (!proctoringEnabled) return;
+
+                const videoElement = document.getElementById('webcam');
+                const objectPredictions = await objectDetector.detect(videoElement);
+                const facePredictions = await faceDetector.estimateFaces(videoElement, false);
+
+                if (phoneFound(objectPredictions)) {
+                    return handleViolation('Phone Detected');
+                }
+                
+                if (facePredictions.length > 1) {
+                    return handleViolation('Multiple People Detected');
+                }
+                
+                if (facePredictions.length === 0) {
+                    noFaceCounter++;
+                    if (noFaceCounter > NO_FACE_THRESHOLD) {
+                        return handleViolation('User Not Present or Looking Away');
+                    }
+                } else {
+                    noFaceCounter = 0;
+                }
+
+                requestAnimationFrame(runProctoring);
+            }
+            
+            function phoneFound(predictions) {
+                return predictions.some(p => p.class === 'cell phone' && p.score > 0.6);
+            }
+
+            function handleViolation(reason) {
+                if (!proctoringEnabled) return; 
+                
+                proctoringEnabled = false;
+                const proctorStatus = document.getElementById('proctor-status');
+                proctorStatus.innerHTML = `<span class="text-red-500 font-bold">VIOLATION: ${reason}</span>`;
+                
+                setTimeout(() => {
+                    forceSubmitTest(`VIOLATION DETECTED: ${reason}. The test is being submitted automatically.`);
+                }, 2000);
+            }
+
+            function stopProctoring() {
+                proctoringEnabled = false;
+                if (videoStream) {
+                    videoStream.getTracks().forEach(track => track.stop());
+                }
+                document.getElementById('proctor-container').classList.add('hidden');
+            }
+
             function handleFullScreenChange() {
                 if (!document.fullscreenElement && !document.webkitFullscreenElement && testInProgress) {
-                    submitTest('You have exited full-screen mode. The test will be submitted automatically.');
+                    handleViolation('Exited Full-Screen Mode');
                 }
             }
 
             function handleVisibilityChange() {
                 if (document.hidden && testInProgress) {
-                    submitTest('You have switched tabs. The test will be submitted automatically.');
+                    handleViolation('Switched to Another Tab/Window');
                 }
             }
 
@@ -433,6 +590,8 @@
                 if (document.exitFullscreen && document.fullscreenElement) document.exitFullscreen();
                 else if (document.webkitExitFullscreen && document.webkitFullscreenElement) document.webkitExitFullscreen();
             }
+            
+            await fetchAndDisplayTests();
         });
     </script>
 </body>
