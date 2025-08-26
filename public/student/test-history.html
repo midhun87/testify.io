@@ -41,6 +41,14 @@
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span class="ml-3">Test History</span>
                 </a>
+                <a href="/student/my-certificates.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span class="ml-3">My Certificates</span>
+                </a>
+                <a href="/student/my-courses.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span class="ml-3">My Courses</span>
+                </a>
             </div>
         </div>
 
@@ -81,7 +89,13 @@
                         </table>
                     </div>
                 </div>
+                <P><Strong>Note :</Strong> The test history will only display results for tests that have been published by the instructor. If you do not see any results, please check back later or contact your instructor for more information.</P>
             </div>
+            <footer class="bg-white border-t border-gray-200 p-4 mt-auto">
+                <div class="text-center text-sm text-gray-500">
+                    &copy; 2025 TESTIFY. All Rights Reserved.
+                </div>
+            </footer>
         </div>
     </div>
 
@@ -106,6 +120,7 @@
             // --- FETCH AND DISPLAY TEST HISTORY ---
             async function fetchAndDisplayHistory() {
                 try {
+                    historyTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Loading history...</td></tr>';
                     const response = await fetch('/api/student/history', {
                         headers: { 'x-auth-token': token }
                     });
@@ -115,7 +130,8 @@
                     historyTableBody.innerHTML = '';
 
                     if (historyData.length === 0) {
-                        historyTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">You have not completed any tests yet.</td></tr>';
+                        // MODIFIED: Display a more informative message
+                        historyTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No published test results found. Please check back later.</td></tr>';
                         return;
                     }
 

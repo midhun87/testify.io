@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Viewer - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAFC; }
+        .content-view iframe {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border-radius: 0.75rem;
+            border: 1px solid #e2e8f0;
+        }
+        .sidebar { transition: margin-left 0.3s ease-in-out; }
+        .sidebar-item.active { background-color: #EEF2FF; color: #4338CA; }
+        .sidebar-item.completed .status-icon { color: #22C55E; }
+        .sidebar-item:not(.completed) .status-icon { color: #9CA3AF; }
+        .prose { max-width: 80ch; }
+    </style>
+</head>
+<body class="overflow-hidden">
+    <div class="flex h-screen">
+        <!-- Collapsible Sidebar -->
+        <aside id="sidebar" class="sidebar w-80 bg-white border-r flex-shrink-0 flex flex-col">
+            <div class="h-16 flex items-center justify-between px-4 border-b">
+                <a href="/student/my-courses.html" class="flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-800">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    Back to Courses
+                </a>
+            </div>
+            <div id="modules-sidebar" class="flex-1 overflow-y-auto p-4 space-y-6">
+                <!-- Sidebar content will be injected here -->
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col">
+            <!-- Top Header Bar -->
+            <header class="h-16 bg-white border-b flex items-center justify-between px-6 flex-shrink-0">
+                <div class="flex items-center">
+                    <button id="toggle-sidebar-btn" class="p-2 mr-4 rounded-full hover:bg-gray-100">
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+                    <div>
+                        <h1 id="course-title" class="text-lg font-bold text-gray-800"></h1>
+                        <p id="current-lesson-title" class="text-sm text-gray-500"></p>
+                    </div>
+                </div>
+                <div class="w-1/3">
+                    <div class="flex items-center justify-between mb-1">
+                         <span class="text-sm font-medium text-gray-700">Course Progress</span>
+                         <span id="progress-percent" class="text-sm font-medium text-indigo-600">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="progress-bar" class="bg-indigo-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Viewer -->
+            <main class="flex-1 overflow-y-auto p-8 lg:p-12">
+                <div id="content-view" class="max-w-4xl mx-auto">
+                    <!-- Main content will be displayed here -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) { window.location.href = '/login.html'; return; }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseId = urlParams.get('id');
+            if (!courseId) { document.body.innerHTML = '<p class="p-8 text-center text-red-500">No course ID specified.</p>'; return; }
+
+            // --- UI Elements ---
+            const sidebar = document.getElementById('sidebar');
+            const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
+            const courseTitleEl = document.getElementById('course-title');
+            const currentLessonTitleEl = document.getElementById('current-lesson-title');
+            const progressBar = document.getElementById('progress-bar');
+            const progressPercent = document.getElementById('progress-percent');
+            const modulesSidebar = document.getElementById('modules-sidebar');
+            const contentView = document.getElementById('content-view');
+
+            // --- State ---
+            let courseData = null;
+            let allSubModules = [];
+            let completedSubModules = new Set();
+            let currentSubModuleId = null;
+
+            // --- Functions ---
+            const updateProgressUI = () => {
+                const percentage = allSubModules.length > 0 ? Math.round((completedSubModules.size / allSubModules.length) * 100) : 0;
+                progressBar.style.width = `${percentage}%`;
+                progressPercent.textContent = `${percentage}%`;
+            };
+
+            const renderSidebar = () => {
+                modulesSidebar.innerHTML = '';
+                courseData.modules.forEach(module => {
+                    const moduleEl = document.createElement('div');
+                    const subModulesHtml = module.subModules.map(sub => {
+                        const isCompleted = completedSubModules.has(sub.subModuleId);
+                        return `
+                            <a href="#" class="sidebar-item flex items-start p-3 rounded-lg transition-colors hover:bg-gray-100" data-submodule-id="${sub.subModuleId}">
+                                <div class="status-icon mr-3 mt-1 flex-shrink-0">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <span class="text-sm font-medium ${isCompleted ? 'text-gray-500' : 'text-gray-800'}">${sub.title}</span>
+                            </a>`;
+                    }).join('');
+                    moduleEl.innerHTML = `<h3 class="px-3 font-bold text-gray-500 uppercase text-xs tracking-wider mb-2">${module.title}</h3><div class="space-y-1">${subModulesHtml}</div>`;
+                    modulesSidebar.appendChild(moduleEl);
+                });
+            };
+
+            const renderContent = (subModuleId) => {
+                currentSubModuleId = subModuleId;
+                const subModule = allSubModules.find(s => s.subModuleId === subModuleId);
+                if (!subModule) return;
+
+                document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+                document.querySelector(`[data-submodule-id="${subModuleId}"]`)?.classList.add('active');
+                currentLessonTitleEl.textContent = subModule.title;
+
+                // --- THIS IS THE CORRECTED LOGIC ---
+                let contentHtml = '<div class="space-y-8">';
+                if (subModule.videoUrl) {
+                    let videoSrc = subModule.videoUrl.replace("watch?v=", "embed/");
+                    contentHtml += `<iframe src="${videoSrc}" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+                }
+                if (subModule.imageUrl) {
+                    contentHtml += `<img src="${subModule.imageUrl}" class="rounded-lg shadow-lg mx-auto max-h-[70vh]">`;
+                }
+                if (subModule.textContent) {
+                    contentHtml += `<div class="prose lg:prose-lg">${subModule.textContent.replace(/\n/g, '<br>')}</div>`;
+                }
+                contentHtml += '</div>';
+                // --- END OF CORRECTION ---
+
+                const currentIndex = allSubModules.findIndex(s => s.subModuleId === subModuleId);
+                const isCompleted = completedSubModules.has(subModuleId);
+                const isFirst = currentIndex === 0;
+                const isLast = currentIndex === allSubModules.length - 1;
+
+                contentView.innerHTML = `
+                    <h2 class="text-3xl font-bold text-gray-900 mb-8">${subModule.title}</h2>
+                    ${contentHtml}
+                    <footer class="mt-12 pt-8 border-t flex justify-between items-center">
+                        <button id="prev-btn" class="px-6 py-2 font-semibold text-gray-700 rounded-lg hover:bg-gray-100 ${isFirst ? 'opacity-50 cursor-not-allowed' : ''}" ${isFirst ? 'disabled' : ''}>Previous</button>
+                        <button id="next-btn" class="px-6 py-3 ${isCompleted ? 'bg-green-600' : 'bg-indigo-600 hover:bg-indigo-700'} text-white font-bold rounded-lg shadow-md transition-colors">
+                            ${isCompleted ? (isLast ? '✓ Course Complete' : '✓ Completed: Next') : (isLast ? 'Finish Course' : 'Complete & Continue')}
+                        </button>
+                    </footer>
+                `;
+            };
+
+            const navigate = (direction) => {
+                const currentIndex = allSubModules.findIndex(s => s.subModuleId === currentSubModuleId);
+                const nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+                if (nextIndex >= 0 && nextIndex < allSubModules.length) {
+                    renderContent(allSubModules[nextIndex].subModuleId);
+                }
+            };
+            
+            const markAsCompleteAndProceed = async () => {
+                if (completedSubModules.has(currentSubModuleId)) {
+                    navigate('next');
+                    return;
+                }
+                try {
+                    await fetch('/api/student/courses/progress', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify({ courseId, subModuleId: currentSubModuleId })
+                    });
+                    completedSubModules.add(currentSubModuleId);
+                    updateProgressUI();
+                    renderSidebar();
+                    const isLast = allSubModules.findIndex(s => s.subModuleId === currentSubModuleId) === allSubModules.length - 1;
+                    if (isLast) {
+                        renderContent(currentSubModuleId); // Re-render to show final state
+                        alert("Congratulations! You have completed the course. The final test is now available in your dashboard.");
+                    } else {
+                        navigate('next');
+                    }
+                } catch (error) {
+                    alert('Could not update your progress. Please try again.');
+                }
+            };
+
+            // --- Event Listeners ---
+            toggleSidebarBtn.addEventListener('click', () => sidebar.classList.toggle('-ml-80'));
+            modulesSidebar.addEventListener('click', e => {
+                e.preventDefault();
+                const item = e.target.closest('.sidebar-item');
+                if (item) renderContent(item.dataset.submoduleId);
+            });
+            contentView.addEventListener('click', e => {
+                if (e.target.id === 'prev-btn') navigate('prev');
+                if (e.target.id === 'next-btn') markAsCompleteAndProceed();
+            });
+
+            // --- Initial Load ---
+            try {
+                const response = await fetch(`/api/student/courses/${courseId}`, { headers: { 'x-auth-token': token } });
+                if (!response.ok) throw new Error('Could not load course data.');
+                
+                const { course, progress } = await response.json();
+                courseData = course;
+                allSubModules = course.modules.flatMap(m => m.subModules);
+                completedSubModules = new Set(progress.completedSubModules);
+
+                courseTitleEl.textContent = course.title;
+                updateProgressUI();
+                renderSidebar();
+
+                const firstIncomplete = allSubModules.find(s => !completedSubModules.has(s.subModuleId));
+                const initialSubModule = firstIncomplete || allSubModules[0];
+                if (initialSubModule) {
+                    renderContent(initialSubModule.subModuleId);
+                } else {
+                    contentView.innerHTML = '<p class="text-center text-gray-500">This course has no content yet.</p>';
+                }
+
+            } catch (error) {
+                document.body.innerHTML = `<p class="p-8 text-center text-red-500">${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

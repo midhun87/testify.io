@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Certificates - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold">TESTIFY</span>
+            </div>
+            <div class="flex flex-col flex-grow p-4">
+                <a href="/student/dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <a href="/student/take-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    <span class="ml-3">Take Test</span>
+                </a>
+                <a href="/student/test-history.html" class="sidebar-link  flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="ml-3">Test History</span>
+                </a>
+                <a href="/student/my-certificates.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span class="ml-3">My Certificates</span>
+                </a>
+                <a href="/student/my-courses.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span class="ml-3">My Courses</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+                <h1 class="text-2xl font-bold text-gray-800">My Certificates</h1>
+                <div class="relative">
+                    <button id="user-menu-button" class="flex items-center space-x-2">
+                        <span id="user-name" class="font-semibold text-gray-700">Student Name</span>
+                        <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                        <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Your Achievements</h2>
+                    <div id="certificates-list" class="space-y-4">
+                        <!-- Certificates will be loaded here -->
+                    </div>
+                </div>
+            </div>
+            <footer class="bg-white border-t border-gray-200 p-4 mt-auto">
+    <div class="text-center text-sm text-gray-500">
+        &copy; 2025 TESTIFY. All Rights Reserved.
+    </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // --- AUTH & UI ---
+            const user = JSON.parse(localStorage.getItem('user'));
+            const token = localStorage.getItem('token');
+            if (!token || !user || user.role !== 'Student') {
+                window.location.href = '/login.html';
+                return;
+            }
+            document.getElementById('user-name').textContent = user.fullName;
+            
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userMenu = document.getElementById('user-menu');
+            const logoutButton = document.getElementById('logout-button');
+            userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
+            logoutButton.addEventListener('click', () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login.html';
+            });
+
+            // --- FETCH AND DISPLAY CERTIFICATES ---
+            const certificatesList = document.getElementById('certificates-list');
+            async function fetchCertificates() {
+                try {
+                    const response = await fetch('/api/student/certificates', {
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch certificates');
+                    const certificates = await response.json();
+
+                    certificatesList.innerHTML = '';
+                    if (certificates.length === 0) {
+                        certificatesList.innerHTML = '<p class="text-gray-500">You have not earned any certificates yet.</p>';
+                        return;
+                    }
+
+                    certificates.forEach(cert => {
+                        const certElement = document.createElement('div');
+                        certElement.className = 'flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200';
+                        const issuedDate = new Date(cert.issuedAt).toLocaleDateString();
+                        
+                        // THIS IS THE FIX: Added the certificateId to the href
+                        certElement.innerHTML = `
+                            <div>
+                                <p class="font-semibold text-gray-800">${cert.testTitle}</p>
+                                <p class="text-sm text-gray-600">Issued on: ${issuedDate}</p>
+                            </div>
+                            <a href="/student/view-certificate.html?id=${cert.certificateId}" class="font-medium text-indigo-600 hover:text-indigo-800">View</a>
+                        `;
+                        certificatesList.appendChild(certElement);
+                    });
+                } catch (error) {
+                    console.error('Error fetching certificates:', error);
+                    certificatesList.innerHTML = '<p class="text-red-500">Could not load your certificates.</p>';
+                }
+            }
+            await fetchCertificates();
+        });
+    </script>
+</body>
+</html>

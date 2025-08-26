@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Courses - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style> 
+        body { font-family: 'Inter', sans-serif; background-color: #F9FAFB; } 
+    </style>
+</head>
+<body>
+    <!-- A simple student-facing navbar -->
+    <nav class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <img class="h-8 w-auto" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                    <span class="ml-3 text-xl font-bold text-gray-800">TESTIFY - LEARNING</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                   <a href="/student/dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <a href="/student/take-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    <span class="ml-3">Take Test</span>
+                </a>
+                <a href="/student/test-history.html" class="sidebar-link  flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="ml-3">Test History</span>
+                </a>
+                <a href="/student/my-certificates.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span class="ml-3">My Certificates</span>
+                </a>
+                <a href="/student/my-courses.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span class="ml-3">My Courses</span>
+                </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="p-6 sm:p-8">
+        <div class="max-w-7xl mx-auto">
+            <h1 class="text-3xl font-bold text-gray-900 mb-6">My Learning Path</h1>
+            <div id="courses-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Course cards will be injected here -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) { window.location.href = '/login.html'; return; }
+
+            const coursesContainer = document.getElementById('courses-container');
+
+            try {
+                const response = await fetch('/api/student/my-courses', {
+                    headers: { 'x-auth-token': token }
+                });
+                if (!response.ok) throw new Error('Failed to fetch courses');
+
+                const courses = await response.json();
+
+                if (courses.length === 0) {
+                    coursesContainer.innerHTML = `
+                        <div class="col-span-full text-center py-16 px-6 bg-white rounded-lg shadow-sm">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
+                            <h3 class="mt-2 text-lg font-medium text-gray-900">No Courses Assigned</h3>
+                            <p class="mt-1 text-sm text-gray-500">Check back later to see if new courses have been assigned to you.</p>
+                        </div>`;
+                    return;
+                }
+
+                courses.forEach(course => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-xl shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-lg transition-shadow duration-300 border border-gray-200';
+                    
+                    let statusBadge;
+                    if (course.completionPercentage === 100) {
+                        statusBadge = `<span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-1 rounded-full">Completed</span>`;
+                    } else if (course.completionPercentage > 0) {
+                        statusBadge = `<span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-1 rounded-full">In Progress</span>`;
+                    } else {
+                        statusBadge = `<span class="bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-1 rounded-full">Not Started</span>`;
+                    }
+
+                    card.innerHTML = `
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-3">
+                                <h2 class="text-xl font-bold text-gray-800">${course.title}</h2>
+                                ${statusBadge}
+                            </div>
+                            <p class="text-gray-600 text-sm mb-5 h-10 overflow-hidden">${course.description}</p>
+                            
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm font-medium text-gray-700">Progress</span>
+                                    <span class="text-sm font-medium text-gray-700">${course.completionPercentage}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="bg-indigo-600 h-2.5 rounded-full" style="width: ${course.completionPercentage}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-4">
+                             <a href="/student/view-course.html?id=${course.courseId}" class="block w-full text-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+                                ${course.completionPercentage > 0 ? 'Continue Learning' : 'Start Course'}
+                            </a>
+                        </div>
+                    `;
+                    coursesContainer.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error('Error fetching courses:', error);
+                coursesContainer.innerHTML = `<p class="text-red-500 col-span-full">Could not load your courses. Please try again later.</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
