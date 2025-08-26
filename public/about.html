@@ -13,6 +13,16 @@
         .gradient-bg-about {
             background-image: linear-gradient(to bottom right, #4f46e5, #7c3aed);
         }
+        /* Animation styles */
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -47,7 +57,7 @@
         <div class="gradient-bg-about text-white">
             <div class="max-w-4xl mx-auto text-center py-20 px-4 sm:py-28 sm:px-6 lg:px-8">
                 <h1 class="text-4xl font-extrabold sm:text-5xl lg:text-6xl tracking-tight">Our Mission</h1>
-                <p class="mt-6 text-xl text-indigo-100">To empower educational institutions and organizations with a secure, reliable, and user-friendly platform for conducting online assessments, ensuring integrity and fostering academic excellence.</p>
+                <p class="mt-6 text-xl text-indigo-100">To empower educational institutions with a secure, intelligent, and user-friendly platform that upholds academic integrity and unlocks the full potential of every learner.</p>
             </div>
         </div>
 
@@ -55,41 +65,65 @@
         <div class="py-16 sm:py-24 bg-white overflow-hidden">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="lg:grid lg:grid-cols-2 lg:gap-16 lg:items-center">
-                    <div>
+                    <div class="fade-in-section">
                         <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">The Story Behind TESTIFY</h2>
-                        <p class="mt-6 text-lg text-gray-500">TESTIFY was born from a simple idea: online testing should be secure, straightforward, and accessible to everyone. In a world rapidly moving towards digital education, we saw a critical need for a platform that administrators could trust and students could use without friction. Our team of educators and technologists came together to build a solution that addresses the core challenges of online assessments—from question creation and test assignment to proctoring and automated certification.</p>
-                        <p class="mt-4 text-lg text-gray-500">We are committed to continuous innovation, ensuring TESTIFY remains at the forefront of educational technology, helping institutions uphold academic integrity and unlock student potential.</p>
+                        <p class="mt-6 text-lg text-gray-600">TESTIFY was forged from a clear vision: online assessment should be secure, straightforward, and accessible. As education embraced the digital frontier, we identified a critical need for a platform that administrators could trust implicitly and students could navigate effortlessly. Our team, a blend of passionate educators and innovative technologists, united to solve the core challenges of digital assessments—from intelligent content creation and secure proctoring to insightful analytics and automated certification.</p>
+                        <p class="mt-4 text-lg text-gray-600">We are relentlessly committed to advancing educational technology, ensuring TESTIFY not only meets but anticipates the needs of modern learning environments.</p>
                     </div>
-                    <div class="mt-10 lg:mt-0">
-                        <img class="rounded-2xl shadow-xl mx-auto" src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop" alt="Team working together">
+                    <div class="mt-10 lg:mt-0 fade-in-section" style="transition-delay: 150ms;">
+                        <img class="rounded-2xl shadow-xl mx-auto" src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2071&auto=format&fit=crop" alt="A diverse team collaborating in a modern office environment">
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Our Impact Section -->
+        <!--<div class="py-16 sm:py-24 bg-gray-50">-->
+        <!--    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">-->
+        <!--        <div class="text-center fade-in-section">-->
+        <!--            <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Our Impact in Numbers</h2>-->
+        <!--            <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-500">We're proud to support institutions in their mission to deliver quality education.</p>-->
+        <!--        </div>-->
+        <!--        <div class="mt-16 grid gap-10 md:grid-cols-3 text-center">-->
+        <!--            <div class="p-8 bg-white rounded-2xl shadow-md fade-in-section">-->
+        <!--                <h3 class="text-5xl font-bold text-indigo-600">50+</h3>-->
+        <!--                <p class="mt-2 text-lg font-medium text-gray-700">Institutions Empowered</p>-->
+        <!--            </div>-->
+        <!--            <div class="p-8 bg-white rounded-2xl shadow-md fade-in-section" style="transition-delay: 150ms;">-->
+        <!--                <h3 class="text-5xl font-bold text-indigo-600">100,000+</h3>-->
+        <!--                <p class="mt-2 text-lg font-medium text-gray-700">Exams Proctored</p>-->
+        <!--            </div>-->
+        <!--            <div class="p-8 bg-white rounded-2xl shadow-md fade-in-section" style="transition-delay: 300ms;">-->
+        <!--                <h3 class="text-5xl font-bold text-indigo-600">99.9%</h3>-->
+        <!--                <p class="mt-2 text-lg font-medium text-gray-700">Platform Uptime</p>-->
+        <!--            </div>-->
+        <!--        </div>-->
+        <!--    </div>-->
+        <!--</div>-->
+
         <!-- Our Values Section -->
-        <div class="py-16 sm:py-24 bg-gray-50">
+        <div class="py-16 sm:py-24 bg-white">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="text-center">
+                <div class="text-center fade-in-section">
                     <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Our Core Values</h2>
                     <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-500">The principles that guide our work every day.</p>
                 </div>
                 <div class="mt-16 grid gap-10 md:grid-cols-2 lg:grid-cols-3">
-                    <div class="text-center p-8 bg-white rounded-2xl shadow-md">
+                    <div class="text-center p-8 bg-gray-50 rounded-2xl transition-transform transform hover:scale-105 hover:shadow-xl fade-in-section">
                         <div class="flex items-center justify-center h-12 w-12 rounded-xl bg-indigo-500 text-white mx-auto">
                             <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                         </div>
                         <h3 class="mt-6 text-xl font-bold text-gray-900">Integrity</h3>
                         <p class="mt-4 text-base text-gray-600">We build our platform on a foundation of trust and security, ensuring that every assessment is fair and reliable.</p>
                     </div>
-                    <div class="text-center p-8 bg-white rounded-2xl shadow-md">
+                    <div class="text-center p-8 bg-gray-50 rounded-2xl transition-transform transform hover:scale-105 hover:shadow-xl fade-in-section" style="transition-delay: 150ms;">
                         <div class="flex items-center justify-center h-12 w-12 rounded-xl bg-indigo-500 text-white mx-auto">
                              <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                         </div>
                         <h3 class="mt-6 text-xl font-bold text-gray-900">Innovation</h3>
                         <p class="mt-4 text-base text-gray-600">We are dedicated to pushing the boundaries of educational technology to create smarter, more effective tools for learning.</p>
                     </div>
-                    <div class="text-center p-8 bg-white rounded-2xl shadow-md">
+                    <div class="text-center p-8 bg-gray-50 rounded-2xl transition-transform transform hover:scale-105 hover:shadow-xl fade-in-section" style="transition-delay: 300ms;">
                         <div class="flex items-center justify-center h-12 w-12 rounded-xl bg-indigo-500 text-white mx-auto">
                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9V3m0 18a9 9 0 009-9m-9 9a9 9 0 00-9-9" /></svg>
                         </div>
@@ -107,6 +141,24 @@
             <p class="text-center text-base text-gray-400">&copy; 2024 TESTIFY. All rights reserved.</p>
         </div>
     </footer>
+
+    <script>
+        const sections = document.querySelectorAll('.fade-in-section');
+
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+
+        sections.forEach(section => {
+            observer.observe(section);
+        });
+    </script>
 
 </body>
 </html>
