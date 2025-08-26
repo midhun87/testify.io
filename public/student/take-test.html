@@ -35,7 +35,7 @@
             background-color: #10B981;
             color: white;
         }
-        /* -- MOBILE SIDEBAR STYLES (New) -- */
+        /* -- MOBILE SIDEBAR STYLES -- */
         #sidebar {
             transition: transform 0.3s ease-in-out;
         }
@@ -150,7 +150,7 @@
             const prevBtn = document.getElementById('prev-btn');
             const nextBtn = document.getElementById('next-btn');
             
-            // NEW: Mobile menu elements
+            // Mobile menu elements
             const mobileMenuBtn = document.getElementById('mobile-menu-btn');
             const sidebar = document.getElementById('sidebar');
 
@@ -181,7 +181,7 @@
 
                     availableTests.forEach(test => {
                         const testElement = document.createElement('div');
-                        // MODIFIED: Classes changed for responsive stacking
+                        // RESPONSIVE TEST ITEM: 'flex-col' stacks test info on mobile, 'sm:flex-row' aligns it on larger screens.
                         testElement.className = 'flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200';
                         testElement.innerHTML = `
                             <div>
@@ -206,7 +206,7 @@
             logoutButton.addEventListener('click', logout);
             submitTestBtn.addEventListener('click', () => submitTest('Are you sure you want to submit the test?'));
             
-            // NEW: Event listener for the hamburger menu
+            // JAVASCRIPT FOR MOBILE MENU
             mobileMenuBtn.addEventListener('click', () => {
                 sidebar.classList.toggle('hidden-mobile');
             });
@@ -232,7 +232,7 @@
                 window.location.href = '/login.html';
             }
 
-            // --- TEST LOGIC (largely unchanged, as it's not layout-dependent) ---
+            // --- TEST LOGIC ---
             function startTest(testData) {
                 if (!confirm('This test will start in fullscreen mode. You cannot exit fullscreen or switch tabs. Are you ready to begin?')) return;
                 
@@ -259,7 +259,7 @@
 
             async function submitTest(message) {
                 if (confirm(message)) {
-                    saveAnswer(); // Save the final answer before submitting
+                    saveAnswer();
                     testInProgress = false;
                     clearInterval(timerInterval);
                     exitFullScreen();
@@ -331,7 +331,7 @@
                         </label>
                     `).join('');
                 } else { // fill-blank
-                    optionsHtml = `<input type="text" name="q${currentQuestionIndex}" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg" value="${savedAnswer || ''}">`;
+                    optionsHtml = `<input type="text" name="q${currentQuestionIndex}" class="w-full px-4 py-3 bg-gray-50 border-gray-300 rounded-lg" value="${savedAnswer || ''}">`;
                 }
 
                 questionContent.innerHTML = `
