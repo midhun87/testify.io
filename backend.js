@@ -1,6 +1,5 @@
 // backend.js
 // --- IMPORTS ---
-require('dotenv').config();
 const express = require('express');
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
 const { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, QueryCommand, UpdateCommand, BatchGetCommand } = require("@aws-sdk/lib-dynamodb");
@@ -1432,3 +1431,4 @@ app.post('/api/admin/generate-course-from-pdf', authMiddleware, async (req, res)
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
