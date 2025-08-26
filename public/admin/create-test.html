@@ -6,6 +6,8 @@
     <title>Create Test - TESTIFY</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- PDF.js Library for reading PDF content -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -17,9 +19,11 @@
             background-color: #4F46E5;
             font-weight: 600;
         }
-        /* Custom styles for better form controls */
         .question-block {
             transition: all 0.3s ease-in-out;
+        }
+        #ai-loader { 
+            display: none; 
         }
     </style>
 </head>
@@ -36,6 +40,18 @@
                 <a href="/admin/dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                     <span class="ml-3">Dashboard</span>
+                </a>
+                 <a href="/admin/create-course.html" class="sidebar-link flex items-center px-3 py-2 rounded-lg transition-colors duration-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path></svg>
+                    <span class="ml-3">Create Course</span>
+                </a>
+                 <a href="/admin/assign-course.html" class="sidebar-link flex items-center px-3 py-2 rounded-lg transition-colors duration-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <span class="ml-3">Assign Course</span>
+                </a>
+                <a href="/admin/modify-course.html" class="sidebar-link flex items-center px-3 py-2 rounded-lg transition-colors duration-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path></svg>
+                    <span class="ml-3">Modify Course</span>
                 </a>
                 <a href="/admin/create-test.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
@@ -57,6 +73,9 @@
                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A11.953 11.953 0 0112 13.5c-2.998 0-5.74-1.1-7.843-2.918" /></svg>
                     <span class="ml-3">Add College</span>
                 </a>
+                <a href="/admin/issue-certificates.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span class="ml-3">Issue Certificates</span></a>
             </div>
         </div>
 
@@ -79,6 +98,20 @@
 
             <div class="p-6">
                 <form id="create-test-form">
+                    <!-- AI Generation Section -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border-2 border-dashed border-indigo-200 mb-6">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-2">Generate with AI</h2>
+                        <p class="text-sm text-gray-500 mb-4">Upload a PDF with questions and answers, and our AI will structure the test for you.</p>
+                        <div class="flex items-center space-x-4">
+                            <input type="file" id="pdf-upload" accept=".pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                            <button type="button" id="analyze-pdf-btn" class="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-sm hover:bg-indigo-700 whitespace-nowrap">Analyze PDF</button>
+                        </div>
+                         <div id="ai-loader" class="mt-4 flex items-center text-gray-600">
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span>AI is reading and structuring your test... please wait.</span>
+                        </div>
+                    </div>
+
                     <!-- Test Details Section -->
                     <div class="bg-white p-6 rounded-xl shadow-md">
                         <h2 class="text-xl font-bold text-gray-800 mb-4">Test Details</h2>
@@ -158,7 +191,7 @@
             const questionsContainer = document.getElementById('questions-container');
             let questionCounter = 0;
 
-            addQuestionBtn.addEventListener('click', () => {
+            function addQuestion(data = {}) {
                 questionCounter++;
                 const questionId = `question-${questionCounter}`;
                 const questionBlock = document.createElement('div');
@@ -182,22 +215,30 @@
                         </div>
                         <div class="md:col-span-2">
                              <label for="${questionId}-marks" class="block text-sm font-medium text-gray-700">Marks</label>
-                            <input type="number" id="${questionId}-marks" name="${questionId}-marks" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <input type="number" id="${questionId}-marks" name="${questionId}-marks" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" value="${data.marks || ''}">
                         </div>
                     </div>
                     <div class="mt-4">
                         <label for="${questionId}-text" class="block text-sm font-medium text-gray-700">Question Text</label>
-                        <textarea id="${questionId}-text" name="${questionId}-text" rows="3" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                        <textarea id="${questionId}-text" name="${questionId}-text" rows="3" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">${data.text || ''}</textarea>
                     </div>
                     
                     <!-- Answer/Options Area -->
                     <div id="${questionId}-answer-area" class="mt-4"></div>
                 `;
                 questionsContainer.appendChild(questionBlock);
-                updateAnswerArea(questionId, 'mcq-single');
-            });
 
-            function updateAnswerArea(questionId, type) {
+                const typeSelect = document.getElementById(`${questionId}-type`);
+                if (data.type) {
+                    typeSelect.value = data.type;
+                }
+                
+                updateAnswerArea(questionId, typeSelect.value, data);
+            }
+
+            addQuestionBtn.addEventListener('click', () => addQuestion());
+
+            function updateAnswerArea(questionId, type, data = {}) {
                 const answerArea = document.getElementById(`${questionId}-answer-area`);
                 if (!answerArea) return;
 
@@ -205,24 +246,31 @@
                     const inputType = type === 'mcq-single' ? 'radio' : 'checkbox';
                     answerArea.innerHTML = `
                         <h4 class="text-md font-semibold text-gray-700 mb-2">Options</h4>
-                        <div id="${questionId}-options-container" class="space-y-2">
-                           <!-- Options will be added here -->
-                        </div>
+                        <div id="${questionId}-options-container" class="space-y-2"></div>
                         <button type="button" class="add-option-btn mt-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800" data-question-id="${questionId}" data-input-type="${inputType}">+ Add Option</button>
                     `;
-                    addOption(questionId, inputType);
-                    addOption(questionId, inputType);
+                    const options = data.options || ['', '']; // Default to 2 empty options if none provided
+                    options.forEach((optionText, index) => {
+                        let isChecked = false;
+                        if (type === 'mcq-single') {
+                            isChecked = data.correctAnswer == index;
+                        } else if (type === 'mcq-multiple') {
+                            isChecked = data.correctAnswers && data.correctAnswers.includes(String(index));
+                        }
+                        addOption(questionId, inputType, optionText, isChecked);
+                    });
+
                 } else if (type === 'fill-blank') {
                     answerArea.innerHTML = `
                         <div>
                             <label for="${questionId}-answer" class="block text-sm font-medium text-gray-700">Correct Answer</label>
-                            <input type="text" id="${questionId}-answer" name="${questionId}-answer" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <input type="text" id="${questionId}-answer" name="${questionId}-answer" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" value="${data.correctAnswer || ''}">
                         </div>
                     `;
                 }
             }
 
-            function addOption(questionId, inputType) {
+            function addOption(questionId, inputType, text = '', isChecked = false) {
                 const optionsContainer = document.getElementById(`${questionId}-options-container`);
                 if (!optionsContainer) return;
                 const optionIndex = optionsContainer.children.length;
@@ -231,13 +279,12 @@
                 const optionDiv = document.createElement('div');
                 optionDiv.className = 'flex items-center space-x-3';
                 optionDiv.innerHTML = `
-                    <input id="${optionId}-correct" name="${questionId}-correct" type="${inputType}" value="${optionIndex}" class="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
-                    <input type="text" id="${optionId}-text" name="${optionId}-text" placeholder="Option ${optionIndex + 1}" required class="flex-grow px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    <input id="${optionId}-correct" name="${questionId}-correct" type="${inputType}" value="${optionIndex}" class="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500" ${isChecked ? 'checked' : ''}>
+                    <input type="text" id="${optionId}-text" name="${optionId}-text" placeholder="Option ${optionIndex + 1}" required class="flex-grow px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" value="${text}">
                 `;
                 optionsContainer.appendChild(optionDiv);
             }
 
-            // Event delegation for dynamic elements
             questionsContainer.addEventListener('click', (e) => {
                 if (e.target.closest('.remove-question-btn')) {
                     const button = e.target.closest('.remove-question-btn');
@@ -256,12 +303,90 @@
                 }
             });
 
+            // --- AI PDF ANALYSIS ---
+            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js`;
+            const analyzePdfBtn = document.getElementById('analyze-pdf-btn');
+            const pdfUploadInput = document.getElementById('pdf-upload');
+            const aiLoader = document.getElementById('ai-loader');
+
+            analyzePdfBtn.addEventListener('click', async () => {
+                const file = pdfUploadInput.files[0];
+                if (!file) {
+                    alert('Please select a PDF file first.');
+                    return;
+                }
+
+                aiLoader.style.display = 'flex';
+                analyzePdfBtn.disabled = true;
+
+                try {
+                    const fileReader = new FileReader();
+                    fileReader.onload = async (event) => {
+                        try {
+                            const typedarray = new Uint8Array(event.target.result);
+                            const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                            let fullText = '';
+                            for (let i = 1; i <= pdf.numPages; i++) {
+                                const page = await pdf.getPage(i);
+                                const textContent = await page.getTextContent();
+                                fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+                            }
+                            
+                            const response = await fetch('/api/admin/generate-test-from-pdf', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'x-auth-token': token
+                                },
+                                body: JSON.stringify({ text: fullText })
+                            });
+
+                            if (!response.ok) {
+                                const errorResult = await response.json();
+                                throw new Error(errorResult.message || `API call failed with status: ${response.status}`);
+                            }
+
+                            const structuredTest = await response.json();
+                            populateTestFormWithAIData(structuredTest);
+
+                        } catch (apiError) {
+                            console.error('Error during AI processing:', apiError);
+                            alert('An error occurred while generating the test with AI. Please check the console for details.');
+                        } finally {
+                            aiLoader.style.display = 'none';
+                            analyzePdfBtn.disabled = false;
+                        }
+                    };
+                    fileReader.readAsArrayBuffer(file);
+
+                } catch (error) {
+                    console.error('Error reading PDF file:', error);
+                    alert('An error occurred while reading the PDF file.');
+                    aiLoader.style.display = 'none';
+                    analyzePdfBtn.disabled = false;
+                }
+            });
+
+            function populateTestFormWithAIData(data) {
+                document.getElementById('testTitle').value = data.testTitle || '';
+                document.getElementById('duration').value = data.duration || '';
+                document.getElementById('totalMarks').value = data.totalMarks || '';
+                document.getElementById('passingPercentage').value = data.passingPercentage || '';
+                
+                questionsContainer.innerHTML = ''; // Clear existing questions
+                questionCounter = 0;
+                
+                if (data.questions && data.questions.length > 0) {
+                    data.questions.forEach(q => addQuestion(q));
+                }
+            }
+
+
             // --- FORM SUBMISSION ---
             const form = document.getElementById('create-test-form');
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
 
-                // 1. Get Test Details
                 const testDetails = {
                     testTitle: document.getElementById('testTitle').value,
                     duration: parseInt(document.getElementById('duration').value),
@@ -269,7 +394,6 @@
                     passingPercentage: parseInt(document.getElementById('passingPercentage').value),
                 };
 
-                // 2. Get Questions Data
                 const questions = [];
                 const questionBlocks = document.querySelectorAll('.question-block');
 
@@ -300,7 +424,6 @@
                 
                 const payload = { ...testDetails, questions };
 
-                // 3. Send to backend
                 try {
                     const response = await fetch('/api/tests', {
                         method: 'POST',

@@ -3,20 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Colleges - TESTIFY</title>
+    <title>Issue Certificates - TESTIFY</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .sidebar-link:hover {
-            background-color: #4338CA;
-        }
-        .sidebar-link.active {
-            background-color: #4F46E5;
-            font-weight: 600;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -29,7 +22,7 @@
                 <span class="ml-3 text-2xl font-bold">TESTIFY</span>
             </div>
             <div class="flex flex-col flex-grow p-4">
-                <a href="/admin/dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+               <a href="/admin/dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                     <span class="ml-3">Dashboard</span>
                 </a>
@@ -37,7 +30,7 @@
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                     <span class="ml-3">Create Test</span>
                 </a>
-                <a href="/admin/assign-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                <a href="/admin/assign-test.html" class="sidebar-link  flex items-center px-4 py-3 mt-2 rounded-lg">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     <span class="ml-3">Assign Test</span>
                 </a>
@@ -45,17 +38,18 @@
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     <span class="ml-3">Test History</span>
                 </a>
-                 <a href="/admin/modify-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                 <a href="/admin/modify-test.html" class="sidebar-link  flex items-center px-4 py-3 mt-2 rounded-lg">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
                     <span class="ml-3">Modify Test</span>
                 </a>
-                <a href="/admin/add-college.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                <a href="/admin/add-college.html" class="sidebar-link  flex items-center px-4 py-3 mt-2 rounded-lg">
                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A11.953 11.953 0 0112 13.5c-2.998 0-5.74-1.1-7.843-2.918" /></svg>
                     <span class="ml-3">Add College</span>
                 </a>
-<a href="/admin/issue-certificates.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+
+                <a href="/admin/issue-certificates.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    <span class="ml-3">Issue Certificates</span> </a>
+                    <span class="ml-3">Issue Certificates</span></a>
                     <a href="/admin/create-course.html" class="sidebar-link  flex items-center px-3 py-2 rounded-lg transition-colors duration-200">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path></svg>
                     <span class="ml-3">Create Course</span>
@@ -66,54 +60,50 @@
                 </a>
                 <a href="/admin/modify-course.html" class="sidebar-link flex items-center px-3 py-2 rounded-lg transition-colors duration-200">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path></svg>
-                    <span class="ml-3">Modify Course</span>
-                    </a>
+                    <span class="ml-3">Modify Course</span></a>
             </div>
         </div>
 
         <!-- Main content -->
         <div class="flex flex-col flex-1 overflow-y-auto">
             <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
-                <h1 class="text-2xl font-bold text-gray-800">Manage Colleges</h1>
-                <div class="flex items-center">
-                    <div class="relative">
-                        <button id="user-menu-button" class="flex items-center space-x-2">
-                            <span id="user-name" class="font-semibold text-gray-700">Admin User</span>
-                            <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                        </button>
-                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                            <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
-                        </div>
+                <h1 class="text-2xl font-bold text-gray-800">Issue Certificates</h1>
+                <div class="relative">
+                    <button id="user-menu-button" class="flex items-center space-x-2">
+                        <span id="user-name" class="font-semibold text-gray-700">Admin User</span>
+                        <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                        <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
                     </div>
                 </div>
             </div>
 
             <div class="p-6">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Add College Form -->
-                    <div class="lg:col-span-1">
-                        <div class="bg-white p-6 rounded-xl shadow-md">
-                            <h2 class="text-xl font-bold text-gray-800 mb-4">Add a New College</h2>
-                            <form id="add-college-form">
-                                <div>
-                                    <label for="collegeName" class="block text-sm font-medium text-gray-700">College Name</label>
-                                    <input type="text" id="collegeName" name="collegeName" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                                </div>
-                                <button type="submit" class="mt-4 w-full px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700">Add College</button>
-                            </form>
-                        </div>
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Select a Test</h2>
+                    <div class="max-w-md">
+                        <select id="test-select" class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="">Loading tests...</option>
+                        </select>
                     </div>
-                    <!-- Existing Colleges List -->
-                    <div class="lg:col-span-2">
-                        <div class="bg-white p-6 rounded-xl shadow-md">
-                            <h2 class="text-xl font-bold text-gray-800 mb-4">Existing Colleges</h2>
-                            <div id="college-list" class="space-y-3 max-h-96 overflow-y-auto">
-                                <!-- College list will be loaded here -->
-                            </div>
+
+                    <div id="passed-students-container" class="mt-6 hidden">
+                        <h3 class="text-lg font-semibold text-gray-700">Students Who Passed</h3>
+                        <p id="student-count" class="text-sm text-gray-500 mb-4"></p>
+                        <div id="passed-students-list" class="space-y-2 max-h-60 overflow-y-auto border rounded-lg p-4">
+                            <!-- List of passed students -->
                         </div>
+                        <button id="issue-certs-btn" class="mt-4 w-full px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                            Issue Certificates
+                        </button>
                     </div>
                 </div>
             </div>
+            <footer class="bg-white border-t border-gray-200 p-4 mt-auto">
+    <div class="text-center text-sm text-gray-500">
+        &copy; 2025 TESTIFY. All Rights Reserved.
+    </div>
         </div>
     </div>
 
@@ -138,75 +128,100 @@
                 window.location.href = '/login.html';
             });
 
-            const collegeListDiv = document.getElementById('college-list');
-            const addCollegeForm = document.getElementById('add-college-form');
+            // --- PAGE ELEMENTS ---
+            const testSelect = document.getElementById('test-select');
+            const studentsContainer = document.getElementById('passed-students-container');
+            const studentCount = document.getElementById('student-count');
+            const studentsListDiv = document.getElementById('passed-students-list');
+            const issueCertsBtn = document.getElementById('issue-certs-btn');
+            let passedStudentsData = [];
 
-            async function fetchAndDisplayColleges() {
+            // --- FETCH TESTS FOR DROPDOWN ---
+            async function loadTests() {
                 try {
-                    const response = await fetch('/api/colleges', { headers: { 'x-auth-token': token } });
-                    if (!response.ok) throw new Error('Failed to fetch colleges');
-                    const colleges = await response.json();
+                    const response = await fetch('/api/tests', { headers: { 'x-auth-token': token } });
+                    if (!response.ok) throw new Error('Failed to fetch tests');
+                    const tests = await response.json();
                     
-                    collegeListDiv.innerHTML = '';
-                    if (colleges.length === 0) {
-                        collegeListDiv.innerHTML = '<p class="text-gray-500">No colleges added yet.</p>';
-                        return;
-                    }
-
-                    colleges.forEach(college => {
-                        const div = document.createElement('div');
-                        div.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg';
-                        div.innerHTML = `
-                            <span class="text-gray-800 font-medium">${college.collegeName}</span>
-                            <button class="delete-college-btn text-red-500 hover:text-red-700" data-name="${college.collegeName}">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
-                        `;
-                        collegeListDiv.appendChild(div);
+                    testSelect.innerHTML = '<option value="">-- Select a test --</option>';
+                    tests.forEach(test => {
+                        const option = document.createElement('option');
+                        option.value = test.testId;
+                        option.textContent = test.title;
+                        testSelect.appendChild(option);
                     });
                 } catch (error) {
-                    console.error('Error:', error);
-                    collegeListDiv.innerHTML = '<p class="text-red-500">Could not load colleges.</p>';
+                    testSelect.innerHTML = '<option value="">Could not load tests</option>';
+                    console.error(error);
                 }
             }
-            await fetchAndDisplayColleges();
+            await loadTests();
 
-            addCollegeForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const collegeName = document.getElementById('collegeName').value;
-                if (!collegeName) return;
+            // --- EVENT LISTENER FOR TEST SELECTION ---
+            testSelect.addEventListener('change', async () => {
+                const testId = testSelect.value;
+                if (!testId) {
+                    studentsContainer.classList.add('hidden');
+                    return;
+                }
 
                 try {
-                    const response = await fetch('/api/colleges', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                        body: JSON.stringify({ collegeName })
-                    });
-                    if (!response.ok) throw new Error('Failed to add college');
-                    
-                    addCollegeForm.reset();
-                    await fetchAndDisplayColleges();
+                    const response = await fetch(`/api/admin/passed-students/${testId}`, { headers: { 'x-auth-token': token } });
+                    if (!response.ok) throw new Error('Failed to fetch students');
+                    passedStudentsData = await response.json();
+
+                    studentCount.textContent = `${passedStudentsData.length} student(s) passed this test.`;
+                    studentsListDiv.innerHTML = '';
+                    if (passedStudentsData.length > 0) {
+                        passedStudentsData.forEach(student => {
+                            const p = document.createElement('p');
+                            p.className = 'text-gray-700';
+                            p.textContent = student.studentEmail;
+                            studentsListDiv.appendChild(p);
+                        });
+                        issueCertsBtn.disabled = false;
+                    } else {
+                        studentsListDiv.innerHTML = '<p class="text-gray-500">No students have passed this test yet.</p>';
+                        issueCertsBtn.disabled = true;
+                    }
+                    studentsContainer.classList.remove('hidden');
                 } catch (error) {
-                    alert('Error adding college. It might already exist.');
+                    console.error('Error fetching passed students:', error);
+                    alert('Could not load student data for this test.');
                 }
             });
 
-            collegeListDiv.addEventListener('click', async (e) => {
-                const deleteBtn = e.target.closest('.delete-college-btn');
-                if (deleteBtn) {
-                    const collegeName = deleteBtn.dataset.name;
-                    if (confirm(`Are you sure you want to delete "${collegeName}"?`)) {
-                        try {
-                            const response = await fetch(`/api/colleges/${encodeURIComponent(collegeName)}`, {
-                                method: 'DELETE',
-                                headers: { 'x-auth-token': token }
-                            });
-                             if (!response.ok) throw new Error('Failed to delete college');
-                             await fetchAndDisplayColleges();
-                        } catch (error) {
-                             alert('Error deleting college.');
-                        }
-                    }
+            // --- EVENT LISTENER FOR ISSUING CERTIFICATES ---
+            issueCertsBtn.addEventListener('click', async () => {
+                const testId = testSelect.value;
+                const testTitle = testSelect.options[testSelect.selectedIndex].text;
+
+                if (!testId || passedStudentsData.length === 0) {
+                    alert('No students to issue certificates to.');
+                    return;
+                }
+
+                issueCertsBtn.disabled = true;
+                issueCertsBtn.textContent = 'Issuing...';
+
+                try {
+                    const response = await fetch('/api/admin/issue-certificates', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify({ testId, testTitle, passedStudents: passedStudentsData })
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message);
+
+                    alert(result.message);
+                    studentsContainer.classList.add('hidden');
+                    testSelect.value = '';
+
+                } catch (error) {
+                    alert(`Error: ${error.message}`);
+                } finally {
+                    issueCertsBtn.disabled = false;
+                    issueCertsBtn.textContent = 'Issue Certificates to Passed Students';
                 }
             });
         });

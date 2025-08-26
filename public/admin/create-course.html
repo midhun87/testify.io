@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Course - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- PDF.js Library for reading PDF content -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F9FAFB; }
+        .sidebar { background-color: #111827; }
+        .sidebar-link { color: #9CA3AF; }
+        .sidebar-link:hover { background-color: #374151; color: #FFFFFF; }
+        .sidebar-link.active { background-color: #4F46E5; color: #FFFFFF; font-weight: 600; }
+        .module { border-left: 3px solid #A5B4FC; }
+        #ai-loader { display: none; }
+    </style>
+</head>
+<body>
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 sidebar">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-8 w-auto" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold text-white">TESTIFY</span>
+            </div>
+            <nav class="flex-1 px-2 py-4 space-y-2">
+                 <a href="/admin/dashboard.html" class="sidebar-link flex items-center px-3 py-2 rounded-lg transition-colors duration-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <a href="/admin/create-course.html" class="sidebar-link active flex items-center px-3 py-2 rounded-lg transition-colors duration-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0-2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path></svg>
+                    <span class="ml-3">Create Course</span>
+                </a>
+                 <a href="/admin/assign-course.html" class="sidebar-link flex items-center px-3 py-2 rounded-lg transition-colors duration-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <span class="ml-3">Assign Course</span>
+                </a>
+                <a href="/admin/modify-course.html" class="sidebar-link flex items-center px-3 py-2 rounded-lg transition-colors duration-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path></svg>
+                    <span class="ml-3">Modify Course</span>
+                </a>
+                <a href="/admin/create-test.html" class="sidebar-link flex items-center px-3 py-2 rounded-lg transition-colors duration-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span class="ml-3">Create Test</span>
+                </a>
+                <a href="/admin/assign-test.html" class="sidebar-link flex items-center px-3 py-2 rounded-lg transition-colors duration-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    <span class="ml-3">Assign Test</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <header class="flex items-center justify-between h-20 bg-white border-b px-6">
+                <h1 id="page-title" class="text-2xl font-semibold text-gray-800">Create a New Course</h1>
+            </header>
+
+            <main class="p-6">
+                <form id="course-form" class="space-y-8">
+                    <!-- AI Generation Section -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border-2 border-dashed border-indigo-200">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-2">Generate with AI</h2>
+                        <p class="text-sm text-gray-500 mb-4">Upload a PDF of your course material, and our AI will structure the course for you.</p>
+                        <div class="flex items-center space-x-4">
+                            <input type="file" id="pdf-upload" accept=".pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                            <button type="button" id="analyze-pdf-btn" class="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-sm hover:bg-indigo-700 whitespace-nowrap">Analyze PDF</button>
+                        </div>
+                         <div id="ai-loader" class="mt-4 flex items-center text-gray-600">
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span>AI is reading and structuring your course... please wait.</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-5">Course Details</h2>
+                        <div class="grid grid-cols-1 gap-6">
+                            <div>
+                                <label for="course-title" class="block text-sm font-medium text-gray-700">Course Title</label>
+                                <input type="text" id="course-title" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+                            </div>
+                            <div>
+                                <label for="course-description" class="block text-sm font-medium text-gray-700">Course Description</label>
+                                <textarea id="course-description" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="modules-container" class="space-y-6">
+                        <!-- Modules will be added here dynamically -->
+                    </div>
+
+                    <div class="bg-white p-6 rounded-lg shadow-sm flex justify-between items-center">
+                        <button type="button" id="add-module-btn" class="px-5 py-2 bg-indigo-50 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-100 transition-colors">
+                            + Add Module
+                        </button>
+                        <div class="flex items-center space-x-4">
+                            <label for="main-test-select" class="text-sm font-medium text-gray-700">Final Test:</label>
+                            <select id="main-test-select" class="w-full max-w-xs px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+                                <option value="">Loading tests...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="px-8 py-3 bg-indigo-600 text-white font-bold rounded-lg shadow-md hover:bg-indigo-700 transition-colors">
+                            Save Course
+                        </button>
+                    </div>
+                </form>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) { window.location.href = '/login.html'; return; }
+
+            const modulesContainer = document.getElementById('modules-container');
+            const addModuleBtn = document.getElementById('add-module-btn');
+            const courseForm = document.getElementById('course-form');
+            const mainTestSelect = document.getElementById('main-test-select');
+            const analyzePdfBtn = document.getElementById('analyze-pdf-btn');
+            const pdfUploadInput = document.getElementById('pdf-upload');
+            const aiLoader = document.getElementById('ai-loader');
+            
+            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js`;
+
+            const createModuleElement = (module = { title: '', subModules: [] }) => {
+                const moduleDiv = document.createElement('div');
+                moduleDiv.className = 'module bg-white p-5 rounded-lg shadow-sm space-y-4';
+                moduleDiv.innerHTML = `
+                    <div class="flex justify-between items-center pb-3 border-b">
+                        <input type="text" value="${module.title}" class="module-title-input text-lg font-bold text-gray-800 bg-transparent focus:bg-gray-50 w-full p-1 rounded" placeholder="Module Title" required>
+                        <button type="button" class="remove-module-btn text-gray-400 hover:text-red-600 p-1 rounded-full">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                    <div class="submodules-container space-y-3"></div>
+                    <button type="button" class="add-submodule-btn mt-2 px-4 py-2 bg-gray-100 text-sm text-gray-700 font-semibold rounded-md hover:bg-gray-200">+ Add Sub-module</button>
+                `;
+                modulesContainer.appendChild(moduleDiv);
+                const subModulesContainer = moduleDiv.querySelector('.submodules-container');
+                module.subModules.forEach(sub => createSubModuleElement(subModulesContainer, sub));
+            };
+
+            const createSubModuleElement = (container, subModule = { title: '', textContent: '', videoUrl: '', imageUrl: ''}) => {
+                const subModuleDiv = document.createElement('div');
+                subModuleDiv.className = 'submodule bg-gray-50 p-4 rounded-md border border-gray-200';
+                subModuleDiv.innerHTML = `
+                    <div class="flex justify-between items-center mb-3">
+                        <input type="text" value="${subModule.title}" class="submodule-title-input font-semibold text-gray-700 bg-transparent focus:bg-white w-full p-1 rounded" placeholder="Sub-module Title" required>
+                        <button type="button" class="remove-submodule-btn text-gray-400 hover:text-red-500">✕</button>
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-medium text-gray-500">Video URL (Optional)</label>
+                            <input type="url" value="${subModule.videoUrl || ''}" class="video-url-input w-full p-2 mt-1 border border-gray-300 rounded-md" placeholder="https://www.youtube.com/watch?v=...">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-gray-500">Image URL (Optional)</label>
+                            <input type="url" value="${subModule.imageUrl || ''}" class="image-url-input w-full p-2 mt-1 border border-gray-300 rounded-md" placeholder="https://example.com/image.png">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-gray-500">Text Content (Optional)</label>
+                            <textarea class="text-content-input w-full p-2 mt-1 border border-gray-300 rounded-md" rows="5" placeholder="Enter lesson text...">${subModule.textContent || ''}</textarea>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(subModuleDiv);
+            };
+
+            function populateFormWithAIData(data) {
+                document.getElementById('course-title').value = data.title || '';
+                document.getElementById('course-description').value = data.description || '';
+                modulesContainer.innerHTML = ''; // Clear existing modules
+                data.modules.forEach(module => createModuleElement(module));
+            }
+
+            analyzePdfBtn.addEventListener('click', async () => {
+                const file = pdfUploadInput.files[0];
+                if (!file) {
+                    alert('Please select a PDF file first.');
+                    return;
+                }
+
+                aiLoader.style.display = 'flex';
+                analyzePdfBtn.disabled = true;
+
+                try {
+                    const fileReader = new FileReader();
+                    fileReader.onload = async (event) => {
+                        try {
+                            const typedarray = new Uint8Array(event.target.result);
+                            const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                            let fullText = '';
+                            for (let i = 1; i <= pdf.numPages; i++) {
+                                const page = await pdf.getPage(i);
+                                const textContent = await page.getTextContent();
+                                fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+                            }
+                            
+                            // *** CORRECTED PART: Call our own backend, not Google's API directly ***
+                            const response = await fetch('/api/admin/generate-course-from-pdf', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'x-auth-token': token
+                                },
+                                body: JSON.stringify({ text: fullText })
+                            });
+
+                            if (!response.ok) {
+                                const errorResult = await response.json();
+                                throw new Error(errorResult.message || `API call failed with status: ${response.status}`);
+                            }
+
+                            const structuredCourse = await response.json();
+                            populateFormWithAIData(structuredCourse);
+
+                        } catch (apiError) {
+                            console.error('Error during AI processing:', apiError);
+                            alert('An error occurred while generating the course with AI. Please check the console for details.');
+                        } finally {
+                            aiLoader.style.display = 'none';
+                            analyzePdfBtn.disabled = false;
+                        }
+                    };
+                    fileReader.readAsArrayBuffer(file);
+
+                } catch (error) {
+                    console.error('Error reading PDF file:', error);
+                    alert('An error occurred while reading the PDF file.');
+                    aiLoader.style.display = 'none';
+                    analyzePdfBtn.disabled = false;
+                }
+            });
+
+            addModuleBtn.addEventListener('click', () => createModuleElement());
+            modulesContainer.addEventListener('click', e => {
+                if (e.target.closest('.add-submodule-btn')) createSubModuleElement(e.target.closest('.module').querySelector('.submodules-container'));
+                if (e.target.closest('.remove-module-btn')) e.target.closest('.module').remove();
+                if (e.target.closest('.remove-submodule-btn')) e.target.closest('.submodule').remove();
+            });
+
+            courseForm.addEventListener('submit', async e => {
+                e.preventDefault();
+                const modules = Array.from(document.querySelectorAll('.module')).map(modDiv => ({
+                    title: modDiv.querySelector('.module-title-input').value,
+                    subModules: Array.from(modDiv.querySelectorAll('.submodule')).map(subDiv => ({
+                        title: subDiv.querySelector('.submodule-title-input').value,
+                        videoUrl: subDiv.querySelector('.video-url-input').value,
+                        imageUrl: subDiv.querySelector('.image-url-input').value,
+                        textContent: subDiv.querySelector('.text-content-input').value
+                    }))
+                }));
+                const payload = {
+                    title: document.getElementById('course-title').value,
+                    description: document.getElementById('course-description').value,
+                    mainTestId: mainTestSelect.value,
+                    modules
+                };
+                
+                try {
+                    const response = await fetch('/api/admin/courses', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error((await response.json()).message);
+                    alert('Course saved successfully!');
+                    window.location.href = '/admin/modify-course.html';
+                } catch (error) {
+                    alert(`Error saving course: ${error.message}`);
+                }
+            });
+
+            async function loadTestsForSelect() {
+                try {
+                    const response = await fetch('/api/tests', { headers: { 'x-auth-token': token } });
+                    const tests = await response.json();
+                    mainTestSelect.innerHTML = '<option value="">-- Select Final Test --</option>';
+                    tests.forEach(test => mainTestSelect.innerHTML += `<option value="${test.testId}">${test.title}</option>`);
+                } catch (error) {
+                    mainTestSelect.innerHTML = '<option value="">Could not load tests</option>';
+                }
+            }
+            
+            await loadTestsForSelect();
+        });
+    </script>
+</body>
+</html>
