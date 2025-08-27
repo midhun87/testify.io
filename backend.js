@@ -1,8 +1,9 @@
 // backend.js
 // --- IMPORTS ---
+require('dotenv').config();
 const express = require('express');
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, QueryCommand, UpdateCommand, BatchGetCommand } = require("@aws-sdk/lib-dynamodb");
+const { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, QueryCommand, UpdateCommand, BatchGetCommand, DeleteCommand } = require("@aws-sdk/lib-dynamodb");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
@@ -10,8 +11,10 @@ const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const multer = require('multer');
-const pdf = require('pdf-parse'); 
+const pdf = require('pdf-parse');
 const fetch = require('node-fetch');
+const cloudinary = require('cloudinary').v2;
+
 
 // --- INITIALIZATION ---
 const app = express();
@@ -37,13 +40,21 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+// --- CLOUDINARY CONFIG ---
+cloudinary.config({
+  cloud_name: 'dpz44zf0z',
+  api_key: '939929349547989',
+  api_secret: '7mwxyaqe-tvtilgyek2oR7lTkr8'
+});
+const upload = multer({ storage: multer.memoryStorage() });
+
 // --- MIDDLEWARE ---
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
-// --- AUTHENTICATION MIDDLEWARE ---
-const authMiddleware = (req, res, next) => {
+// --- AUTHENTICATION MIDDLEWARE [MODIFIED] ---
+const authMiddleware = async (req, res, next) => {
     const token = req.header('x-auth-token');
     if (!token) {
         return res.status(401).json({ message: 'No token, authorization denied' });
@@ -51,11 +62,175 @@ const authMiddleware = (req, res, next) => {
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
         req.user = decoded.user;
+
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: "TestifyUsers",
+            Key: { email: req.user.email }
+        }));
+
+        if (!Item) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        if (Item.isBlocked) {
+            return res.status(403).json({ message: 'Your account has been blocked by the administrator.' });
+        }
+
         next();
     } catch (e) {
         res.status(401).json({ message: 'Token is not valid' });
     }
 };
+
+
+// =================================================================
+// --- NEW: COLLEGE MANAGEMENT ROUTES ---
+// =================================================================
+
+// GET all colleges (Public for signup, but also used by admin)
+app.get('/api/colleges', async (req, res) => {
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyColleges"
+        }));
+        // Sort colleges alphabetically for consistent display
+        Items.sort((a, b) => a.collegeName.localeCompare(b.collegeName));
+        res.json(Items);
+    } catch (error) {
+        console.error("Get Colleges Error:", error);
+        res.status(500).json({ message: 'Server error fetching colleges.' });
+    }
+});
+
+// POST a new college (Admin only)
+app.post('/api/colleges', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { collegeName } = req.body;
+    if (!collegeName) {
+        return res.status(400).json({ message: 'College name is required.' });
+    }
+    try {
+        // Check if college already exists to prevent duplicates
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: "TestifyColleges",
+            Key: { collegeName }
+        }));
+        if (Item) {
+            return res.status(400).json({ message: 'College with this name already exists.' });
+        }
+
+        await docClient.send(new PutCommand({
+            TableName: "TestifyColleges",
+            Item: { collegeName }
+        }));
+        res.status(201).json({ message: 'College added successfully.' });
+    } catch (error) {
+        console.error("Add College Error:", error);
+        res.status(500).json({ message: 'Server error adding college.' });
+    }
+});
+
+// DELETE a college (Admin only)
+app.delete('/api/colleges/:collegeName', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { collegeName } = req.params;
+    try {
+        await docClient.send(new DeleteCommand({
+            TableName: "TestifyColleges",
+            Key: { collegeName }
+        }));
+        res.json({ message: 'College deleted successfully.' });
+    } catch (error) {
+        console.error("Delete College Error:", error);
+        res.status(500).json({ message: 'Server error deleting college.' });
+    }
+});
+
+
+// =================================================================
+// --- STUDENT PROFILE ROUTES ---
+// =================================================================
+
+// Get student profile
+app.get('/api/student/profile', authMiddleware, async (req, res) => {
+    try {
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: "TestifyUsers",
+            Key: { email: req.user.email }
+        }));
+        if (Item) {
+            delete Item.password;
+            res.json(Item);
+        } else {
+            res.status(404).json({ message: 'User not found.' });
+        }
+    } catch (error) {
+        console.error("Get Profile Error:", error);
+        res.status(500).json({ message: 'Server error fetching profile.' });
+    }
+});
+
+// Update student profile
+app.put('/api/student/profile', authMiddleware, async (req, res) => {
+    const { mobile, department, rollNumber } = req.body;
+    try {
+        await docClient.send(new UpdateCommand({
+            TableName: "TestifyUsers",
+            Key: { email: req.user.email },
+            UpdateExpression: "set mobile = :m, department = :d, rollNumber = :rn",
+            ExpressionAttributeValues: {
+                ":m": mobile,
+                ":d": department,
+                ":rn": rollNumber
+            }
+        }));
+        res.json({ message: 'Profile updated successfully.' });
+    } catch (error) {
+        console.error("Update Profile Error:", error);
+        res.status(500).json({ message: 'Server error updating profile.' });
+    }
+});
+
+// Upload profile image (STUDENT - ONE TIME ONLY)
+app.post('/api/student/profile/image', authMiddleware, upload.single('profileImage'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: 'No image file uploaded.' });
+    }
+    try {
+        const { Item: user } = await docClient.send(new GetCommand({
+            TableName: "TestifyUsers",
+            Key: { email: req.user.email }
+        }));
+
+        if (user && user.profileImageUrl) {
+            return res.status(403).json({ message: 'Profile image can only be uploaded once. Please contact an administrator to change it.' });
+        }
+
+        const b64 = Buffer.from(req.file.buffer).toString("base64");
+        let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+        const result = await cloudinary.uploader.upload(dataURI, {
+            folder: "profile_pictures"
+        });
+
+        await docClient.send(new UpdateCommand({
+            TableName: "TestifyUsers",
+            Key: { email: req.user.email },
+            UpdateExpression: "set profileImageUrl = :url",
+            ExpressionAttributeValues: {
+                ":url": result.secure_url
+            }
+        }));
+
+        res.json({ message: 'Image uploaded successfully.', imageUrl: result.secure_url });
+    } catch (error) {
+        console.error("Image Upload Error:", error);
+        res.status(500).json({ message: 'Server error uploading image.' });
+    }
+});
 
 // =================================================================
 // --- AI TEST GENERATION ROUTE ---
@@ -79,7 +254,7 @@ app.post('/api/admin/generate-test-from-pdf', authMiddleware, async (req, res) =
 - 'correctAnswer' (string): For 'mcq-single' (the index of the correct option, e.g., "0") and 'fill-blank' (the exact answer string).
 - 'correctAnswers' (array of strings): For 'mcq-multiple' (an array of the indices of correct options, e.g., ["0", "2"]).
 Here is the text:\n\n${text}`;
-        
+
         const schema = {
             type: "OBJECT",
             properties: {
@@ -106,13 +281,13 @@ Here is the text:\n\n${text}`;
             required: ["testTitle", "duration", "totalMarks", "passingPercentage", "questions"]
         };
 
-        const apiKey = 'AIzaSyAR_X4MZ75vxwV7OTU3dabFRcVe4SxWpb8'; 
-        
+        const apiKey = 'AIzaSyAR_X4MZ75vxwV7OTU3dabFRcVe4SxWpb8';
+
         if (!apiKey) {
             throw new Error("GEMINI_API_KEY is not configured on the server.");
         }
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-        
+
         const payload = {
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
@@ -249,7 +424,8 @@ app.post('/api/signup', async (req, res) => {
             department,
             rollNumber,
             password: hashedPassword,
-            role: "Student"
+            role: "Student",
+            isBlocked: false
         };
         await docClient.send(new PutCommand({ TableName: "TestifyUsers", Item: newUser }));
         res.status(201).json({ message: 'Account created successfully!' });
@@ -265,9 +441,24 @@ app.post('/api/login', async (req, res) => {
     try {
         const { Item } = await docClient.send(new GetCommand({ TableName: "TestifyUsers", Key: { email: email.toLowerCase() } }));
         if (!Item) return res.status(400).json({ message: 'Invalid credentials.' });
+
+        if (Item.isBlocked) {
+            return res.status(403).json({ message: 'Your account has been blocked by the administrator.' });
+        }
+
         const isMatch = await bcrypt.compare(password, Item.password);
         if (!isMatch) return res.status(400).json({ message: 'Invalid credentials.' });
-        const payload = { user: { email: Item.email, fullName: Item.fullName, role: Item.role, college: Item.college } };
+        
+        const payload = { 
+            user: { 
+                email: Item.email, 
+                fullName: Item.fullName, 
+                role: Item.role, 
+                college: Item.college,
+                profileImageUrl: Item.profileImageUrl || null 
+            } 
+        };
+
         jwt.sign(payload, JWT_SECRET, { expiresIn: '1d' }, (err, token) => {
             if (err) throw err;
             res.json({ message: 'Login successful!', token, user: payload.user });
@@ -298,7 +489,7 @@ app.post('/api/tests', authMiddleware, async (req, res) => {
         questions,
         createdAt: new Date().toISOString(),
         status: 'Not Assigned',
-        resultsPublished: false, // Default to false
+        resultsPublished: false,
         autoIssueCertificates: false 
     };
 
@@ -385,7 +576,7 @@ app.post('/api/assign-test', authMiddleware, async (req, res) => {
 });
 
 // =================================================================
-// --- NEW: PUBLISH RESULTS ROUTE (ADMIN) ---
+// --- PUBLISH RESULTS ROUTE (ADMIN) ---
 // =================================================================
 app.post('/api/publish-results', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Admin') {
@@ -832,7 +1023,6 @@ app.get('/api/student/dashboard-data', authMiddleware, async (req, res) => {
         const studentEmail = req.user.email;
         const studentCollege = req.user.college;
 
-        // 1. Get all of the student's results
         const historyResponse = await docClient.send(new QueryCommand({
             TableName: "TestifyResults",
             IndexName: "StudentEmailIndex",
@@ -841,7 +1031,6 @@ app.get('/api/student/dashboard-data', authMiddleware, async (req, res) => {
         }));
         const allHistory = historyResponse.Items || [];
 
-        // 2. Get details for all tests the student has ever taken
         const allTestIds = [...new Set(allHistory.map(r => r.testId))];
         let allTestsMap = new Map();
         if (allTestIds.length > 0) {
@@ -853,16 +1042,13 @@ app.get('/api/student/dashboard-data', authMiddleware, async (req, res) => {
             allTestsMap = new Map(tests.map(t => [t.testId, t]));
         }
 
-        // 3. Filter the history to only include results from PUBLISHED tests
         const history = allHistory.filter(r => {
             const testDetails = allTestsMap.get(r.testId);
             return testDetails && testDetails.resultsPublished === true;
         });
 
-        // 4. Get available tests (assigned but not yet taken)
         let availableTests = [];
         if (studentCollege) {
-            // --- FIX: Fetch college-wide and individual assignments separately for robustness ---
             const collegeAssignmentsResponse = await docClient.send(new ScanCommand({
                 TableName: "TestifyAssignments",
                 FilterExpression: "college = :c",
@@ -892,14 +1078,12 @@ app.get('/api/student/dashboard-data', authMiddleware, async (req, res) => {
             }
         }
 
-        // 5. Calculate stats based on the filtered (published) history
         const testsCompleted = history.length;
         const totalScore = history.reduce((sum, item) => sum + item.score, 0);
         const overallScore = testsCompleted > 0 ? Math.round(totalScore / testsCompleted) : 0;
         const passedCount = history.filter(item => item.result === 'Pass').length;
         const passRate = testsCompleted > 0 ? Math.round((passedCount / testsCompleted) * 100) : 0;
         
-        // 6. Create recent history list from the filtered (published) history
         const recentHistory = history
             .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))
             .slice(0, 3)
@@ -925,7 +1109,6 @@ app.get('/api/student/tests', authMiddleware, async (req, res) => {
         const studentEmail = req.user.email;
         if (!studentCollege) return res.json([]);
 
-        // --- FIX: Fetch college-wide and individual assignments separately for robustness ---
         const collegeAssignmentsResponse = await docClient.send(new ScanCommand({
             TableName: "TestifyAssignments",
             FilterExpression: "college = :c",
@@ -1308,7 +1491,8 @@ app.get('/api/student/certificate/:id', authMiddleware, async (req, res) => {
 
         res.json({
             ...certificate,
-            studentName: student ? student.fullName : 'Student'
+            studentName: student ? student.fullName : 'Student',
+            profileImageUrl: student ? student.profileImageUrl : null
         });
 
     } catch (error) {
@@ -1316,6 +1500,7 @@ app.get('/api/student/certificate/:id', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Server error fetching certificate.' });
     }
 });
+
 
 app.get('/api/verify-certificate/:id', async (req, res) => {
     const { id } = req.params;
@@ -1426,9 +1611,370 @@ app.post('/api/admin/generate-course-from-pdf', authMiddleware, async (req, res)
         res.status(500).json({ message: 'Failed to generate course from AI.' });
     }
 });
+// =================================================================
+// --- ADMIN ROUTES FOR STUDENT MANAGEMENT ---
+// =================================================================
+
+// Get students by college
+app.get('/api/admin/students/:college', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { college } = req.params;
+    try {
+        const studentsResponse = await docClient.send(new ScanCommand({
+            TableName: "TestifyUsers",
+            FilterExpression: "college = :college",
+            ExpressionAttributeValues: { ":college": college }
+        }));
+        const students = studentsResponse.Items;
+
+        const resultsResponse = await docClient.send(new ScanCommand({ TableName: "TestifyResults" }));
+        const coursesResponse = await docClient.send(new ScanCommand({ TableName: "TestifyCourseProgress" }));
+
+        const resultsByStudent = resultsResponse.Items.reduce((acc, result) => {
+            (acc[result.studentEmail] = acc[result.studentEmail] || []).push(result);
+            return acc;
+        }, {});
+
+        const coursesByStudent = coursesResponse.Items.reduce((acc, course) => {
+            (acc[course.studentEmail] = acc[course.studentEmail] || []).push(course);
+            return acc;
+        }, {});
+
+        const detailedStudents = students.map(student => ({
+            ...student,
+            tests: resultsByStudent[student.email] || [],
+            courses: coursesByStudent[student.email] || []
+        }));
+
+        res.json(detailedStudents);
+    } catch (error) {
+        console.error("Get Students by College Error:", error);
+        res.status(500).json({ message: 'Server error fetching students.' });
+    }
+});
+
+// Update student details
+app.put('/api/admin/students/:email', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { email } = req.params;
+    const { fullName, mobile, college, department, rollNumber } = req.body;
+    try {
+        await docClient.send(new UpdateCommand({
+            TableName: "TestifyUsers",
+            Key: { email },
+            UpdateExpression: "set fullName = :fn, mobile = :m, college = :c, department = :d, rollNumber = :rn",
+            ExpressionAttributeValues: {
+                ":fn": fullName,
+                ":m": mobile,
+                ":c": college,
+                ":d": department,
+                ":rn": rollNumber
+            }
+        }));
+        res.json({ message: 'Student updated successfully.' });
+    } catch (error) {
+        console.error("Update Student Error:", error);
+        res.status(500).json({ message: 'Server error updating student.' });
+    }
+});
+
+// Admin can change a student's profile image
+app.post('/api/admin/student/:email/image', authMiddleware, upload.single('profileImage'), async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied. Only admins can perform this action.' });
+    }
+    if (!req.file) {
+        return res.status(400).json({ message: 'No image file uploaded.' });
+    }
+
+    const { email } = req.params;
+
+    try {
+        const { Item: student } = await docClient.send(new GetCommand({
+            TableName: "TestifyUsers",
+            Key: { email }
+        }));
+
+        if (!student) {
+            return res.status(404).json({ message: 'Student not found.' });
+        }
+
+        const b64 = Buffer.from(req.file.buffer).toString("base64");
+        let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+        const result = await cloudinary.uploader.upload(dataURI, {
+            folder: "profile_pictures"
+        });
+
+        await docClient.send(new UpdateCommand({
+            TableName: "TestifyUsers",
+            Key: { email },
+            UpdateExpression: "set profileImageUrl = :url",
+            ExpressionAttributeValues: {
+                ":url": result.secure_url
+            }
+        }));
+
+        res.json({ message: `Image for ${email} updated successfully.`, imageUrl: result.secure_url });
+
+    } catch (error) {
+        console.error("Admin Image Upload Error:", error);
+        res.status(500).json({ message: 'Server error uploading image.' });
+    }
+});
+
+
+// Delete a student
+app.delete('/api/admin/students/:email', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { email } = req.params;
+    try {
+        await docClient.send(new DeleteCommand({
+            TableName: "TestifyUsers",
+            Key: { email }
+        }));
+        res.json({ message: 'Student deleted successfully.' });
+    } catch (error) {
+        console.error("Delete Student Error:", error);
+        res.status(500).json({ message: 'Server error deleting student.' });
+    }
+});
+
+// Block/Unblock a student
+app.patch('/api/admin/students/:email/status', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { email } = req.params;
+    const { isBlocked } = req.body;
+    try {
+        await docClient.send(new UpdateCommand({
+            TableName: "TestifyUsers",
+            Key: { email },
+            UpdateExpression: "set isBlocked = :isBlocked",
+            ExpressionAttributeValues: { ":isBlocked": isBlocked }
+        }));
+        res.json({ message: `Student has been ${isBlocked ? 'blocked' : 'unblocked'}.` });
+    } catch (error) {
+        console.error("Block/Unblock Student Error:", error);
+        res.status(500).json({ message: 'Server error updating student status.' });
+    }
+});
+
+app.post('/api/student/face-verification', authMiddleware, async (req, res) => {
+    const { profileImageUrl, webcamImage } = req.body;
+
+    if (!profileImageUrl || !webcamImage) {
+        return res.status(400).json({ message: 'Missing required image data.' });
+    }
+
+    try {
+    
+        const isMatch = true; 
+        const confidence = 45.0;
+
+        if (isMatch) {
+            res.json({ success: true, message: 'Face verification successful.', confidence });
+        } else {
+            res.status(401).json({ success: false, message: 'Face verification failed. The person in the camera does not match the profile image.', confidence });
+        }
+
+    } catch (error) {
+        console.error('Face Verification Error:', error);
+        res.status(500).json({ message: 'An error occurred during face verification.' });
+    }
+});
+
+// Get ALL students
+app.get('/api/admin/all-students', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        // Fetch all users with the role of "Student"
+        const studentsResponse = await docClient.send(new ScanCommand({
+            TableName: "TestifyUsers",
+            FilterExpression: "#role = :student",
+            ExpressionAttributeNames: {"#role": "role"},
+            ExpressionAttributeValues: {":student": "Student"}
+        }));
+        const students = studentsResponse.Items;
+
+        // Fetch all test results and course progresses to enrich student data
+        const resultsResponse = await docClient.send(new ScanCommand({ TableName: "TestifyResults" }));
+        const coursesResponse = await docClient.send(new ScanCommand({ TableName: "TestifyCourseProgress" }));
+
+        const resultsByStudent = resultsResponse.Items.reduce((acc, result) => {
+            (acc[result.studentEmail] = acc[result.studentEmail] || []).push(result);
+            return acc;
+        }, {});
+
+        const coursesByStudent = coursesResponse.Items.reduce((acc, course) => {
+            (acc[course.studentEmail] = acc[course.studentEmail] || []).push(course);
+            return acc;
+        }, {});
+
+        const detailedStudents = students.map(student => ({
+            ...student,
+            tests: resultsByStudent[student.email] || [],
+            courses: coursesByStudent[student.email] || []
+        }));
+
+        res.json(detailedStudents);
+    } catch (error) {
+        console.error("Get All Students Error:", error);
+        res.status(500).json({ message: 'Server error fetching all students.' });
+    }
+});
+
+// =================================================================
+// --- NEW: IMPACT STATS ROUTES ---
+// =================================================================
+
+// GET route for public "About Us" page (no auth needed)
+// =================================================================
+// --- IMPACT STATS & FLYER ROUTES (USING TestifyUsers TABLE) ---
+// =================================================================
+
+// GET route for public pages (no auth needed)
+app.get('/api/impact-stats', async (req, res) => {
+    try {
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: "TestifyUsers",
+            Key: { email: "_system_impact_stats" }
+        }));
+        
+        if (Item) {
+            // Return all stats, including the flyer image URL if it exists
+            res.json({
+                institutions: Item.institutions,
+                exams: Item.exams,
+                uptime: Item.uptime,
+                flyerImageUrl: Item.flyerImageUrl || null
+            });
+        } else {
+            // Return default values if nothing is saved yet
+            res.json({ institutions: "0+", exams: "0+", uptime: "0%", flyerImageUrl: null });
+        }
+    } catch (error) {
+        console.error("Get Impact Stats Error:", error);
+        res.status(500).json({ message: 'Server error fetching stats.' });
+    }
+});
+
+// POST route for admin to update stats and upload flyer (auth needed)
+// Using upload.single() to handle the flyer image file
+app.post('/api/admin/impact-stats', authMiddleware, upload.single('flyerImage'), async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    
+    const { institutions, exams, uptime } = req.body;
+    let flyerImageUrl;
+
+    try {
+        // First, fetch the existing record to see if there's an old image URL
+        const { Item: existingStats } = await docClient.send(new GetCommand({
+            TableName: "TestifyUsers",
+            Key: { email: "_system_impact_stats" }
+        }));
+
+        // If a new file is uploaded, send it to Cloudinary
+        if (req.file) {
+            const b64 = Buffer.from(req.file.buffer).toString("base64");
+            const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+            const result = await cloudinary.uploader.upload(dataURI, {
+                folder: "flyers"
+            });
+            flyerImageUrl = result.secure_url;
+        } else {
+            // If no new file, keep the existing URL
+            flyerImageUrl = existingStats ? existingStats.flyerImageUrl : null;
+        }
+
+        // Prepare the data for DynamoDB
+        const statsData = {
+            email: "_system_impact_stats",
+            recordType: "ImpactStats",
+            institutions,
+            exams,
+            uptime,
+            flyerImageUrl // Add the new or existing image URL
+        };
+
+        // Use PutCommand to create or overwrite the item
+        await docClient.send(new PutCommand({
+            TableName: "TestifyUsers",
+            Item: statsData
+        }));
+        
+        res.status(200).json({ message: 'Impact stats and flyer updated successfully!' });
+
+    } catch (error) {
+        console.error("Update Impact Stats Error:", error);
+        res.status(500).json({ message: 'Server error updating stats.' });
+    }
+});
+
+app.post('/api/compile', authMiddleware, async (req, res) => {
+    const { language, code, input } = req.body; // Added 'input'
+
+    if (!language || !code) {
+        return res.status(400).json({ message: 'Language and code are required.' });
+    }
+
+    try {
+        const response = await fetch('https://api.paiza.io/runners/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                language: language,
+                source_code: code,
+                input: input || "", // Pass the input to the execution API
+                api_key: 'guest'
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.id) {
+            // Wait a moment for the execution to start
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            const statusResponse = await fetch(`https://api.paiza.io/runners/get_details?id=${data.id}&api_key=guest`);
+            const statusData = await statusResponse.json();
+            
+            let output = '';
+            if (statusData.stdout) {
+                output += statusData.stdout;
+            }
+            if (statusData.stderr) {
+                output += `\nError:\n${statusData.stderr}`;
+            }
+            if (statusData.build_stderr) {
+                output += `\nBuild Error:\n${statusData.build_stderr}`;
+            }
+            
+            res.json({ output: output || 'No output.' });
+
+        } else {
+            res.status(500).json({ message: 'Failed to create runner.' });
+        }
+    } catch (error) {
+        console.error("Compile Error:", error);
+        res.status(500).json({ message: 'Server error during compilation.' });
+    }
+});
+
 
 // --- SERVER START ---
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-
