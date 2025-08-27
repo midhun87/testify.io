@@ -56,7 +56,7 @@
                             <span class="block text-indigo-200">Powered by AI</span>
                         </h1>
                         <p class="mt-6 max-w-lg mx-auto text-center text-xl text-indigo-100 sm:max-w-3xl">
-                           Welcome to TESTIFY, the intelligent platform that leverages AI to create, manage, and proctor secure online assessments with unparalleled ease and integrity.
+                            Welcome to TESTIFY, the intelligent platform that leverages AI to create, manage, and proctor secure online assessments with unparalleled ease and integrity.
                         </p>
                         <div class="mt-10 max-w-sm mx-auto sm:max-w-none sm:flex sm:justify-center">
                             <div class="space-y-4 sm:space-y-0 sm:mx-auto sm:inline-grid sm:grid-cols-2 sm:gap-5">
@@ -107,6 +107,30 @@
                 </div>
             </div>
         </div>
+
+        <!-- NEW: Our Impact Section -->
+        <div class="bg-white py-16 sm:py-24">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Our Impact in Numbers</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-500">We're proud to support institutions in their mission to deliver quality education.</p>
+                </div>
+                <div class="mt-16 grid gap-10 md:grid-cols-3 text-center">
+                    <div class="p-8 bg-gray-50 rounded-2xl shadow-md">
+                        <h3 id="institutions-count" class="text-5xl font-bold text-indigo-600">...</h3>
+                        <p class="mt-2 text-lg font-medium text-gray-700">Institutions Empowered</p>
+                    </div>
+                    <div class="p-8 bg-gray-50 rounded-2xl shadow-md">
+                        <h3 id="exams-count" class="text-5xl font-bold text-indigo-600">...</h3>
+                        <p class="mt-2 text-lg font-medium text-gray-700">Exams Proctored</p>
+                    </div>
+                    <div class="p-8 bg-gray-50 rounded-2xl shadow-md">
+                        <h3 id="uptime-count" class="text-5xl font-bold text-indigo-600">...</h3>
+                        <p class="mt-2 text-lg font-medium text-gray-700">Platform Uptime</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
     
     <!-- Footer -->
@@ -115,6 +139,26 @@
             <p class="text-center text-base text-gray-400">&copy; 2024 TESTIFY. All rights reserved.</p>
         </div>
     </footer>
+
+    <script>
+        // Fetch and display dynamic impact stats
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/impact-stats')
+                .then(response => response.json())
+                .then(stats => {
+                    document.getElementById('institutions-count').textContent = stats.institutions || '0+';
+                    document.getElementById('exams-count').textContent = stats.exams || '0+';
+                    document.getElementById('uptime-count').textContent = stats.uptime || '0%';
+                })
+                .catch(error => {
+                    console.error('Error fetching impact stats:', error);
+                    // Set default text on error
+                    document.getElementById('institutions-count').textContent = 'N/A';
+                    document.getElementById('exams-count').textContent = 'N/A';
+                    document.getElementById('uptime-count').textContent = 'N/A';
+                });
+        });
+    </script>
 
 </body>
 </html>
