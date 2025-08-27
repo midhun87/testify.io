@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Impact Stats</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar { background-color: #111827; }
+        .sidebar-link { color: #D1D5DB; }
+        .sidebar-link:hover { background-color: #374151; color: #FFFFFF; }
+        .sidebar-link.active { background-color: #4F46E5; color: #FFFFFF; font-weight: 600; }
+        .sidebar-heading {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            color: #9CA3AF;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 bg-gray-800 text-white min-h-screen p-4 flex-col">
+             <div class="flex items-center justify-center h-16 border-b border-gray-700 mb-4">
+                 <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                 <span class="ml-3 text-2xl font-bold">TESTIFY</span>
+            </div>
+            <nav class="flex-grow overflow-y-auto">
+                 <a href="dashboard.html" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200">
+                    <i class="fas fa-tachometer-alt w-6 text-center"></i>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <div class="sidebar-heading mt-4">Content</div>
+                <a href="admin-impact.html" class="sidebar-link active flex items-center py-2.5 px-4 rounded transition duration-200">
+                    <i class="fas fa-chart-line w-6 text-center"></i>
+                    <span class="ml-3">Impact Stats</span>
+                </a>
+                <!-- Add other admin links here -->
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col">
+            <header class="bg-white shadow-md p-4 flex justify-between items-center">
+                <h1 class="text-2xl font-semibold text-gray-800">Manage Impact Stats</h1>
+                 <div class="flex items-center space-x-4">
+                    <span id="user-name" class="mr-4">Admin User</span>
+                    <div class="relative">
+                        <button id="user-menu-button">
+                            <i class="fas fa-user-circle text-3xl text-gray-600"></i>
+                        </button>
+                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                            <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="flex-1 p-6 overflow-y-auto">
+                <div class="max-w-xl mx-auto bg-white shadow rounded-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Update "Our Impact" Numbers</h2>
+                    <p class="text-gray-600 mb-6">The values entered here will be displayed on the public "About Us" page.</p>
+                    <form id="impact-form" class="space-y-4">
+                        <div>
+                            <label for="institutions" class="block text-sm font-medium text-gray-700">Institutions Empowered</label>
+                            <input type="text" id="institutions" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 50+">
+                        </div>
+                        <div>
+                            <label for="exams" class="block text-sm font-medium text-gray-700">Exams Proctored</label>
+                            <input type="text" id="exams" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 100,000+">
+                        </div>
+                        <div>
+                            <label for="uptime" class="block text-sm font-medium text-gray-700">Platform Uptime</label>
+                            <input type="text" id="uptime" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="e.g., 99.9%">
+                        </div>
+                        <div class="text-right">
+                            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!token || !user || user.role !== 'Admin') {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // User menu logic
+            document.getElementById('user-name').textContent = user.fullName;
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userMenu = document.getElementById('user-menu');
+            const logoutButton = document.getElementById('logout-button');
+            userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
+            logoutButton.addEventListener('click', () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login.html';
+            });
+
+            const form = document.getElementById('impact-form');
+            const institutionsInput = document.getElementById('institutions');
+            const examsInput = document.getElementById('exams');
+            const uptimeInput = document.getElementById('uptime');
+
+            // Fetch current stats and populate the form
+            fetch('/api/impact-stats')
+                .then(res => res.json())
+                .then(stats => {
+                    institutionsInput.value = stats.institutions || '';
+                    examsInput.value = stats.exams || '';
+                    uptimeInput.value = stats.uptime || '';
+                })
+                .catch(err => console.error("Could not fetch stats:", err));
+
+            // Handle form submission
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const statsData = {
+                    institutions: institutionsInput.value,
+                    exams: examsInput.value,
+                    uptime: uptimeInput.value
+                };
+
+                fetch('/api/admin/impact-stats', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': token
+                    },
+                    body: JSON.stringify(statsData)
+                })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message);
+                })
+                .catch(err => {
+                    alert('An error occurred. Please try again.');
+                    console.error('Error saving stats:', err);
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
