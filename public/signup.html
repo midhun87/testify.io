@@ -53,14 +53,8 @@
                         <div class="mb-5">
                             <label for="college" class="block mb-2 text-sm font-medium text-gray-700">College Name</label>
                             <select id="college" name="college" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
-                                <option value="" disabled selected>Select your college</option>
-                                <option value="LAKIREDDY BALI REDDY COLLEGE OF ENGINEERING">LAKIREDDY BALI REDDY COLLEGE OF ENGINEERING</option>
-                                <option value="KHIT">KHIT</option>
-                                <option value="AITAM">AITAM</option>
-                                <option value="AITS">AITS</option>
-                                <option value="PBR">PBR</option>
-                                <option value="MBU">MBU</option>
-                                <option value="GMRIT">GMRIT</option>
+                                <option value="" disabled selected>Loading colleges...</option>
+                                <!-- Options will be dynamically populated here -->
                             </select>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
@@ -92,6 +86,73 @@
             </div>
         </div>
     </div>
-    <script src="auth.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const collegeSelect = document.getElementById('college');
+            
+            async function fetchAndPopulateColleges() {
+                try {
+                    const response = await fetch('/api/colleges');
+                    if (!response.ok) throw new Error('Failed to fetch colleges');
+                    const colleges = await response.json();
+                    
+                    // Clear the loading text
+                    collegeSelect.innerHTML = '<option value="" disabled selected>Select your college</option>';
+                    
+                    if (colleges.length > 0) {
+                        colleges.forEach(college => {
+                            const option = document.createElement('option');
+                            option.value = college.collegeName;
+                            option.textContent = college.collegeName;
+                            collegeSelect.appendChild(option);
+                        });
+                    } else {
+                         collegeSelect.innerHTML = '<option value="" disabled selected>No colleges available</option>';
+                    }
+                } catch (error) {
+                    console.error('Error fetching colleges:', error);
+                    collegeSelect.innerHTML = '<option value="" disabled selected>Error loading colleges</option>';
+                }
+            }
+
+            await fetchAndPopulateColleges();
+
+            // Existing signup form logic
+            const signupForm = document.getElementById('signup-form');
+            const messageDiv = document.getElementById('message');
+
+            signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(signupForm);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch('/api/signup', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await response.json();
+
+                    messageDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+                    if (response.ok) {
+                        messageDiv.textContent = result.message;
+                        messageDiv.classList.add('bg-green-100', 'text-green-700');
+                        setTimeout(() => {
+                            window.location.href = '/login.html';
+                        }, 2000);
+                    } else {
+                        messageDiv.textContent = result.message;
+                        messageDiv.classList.add('bg-red-100', 'text-red-700');
+                    }
+                } catch (error) {
+                    messageDiv.classList.remove('hidden');
+                    messageDiv.classList.add('bg-red-100', 'text-red-700');
+                    messageDiv.textContent = 'An unexpected error occurred.';
+                }
+            });
+        });
+    </script>
 </body>
 </html>

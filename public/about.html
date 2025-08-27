@@ -78,28 +78,28 @@
         </div>
 
         <!-- Our Impact Section -->
-        <!--<div class="py-16 sm:py-24 bg-gray-50">-->
-        <!--    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">-->
-        <!--        <div class="text-center fade-in-section">-->
-        <!--            <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Our Impact in Numbers</h2>-->
-        <!--            <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-500">We're proud to support institutions in their mission to deliver quality education.</p>-->
-        <!--        </div>-->
-        <!--        <div class="mt-16 grid gap-10 md:grid-cols-3 text-center">-->
-        <!--            <div class="p-8 bg-white rounded-2xl shadow-md fade-in-section">-->
-        <!--                <h3 class="text-5xl font-bold text-indigo-600">50+</h3>-->
-        <!--                <p class="mt-2 text-lg font-medium text-gray-700">Institutions Empowered</p>-->
-        <!--            </div>-->
-        <!--            <div class="p-8 bg-white rounded-2xl shadow-md fade-in-section" style="transition-delay: 150ms;">-->
-        <!--                <h3 class="text-5xl font-bold text-indigo-600">100,000+</h3>-->
-        <!--                <p class="mt-2 text-lg font-medium text-gray-700">Exams Proctored</p>-->
-        <!--            </div>-->
-        <!--            <div class="p-8 bg-white rounded-2xl shadow-md fade-in-section" style="transition-delay: 300ms;">-->
-        <!--                <h3 class="text-5xl font-bold text-indigo-600">99.9%</h3>-->
-        <!--                <p class="mt-2 text-lg font-medium text-gray-700">Platform Uptime</p>-->
-        <!--            </div>-->
-        <!--        </div>-->
-        <!--    </div>-->
-        <!--</div>-->
+        <div class="py-16 sm:py-24 bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center fade-in-section">
+                    <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Our Impact in Numbers</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-500">We're proud to support institutions in their mission to deliver quality education.</p>
+                </div>
+                <div class="mt-16 grid gap-10 md:grid-cols-3 text-center">
+                    <div class="p-8 bg-white rounded-2xl shadow-md fade-in-section">
+                        <h3 id="institutions-count" class="text-5xl font-bold text-indigo-600">...</h3>
+                        <p class="mt-2 text-lg font-medium text-gray-700">Institutions Empowered</p>
+                    </div>
+                    <div class="p-8 bg-white rounded-2xl shadow-md fade-in-section" style="transition-delay: 150ms;">
+                        <h3 id="exams-count" class="text-5xl font-bold text-indigo-600">...</h3>
+                        <p class="mt-2 text-lg font-medium text-gray-700">Exams Proctored</p>
+                    </div>
+                    <div class="p-8 bg-white rounded-2xl shadow-md fade-in-section" style="transition-delay: 300ms;">
+                        <h3 id="uptime-count" class="text-5xl font-bold text-indigo-600">...</h3>
+                        <p class="mt-2 text-lg font-medium text-gray-700">Platform Uptime</p>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Our Values Section -->
         <div class="py-16 sm:py-24 bg-white">
@@ -143,8 +143,8 @@
     </footer>
 
     <script>
+        // Animation for sections fading in on scroll
         const sections = document.querySelectorAll('.fade-in-section');
-
         const observer = new IntersectionObserver(entries => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -154,9 +154,26 @@
         }, {
             threshold: 0.1
         });
-
         sections.forEach(section => {
             observer.observe(section);
+        });
+
+        // Fetch and display dynamic impact stats
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/impact-stats')
+                .then(response => response.json())
+                .then(stats => {
+                    document.getElementById('institutions-count').textContent = stats.institutions || '0+';
+                    document.getElementById('exams-count').textContent = stats.exams || '0+';
+                    document.getElementById('uptime-count').textContent = stats.uptime || '0%';
+                })
+                .catch(error => {
+                    console.error('Error fetching impact stats:', error);
+                    // Set default text on error
+                    document.getElementById('institutions-count').textContent = 'N/A';
+                    document.getElementById('exams-count').textContent = 'N/A';
+                    document.getElementById('uptime-count').textContent = 'N/A';
+                });
         });
     </script>
 
