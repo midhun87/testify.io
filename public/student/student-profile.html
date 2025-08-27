@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <!-- Cropper.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar {
+            width: 250px;
+            transition: width 0.3s;
+        }
+        .sidebar-link:hover { background-color: #374151; }
+        .sidebar-link.active { background-color: #4F46E5; }
+        /* Ensure the cropper's image is not distorted and is contained */
+        #image-to-crop-container {
+            width: 100%;
+            height: 300px; /* Fixed height for the crop area */
+            background-color: #f3f4f6;
+        }
+        #image-to-crop {
+            display: block;
+            max-width: 100%;
+            max-height: 300px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex">
+
+    <!-- Sidebar -->
+    <aside class="sidebar bg-gray-800 text-white min-h-screen p-4">
+        <div class="text-2xl font-bold mb-10">TESTIFY</div>
+        <nav>
+            <a href="/student/dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                <span class="ml-3">Dashboard</span>
+            </a>
+            <a href="/student/take-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                <span class="ml-3">Take Test</span>
+            </a>
+            <a href="/student/test-history.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span class="ml-3">Test History</span>
+            </a>
+            <a href="/student/my-certificates.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span class="ml-3">My Certificates</span>
+            </a>
+            <a href="/student/my-courses.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path></svg>
+                <span class="ml-3">My Courses</span>
+            </a>
+            <a href="/student-profile.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 0115 0v.75H4.5v-.75z"/></svg>
+                <span class="ml-3">My Profile</span>
+            </a>
+             <a href="compiler.html" class="sidebar-link  flex items-center py-2.5 px-4 rounded transition duration-200">
+                    <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
+                    <span>Compiler</span>
+                </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col">
+        <header class="bg-white shadow-md p-4 flex justify-between items-center">
+            <h1 class="text-2xl font-semibold text-gray-800">My Profile</h1>
+            <div id="user-info" class="flex items-center">
+                <!-- User name will be loaded here -->
+            </div>
+        </header>
+
+        <main class="flex-1 p-6">
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6 mb-6">
+                    <img id="profile-image" src="https://placehold.co/150x150/EFEFEF/333333?text=..." alt="Profile Picture" class="w-36 h-36 rounded-full object-cover border-4 border-gray-200">
+                    <div class="text-center md:text-left">
+                        <h2 id="profile-name" class="text-2xl font-bold">Loading...</h2>
+                        <p id="profile-email" class="text-gray-600">...</p>
+                        <p id="profile-college" class="text-gray-600">...</p>
+                    </div>
+                </div>
+
+                <form id="profile-form">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-200 pt-6">
+                        <div>
+                            <label for="mobile" class="block text-sm font-medium text-gray-700">Mobile Number</label>
+                            <input type="text" id="mobile" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label for="department" class="block text-sm font-medium text-gray-700">Department</label>
+                            <input type="text" id="department" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label for="rollNumber" class="block text-sm font-medium text-gray-700">Roll Number</label>
+                            <input type="text" id="rollNumber" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <div class="mt-6 text-right">
+                        <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+            <p class="mt-4 text-sm text-gray-600"><strong>Note:</strong> Please upload a recent photograph. Your test identity will be verified based on this image. The profile picture can only be set once.</p>
+        </main>
+    </div>
+
+    <!-- Image Upload & Crop Modal (for Student) -->
+    <div id="image-crop-modal" class="fixed z-50 inset-0 overflow-y-auto hidden">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-800 opacity-75"></div>
+            </div>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Upload Your Profile Picture</h3>
+                    <p class="text-sm text-gray-500">Adjust the image and click "Save" to upload. This can only be done once.</p>
+                    <div class="mt-4">
+                         <div id="image-to-crop-container">
+                            <img id="image-to-crop" src="">
+                         </div>
+                         <input type="file" id="image-input" accept="image/*" class="hidden">
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="save-cropped-image" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 sm:ml-3 sm:w-auto sm:text-sm">Save</button>
+                    <button type="button" id="change-image-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">Choose a different image</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cropper.js JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user'));
+
+            if (!token || !user || user.role !== 'Student') {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // Populate header
+            document.getElementById('user-info').innerHTML = `
+                <span class="mr-4">${user.fullName}</span>
+                <i class="fas fa-user-circle text-2xl text-gray-600"></i>
+            `;
+
+            const imageCropModal = document.getElementById('image-crop-modal');
+            const imageToCrop = document.getElementById('image-to-crop');
+            const imageInput = document.getElementById('image-input');
+            let cropper;
+
+            // Function to populate profile data on the page
+            function populateProfile(profile) {
+                document.getElementById('profile-name').textContent = profile.fullName;
+                document.getElementById('profile-email').textContent = profile.email;
+                document.getElementById('profile-college').textContent = profile.college;
+                document.getElementById('mobile').value = profile.mobile || '';
+                document.getElementById('department').value = profile.department || '';
+                document.getElementById('rollNumber').value = profile.rollNumber || '';
+                if (profile.profileImageUrl) {
+                    document.getElementById('profile-image').src = profile.profileImageUrl;
+                } else {
+                    document.getElementById('profile-image').src = 'https://placehold.co/150x150/EFEFEF/333333?text=Upload';
+                }
+            }
+
+            // Fetch full profile data on page load
+            fetch('/api/student/profile', {
+                headers: { 'x-auth-token': token }
+            })
+            .then(res => res.json())
+            .then(profile => {
+                populateProfile(profile);
+
+                // If the profile image URL is missing, show the upload modal automatically.
+                if (!profile.profileImageUrl) {
+                    imageCropModal.classList.remove('hidden');
+                    // Trigger the hidden file input so the user can select a file immediately.
+                    imageInput.click();
+                }
+            });
+
+            // Handle profile form submission
+            document.getElementById('profile-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const updatedData = {
+                    mobile: document.getElementById('mobile').value,
+                    department: document.getElementById('department').value,
+                    rollNumber: document.getElementById('rollNumber').value
+                };
+
+                fetch('/api/student/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': token
+                    },
+                    body: JSON.stringify(updatedData)
+                })
+                .then(res => res.json())
+                .then(data => alert(data.message));
+            });
+
+            // Event listener for when a user selects a file
+            imageInput.addEventListener('change', (e) => {
+                const files = e.target.files;
+                if (files && files.length > 0) {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        imageToCrop.src = reader.result;
+                        if (cropper) {
+                            cropper.destroy();
+                        }
+                        cropper = new Cropper(imageToCrop, {
+                            aspectRatio: 1,
+                            viewMode: 1,
+                            background: false,
+                            autoCropArea: 0.8,
+                        });
+                    };
+                    reader.readAsDataURL(files[0]);
+                }
+            });
+            
+            document.getElementById('change-image-btn').addEventListener('click', () => imageInput.click());
+
+            document.getElementById('save-cropped-image').addEventListener('click', () => {
+                if (!cropper) {
+                    alert('Please select an image first.');
+                    return;
+                }
+
+                const saveButton = document.getElementById('save-cropped-image');
+                saveButton.disabled = true;
+                saveButton.textContent = 'Uploading...';
+
+                cropper.getCroppedCanvas({
+                    width: 512,
+                    height: 512,
+                }).toBlob((blob) => {
+                    const formData = new FormData();
+                    formData.append('profileImage', blob, 'profile.jpg');
+                    
+                    fetch('/api/student/profile/image', {
+                        method: 'POST',
+                        headers: { 'x-auth-token': token },
+                        body: formData
+                    })
+                    .then(res => {
+                        if(!res.ok) return res.json().then(err => Promise.reject(err));
+                        return res.json();
+                    })
+                    .then(data => {
+                        alert('Profile image uploaded successfully!');
+                        document.getElementById('profile-image').src = data.imageUrl;
+                        
+                        // Also update user data in localStorage
+                        const localUser = JSON.parse(localStorage.getItem('user'));
+                        if(localUser) {
+                            localUser.profileImageUrl = data.imageUrl;
+                            localStorage.setItem('user', JSON.stringify(localUser));
+                        }
+
+                        imageCropModal.classList.add('hidden');
+                        if (cropper) {
+                            cropper.destroy();
+                        }
+                    })
+                    .catch(err => {
+                        alert(`Error: ${err.message}`);
+                    })
+                    .finally(() => {
+                        saveButton.disabled = false;
+                        saveButton.textContent = 'Save';
+                    });
+                }, 'image/jpeg');
+            });
+        });
+    </script>
+</body>
+</html>

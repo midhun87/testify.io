@@ -23,6 +23,7 @@
             background-color: #4F46E5;
             font-weight: 600;
         }
+        /* This style is crucial for the fullscreen test environment */
         #test-environment.fullscreen {
             position: fixed;
             top: 0;
@@ -40,6 +41,10 @@
         .palette-btn.answered {
             background-color: #10B981;
             color: white;
+        }
+        /* Custom styles for verification feedback */
+        #verification-status {
+            min-height: 24px; /* Reserve space for the message */
         }
     </style>
 </head>
@@ -73,6 +78,14 @@
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     <span class="ml-3">My Courses</span>
                 </a>
+                <a href="/student/student-profile.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"/></svg>
+                <span class="ml-3">My Profile</span>
+                </a>
+                 <a href="compiler.html" class="sidebar-link  flex items-center py-2.5 px-4 rounded transition duration-200">
+                    <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
+                    <span>Compiler</span>
+                </a>
             </div>
         </div>
 
@@ -81,15 +94,15 @@
             <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
                 <h1 class="text-2xl font-bold text-gray-800">Available Tests</h1>
                  <div class="flex items-center">
-                      <div class="relative">
-                           <button id="user-menu-button" class="flex items-center space-x-2">
+                       <div class="relative">
+                            <button id="user-menu-button" class="flex items-center space-x-2">
                                 <span id="user-name" class="font-semibold text-gray-700">Student Name</span>
                                 <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                           </button>
-                           <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                            </button>
+                            <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
                                 <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
-                           </div>
-                      </div>
+                            </div>
+                       </div>
                  </div>
             </div>
 
@@ -102,6 +115,37 @@
             </div>
         </div>
         
+        <!-- Face Verification Modal -->
+        <div id="face-verification-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+                <div class="mt-3 text-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Face Verification</h3>
+                    <div class="mt-2 px-7 py-3">
+                        <p class="text-sm text-gray-500">Please align your face with the camera to verify your identity.</p>
+                        <div class="flex justify-around items-center mt-4">
+                            <div>
+                                <p class="font-semibold">Your Profile</p>
+                                <img id="profile-image-verification" src="https://placehold.co/150x150/EFEFEF/AAAAAA&text=Profile" alt="Profile Image" class="w-32 h-32 rounded-full object-cover border-4 border-gray-200">
+                            </div>
+                            <div>
+                                <p class="font-semibold">Live Camera</p>
+                                <video id="verification-webcam" class="w-32 h-32 rounded-full object-cover border-4 border-gray-200" autoplay muted playsinline></video>
+                            </div>
+                        </div>
+                         <div id="verification-status" class="mt-4 text-sm font-medium"></div>
+                    </div>
+                    <div class="items-center px-4 py-3">
+                        <button id="verify-identity-btn" class="px-4 py-2 bg-green-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-green-600 disabled:bg-gray-400">
+                            Verify My Identity
+                        </button>
+                         <button id="cancel-verification-btn" class="mt-2 px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Test Environment (Initially Hidden) -->
         <div id="test-environment" class="hidden bg-white">
             <!-- Test Header -->
@@ -173,6 +217,10 @@
             const logoutButton = document.getElementById('logout-button');
             const prevBtn = document.getElementById('prev-btn');
             const nextBtn = document.getElementById('next-btn');
+            const faceVerificationModal = document.getElementById('face-verification-modal');
+            const verifyIdentityBtn = document.getElementById('verify-identity-btn');
+            const cancelVerificationBtn = document.getElementById('cancel-verification-btn');
+            const verificationStatus = document.getElementById('verification-status');
             
             // --- TEST STATE ---
             let testInProgress = false;
@@ -182,14 +230,28 @@
             let currentQuestionIndex = 0;
             let studentAnswers = [];
             let availableTests = [];
+            let profileImageUrl = null;
 
-            // --- AI PROCTORING STATE ---
+            // --- AI PROCTORING STATE & CONSTANTS ---
             let proctoringEnabled = false;
-            let videoStream = null;
+            let verificationStream = null;
+            let proctoringStream = null;
             let objectDetector = null;
             let faceDetector = null;
+            let isWarningActive = false;
+            
+            // Violation counters
+            let phoneDetectionCount = 0;
             let noFaceCounter = 0;
-            const NO_FACE_THRESHOLD = 150; // Approx 5 seconds (30fps * 5)
+            let lookingAwayCounter = 0;
+
+            // Proctoring thresholds
+            const PHONE_SCORE_TRACE = 0.45; // Lower confidence for initial warning
+            const PHONE_SCORE_CLEAR = 0.75; // Higher confidence for immediate submission
+            const PHONE_WARNING_THRESHOLD = 2; // Allow 2 warnings, submit on the 3rd detection
+            const NO_FACE_FRAME_LIMIT = 90; // Approx. 3 seconds of no face detected
+            const LOOKING_AWAY_HORIZONTAL_THRESHOLD = 30; // Pixel distance threshold for looking away
+            const LOOKING_AWAY_FRAME_LIMIT = 120; // Approx. 4 seconds of looking away
 
             // --- FETCH AND DISPLAY AVAILABLE TESTS ---
             async function fetchAndDisplayTests() {
@@ -226,6 +288,19 @@
                     testListDiv.innerHTML = '<p class="text-red-500">Could not load available tests.</p>';
                 }
             }
+
+            // --- FETCH STUDENT PROFILE ---
+            async function fetchProfile() {
+                try {
+                    const response = await fetch('/api/student/profile', {
+                        headers: { 'x-auth-token': token }
+                    });
+                    const data = await response.json();
+                    profileImageUrl = data.profileImageUrl;
+                } catch (error) {
+                    console.error('Error fetching profile:', error);
+                }
+            }
             
             // --- EVENT LISTENERS ---
             userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
@@ -234,30 +309,25 @@
             
             testListDiv.addEventListener('click', async (e) => {
                 if (e.target.classList.contains('start-test-btn')) {
-                    const startButton = e.target;
-                    const originalButtonText = startButton.textContent;
-                    
-                    startButton.disabled = true;
-                    startButton.textContent = 'Initializing...';
-
-                    try {
-                        const testId = startButton.dataset.testid;
-                        const selectedTest = availableTests.find(t => t.testId === testId);
-                        if (selectedTest) {
-                            await startTest(selectedTest);
-                        }
-                    } catch (error) {
-                        console.error('Failed to start test:', error.message);
-                        if (!testInProgress) {
-                            startButton.disabled = false;
-                            startButton.textContent = originalButtonText;
-                        }
+                    const testId = e.target.dataset.testid;
+                    currentTest = availableTests.find(t => t.testId === testId);
+                    if (currentTest) {
+                        openFaceVerification();
                     }
                 }
             });
 
+            verifyIdentityBtn.addEventListener('click', performFaceVerification);
+            cancelVerificationBtn.addEventListener('click', closeFaceVerification);
             prevBtn.addEventListener('click', navigatePrev);
             nextBtn.addEventListener('click', navigateNext);
+
+            // --- NEW: Disable right-click context menu during the test ---
+            document.addEventListener('contextmenu', event => {
+                if (testInProgress) {
+                    event.preventDefault();
+                }
+            });
 
             function logout() {
                 localStorage.removeItem('token');
@@ -265,75 +335,133 @@
                 window.location.href = '/login.html';
             }
 
+            // --- FACE VERIFICATION ---
+            async function openFaceVerification() {
+                if (!profileImageUrl) {
+                    alert('You must have a profile picture to take a proctored test. Please upload one on your profile page.');
+                    return;
+                }
+                document.getElementById('profile-image-verification').src = profileImageUrl;
+                faceVerificationModal.classList.remove('hidden');
+                try {
+                    verificationStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    document.getElementById('verification-webcam').srcObject = verificationStream;
+                } catch (err) {
+                    alert('Could not access webcam. Please allow camera access to continue.');
+                    closeFaceVerification();
+                }
+            }
+
+            function closeFaceVerification() {
+                faceVerificationModal.classList.add('hidden');
+                if (verificationStream) {
+                    verificationStream.getTracks().forEach(track => track.stop());
+                    verificationStream = null;
+                }
+                verificationStatus.textContent = '';
+                verifyIdentityBtn.disabled = false;
+                verifyIdentityBtn.textContent = 'Verify My Identity';
+            }
+
+            async function performFaceVerification() {
+                const video = document.getElementById('verification-webcam');
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                const webcamImage = canvas.toDataURL('image/jpeg');
+
+                verifyIdentityBtn.disabled = true;
+                verifyIdentityBtn.textContent = 'Verifying...';
+                verificationStatus.textContent = 'Please wait...';
+                verificationStatus.className = 'mt-4 text-sm font-medium text-blue-600';
+
+                try {
+                    const response = await fetch('/api/student/face-verification', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-auth-token': token
+                        },
+                        body: JSON.stringify({ profileImageUrl, webcamImage })
+                    });
+                    
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        verificationStatus.textContent = 'Verification successful! Starting test...';
+                        verificationStatus.className = 'mt-4 text-sm font-medium text-green-600';
+                        setTimeout(() => {
+                            closeFaceVerification();
+                            startTest(currentTest);
+                        }, 1500);
+                    } else {
+                        throw new Error(result.message || 'Face verification failed.');
+                    }
+                } catch (error) {
+                    verificationStatus.textContent = `Verification Failed: ${error.message}`;
+                    verificationStatus.className = 'mt-4 text-sm font-medium text-red-600';
+                    verifyIdentityBtn.disabled = false;
+                    verifyIdentityBtn.textContent = 'Try Again';
+                }
+            }
+
             // --- TEST LOGIC ---
             async function startTest(testData) {
                 const proctoringConsent = confirm(
                     'This test requires AI proctoring.\n\n' +
-                    'Your webcam will be activated to monitor for the following violations:\n' +
-                    '- Use of a mobile phone\n' +
-                    '- More than one person in view\n' +
-                    '- Looking away or leaving the test area\n\n' +
-                    'A violation will result in automatic submission. This test will also start in fullscreen mode. Are you ready to begin?'
+                    'Your webcam will be activated to monitor for violations. Any violation will result in automatic test submission.\n\n' +
+                    'This test will also start in fullscreen mode. Exiting fullscreen will submit the test. Are you ready to begin?'
                 );
                 
-                if (!proctoringConsent) {
-                    throw new Error("User cancelled the test.");
-                }
+                if (!proctoringConsent) return;
                 
-                // **FIX:** Enter fullscreen immediately after user consent
-                enterFullScreen();
-
                 try {
-                    // Now, set up the test environment and proctoring
+                    await enterFullScreen(); 
+                    
                     mainContent.classList.add('hidden');
                     testEnvironment.classList.remove('hidden');
                     testEnvironment.classList.add('fullscreen');
                     
                     await initializeProctoring();
 
-                    currentTest = testData;
-                    studentAnswers = new Array(currentTest.questions.length).fill(null);
+                    studentAnswers = new Array(testData.questions.length).fill(null);
                     currentQuestionIndex = 0;
                     testInProgress = true;
                     
-                    document.getElementById('test-title').textContent = currentTest.title;
+                    document.getElementById('test-title').textContent = testData.title;
                     
-                    startTimer(currentTest.duration * 60);
+                    startTimer(testData.duration * 60);
                     renderQuestion();
                     renderPalette();
 
                     document.addEventListener('fullscreenchange', handleFullScreenChange);
+                    document.addEventListener('webkitfullscreenchange', handleFullScreenChange); // For Safari/Chrome
                     document.addEventListener('visibilitychange', handleVisibilityChange);
                 } catch (error) {
-                    // If something fails after entering fullscreen, exit it
-                    exitFullScreen();
-                    alert(`Failed to initialize proctoring. The test cannot start.\nError: ${error.message}`);
-                    throw error;
+                    await exitFullScreen();
+                    alert(`Failed to start the test.\nError: ${error.message}`);
+                    mainContent.classList.remove('hidden');
+                    testEnvironment.classList.add('hidden');
                 }
             }
 
-            // This function is for MANUAL submission by the user (cancellable)
             async function submitTest(message) {
                 if (window.isSubmitting) return;
-                
                 const shouldSubmit = confirm(message);
-
                 if (shouldSubmit) {
                     window.isSubmitting = true;
                     await performSubmission();
                 }
             }
 
-            // This function is for FORCED submission by the system (NOT cancellable)
             async function forceSubmitTest(message) {
                 if (window.isSubmitting) return;
                 window.isSubmitting = true;
-
-                alert(message); // Inform the user, but don't ask for confirmation
+                alert(message);
                 await performSubmission();
             }
 
-            // Centralized submission logic used by both manual and forced submissions
             async function performSubmission() {
                 saveAnswer(); 
                 testInProgress = false;
@@ -341,8 +469,9 @@
                 
                 stopProctoring(); 
                 
-                exitFullScreen();
+                await exitFullScreen();
                 document.removeEventListener('fullscreenchange', handleFullScreenChange);
+                document.removeEventListener('webkitfullscreenchange', handleFullScreenChange);
                 document.removeEventListener('visibilitychange', handleVisibilityChange);
                 
                 const payload = {
@@ -364,9 +493,8 @@
                     alert('Test submitted successfully!');
                     window.location.href = '/student/dashboard.html';
                 } catch (error) {
-                    alert('An error occurred during submission. Please try again.');
+                    alert('An error occurred during submission. Please contact your administrator.');
                     console.error('Submission Error:', error);
-                    window.isSubmitting = false; // Only reset if submission fails
                 }
             }
 
@@ -497,11 +625,11 @@
                 proctorStatus.textContent = 'Requesting camera...';
                 
                 try {
-                    videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    videoElement.srcObject = videoStream;
+                    proctoringStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    videoElement.srcObject = proctoringStream;
                     proctorContainer.classList.remove('hidden');
                     
-                    proctorStatus.textContent = 'Connecting to Server...';
+                    proctorStatus.textContent = 'Connecting you to Server...';
                     [objectDetector, faceDetector] = await Promise.all([
                         cocoSsd.load(),
                         blazeface.load()
@@ -521,37 +649,82 @@
                 if (!proctoringEnabled) return;
 
                 const videoElement = document.getElementById('webcam');
-                const objectPredictions = await objectDetector.detect(videoElement);
-                const facePredictions = await faceDetector.estimateFaces(videoElement, false);
+                const [objectPredictions, facePredictions] = await Promise.all([
+                    objectDetector.detect(videoElement),
+                    faceDetector.estimateFaces(videoElement, false)
+                ]);
 
-                if (phoneFound(objectPredictions)) {
-                    return handleViolation('Phone Detected');
-                }
-                
+                // --- Violation Checks ---
+                // 1. Multiple People
                 if (facePredictions.length > 1) {
                     return handleViolation('Multiple People Detected');
                 }
                 
+                // 2. No Person Detected
                 if (facePredictions.length === 0) {
                     noFaceCounter++;
-                    if (noFaceCounter > NO_FACE_THRESHOLD) {
-                        return handleViolation('User Not Present or Looking Away');
+                    if (noFaceCounter > NO_FACE_FRAME_LIMIT) {
+                        return handleViolation('User Not Present');
                     }
                 } else {
                     noFaceCounter = 0;
+                    // 3. Looking Away (only check if one face is present)
+                    if (isLookingAway(facePredictions[0])) {
+                        lookingAwayCounter++;
+                        if (lookingAwayCounter > LOOKING_AWAY_FRAME_LIMIT) {
+                           return handleViolation('Looking Away From Screen');
+                        }
+                    } else {
+                        lookingAwayCounter = 0;
+                    }
+                }
+
+                // 4. Phone Detection
+                const phone = objectPredictions.find(p => p.class === 'cell phone');
+                if (phone) {
+                    if (phone.score > PHONE_SCORE_CLEAR) {
+                        return handleViolation('Phone Clearly Detected');
+                    }
+                    if (phone.score > PHONE_SCORE_TRACE) {
+                        phoneDetectionCount++;
+                        if (phoneDetectionCount > PHONE_WARNING_THRESHOLD) {
+                            return handleViolation('Repeated Phone Detection');
+                        } else {
+                            showWarning(`Phone Detected (${phoneDetectionCount}/${PHONE_WARNING_THRESHOLD + 1})`);
+                        }
+                    }
                 }
 
                 requestAnimationFrame(runProctoring);
             }
-            
-            function phoneFound(predictions) {
-                return predictions.some(p => p.class === 'cell phone' && p.score > 0.6);
+
+            function isLookingAway(face) {
+                // Simple heuristic: check if the nose is horizontally far from the center of the eyes
+                const leftEye = face.landmarks[0];
+                const rightEye = face.landmarks[1];
+                const nose = face.landmarks[2];
+                const eyeMidpointX = (leftEye[0] + rightEye[0]) / 2;
+                const horizontalDistance = Math.abs(nose[0] - eyeMidpointX);
+                return horizontalDistance > LOOKING_AWAY_HORIZONTAL_THRESHOLD;
+            }
+
+            function showWarning(message) {
+                if (isWarningActive) return; // Prevent overlapping warnings
+                isWarningActive = true;
+                const proctorStatus = document.getElementById('proctor-status');
+                const originalStatus = proctorStatus.innerHTML;
+                proctorStatus.innerHTML = `<span class="text-yellow-400 font-bold">WARNING: ${message}</span>`;
+                
+                setTimeout(() => {
+                    proctorStatus.innerHTML = originalStatus;
+                    isWarningActive = false;
+                }, 3000); // Show warning for 3 seconds
             }
 
             function handleViolation(reason) {
                 if (!proctoringEnabled) return; 
                 
-                proctoringEnabled = false;
+                proctoringEnabled = false; // Stop further checks
                 const proctorStatus = document.getElementById('proctor-status');
                 proctorStatus.innerHTML = `<span class="text-red-500 font-bold">VIOLATION: ${reason}</span>`;
                 
@@ -562,14 +735,17 @@
 
             function stopProctoring() {
                 proctoringEnabled = false;
-                if (videoStream) {
-                    videoStream.getTracks().forEach(track => track.stop());
+                if (proctoringStream) {
+                    proctoringStream.getTracks().forEach(track => track.stop());
+                    proctoringStream = null;
                 }
-                document.getElementById('proctor-container').classList.add('hidden');
+                const proctorContainer = document.getElementById('proctor-container');
+                if(proctorContainer) proctorContainer.classList.add('hidden');
             }
 
             function handleFullScreenChange() {
-                if (!document.fullscreenElement && !document.webkitFullscreenElement && testInProgress) {
+                const isFullScreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+                if (!isFullScreen && testInProgress) {
                     handleViolation('Exited Full-Screen Mode');
                 }
             }
@@ -582,16 +758,19 @@
 
             function enterFullScreen() {
                 const elem = document.documentElement;
-                if (elem.requestFullscreen) elem.requestFullscreen();
-                else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+                if (elem.requestFullscreen) return elem.requestFullscreen();
+                if (elem.webkitRequestFullscreen) return elem.webkitRequestFullscreen();
+                return Promise.resolve();
             }
 
             function exitFullScreen() {
-                if (document.exitFullscreen && document.fullscreenElement) document.exitFullscreen();
-                else if (document.webkitExitFullscreen && document.webkitFullscreenElement) document.webkitExitFullscreen();
+                if (document.exitFullscreen && document.fullscreenElement) return document.exitFullscreen();
+                if (document.webkitExitFullscreen && document.webkitFullscreenElement) return document.webkitExitFullscreen();
+                return Promise.resolve();
             }
             
             await fetchAndDisplayTests();
+            await fetchProfile();
         });
     </script>
 </body>

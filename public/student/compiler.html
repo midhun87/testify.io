@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Compiler - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material-darker.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; overflow: hidden; }
+        .sidebar { background-color: #111827; }
+        .sidebar-link { color: #D1D5DB; }
+        .sidebar-link:hover { background-color: #374151; color: #FFFFFF; }
+        .sidebar-link.active { background-color: #4F46E5; color: #FFFFFF; font-weight: 600; }
+        .CodeMirror {
+            height: calc(100vh - 420px); /* Adjusted height */
+            border-radius: 0.5rem;
+            font-size: 14px;
+        }
+        .problem-list-item {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .problem-list-item.selected {
+            background-color: #4F46E5;
+            color: white;
+        }
+        .test-case-tab {
+            transition: all 0.2s;
+        }
+        .test-case-tab.active {
+            border-color: #4F46E5;
+            color: #4F46E5;
+            background-color: #EEF2FF;
+        }
+        /* Celebration styles */
+        .confetti {
+            width: 10px;
+            height: 10px;
+            position: absolute;
+            animation: confetti-fall 3s ease-out forwards;
+            z-index: 100;
+        }
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 bg-gray-800 text-white min-h-screen p-4 flex-col">
+              <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                  <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" onerror="this.onerror=null;this.src='https://placehold.co/40x40/111827/FFFFFF?text=T'">
+                  <span class="ml-3 text-2xl font-bold">TESTIFY</span>
+              </div>
+              <div class="flex flex-col flex-grow p-4">
+                  <a href="/student/dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                      <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                      <span class="ml-3">Dashboard</span>
+                  </a>
+                  <a href="/student/take-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                      <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                      <span class="ml-3">Take Test</span>
+                  </a>
+                  <a href="/student/test-history.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                      <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      <span class="ml-3">Test History</span>
+                  </a>
+                  <a href="/student/my-certificates.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                      <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <span class="ml-3">My Certificates</span>
+                  </a>
+                  <a href="/student/my-courses.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                      <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      <span class="ml-3">My Courses</span>
+                  </a>
+                  <a href="/student/student-profile.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                  <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"/></svg>
+                  <span class="ml-3">My Profile</span>
+                  </a>
+                   <a href="compiler.html" class="sidebar-link active flex items-center py-2.5 px-4 rounded transition duration-200">
+                      <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
+                      <span>Compiler</span>
+                  </a>
+              </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col">
+            <header class="bg-white shadow-md p-4 flex justify-between items-center">
+                <h1 class="text-2xl font-semibold text-gray-800">Coding Playground</h1>
+                <div class="relative">
+                     <button id="user-menu-button" class="flex items-center space-x-2">
+                         <span id="user-name" class="font-semibold text-gray-700">Student User</span>
+                         <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                     </button>
+                     <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                         <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                     </div>
+                </div>
+            </header>
+
+            <main class="flex-1 p-6 overflow-y-auto flex space-x-6">
+                <!-- Problems List -->
+                <div class="w-1/3 bg-white p-4 rounded-lg shadow-md flex flex-col">
+                    <h2 class="text-lg font-bold mb-4 border-b pb-2">Problems</h2>
+                    <div id="problem-list" class="space-y-2 overflow-y-auto flex-grow">
+                        <!-- Problems will be dynamically inserted here -->
+                    </div>
+                </div>
+
+                <!-- Compiler and Problem Details -->
+                <div id="compiler-view" class="w-2/3 bg-white p-6 rounded-lg shadow-md hidden flex flex-col">
+                    <div class="flex-shrink-0">
+                        <h2 id="problem-title" class="text-xl font-bold text-gray-800 mb-2"></h2>
+                        <p id="problem-description" class="text-gray-600 mb-4"></p>
+                    
+                        <div class="flex justify-between items-center mb-4">
+                            <select id="language-select" class="p-2 border rounded-md">
+                                <option value="c">C</option>
+                                <option value="cpp">C++</option>
+                                <option value="java">Java</option>
+                                <option value="python">Python</option>
+                            </select>
+                            <button id="submit-button" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700">Submit Code</button>
+                        </div>
+                    </div>
+                    <div class="flex-grow">
+                        <textarea id="code-editor"></textarea>
+                    </div>
+                    <div class="flex-shrink-0 mt-4">
+                        <h3 class="text-lg font-semibold mb-2">Test Cases</h3>
+                        <div id="test-case-tabs" class="flex border-b mb-2"></div>
+                        <div id="test-case-details" class="overflow-y-auto" style="max-height: 120px;"></div>
+                    </div>
+                </div>
+                <div id="welcome-view" class="w-2/3 flex items-center justify-center bg-white p-6 rounded-lg shadow-md">
+                    <p class="text-gray-500 text-lg">Select a problem to begin.</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Celebration Modal -->
+    <div id="celebration-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-8 max-w-sm text-center transform transition-all scale-95 opacity-0" style="transition: transform 0.3s ease-out, opacity 0.3s ease-out;">
+            <div class="text-9xl animate-bounce">🎉</div>
+            <h2 class="text-2xl font-bold text-gray-800 mt-4">Congratulations!</h2>
+            <p class="text-gray-600 mt-2">You've successfully passed all the test cases.</p>
+            <button id="close-modal-button" class="mt-6 px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Continue Coding</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!token || !user) { 
+                // window.location.href = '/login.html'; 
+                // return; 
+            }
+
+            // Mock user if not logged in for testing
+            if(user) {
+                document.getElementById('user-name').textContent = user.fullName;
+            }
+
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userMenu = document.getElementById('user-menu');
+            const logoutButton = document.getElementById('logout-button');
+            userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
+            logoutButton.addEventListener('click', () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login.html';
+            });
+
+            // --- DATA ---
+            const problems = [
+                {
+                    id: 'two-sum',
+                    title: 'Two Sum',
+                    description: 'Given an array of integers, return indices of the two numbers such that they add up to a specific target.',
+                    starterCode: {
+                        c: '#include <stdio.h>\n\nint main() {\n    // Your code here\n    return 0;\n}',
+                        cpp: '#include <iostream>\n\nint main() {\n    // Your code here\n    return 0;\n}',
+                        java: 'public class Main {\n    public static void main(String[] args) {\n        // Your code here\n    }\n}',
+                        python: '# Your code here'
+                    },
+                    testCases: [
+                        { input: '9\n2 7 11 15', expected: '0 1' },
+                        { input: '6\n3 2 4', expected: '1 2' }
+                    ]
+                },
+                {
+                    id: 'reverse-string',
+                    title: 'Reverse a String',
+                    description: 'Write a function that reverses a string.',
+                    starterCode: {
+                        c: '#include <stdio.h>\n#include <string.h>\n\nvoid reverse(char *str) {\n    int i = 0, j = strlen(str) - 1;\n    char temp;\n    while (i < j) {\n        temp = str[i];\n        str[i] = str[j];\n        str[j] = temp;\n        i++;\n        j--;\n    }\n}\n\nint main() {\n    char s[100];\n    scanf("%s", s);\n    reverse(s);\n    printf("%s", s);\n    return 0;\n}',
+                        cpp: '#include <iostream>\n#include <string>\n#include <algorithm>\n\nint main() {\n    std::string s;\n    std::cin >> s;\n    std::reverse(s.begin(), s.end());\n    std::cout << s;\n    return 0;\n}',
+                        java: 'import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        String s = sc.next();\n        System.out.println(new StringBuilder(s).reverse().toString());\n    }\n}',
+                        python: 's = input()\nprint(s[::-1])'
+                    },
+                    testCases: [
+                        { input: 'hello', expected: 'olleh' },
+                        { input: 'world', expected: 'dlrow' }
+                    ]
+                },
+                {
+                    id: 'palindrome',
+                    title: 'Palindrome Check',
+                    description: 'Check if a given string is a palindrome (reads the same forwards and backward).',
+                    starterCode: { c: '', cpp: '', java: '', python: '' },
+                    testCases: [
+                        { input: 'racecar', expected: 'true' },
+                        { input: 'hello', expected: 'false' }
+                    ]
+                },
+                {
+                    id: 'fibonacci',
+                    title: 'Fibonacci Number',
+                    description: 'Calculate the Nth Fibonacci number.',
+                    starterCode: { c: '', cpp: '', java: '', python: '' },
+                    testCases: [
+                        { input: '5', expected: '5' },
+                        { input: '10', expected: '55' }
+                    ]
+                },
+                 {
+                    id: 'factorial',
+                    title: 'Factorial',
+                    description: 'Calculate the factorial of a non-negative integer N.',
+                    starterCode: { c: '', cpp: '', java: '', python: '' },
+                    testCases: [
+                        { input: '5', expected: '120' },
+                        { input: '0', expected: '1' }
+                    ]
+                },
+                {
+                    id: 'prime-check',
+                    title: 'Prime Number Check',
+                    description: 'Determine if a given number is a prime number.',
+                    starterCode: { c: '', cpp: '', java: '', python: '' },
+                    testCases: [
+                        { input: '7', expected: 'true' },
+                        { input: '10', expected: 'false' }
+                    ]
+                },
+                {
+                    id: 'max-array',
+                    title: 'Find Max in Array',
+                    description: 'Find the maximum element in an array of integers.',
+                    starterCode: { c: '', cpp: '', java: '', python: '' },
+                    testCases: [
+                        { input: '1 5 2 9 3', expected: '9' },
+                        { input: '-1 -5 -2', expected: '-1' }
+                    ]
+                },
+                {
+                    id: 'sum-of-array',
+                    title: 'Sum of Array',
+                    description: 'Calculate the sum of all elements in an array.',
+                    starterCode: { c: '', cpp: '', java: '', python: '' },
+                    testCases: [
+                        { input: '1 2 3 4 5', expected: '15' },
+                        { input: '10 20', expected: '30' }
+                    ]
+                },
+                {
+                    id: 'count-vowels',
+                    title: 'Count Vowels',
+                    description: 'Count the number of vowels in a given string.',
+                    starterCode: { c: '', cpp: '', java: '', python: '' },
+                    testCases: [
+                        { input: 'hello world', expected: '3' },
+                        { input: 'programming', expected: '3' }
+                    ]
+                },
+                 {
+                    id: 'binary-search',
+                    title: 'Binary Search',
+                    description: 'Implement the binary search algorithm to find an element in a sorted array.',
+                    starterCode: { c: '', cpp: '', java: '', python: '' },
+                    testCases: [
+                        { input: '2 5\n1 2 3 4 5', expected: 'true' },
+                        { input: '6 5\n1 2 3 4 5', expected: 'false' }
+                    ]
+                }
+            ];
+
+            // --- UI ELEMENTS ---
+            const problemListDiv = document.getElementById('problem-list');
+            const welcomeView = document.getElementById('welcome-view');
+            const compilerView = document.getElementById('compiler-view');
+            const problemTitle = document.getElementById('problem-title');
+            const problemDescription = document.getElementById('problem-description');
+            const languageSelect = document.getElementById('language-select');
+            const submitButton = document.getElementById('submit-button');
+            const testCaseTabs = document.getElementById('test-case-tabs');
+            const testCaseDetails = document.getElementById('test-case-details');
+            const celebrationModal = document.getElementById('celebration-modal');
+            const closeModalButton = document.getElementById('close-modal-button');
+            
+            let currentProblem = null;
+
+            const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+                lineNumbers: true,
+                mode: 'text/x-csrc',
+                theme: 'material-darker'
+            });
+
+            // --- FUNCTIONS ---
+            function displayProblems() {
+                problemListDiv.innerHTML = '';
+                problems.forEach(problem => {
+                    const item = document.createElement('div');
+                    item.className = 'problem-list-item p-3 rounded-md';
+                    item.textContent = problem.title;
+                    item.dataset.problemId = problem.id;
+                    item.addEventListener('click', () => selectProblem(problem.id));
+                    problemListDiv.appendChild(item);
+                });
+            }
+
+            function selectProblem(problemId) {
+                currentProblem = problems.find(p => p.id === problemId);
+                if (!currentProblem) return;
+
+                document.querySelectorAll('.problem-list-item').forEach(item => {
+                    item.classList.toggle('selected', item.dataset.problemId === problemId);
+                });
+
+                welcomeView.classList.add('hidden');
+                compilerView.classList.remove('hidden');
+                compilerView.classList.add('flex');
+
+
+                problemTitle.textContent = currentProblem.title;
+                problemDescription.textContent = currentProblem.description;
+                
+                const currentLang = languageSelect.value;
+                editor.setValue(currentProblem.starterCode[currentLang] || `// Write your ${currentLang} code for ${currentProblem.title} here.`);
+                
+                displayTestCases();
+            }
+
+            function displayTestCases() {
+                testCaseTabs.innerHTML = '';
+                testCaseDetails.innerHTML = '';
+
+                currentProblem.testCases.forEach((tc, index) => {
+                    const tab = document.createElement('button');
+                    tab.className = 'test-case-tab px-4 py-2 border-b-2 font-medium text-sm';
+                    tab.textContent = `Case ${index + 1}`;
+                    tab.dataset.index = index;
+                    if (index === 0) tab.classList.add('active');
+                    
+                    tab.addEventListener('click', () => {
+                        document.querySelectorAll('.test-case-tab').forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        renderTestCaseDetail(index);
+                    });
+                    testCaseTabs.appendChild(tab);
+                });
+                renderTestCaseDetail(0);
+            }
+
+            function renderTestCaseDetail(index) {
+                const tc = currentProblem.testCases[index];
+                testCaseDetails.innerHTML = `
+                    <div class="space-y-2 text-sm">
+                        <div><strong class="font-semibold">Input:</strong><pre class="bg-gray-100 p-2 rounded mt-1">${tc.input}</pre></div>
+                        <div><strong class="font-semibold">Expected Output:</strong><pre class="bg-gray-100 p-2 rounded mt-1">${tc.expected}</pre></div>
+                        <div id="actual-output-${index}" class="hidden"><strong class="font-semibold">Your Output:</strong><pre class="bg-gray-800 text-white p-2 rounded mt-1"></pre></div>
+                    </div>
+                `;
+            }
+            
+            function triggerCelebration() {
+                const container = document.body;
+                for (let i = 0; i < 100; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.top = Math.random() * -20 + 'vh';
+                    confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    confetti.style.animationDelay = Math.random() * 2 + 's';
+                    container.appendChild(confetti);
+
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 4000);
+                }
+            }
+            
+            async function handleSubmit() {
+                if (!currentProblem) return;
+
+                const code = editor.getValue();
+                const language = languageSelect.value;
+                submitButton.disabled = true;
+                submitButton.textContent = 'Evaluating...';
+
+                let allPassed = true;
+
+                for (let i = 0; i < currentProblem.testCases.length; i++) {
+                    const tc = currentProblem.testCases[i];
+                    const tab = document.querySelector(`.test-case-tab[data-index='${i}']`);
+                    tab.classList.remove('text-green-600', 'text-red-600', 'border-green-500', 'border-red-500');
+                    
+                    // Mocking API call for demonstration
+                    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+                    
+                    // This is a mock response. In a real app, you'd fetch from your backend.
+                    // For this demo, we'll just check if the solution for "Reverse a String" is present.
+                    let actualOutput = "Sample output";
+                    if (currentProblem.id === 'reverse-string' && language === 'python' && code.includes('s[::-1]')) {
+                        actualOutput = tc.input.split('').reverse().join('');
+                    } else {
+                        // For other problems, we'll randomly pass or fail for demo purposes
+                        actualOutput = Math.random() > 0.3 ? tc.expected : "Wrong Answer";
+                    }
+
+                    const expectedOutput = tc.expected.trim();
+
+                    if (actualOutput.trim() === expectedOutput) {
+                        tab.classList.add('text-green-600', 'border-green-500');
+                    } else {
+                        tab.classList.add('text-red-600', 'border-red-500');
+                        allPassed = false;
+                    }
+                    
+                    if (tab.classList.contains('active')) {
+                         const outputContainer = document.getElementById(`actual-output-${i}`);
+                         if(outputContainer){
+                             outputContainer.classList.remove('hidden');
+                             outputContainer.querySelector('pre').textContent = actualOutput;
+                         }
+                    }
+                }
+
+                if (allPassed) {
+                    triggerCelebration();
+                    const modalContent = celebrationModal.querySelector('div');
+                    celebrationModal.classList.remove('hidden');
+                    // Trigger reflow to apply initial animation state
+                    void modalContent.offsetWidth; 
+                    modalContent.classList.remove('scale-95', 'opacity-0');
+                    modalContent.classList.add('scale-100', 'opacity-100');
+                }
+
+                submitButton.disabled = false;
+                submitButton.textContent = 'Submit Code';
+            }
+
+            languageSelect.addEventListener('change', () => {
+                const lang = languageSelect.value;
+                const modeMap = {
+                    'python': 'python',
+                    'java': 'text/x-java',
+                    'c': 'text/x-csrc',
+                    'cpp': 'text/x-c++src'
+                };
+                editor.setOption('mode', modeMap[lang] || 'text/x-csrc');
+
+                if (currentProblem) {
+                    selectProblem(currentProblem.id);
+                }
+            });
+
+            submitButton.addEventListener('click', handleSubmit);
+            
+            closeModalButton.addEventListener('click', () => {
+                const modalContent = celebrationModal.querySelector('div');
+                modalContent.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    celebrationModal.classList.add('hidden');
+                }, 300); // Match transition duration
+            });
+
+            // --- INITIALIZATION ---
+            displayProblems();
+        });
+    </script>
+</body>
+</html>
