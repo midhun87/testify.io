@@ -23,7 +23,6 @@
             background-color: #4F46E5;
             font-weight: 600;
         }
-        /* This style is crucial for the fullscreen test environment */
         #test-environment.fullscreen {
             position: fixed;
             top: 0;
@@ -42,9 +41,8 @@
             background-color: #10B981;
             color: white;
         }
-        /* Custom styles for verification feedback */
         #verification-status {
-            min-height: 24px; /* Reserve space for the message */
+            min-height: 24px;
         }
     </style>
 </head>
@@ -83,9 +81,9 @@
                 <span class="ml-3">My Profile</span>
                 </a>
                  <a href="compiler.html" class="sidebar-link  flex items-center py-2.5 px-4 rounded transition duration-200">
-                    <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
-                    <span>Compiler</span>
-                </a>
+                     <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
+                     <span>Compiler</span>
+                 </a>
             </div>
         </div>
 
@@ -94,16 +92,16 @@
             <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
                 <h1 class="text-2xl font-bold text-gray-800">Available Tests</h1>
                  <div class="flex items-center">
-                         <div class="relative">
-                             <button id="user-menu-button" class="flex items-center space-x-2">
-                                 <span id="user-name" class="font-semibold text-gray-700">Student Name</span>
-                                 <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                             </button>
-                             <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                                 <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
-                             </div>
-                         </div>
-                 </div>
+                       <div class="relative">
+                           <button id="user-menu-button" class="flex items-center space-x-2">
+                               <span id="user-name" class="font-semibold text-gray-700">Student Name</span>
+                               <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                           </button>
+                           <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                               <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                           </div>
+                       </div>
+               </div>
             </div>
 
             <div class="p-6">
@@ -154,7 +152,7 @@
                     <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_3wfuty3wfuty3wfu_iqsg1x.png" alt="TESTIFY Lockdown Logo">
                     <div class="ml-4">
                         <h1 class="text-xl font-bold text-gray-800">Testify-Lockdown Portal</h1>
-                        <p id="test-title" class="text-sm text-gray-600 font-medium"></p> <!-- Test title will be populated here -->
+                        <p id="test-title" class="text-sm text-gray-600 font-medium"></p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
@@ -190,7 +188,21 @@
             </div>
         </div>
     </div>
-  <footer class="bg-white border-t border-gray-200 p-4 mt-auto">
+    
+    <!-- NEW: Audio Warning Modal -->
+    <div id="audio-warning-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-[10000]">
+        <div class="bg-white rounded-lg shadow-2xl p-8 max-w-sm mx-auto text-center">
+            <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-volume-up text-4xl text-yellow-500"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800">Noise Detected</h3>
+            <p class="text-gray-600 mt-2">Please maintain silence. Further noise will be flagged as a violation.</p>
+            <p id="warning-count" class="text-lg font-bold text-yellow-600 mt-4"></p>
+            <button id="close-warning-btn" class="mt-6 w-full bg-yellow-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-yellow-600">I Understand</button>
+        </div>
+    </div>
+
+    <footer class="bg-white border-t border-gray-200 p-4 mt-auto">
     <div class="text-center text-sm text-gray-500">
         &copy; 2025 TESTIFY. All Rights Reserved.
     </div>
@@ -221,6 +233,9 @@
             const verifyIdentityBtn = document.getElementById('verify-identity-btn');
             const cancelVerificationBtn = document.getElementById('cancel-verification-btn');
             const verificationStatus = document.getElementById('verification-status');
+            const audioWarningModal = document.getElementById('audio-warning-modal');
+            const warningCountSpan = document.getElementById('warning-count');
+            const closeWarningBtn = document.getElementById('close-warning-btn');
             
             // --- TEST STATE ---
             let testInProgress = false;
@@ -257,8 +272,8 @@
             const NO_FACE_FRAME_LIMIT = 90;
             const LOOKING_AWAY_HORIZONTAL_THRESHOLD = 30;
             const LOOKING_AWAY_FRAME_LIMIT = 120;
-            const AUDIO_VIOLATION_THRESHOLD = 4;
-            const AUDIO_LEVEL_THRESHOLD = 0.12; // MODIFICATION: Increased sensitivity threshold
+            const AUDIO_VIOLATION_LIMIT = 5; // MODIFIED: Changed from 4 to 5
+            const AUDIO_LEVEL_THRESHOLD = 0.20; // MODIFIED: Increased sensitivity threshold from 0.12
 
             // --- FETCH AND DISPLAY AVAILABLE TESTS ---
             async function fetchAndDisplayTests() {
@@ -328,6 +343,7 @@
             cancelVerificationBtn.addEventListener('click', closeFaceVerification);
             prevBtn.addEventListener('click', navigatePrev);
             nextBtn.addEventListener('click', navigateNext);
+            closeWarningBtn.addEventListener('click', () => audioWarningModal.classList.add('hidden'));
 
             document.addEventListener('contextmenu', event => {
                 if (testInProgress) {
@@ -678,11 +694,15 @@
                 const volume = Math.sqrt(sum / dataArray.length) / 100;
 
                 if (volume > AUDIO_LEVEL_THRESHOLD) {
-                    audioViolationCount++;
-                    if (audioViolationCount > AUDIO_VIOLATION_THRESHOLD) {
-                        return handleViolation('Excessive Noise Detected');
+                    if (!audioWarningModal.classList.contains('hidden')) {
+                         // If modal is already open, don't do anything until it's closed
                     } else {
-                        showWarning(`Noise Detected (${audioViolationCount}/${AUDIO_VIOLATION_THRESHOLD + 1})`);
+                        audioViolationCount++;
+                        if (audioViolationCount >= AUDIO_VIOLATION_LIMIT) {
+                            return handleViolation('Excessive Noise Detected');
+                        } else {
+                            showAudioWarning();
+                        }
                     }
                 }
 
@@ -732,6 +752,11 @@
                 const eyeMidpointX = (leftEye[0] + rightEye[0]) / 2;
                 const horizontalDistance = Math.abs(nose[0] - eyeMidpointX);
                 return horizontalDistance > LOOKING_AWAY_HORIZONTAL_THRESHOLD;
+            }
+            
+            function showAudioWarning() {
+                warningCountSpan.textContent = `Warning ${audioViolationCount} of ${AUDIO_VIOLATION_LIMIT}`;
+                audioWarningModal.classList.remove('hidden');
             }
 
             function showWarning(message) {
