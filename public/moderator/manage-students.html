@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <!-- This is a partial page, styles are inherited from the dashboard -->
+</head>
+<body>
+    <div class="container mx-auto">
+        <!-- Header Section -->
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+            <div>
+                <label for="college-select" class="block text-sm font-medium text-gray-700">Select College</label>
+                <select id="college-select" class="mt-1 block w-full md:w-72 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm">
+                    <!-- Options populated by JS -->
+                </select>
+            </div>
+            <div class="relative w-full md:w-auto">
+                 <label for="search-student" class="block text-sm font-medium text-gray-700">Search Student</label>
+                <input type="text" id="search-student" placeholder="Search by name or email..." class="mt-1 block w-full md:w-72 pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                <div class="absolute inset-y-0 left-0 top-6 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Cards Grid -->
+        <div id="students-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Student cards will be injected here -->
+        </div>
+         <div id="no-students-message" class="hidden text-center py-10">
+            <p class="text-gray-500 text-lg">No students found.</p>
+        </div>
+    </div>
+
+    <!-- Edit Student Modal -->
+    <div id="edit-modal" class="hidden fixed z-50 inset-0 overflow-y-auto">
+        <!-- Modal content here -->
+    </div>
+    
+    <!-- Change Image Modal -->
+    <div id="image-modal" class="hidden fixed z-50 inset-0 overflow-y-auto">
+        <!-- Modal content here -->
+    </div>
+
+
+    <script>
+    (() => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = localStorage.getItem('token');
+        const headers = { 'x-auth-token': token };
+        
+        let allStudents = [];
+
+        const collegeSelect = document.getElementById('college-select');
+        const studentsGrid = document.getElementById('students-grid');
+        const searchInput = document.getElementById('search-student');
+        const noStudentsMessage = document.getElementById('no-students-message');
+
+        // Populate college dropdown
+        user.assignedColleges.forEach(college => {
+            collegeSelect.add(new Option(college, college));
+        });
+
+        const renderStudents = (students) => {
+            studentsGrid.innerHTML = '';
+            if (students.length === 0) {
+                noStudentsMessage.classList.remove('hidden');
+                studentsGrid.classList.add('hidden');
+            } else {
+                noStudentsMessage.classList.add('hidden');
+                studentsGrid.classList.remove('hidden');
+            }
+            students.forEach(student => {
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300';
+                card.innerHTML = `
+                    <div class="p-5">
+                        <div class="flex items-center gap-4">
+                            <img class="h-16 w-16 rounded-full object-cover" src="${student.profileImageUrl || 'https://placehold.co/150x150/E2E8F0/333?text=NA'}" alt="Profile">
+                            <div>
+                                <p class="text-lg font-bold text-gray-800">${student.fullName}</p>
+                                <p class="text-sm text-gray-500">${student.rollNumber}</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-sm text-gray-600 space-y-2">
+                            <p><i class="fas fa-envelope w-5 text-gray-400"></i> ${student.email}</p>
+                            <p><i class="fas fa-phone w-5 text-gray-400"></i> ${student.mobile}</p>
+                            <p><i class="fas fa-building w-5 text-gray-400"></i> ${student.department} Dept</p>
+                        </div>
+                         <div class="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
+                             <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${student.isBlocked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}">
+                                ${student.isBlocked ? 'Blocked' : 'Active'}
+                            </span>
+                            <div class="flex gap-2">
+                                <button onclick="window.openEditModal('${student.email}')" class="text-gray-500 hover:text-indigo-600" title="Edit"><i class="fas fa-edit"></i></button>
+                                <button onclick="window.openImageModal('${student.email}')" class="text-gray-500 hover:text-indigo-600" title="Change Image"><i class="fas fa-camera"></i></button>
+                                <button onclick="window.toggleBlock('${student.email}', ${student.isBlocked})" class="text-gray-500 hover:text-red-600" title="${student.isBlocked ? 'Unblock' : 'Block'}">${student.isBlocked ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-ban"></i>'}</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                studentsGrid.appendChild(card);
+            });
+        };
+
+        const fetchStudents = async (college) => {
+            if (!college) {
+                allStudents = [];
+                renderStudents([]);
+                return;
+            }
+            try {
+                const response = await fetch(`/api/admin/students/${college}`, { headers: { 'x-auth-token': token } });
+                if (!response.ok) throw new Error('Failed to fetch students');
+                allStudents = await response.json();
+                renderStudents(allStudents);
+            } catch (error) {
+                console.error('Error fetching students:', error);
+                studentsGrid.innerHTML = `<p class="text-red-500">Error loading students.</p>`;
+            }
+        };
+
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filteredStudents = allStudents.filter(s => 
+                s.fullName.toLowerCase().includes(searchTerm) || 
+                s.email.toLowerCase().includes(searchTerm)
+            );
+            renderStudents(filteredStudents);
+        });
+
+        collegeSelect.addEventListener('change', () => fetchStudents(collegeSelect.value));
+
+        window.toggleBlock = async (email, isBlocked) => {
+             const action = isBlocked ? 'unblock' : 'block';
+            if (!confirm(`Are you sure you want to ${action} ${email}?`)) return;
+            try {
+                const response = await fetch(`/api/admin/students/${email}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                    body: JSON.stringify({ isBlocked: !isBlocked })
+                });
+                if (!response.ok) throw new Error('Failed to update status');
+                alert(`Student ${action}ed successfully.`);
+                fetchStudents(collegeSelect.value);
+            } catch (error) {
+                console.error(`Error ${action}ing student:`, error);
+                alert('Failed to update student status.');
+            }
+        };
+
+        // Initial load
+        if (user.assignedColleges.length > 0) {
+            fetchStudents(user.assignedColleges[0]);
+        } else {
+            renderStudents([]);
+        }
+
+    })();
+    </script>
+</body>
+</html>

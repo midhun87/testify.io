@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF--8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderator Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="flex h-screen bg-gray-200">
+        <!-- Sidebar -->
+        <div class="w-64 bg-gray-800 text-white flex flex-col">
+            <div class="px-8 py-6 border-b border-gray-700 flex justify-center items-center">
+                <h2>Moderator DashBoard</h2>
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo" class="h-10 w-auto">
+            </div>
+            <nav id="sidebar-nav" class="flex-1 px-4 py-4 space-y-2">
+                <a href="#" id="dashboard-link" class="flex items-center px-4 py-2 rounded-md">
+                    <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
+                </a>
+                <a href="#" id="students-link" class="flex items-center px-4 py-2 rounded-md">
+                    <i class="fas fa-user-graduate mr-3"></i> Manage Students
+                </a>
+                <a href="#" id="assign-link" class="flex items-center px-4 py-2 rounded-md">
+                    <i class="fas fa-clipboard-list mr-3"></i> Assign Content
+                </a>
+                <a href="#" id="reports-link" class="flex items-center px-4 py-2 rounded-md">
+                    <i class="fas fa-chart-bar mr-3"></i> View Reports
+                </a>
+            </nav>
+            <div class="px-8 py-4 border-t border-gray-700">
+                 <button id="logout-btn" class="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header class="flex justify-between items-center p-6 bg-white border-b">
+                <h1 class="text-2xl font-semibold text-gray-800" id="page-title">Dashboard</h1>
+                <div class="flex items-center">
+                    <span class="text-gray-600 mr-4" id="user-name"></span>
+                </div>
+            </header>
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+                <div id="content-area">
+                    <!-- Content will be loaded here -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = localStorage.getItem('token');
+
+        if (!token || !user || user.role !== 'Moderator') {
+            window.location.href = '/moderator/moderator-login.html';
+        }
+
+        document.getElementById('user-name').textContent = `Welcome, ${user.fullName}`;
+
+        const contentArea = document.getElementById('content-area');
+        const pageTitle = document.getElementById('page-title');
+        const navLinks = document.querySelectorAll('#sidebar-nav a');
+
+        const setActiveLink = (activeLink) => {
+            navLinks.forEach(link => {
+                link.classList.remove('bg-gray-700', 'text-white');
+                link.classList.add('text-gray-400', 'hover:bg-gray-700', 'hover:text-white');
+            });
+            activeLink.classList.add('bg-gray-700', 'text-white');
+            activeLink.classList.remove('text-gray-400');
+        };
+
+        const loadContent = async (url, targetElement) => {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`Failed to load page: ${response.statusText}`);
+                const html = await response.text();
+                
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                targetElement.innerHTML = '';
+                
+                Array.from(tempDiv.children).forEach(child => {
+                    if (child.tagName !== 'SCRIPT') {
+                        targetElement.appendChild(child);
+                    }
+                });
+
+                const scripts = tempDiv.querySelectorAll('script');
+                scripts.forEach(oldScript => {
+                    const newScript = document.createElement('script');
+                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                    newScript.textContent = oldScript.textContent;
+                    document.body.appendChild(newScript);
+                });
+
+            } catch (error) {
+                console.error('Error loading content:', error);
+                targetElement.innerHTML = `<p class="text-red-500">Error loading page. Please check the console for details.</p>`;
+            }
+        };
+
+        const loadDashboard = () => {
+            pageTitle.textContent = 'Dashboard';
+            setActiveLink(document.getElementById('dashboard-link'));
+            contentArea.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold text-gray-700">Assigned Colleges</h3>
+                        <ul class="mt-4 space-y-2 text-gray-600">
+                            ${user.assignedColleges.map(c => `<li><i class="fas fa-university mr-2"></i>${c}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold text-gray-700">Quick Actions</h3>
+                        <div class="mt-4 space-y-3">
+                            <button onclick="loadStudents()" class="w-full text-left text-indigo-600 hover:underline">Manage Students</button>
+                            <button onclick="loadAssignContent()" class="w-full text-left text-indigo-600 hover:underline">Assign Tests & Courses</button>
+                             <button onclick="loadReports()" class="w-full text-left text-indigo-600 hover:underline">View Test Reports</button>
+                        </div>
+                    </div>
+                </div>`;
+        };
+
+        const loadStudents = () => {
+             pageTitle.textContent = 'Manage Students';
+             setActiveLink(document.getElementById('students-link'));
+             loadContent('/moderator/manage-students.html', contentArea);
+        };
+
+        const loadAssignContent = () => {
+             pageTitle.textContent = 'Assign Content';
+             setActiveLink(document.getElementById('assign-link'));
+             loadContent('/moderator/assign-content.html', contentArea);
+        };
+        
+        const loadReports = () => {
+            pageTitle.textContent = 'View Reports';
+            setActiveLink(document.getElementById('reports-link'));
+            loadContent('/moderator/view-reports.html', contentArea);
+        };
+        
+        window.loadStudents = loadStudents;
+        window.loadAssignContent = loadAssignContent;
+        window.loadReports = loadReports;
+
+        document.getElementById('dashboard-link').addEventListener('click', (e) => { e.preventDefault(); loadDashboard(); });
+        document.getElementById('students-link').addEventListener('click', (e) => { e.preventDefault(); loadStudents(); });
+        document.getElementById('assign-link').addEventListener('click', (e) => { e.preventDefault(); loadAssignContent(); });
+        document.getElementById('reports-link').addEventListener('click', (e) => { e.preventDefault(); loadReports(); });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/moderator/moderator-login.html';
+        });
+
+        // Initial load
+        loadDashboard();
+    </script>
+</body>
+</html>
