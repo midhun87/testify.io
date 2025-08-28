@@ -17,9 +17,9 @@
         <!-- Branding Section -->
         <div class="hidden lg:flex w-1/2 items-center justify-center bg-gradient-to-tr from-indigo-800 to-purple-700 text-white p-12">
             <div class="text-center">
-                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-24 h-24 mx-auto mb-4 invert brightness-0">
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-24 h-24 mx-auto mb-4">
                 <h1 class="text-5xl font-bold tracking-tight">TESTIFY</h1>
-                <p class="mt-4 text-lg text-indigo-200">The professional platform for secure online assessments.</p>
+                <p class="mt-4 text-lg text-indigo-200">The professional platform for secure online Training & assessments.</p>
             </div>
         </div>
 
@@ -27,8 +27,8 @@
         <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
             <div class="w-full max-w-md">
                 <div class="lg:hidden text-center mb-8">
-                     <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-16 h-16 mx-auto mb-2">
-                    <h1 class="text-3xl font-bold text-gray-800">TESTIFY</h1>
+                     <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-16 h-16 mx-auto mb-2 invert">
+                     <h1 class="text-3xl font-bold text-gray-800">TESTIFY</h1>
                 </div>
                 
                 <div class="bg-white p-8 rounded-2xl shadow-lg">
@@ -76,12 +76,14 @@
 
                     <div id="message" class="hidden text-center mt-4 p-3 rounded-lg font-medium"></div>
                     
-                    <p class="text-center text-sm text-gray-600 mt-8">
-                        Already have an account? <a href="/login.html" class="font-medium text-indigo-600 hover:text-indigo-500">Log In</a>
-                    </p>
-                     <p class="text-center text-sm text-gray-600 mt-4">
-                        Back to Home? <a href="/welcome.html" class="font-medium text-indigo-600 hover:text-indigo-500">Home</a>
-                    </p>
+                    <div class="mt-8 text-center space-y-4">
+                         <a href="/login.html" class="block w-full bg-gray-200 text-gray-800 font-bold py-3 px-4 rounded-lg hover:bg-gray-300 transition duration-300">Already have an account? Log In</a>
+                         <div class="flex justify-center items-center space-x-4">
+                            <a href="/moderator/login.html" class="text-sm font-medium text-purple-600 hover:text-purple-500">Moderator</a>
+                            <span class="text-gray-300">|</span>
+                            <a href="/welcome.html" class="text-sm font-medium text-gray-600 hover:text-gray-500">Home</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -97,7 +99,6 @@
                     if (!response.ok) throw new Error('Failed to fetch colleges');
                     const colleges = await response.json();
                     
-                    // Clear the loading text
                     collegeSelect.innerHTML = '<option value="" disabled selected>Select your college</option>';
                     
                     if (colleges.length > 0) {
@@ -118,7 +119,6 @@
 
             await fetchAndPopulateColleges();
 
-            // Existing signup form logic
             const signupForm = document.getElementById('signup-form');
             const messageDiv = document.getElementById('message');
 
