@@ -94,15 +94,15 @@
             <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
                 <h1 class="text-2xl font-bold text-gray-800">Available Tests</h1>
                  <div class="flex items-center">
-                       <div class="relative">
-                            <button id="user-menu-button" class="flex items-center space-x-2">
-                                <span id="user-name" class="font-semibold text-gray-700">Student Name</span>
-                                <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                            </button>
-                            <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                                <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
-                            </div>
-                       </div>
+                         <div class="relative">
+                             <button id="user-menu-button" class="flex items-center space-x-2">
+                                 <span id="user-name" class="font-semibold text-gray-700">Student Name</span>
+                                 <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                             </button>
+                             <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                                 <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                             </div>
+                         </div>
                  </div>
             </div>
 
@@ -231,6 +231,7 @@
             let studentAnswers = [];
             let availableTests = [];
             let profileImageUrl = null;
+            let lastViolationReason = null;
 
             // --- AI PROCTORING STATE & CONSTANTS ---
             let proctoringEnabled = false;
@@ -238,20 +239,26 @@
             let proctoringStream = null;
             let objectDetector = null;
             let faceDetector = null;
+            let audioContext = null;
+            let audioSource = null;
+            let audioProcessor = null;
             let isWarningActive = false;
             
             // Violation counters
             let phoneDetectionCount = 0;
             let noFaceCounter = 0;
             let lookingAwayCounter = 0;
+            let audioViolationCount = 0;
 
             // Proctoring thresholds
-            const PHONE_SCORE_TRACE = 0.45; // Lower confidence for initial warning
-            const PHONE_SCORE_CLEAR = 0.75; // Higher confidence for immediate submission
-            const PHONE_WARNING_THRESHOLD = 2; // Allow 2 warnings, submit on the 3rd detection
-            const NO_FACE_FRAME_LIMIT = 90; // Approx. 3 seconds of no face detected
-            const LOOKING_AWAY_HORIZONTAL_THRESHOLD = 30; // Pixel distance threshold for looking away
-            const LOOKING_AWAY_FRAME_LIMIT = 120; // Approx. 4 seconds of looking away
+            const PHONE_SCORE_TRACE = 0.45;
+            const PHONE_SCORE_CLEAR = 0.75;
+            const PHONE_WARNING_THRESHOLD = 2;
+            const NO_FACE_FRAME_LIMIT = 90;
+            const LOOKING_AWAY_HORIZONTAL_THRESHOLD = 30;
+            const LOOKING_AWAY_FRAME_LIMIT = 120;
+            const AUDIO_VIOLATION_THRESHOLD = 4;
+            const AUDIO_LEVEL_THRESHOLD = 0.12; // MODIFICATION: Increased sensitivity threshold
 
             // --- FETCH AND DISPLAY AVAILABLE TESTS ---
             async function fetchAndDisplayTests() {
@@ -322,7 +329,6 @@
             prevBtn.addEventListener('click', navigatePrev);
             nextBtn.addEventListener('click', navigateNext);
 
-            // --- NEW: Disable right-click context menu during the test ---
             document.addEventListener('contextmenu', event => {
                 if (testInProgress) {
                     event.preventDefault();
@@ -410,7 +416,7 @@
             async function startTest(testData) {
                 const proctoringConsent = confirm(
                     'This test requires AI proctoring.\n\n' +
-                    'Your webcam will be activated to monitor for violations. Any violation will result in automatic test submission.\n\n' +
+                    'Your webcam and microphone will be activated to monitor for violations. Any violation will result in automatic test submission.\n\n' +
                     'This test will also start in fullscreen mode. Exiting fullscreen will submit the test. Are you ready to begin?'
                 );
                 
@@ -428,6 +434,7 @@
                     studentAnswers = new Array(testData.questions.length).fill(null);
                     currentQuestionIndex = 0;
                     testInProgress = true;
+                    lastViolationReason = null;
                     
                     document.getElementById('test-title').textContent = testData.title;
                     
@@ -436,7 +443,7 @@
                     renderPalette();
 
                     document.addEventListener('fullscreenchange', handleFullScreenChange);
-                    document.addEventListener('webkitfullscreenchange', handleFullScreenChange); // For Safari/Chrome
+                    document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
                     document.addEventListener('visibilitychange', handleVisibilityChange);
                 } catch (error) {
                     await exitFullScreen();
@@ -477,7 +484,8 @@
                 const payload = {
                     testId: currentTest.testId,
                     answers: studentAnswers,
-                    timeTaken: timeTaken
+                    timeTaken: timeTaken,
+                    violationReason: lastViolationReason 
                 };
 
                 try {
@@ -510,6 +518,7 @@
                     timerDisplay.textContent = `${minutes}:${seconds}`;
                     if (--timer < 0) {
                         clearInterval(timerInterval);
+                        lastViolationReason = "Time Expired";
                         forceSubmitTest('Time is up! The test will now be submitted.');
                     }
                 }, 1000);
@@ -622,14 +631,20 @@
                 const proctorStatus = document.getElementById('proctor-status');
                 const videoElement = document.getElementById('webcam');
 
-                proctorStatus.textContent = 'Requesting camera...';
+                proctorStatus.textContent = 'Requesting camera & mic...';
                 
                 try {
-                    proctoringStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    proctoringStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                     videoElement.srcObject = proctoringStream;
                     proctorContainer.classList.remove('hidden');
                     
-                    proctorStatus.textContent = 'Connecting you to Server...';
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    audioSource = audioContext.createMediaStreamSource(proctoringStream);
+                    audioProcessor = audioContext.createAnalyser();
+                    audioProcessor.fftSize = 512;
+                    audioSource.connect(audioProcessor);
+
+                    proctorStatus.textContent = 'Loading AI models...';
                     [objectDetector, faceDetector] = await Promise.all([
                         cocoSsd.load(),
                         blazeface.load()
@@ -641,7 +656,7 @@
                 } catch (err) {
                     console.error("Proctoring Error:", err);
                     stopProctoring();
-                    throw new Error("Webcam access denied or AI models failed to load.");
+                    throw new Error("Webcam/Mic access denied or AI models failed to load.");
                 }
             }
 
@@ -654,13 +669,27 @@
                     faceDetector.estimateFaces(videoElement, false)
                 ]);
 
-                // --- Violation Checks ---
-                // 1. Multiple People
+                const dataArray = new Uint8Array(audioProcessor.frequencyBinCount);
+                audioProcessor.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (const amplitude of dataArray) {
+                    sum += amplitude * amplitude;
+                }
+                const volume = Math.sqrt(sum / dataArray.length) / 100;
+
+                if (volume > AUDIO_LEVEL_THRESHOLD) {
+                    audioViolationCount++;
+                    if (audioViolationCount > AUDIO_VIOLATION_THRESHOLD) {
+                        return handleViolation('Excessive Noise Detected');
+                    } else {
+                        showWarning(`Noise Detected (${audioViolationCount}/${AUDIO_VIOLATION_THRESHOLD + 1})`);
+                    }
+                }
+
                 if (facePredictions.length > 1) {
                     return handleViolation('Multiple People Detected');
                 }
                 
-                // 2. No Person Detected
                 if (facePredictions.length === 0) {
                     noFaceCounter++;
                     if (noFaceCounter > NO_FACE_FRAME_LIMIT) {
@@ -668,7 +697,6 @@
                     }
                 } else {
                     noFaceCounter = 0;
-                    // 3. Looking Away (only check if one face is present)
                     if (isLookingAway(facePredictions[0])) {
                         lookingAwayCounter++;
                         if (lookingAwayCounter > LOOKING_AWAY_FRAME_LIMIT) {
@@ -679,7 +707,6 @@
                     }
                 }
 
-                // 4. Phone Detection
                 const phone = objectPredictions.find(p => p.class === 'cell phone');
                 if (phone) {
                     if (phone.score > PHONE_SCORE_CLEAR) {
@@ -699,7 +726,6 @@
             }
 
             function isLookingAway(face) {
-                // Simple heuristic: check if the nose is horizontally far from the center of the eyes
                 const leftEye = face.landmarks[0];
                 const rightEye = face.landmarks[1];
                 const nose = face.landmarks[2];
@@ -709,7 +735,7 @@
             }
 
             function showWarning(message) {
-                if (isWarningActive) return; // Prevent overlapping warnings
+                if (isWarningActive) return;
                 isWarningActive = true;
                 const proctorStatus = document.getElementById('proctor-status');
                 const originalStatus = proctorStatus.innerHTML;
@@ -718,13 +744,14 @@
                 setTimeout(() => {
                     proctorStatus.innerHTML = originalStatus;
                     isWarningActive = false;
-                }, 3000); // Show warning for 3 seconds
+                }, 3000);
             }
 
             function handleViolation(reason) {
                 if (!proctoringEnabled) return; 
                 
-                proctoringEnabled = false; // Stop further checks
+                proctoringEnabled = false;
+                lastViolationReason = reason;
                 const proctorStatus = document.getElementById('proctor-status');
                 proctorStatus.innerHTML = `<span class="text-red-500 font-bold">VIOLATION: ${reason}</span>`;
                 
@@ -738,6 +765,10 @@
                 if (proctoringStream) {
                     proctoringStream.getTracks().forEach(track => track.stop());
                     proctoringStream = null;
+                }
+                if (audioContext) {
+                    audioContext.close();
+                    audioContext = null;
                 }
                 const proctorContainer = document.getElementById('proctor-container');
                 if(proctorContainer) proctorContainer.classList.add('hidden');
