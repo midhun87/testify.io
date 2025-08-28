@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Manage Moderators</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-8">
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-4">Manage Moderators</h1>
+            <p class="text-gray-600">Create, view, and delete moderator accounts.</p>
+        </div>
+
+        <!-- Create Moderator Form -->
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-6">Create New Moderator</h2>
+            <form id="create-moderator-form" class="space-y-4">
+                <div>
+                    <label for="fullName" class="block text-sm font-medium text-gray-700">Full Name</label>
+                    <input type="text" id="fullName" name="fullName" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="email" name="email" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="password" name="password" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="assignedColleges" class="block text-sm font-medium text-gray-700">Assign Colleges</label>
+                    <select id="assignedColleges" name="assignedColleges" multiple required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 h-32">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Hold Ctrl (or Cmd on Mac) to select multiple colleges.</p>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Create Moderator
+                </button>
+            </form>
+        </div>
+
+        <!-- Moderators List -->
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-6">Existing Moderators</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned Colleges</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="moderators-list" class="bg-white divide-y divide-gray-200">
+                        <!-- Rows will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/admin-login.html'; // Redirect if not logged in
+        }
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'x-auth-token': token
+        };
+
+        // Fetch and populate colleges
+        async function fetchColleges() {
+            try {
+                const response = await fetch('/api/colleges', { headers });
+                const colleges = await response.json();
+                const select = document.getElementById('assignedColleges');
+                select.innerHTML = '';
+                colleges.forEach(college => {
+                    const option = document.createElement('option');
+                    option.value = college.collegeName;
+                    option.textContent = college.collegeName;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching colleges:', error);
+                alert('Failed to load colleges.');
+            }
+        }
+
+        // Fetch and display moderators
+        async function fetchModerators() {
+            try {
+                const response = await fetch('/api/admin/moderators', { headers });
+                const moderators = await response.json();
+                const tbody = document.getElementById('moderators-list');
+                tbody.innerHTML = '';
+                moderators.forEach(moderator => {
+                    const row = `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${moderator.fullName}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${moderator.email}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${moderator.assignedColleges.join(', ')}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button onclick="deleteModerator('${moderator.email}')" class="text-red-600 hover:text-red-900">
+                                    <i class="fas fa-trash-alt"></i> Delete
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error('Error fetching moderators:', error);
+                alert('Failed to load moderators.');
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('create-moderator-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const assignedColleges = Array.from(document.getElementById('assignedColleges').selectedOptions).map(option => option.value);
+
+            const data = {
+                fullName: formData.get('fullName'),
+                email: formData.get('email'),
+                password: formData.get('password'),
+                assignedColleges: assignedColleges
+            };
+
+            try {
+                const response = await fetch('/api/admin/moderators', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Moderator created successfully!');
+                    form.reset();
+                    fetchModerators(); // Refresh the list
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('Error creating moderator:', error);
+                alert(`Error: ${error.message}`);
+            }
+        });
+
+        // Delete a moderator
+        async function deleteModerator(email) {
+            if (!confirm(`Are you sure you want to delete the moderator: ${email}?`)) {
+                return;
+            }
+            try {
+                const response = await fetch(`/api/admin/moderators/${email}`, {
+                    method: 'DELETE',
+                    headers
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Moderator deleted successfully!');
+                    fetchModerators(); // Refresh the list
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                console.error('Error deleting moderator:', error);
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchColleges();
+            fetchModerators();
+        });
+    </script>
+</body>
+</html>

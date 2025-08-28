@@ -14,7 +14,7 @@
             padding: 0.75rem 1rem;
             font-size: 0.75rem;
             letter-spacing: 0.05em;
-            color: #9CA3AF; /* gray-400 */
+            color: #9CA3AF;
             text-transform: uppercase;
         }
     </style>
@@ -114,13 +114,19 @@
                     </div>
 
                     <div id="passed-students-container" class="mt-6 hidden">
-                        <h3 class="text-lg font-semibold text-gray-700">Students Who Passed</h3>
+                        <h3 class="text-lg font-semibold text-gray-700">Students Eligible for Certificate</h3>
                         <p id="student-count" class="text-sm text-gray-500 mb-4"></p>
-                        <div id="passed-students-list" class="space-y-2 max-h-60 overflow-y-auto border rounded-lg p-4">
-                            <!-- List of passed students -->
+                        <div class="border rounded-lg">
+                            <div class="flex items-center p-4 border-b">
+                                <input id="select-all-students" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                <label for="select-all-students" class="ml-3 text-sm font-medium text-gray-800">Select All</label>
+                            </div>
+                            <div id="passed-students-list" class="space-y-1 max-h-60 overflow-y-auto p-4">
+                                <!-- List of passed students with checkboxes -->
+                            </div>
                         </div>
                         <button id="issue-certs-btn" class="mt-4 w-full px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                            Issue Certificates
+                            Issue Certificates to Selected Students
                         </button>
                     </div>
                 </div>
@@ -135,10 +141,9 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            // --- AUTH & UI ---
             const user = JSON.parse(localStorage.getItem('user'));
             const token = localStorage.getItem('token');
-            if (!token || !user || user.role !== 'Admin') {
+            if (!token || !user || (user.role !== 'Admin' && user.role !== 'Moderator')) {
                 window.location.href = '/login.html';
                 return;
             }
@@ -154,15 +159,14 @@
                 window.location.href = '/login.html';
             });
 
-            // --- PAGE ELEMENTS ---
             const testSelect = document.getElementById('test-select');
             const studentsContainer = document.getElementById('passed-students-container');
             const studentCount = document.getElementById('student-count');
             const studentsListDiv = document.getElementById('passed-students-list');
             const issueCertsBtn = document.getElementById('issue-certs-btn');
-            let passedStudentsData = [];
+            const selectAllCheckbox = document.getElementById('select-all-students');
+            let allEligibleStudents = [];
 
-            // --- FETCH TESTS FOR DROPDOWN ---
             async function loadTests() {
                 try {
                     const response = await fetch('/api/tests', { headers: { 'x-auth-token': token } });
@@ -183,49 +187,60 @@
             }
             await loadTests();
 
-            // --- EVENT LISTENER FOR TEST SELECTION ---
             testSelect.addEventListener('change', async () => {
                 const testId = testSelect.value;
-                if (!testId) {
-                    studentsContainer.classList.add('hidden');
-                    return;
-                }
+                studentsContainer.classList.add('hidden');
+                if (!testId) return;
 
                 try {
                     const response = await fetch(`/api/admin/passed-students/${testId}`, { headers: { 'x-auth-token': token } });
                     if (!response.ok) throw new Error('Failed to fetch students');
-                    passedStudentsData = await response.json();
+                    allEligibleStudents = await response.json();
 
-                    studentCount.textContent = `${passedStudentsData.length} student(s) passed this test.`;
+                    studentCount.textContent = `${allEligibleStudents.length} student(s) are eligible for a certificate.`;
                     studentsListDiv.innerHTML = '';
-                    if (passedStudentsData.length > 0) {
-                        passedStudentsData.forEach(student => {
-                            const p = document.createElement('p');
-                            p.className = 'text-gray-700';
-                            p.textContent = student.studentEmail;
-                            studentsListDiv.appendChild(p);
+                    
+                    if (allEligibleStudents.length > 0) {
+                        allEligibleStudents.forEach(student => {
+                            studentsListDiv.innerHTML += `
+                                <div class="flex items-center">
+                                    <input id="student-${student.studentEmail}" name="students" value="${student.studentEmail}" type="checkbox" class="student-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                    <label for="student-${student.studentEmail}" class="ml-3 text-sm text-gray-700">${student.studentEmail}</label>
+                                </div>`;
                         });
                         issueCertsBtn.disabled = false;
                     } else {
-                        studentsListDiv.innerHTML = '<p class="text-gray-500">No students have passed this test yet.</p>';
+                        studentsListDiv.innerHTML = '<p class="text-gray-500">All passed students have already been issued certificates for this test.</p>';
                         issueCertsBtn.disabled = true;
                     }
                     studentsContainer.classList.remove('hidden');
+                    selectAllCheckbox.checked = false;
                 } catch (error) {
                     console.error('Error fetching passed students:', error);
                     alert('Could not load student data for this test.');
                 }
             });
 
-            // --- EVENT LISTENER FOR ISSUING CERTIFICATES ---
+            selectAllCheckbox.addEventListener('change', () => {
+                const checkboxes = document.querySelectorAll('.student-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = selectAllCheckbox.checked;
+                });
+            });
+
             issueCertsBtn.addEventListener('click', async () => {
                 const testId = testSelect.value;
                 const testTitle = testSelect.options[testSelect.selectedIndex].text;
 
-                if (!testId || passedStudentsData.length === 0) {
-                    alert('No students to issue certificates to.');
+                const selectedCheckboxes = document.querySelectorAll('.student-checkbox:checked');
+                const selectedStudentEmails = Array.from(selectedCheckboxes).map(cb => cb.value);
+
+                if (selectedStudentEmails.length === 0) {
+                    alert('Please select at least one student to issue a certificate.');
                     return;
                 }
+                
+                const studentsToIssue = allEligibleStudents.filter(s => selectedStudentEmails.includes(s.studentEmail));
 
                 issueCertsBtn.disabled = true;
                 issueCertsBtn.textContent = 'Issuing...';
@@ -234,7 +249,7 @@
                     const response = await fetch('/api/admin/issue-certificates', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                        body: JSON.stringify({ testId, testTitle, passedStudents: passedStudentsData })
+                        body: JSON.stringify({ testId, testTitle, passedStudents: studentsToIssue })
                     });
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.message);
@@ -247,7 +262,7 @@
                     alert(`Error: ${error.message}`);
                 } finally {
                     issueCertsBtn.disabled = false;
-                    issueCertsBtn.textContent = 'Issue Certificates to Passed Students';
+                    issueCertsBtn.textContent = 'Issue Certificates to Selected Students';
                 }
             });
         });

@@ -7,22 +7,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .sidebar-link:hover {
-            background-color: #4338CA;
-        }
-        .sidebar-link.active {
-            background-color: #4F46E5;
-            font-weight: 600;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
         .sidebar-heading {
             padding: 0.75rem 1rem;
             font-size: 0.75rem;
             letter-spacing: 0.05em;
-            color: #9CA3AF; /* gray-400 */
+            color: #9CA3AF;
             text-transform: uppercase;
+        }
+        .tab-btn.active {
+            border-color: #4F46E5;
+            color: #4F46E5;
+            background-color: #EEF2FF;
         }
     </style>
 </head>
@@ -99,7 +97,7 @@
         <!-- Main content -->
         <div class="flex flex-col flex-1 overflow-y-auto">
             <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
-                <h1 class="text-2xl font-bold text-gray-800">Assign Tests to Colleges</h1>
+                <h1 class="text-2xl font-bold text-gray-800">Assign Tests</h1>
                 <div class="flex items-center">
                     <div class="relative">
                         <button id="user-menu-button" class="flex items-center space-x-2">
@@ -146,11 +144,24 @@
                     <p class="mt-1 text-sm text-gray-600">Assigning: <strong id="modal-test-name"></strong></p>
                     <input type="hidden" id="modal-test-id" name="testId">
 
-                    <div class="mt-6">
+                     <!-- TABS -->
+                    <div class="border-b border-gray-200 mt-4">
+                        <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                            <button type="button" id="tab-college" class="tab-btn active whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Assign by College</button>
+                            <button type="button" id="tab-student" class="tab-btn text-gray-500 hover:text-gray-700 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Assign by Student</button>
+                        </nav>
+                    </div>
+
+                    <!-- TAB PANELS -->
+                    <div id="tab-panel-college" class="mt-6">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Select Colleges</label>
-                        <div id="college-list" class="space-y-2 max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-4">
-                            <!-- College checkboxes will be dynamically inserted here -->
-                        </div>
+                        <div id="college-list" class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-4"></div>
+                    </div>
+                    
+                    <div id="tab-panel-student" class="hidden mt-6">
+                        <label for="student-search" class="block text-sm font-medium text-gray-700 mb-2">Select Students</label>
+                        <input type="text" id="student-search" placeholder="Search by name or email..." class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <div id="student-list" class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-4 mt-2"></div>
                     </div>
                     
                     <div class="mt-6 flex items-center justify-between">
@@ -182,7 +193,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const user = JSON.parse(localStorage.getItem('user'));
             const token = localStorage.getItem('token');
-            if (!token || !user || user.role !== 'Admin') {
+            if (!token || !user || (user.role !== 'Admin' && user.role !== 'Moderator')) {
                 window.location.href = '/login.html';
                 return;
             }
@@ -196,60 +207,65 @@
             const modalTestName = document.getElementById('modal-test-name');
             const modalTestIdInput = document.getElementById('modal-test-id');
             const collegeListDiv = document.getElementById('college-list');
+            const studentListDiv = document.getElementById('student-list');
+            const studentSearchInput = document.getElementById('student-search');
             const cancelBtn = document.getElementById('cancel-btn');
             const assignForm = document.getElementById('assign-form');
+            const tabCollege = document.getElementById('tab-college');
+            const tabPanelCollege = document.getElementById('tab-panel-college');
+            const tabStudent = document.getElementById('tab-student');
+            const tabPanelStudent = document.getElementById('tab-panel-student');
             
-            let colleges = []; // To store the fetched college list
+            let colleges = [];
+            let students = [];
+            let currentAssignType = 'college';
 
-            async function fetchColleges() {
+            async function fetchData() {
                 try {
-                    const response = await fetch('/api/colleges', { headers: { 'x-auth-token': token } });
-                    if (!response.ok) throw new Error('Failed to fetch colleges');
-                    const collegeData = await response.json();
-                    // Store just the names for easier use
-                    colleges = collegeData.map(c => c.collegeName);
+                    const [collegesRes, studentsRes, testsRes] = await Promise.all([
+                        fetch('/api/colleges', { headers: { 'x-auth-token': token } }),
+                        fetch('/api/admin/all-students', { headers: { 'x-auth-token': token } }),
+                        fetch('/api/tests', { headers: { 'x-auth-token': token } })
+                    ]);
+                    
+                    if (!collegesRes.ok || !studentsRes.ok || !testsRes.ok) throw new Error('Failed to fetch initial data.');
+
+                    const collegeData = await collegesRes.json();
+                    colleges = user.role === 'Admin' ? collegeData.map(c => c.collegeName) : user.assignedColleges;
+                    students = await studentsRes.json();
+                    const tests = await testsRes.json();
+                    
+                    displayTests(tests);
+
                 } catch (error) {
-                    console.error('Error fetching colleges:', error);
-                    alert('Could not load the list of colleges. Please refresh the page.');
+                    console.error('Error fetching data:', error);
+                    alert('Could not load page data. Please try again.');
                 }
             }
             
-            async function fetchAndDisplayTests() {
-                try {
-                    const response = await fetch('/api/tests', { headers: { 'x-auth-token': token } });
-                    if (!response.ok) throw new Error('Failed to fetch tests');
-                    
-                    const tests = await response.json();
-                    testsTableBody.innerHTML = '';
-                    
-                    if (tests.length === 0) {
-                        testsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No tests found. Create one!</td></tr>';
-                        return;
-                    }
-
-                    tests.forEach(test => {
-                        const row = document.createElement('tr');
-                        row.className = 'bg-white border-b hover:bg-gray-50';
-                        
-                        let statusBadge = test.status === 'Not Assigned'
-                            ? `<span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Not Assigned</span>`
-                            : `<span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">${test.status}</span>`;
-
-                        row.innerHTML = `
-                            <td class="px-6 py-4 font-medium text-gray-900">${test.title}</td>
-                            <td class="px-6 py-4">${test.questions.length}</td>
-                            <td class="px-6 py-4">${test.duration} mins</td>
-                            <td class="px-6 py-4">${statusBadge}</td>
-                            <td class="px-6 py-4 text-right">
-                                <button class="assign-btn font-medium text-indigo-600 hover:text-indigo-900" data-testid="${test.testId}" data-testname="${test.title}">Assign</button>
-                            </td>
-                        `;
-                        testsTableBody.appendChild(row);
-                    });
-                } catch (error) {
-                    console.error('Error fetching tests:', error);
-                    testsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">Could not load tests.</td></tr>';
+            function displayTests(tests) {
+                testsTableBody.innerHTML = '';
+                if (tests.length === 0) {
+                    testsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No tests found. Create one!</td></tr>';
+                    return;
                 }
+                tests.forEach(test => {
+                    const row = document.createElement('tr');
+                    row.className = 'bg-white border-b hover:bg-gray-50';
+                    let statusBadge = test.status === 'Not Assigned'
+                        ? `<span class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Not Assigned</span>`
+                        : `<span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">${test.status}</span>`;
+                    row.innerHTML = `
+                        <td class="px-6 py-4 font-medium text-gray-900">${test.title}</td>
+                        <td class="px-6 py-4">${test.questions.length}</td>
+                        <td class="px-6 py-4">${test.duration} mins</td>
+                        <td class="px-6 py-4">${statusBadge}</td>
+                        <td class="px-6 py-4 text-right">
+                            <button class="assign-btn font-medium text-indigo-600 hover:text-indigo-900" data-testid="${test.testId}" data-testname="${test.title}">Assign</button>
+                        </td>
+                    `;
+                    testsTableBody.appendChild(row);
+                });
             }
             
             userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
@@ -263,28 +279,68 @@
                 modalTestName.textContent = testName;
                 modalTestIdInput.value = testId;
                 
-                collegeListDiv.innerHTML = '';
-                if (colleges.length > 0) {
-                    colleges.forEach((college, index) => {
-                        const div = document.createElement('div');
-                        div.className = 'flex items-center';
-                        div.innerHTML = `
-                            <input id="college-${index}" name="colleges" value="${college}" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                            <label for="college-${index}" class="ml-3 block text-sm font-medium text-gray-700">${college}</label>
-                        `;
-                        collegeListDiv.appendChild(div);
-                    });
-                } else {
-                    collegeListDiv.innerHTML = '<p class="text-sm text-gray-500">No colleges have been added yet. Please add colleges first.</p>';
-                }
+                populateCollegeList();
+                populateStudentList();
 
                 document.getElementById('send-email').checked = true;
                 document.getElementById('auto-issue-certs').checked = false;
                 assignModal.classList.remove('hidden');
             }
 
+            function populateCollegeList() {
+                collegeListDiv.innerHTML = '';
+                if (colleges.length > 0) {
+                    colleges.forEach((college, index) => {
+                        collegeListDiv.innerHTML += `
+                            <div class="flex items-center">
+                                <input id="college-${index}" name="colleges" value="${college}" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                <label for="college-${index}" class="ml-3 block text-sm font-medium text-gray-700">${college}</label>
+                            </div>`;
+                    });
+                } else {
+                    collegeListDiv.innerHTML = '<p class="text-sm text-gray-500">No colleges available.</p>';
+                }
+            }
+
+            function populateStudentList(searchTerm = '') {
+                studentListDiv.innerHTML = '';
+                const filteredStudents = students.filter(s => 
+                    s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    s.email.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+
+                if (filteredStudents.length === 0) {
+                    studentListDiv.innerHTML = '<p class="text-sm text-gray-500">No students found.</p>';
+                } else {
+                    filteredStudents.forEach(student => {
+                        studentListDiv.innerHTML += `
+                            <div class="flex items-center">
+                                <input id="student-${student.email}" name="studentEmails" value="${student.email}" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                <label for="student-${student.email}" class="ml-3 text-sm text-gray-700">${student.fullName} (${student.email})</label>
+                            </div>`;
+                    });
+                }
+            }
+
             function closeModal() {
                 assignModal.classList.add('hidden');
+                assignForm.reset();
+                switchTab('college');
+            }
+
+            function switchTab(tab) {
+                currentAssignType = tab;
+                if (tab === 'college') {
+                    tabCollege.classList.add('active');
+                    tabStudent.classList.remove('active');
+                    tabPanelCollege.classList.remove('hidden');
+                    tabPanelStudent.classList.add('hidden');
+                } else {
+                    tabStudent.classList.add('active');
+                    tabCollege.classList.remove('active');
+                    tabPanelStudent.classList.remove('hidden');
+                    tabPanelCollege.classList.add('hidden');
+                }
             }
 
             testsTableBody.addEventListener('click', (e) => {
@@ -292,11 +348,12 @@
                     openModal(e.target.dataset.testid, e.target.dataset.testname);
                 }
             });
-
+            
+            studentSearchInput.addEventListener('input', (e) => populateStudentList(e.target.value));
+            tabCollege.addEventListener('click', () => switchTab('college'));
+            tabStudent.addEventListener('click', () => switchTab('student'));
             cancelBtn.addEventListener('click', closeModal);
-            assignModal.addEventListener('click', (e) => {
-                if (e.target === assignModal) closeModal();
-            });
+            assignModal.addEventListener('click', (e) => { if (e.target === assignModal) closeModal(); });
 
             assignForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -304,14 +361,22 @@
                 const payload = {
                     testId: formData.get('testId'),
                     testName: modalTestName.textContent,
-                    colleges: formData.getAll('colleges'),
                     sendEmail: document.getElementById('send-email').checked,
                     autoIssueCertificates: document.getElementById('auto-issue-certs').checked
                 };
 
-                if (payload.colleges.length === 0) {
-                    alert('Please select at least one college.');
-                    return;
+                if (currentAssignType === 'college') {
+                    payload.colleges = formData.getAll('colleges');
+                    if (payload.colleges.length === 0) {
+                        alert('Please select at least one college.');
+                        return;
+                    }
+                } else {
+                    payload.studentEmails = formData.getAll('studentEmails');
+                     if (payload.studentEmails.length === 0) {
+                        alert('Please select at least one student.');
+                        return;
+                    }
                 }
 
                 try {
@@ -325,15 +390,13 @@
 
                     alert('Test assigned successfully!');
                     closeModal();
-                    await fetchAndDisplayTests();
+                    await fetchData(); // Refetch all data to update the view
                 } catch (error) {
                     alert(`Error assigning test: ${error.message}`);
                 }
             });
 
-            // Initial data fetch
-            await fetchColleges();
-            await fetchAndDisplayTests();
+            await fetchData();
         });
     </script>
 </body>

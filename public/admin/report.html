@@ -27,7 +27,7 @@
 </head>
 <body class="bg-gray-100">
 
-    <div class="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+    <div class="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
         <!-- Header with Print Button -->
         <div class="flex justify-between items-center mb-6 no-print">
             <a href="/admin/test-history.html" class="text-indigo-600 hover:text-indigo-800">&larr; Back to Test History</a>
@@ -61,6 +61,7 @@
                                 <th scope="col" class="px-6 py-3">Result</th>
                                 <th scope="col" class="px-6 py-3">Time Taken</th>
                                 <th scope="col" class="px-6 py-3">Attempted On</th>
+                                <th scope="col" class="px-6 py-3">Violation</th>
                             </tr>
                         </thead>
                         <tbody id="report-table-body">
@@ -107,7 +108,7 @@
                 tableBody.innerHTML = '';
 
                 if (data.results.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No students have attempted this test yet.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">No students have attempted this test yet.</td></tr>';
                     return;
                 }
 
@@ -119,6 +120,10 @@
                         : `<span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Fail</span>`;
                     const dateTaken = new Date(item.submittedAt).toLocaleString();
                     const timeTakenFormatted = `${Math.floor(item.timeTaken / 60)}:${String(item.timeTaken % 60).padStart(2, '0')}`;
+                    
+                    const violationInfo = item.violationReason
+                        ? `<span class="font-semibold text-red-600">${item.violationReason}</span>`
+                        : `<span class="text-gray-500">None</span>`;
 
                     row.innerHTML = `
                         <td class="px-6 py-4 font-medium text-gray-900">${item.studentName}</td>
@@ -127,6 +132,7 @@
                         <td class="px-6 py-4">${resultBadge}</td>
                         <td class="px-6 py-4">${timeTakenFormatted} mins</td>
                         <td class="px-6 py-4">${dateTaken}</td>
+                        <td class="px-6 py-4">${violationInfo}</td>
                     `;
                     tableBody.appendChild(row);
                 });

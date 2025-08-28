@@ -19,6 +19,11 @@
             color: #9CA3AF;
             text-transform: uppercase;
         }
+        .tab-btn.active {
+            border-color: #4F46E5;
+            color: #4F46E5;
+            background-color: #EEF2FF;
+        }
     </style>
 </head>
 <body>
@@ -94,7 +99,7 @@
         <!-- Main content -->
         <div class="flex flex-col flex-1 overflow-y-auto">
             <header class="flex items-center justify-between h-20 bg-white border-b px-6">
-                <h1 class="text-2xl font-semibold text-gray-800">Assign Courses to Colleges</h1>
+                <h1 class="text-2xl font-semibold text-gray-800">Assign Courses</h1>
                  <div class="flex items-center">
                     <div class="relative">
                         <button id="user-menu-button" class="flex items-center space-x-2">
@@ -140,11 +145,24 @@
                     <p class="mt-1 text-sm text-gray-600">Assigning: <strong id="modal-course-name"></strong></p>
                     <input type="hidden" id="modal-course-id" name="courseId">
 
-                    <div class="mt-6">
+                    <!-- TABS -->
+                    <div class="border-b border-gray-200 mt-4">
+                        <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                            <button type="button" id="tab-college" class="tab-btn active whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Assign by College</button>
+                            <button type="button" id="tab-student" class="tab-btn text-gray-500 hover:text-gray-700 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Assign by Student</button>
+                        </nav>
+                    </div>
+
+                    <!-- TAB PANELS -->
+                    <div id="tab-panel-college" class="mt-6">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Select Colleges</label>
-                        <div id="college-list" class="space-y-2 max-h-60 overflow-y-auto border border-gray-200 rounded-lg p-4">
-                            <!-- College checkboxes will be dynamically inserted here -->
-                        </div>
+                        <div id="college-list" class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-4"></div>
+                    </div>
+                    
+                    <div id="tab-panel-student" class="hidden mt-6">
+                        <label for="student-search" class="block text-sm font-medium text-gray-700 mb-2">Select Students</label>
+                        <input type="text" id="student-search" placeholder="Search by name or email..." class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <div id="student-list" class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-4 mt-2"></div>
                     </div>
                     
                     <div class="mt-6 flex items-center justify-between">
@@ -167,7 +185,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('token');
             const user = JSON.parse(localStorage.getItem('user'));
-            if (!token || !user || user.role !== 'Admin') { 
+            if (!token || !user || (user.role !== 'Admin' && user.role !== 'Moderator')) { 
                 window.location.href = '/login.html'; 
                 return; 
             }
@@ -188,61 +206,76 @@
             const assignForm = document.getElementById('assign-form');
             const cancelBtn = document.getElementById('cancel-btn');
             const collegeListDiv = document.getElementById('college-list');
+            const studentListDiv = document.getElementById('student-list');
+            const studentSearchInput = document.getElementById('student-search');
             const modalCourseName = document.getElementById('modal-course-name');
             const modalCourseIdInput = document.getElementById('modal-course-id');
+            const tabCollege = document.getElementById('tab-college');
+            const tabPanelCollege = document.getElementById('tab-panel-college');
+            const tabStudent = document.getElementById('tab-student');
+            const tabPanelStudent = document.getElementById('tab-panel-student');
             
             let colleges = [];
+            let students = [];
+            let currentAssignType = 'college';
 
-            async function fetchColleges() {
+            async function fetchData() {
                 try {
-                    // Use the new public endpoint to get the master list of colleges
-                    const response = await fetch('/api/colleges', { headers: { 'x-auth-token': token } });
-                    if (!response.ok) throw new Error('Failed to fetch colleges');
-                    const collegeData = await response.json();
-                    colleges = collegeData.map(c => c.collegeName);
+                    const [collegesRes, studentsRes, coursesRes] = await Promise.all([
+                        fetch('/api/colleges', { headers: { 'x-auth-token': token } }),
+                        fetch('/api/admin/all-students', { headers: { 'x-auth-token': token } }),
+                        fetch('/api/admin/courses', { headers: { 'x-auth-token': token } })
+                    ]);
+                    
+                    if (!collegesRes.ok || !studentsRes.ok || !coursesRes.ok) throw new Error('Failed to fetch initial data.');
+
+                    const collegeData = await collegesRes.json();
+                    colleges = user.role === 'Admin' ? collegeData.map(c => c.collegeName) : user.assignedColleges;
+                    students = await studentsRes.json();
+                    const courses = await coursesRes.json();
+                    
+                    displayCourses(courses);
+
                 } catch (error) {
-                    console.error('Error fetching colleges:', error);
-                    alert('Could not load colleges. Please try again.');
+                    console.error('Error fetching data:', error);
+                    alert('Could not load page data. Please try again.');
                 }
             }
 
-            async function fetchAndDisplayCourses() {
-                try {
-                    const response = await fetch('/api/admin/courses', { headers: { 'x-auth-token': token } });
-                    if (!response.ok) throw new Error('Failed to fetch courses');
-                    const courses = await response.json();
-                    coursesTableBody.innerHTML = '';
-                    
-                    if (courses.length === 0) {
-                        coursesTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-500">No courses have been created yet.</td></tr>';
-                        return;
-                    }
-
-                    courses.forEach(course => {
-                        const row = `
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="px-6 py-4 font-medium text-gray-800">${course.title}</td>
-                                <td class="px-6 py-4">${course.modules.length}</td>
-                                <td class="px-6 py-4">${new Date(course.createdAt).toLocaleDateString()}</td>
-                                <td class="px-6 py-4 text-right">
-                                    <button class="assign-btn font-medium text-indigo-600 hover:text-indigo-800" data-courseid="${course.courseId}" data-coursename="${course.title}">Assign</button>
-                                </td>
-                            </tr>`;
-                        coursesTableBody.innerHTML += row;
-                    });
-                } catch (error) {
-                    console.error('Error fetching courses:', error);
-                    coursesTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-red-500">Could not load courses. Please try again.</td></tr>';
+            function displayCourses(courses) {
+                coursesTableBody.innerHTML = '';
+                if (courses.length === 0) {
+                    coursesTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-500">No courses have been created yet.</td></tr>';
+                    return;
                 }
+                courses.forEach(course => {
+                    const row = `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-800">${course.title}</td>
+                            <td class="px-6 py-4">${course.modules.length}</td>
+                            <td class="px-6 py-4">${new Date(course.createdAt).toLocaleDateString()}</td>
+                            <td class="px-6 py-4 text-right">
+                                <button class="assign-btn font-medium text-indigo-600 hover:text-indigo-800" data-courseid="${course.courseId}" data-coursename="${course.title}">Assign</button>
+                            </td>
+                        </tr>`;
+                    coursesTableBody.innerHTML += row;
+                });
             }
             
             function openModal(courseId, courseName) {
                 modalCourseName.textContent = courseName;
                 modalCourseIdInput.value = courseId;
                 
+                populateCollegeList();
+                populateStudentList();
+                
+                assignModal.classList.remove('hidden');
+            }
+
+            function populateCollegeList() {
                 collegeListDiv.innerHTML = '';
                 if (colleges.length === 0) {
-                    collegeListDiv.innerHTML = '<p class="text-sm text-gray-500">No colleges available to assign. Please add them first.</p>';
+                    collegeListDiv.innerHTML = '<p class="text-sm text-gray-500">No colleges available.</p>';
                 } else {
                     colleges.forEach((college, index) => {
                         collegeListDiv.innerHTML += `
@@ -252,11 +285,47 @@
                             </div>`;
                     });
                 }
-                assignModal.classList.remove('hidden');
+            }
+
+            function populateStudentList(searchTerm = '') {
+                studentListDiv.innerHTML = '';
+                const filteredStudents = students.filter(s => 
+                    s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    s.email.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+
+                if (filteredStudents.length === 0) {
+                    studentListDiv.innerHTML = '<p class="text-sm text-gray-500">No students found.</p>';
+                } else {
+                    filteredStudents.forEach(student => {
+                        studentListDiv.innerHTML += `
+                            <div class="flex items-center">
+                                <input id="student-${student.email}" name="studentEmails" value="${student.email}" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                                <label for="student-${student.email}" class="ml-3 text-sm text-gray-700">${student.fullName} (${student.email})</label>
+                            </div>`;
+                    });
+                }
             }
 
             function closeModal() {
                 assignModal.classList.add('hidden');
+                assignForm.reset();
+                switchTab('college');
+            }
+
+            function switchTab(tab) {
+                currentAssignType = tab;
+                if (tab === 'college') {
+                    tabCollege.classList.add('active');
+                    tabStudent.classList.remove('active');
+                    tabPanelCollege.classList.remove('hidden');
+                    tabPanelStudent.classList.add('hidden');
+                } else {
+                    tabStudent.classList.add('active');
+                    tabCollege.classList.remove('active');
+                    tabPanelStudent.classList.remove('hidden');
+                    tabPanelCollege.classList.add('hidden');
+                }
             }
 
             coursesTableBody.addEventListener('click', e => {
@@ -265,6 +334,9 @@
                 }
             });
 
+            studentSearchInput.addEventListener('input', (e) => populateStudentList(e.target.value));
+            tabCollege.addEventListener('click', () => switchTab('college'));
+            tabStudent.addEventListener('click', () => switchTab('student'));
             cancelBtn.addEventListener('click', closeModal);
             assignModal.addEventListener('click', e => { if (e.target === assignModal) closeModal(); });
 
@@ -273,13 +345,21 @@
                 const formData = new FormData(assignForm);
                 const payload = {
                     courseId: formData.get('courseId'),
-                    colleges: formData.getAll('colleges'),
                     sendEmail: document.getElementById('send-email').checked
                 };
 
-                if (payload.colleges.length === 0) {
-                    alert('Please select at least one college.');
-                    return;
+                if (currentAssignType === 'college') {
+                    payload.colleges = formData.getAll('colleges');
+                    if (payload.colleges.length === 0) {
+                        alert('Please select at least one college.');
+                        return;
+                    }
+                } else {
+                    payload.studentEmails = formData.getAll('studentEmails');
+                     if (payload.studentEmails.length === 0) {
+                        alert('Please select at least one student.');
+                        return;
+                    }
                 }
 
                 try {
@@ -297,9 +377,7 @@
                 }
             });
 
-            // Initial data fetch
-            await fetchColleges();
-            await fetchAndDisplayCourses();
+            await fetchData();
         });
     </script>
 </body>
