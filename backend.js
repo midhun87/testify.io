@@ -1975,6 +1975,8 @@ const rekognitionClient = new RekognitionClient({
 // const fetch = require('node-fetch');
 
 // --- REPLACE the existing face-verification route with this one ---
+// In backend.js, find and replace this entire route
+
 app.post('/api/student/face-verification', authMiddleware, async (req, res) => {
     const { profileImageUrl, webcamImage } = req.body;
 
@@ -1983,26 +1985,22 @@ app.post('/api/student/face-verification', authMiddleware, async (req, res) => {
     }
 
     try {
-        // --- NEW LOGIC: Fetch profile image from Cloudinary ---
+        // --- Step 1: Fetch profile image from Cloudinary ---
         const profileImageResponse = await fetch(profileImageUrl);
         if (!profileImageResponse.ok) {
+            // This will now throw a specific error if Cloudinary fails
             throw new Error('Failed to download profile image from Cloudinary.');
         }
         const profileImageBuffer = await profileImageResponse.buffer();
-        // --- END OF NEW LOGIC ---
 
-        // Convert the base64 webcam image from the frontend to a buffer
+        // --- Step 2: Prepare webcam image ---
         const webcamImageBuffer = Buffer.from(webcamImage.replace(/^data:image\/jpeg;base64,/, ""), 'base64');
 
+        // --- Step 3: Call AWS Rekognition ---
         const command = new CompareFacesCommand({
-            // MODIFIED: Use Bytes for the source image instead of S3Object
-            SourceImage: {
-                Bytes: profileImageBuffer,
-            },
-            TargetImage: {
-                Bytes: webcamImageBuffer,
-            },
-            SimilarityThreshold: 90, // Set a similarity threshold
+            SourceImage: { Bytes: profileImageBuffer },
+            TargetImage: { Bytes: webcamImageBuffer },
+            SimilarityThreshold: 90,
         });
 
         const response = await rekognitionClient.send(command);
@@ -2015,8 +2013,22 @@ app.post('/api/student/face-verification', authMiddleware, async (req, res) => {
         }
 
     } catch (error) {
-        console.error('Face Verification Error:', error);
-        res.status(500).json({ message: 'An error occurred during face verification.' });
+        // --- MODIFIED & IMPROVED ERROR HANDLING ---
+        console.error('Face Verification Error:', error); // Detailed log for you on Render
+        
+        let userMessage = 'An error occurred during face verification.';
+        
+        // Provide more specific feedback to the frontend
+        if (error.name === 'AccessDeniedException') {
+            userMessage = 'AWS Rekognition service access denied. Please check your IAM user permissions.';
+        } else if (error.message.includes('Cloudinary')) {
+            userMessage = 'Could not retrieve profile image from the server.';
+        } else if (error.name) {
+            // Send back the specific AWS error name
+            userMessage = `AWS Error: ${error.name}. Please check server logs.`;
+        }
+        
+        res.status(500).json({ message: userMessage });
     }
 });
 // Get ALL students (for Admin) or all students in assigned colleges (for Moderator)
@@ -2359,3 +2371,4 @@ app.post('/api/student/submit-practice-test', authMiddleware, async (req, res) =
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
