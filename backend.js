@@ -14,6 +14,8 @@ const multer = require('multer');
 const pdf = require('pdf-parse');
 const fetch = require('node-fetch');
 const cloudinary = require('cloudinary').v2;
+const { BatchWriteCommand } = require("@aws-sdk/lib-dynamodb"); // Make sure this is imported at the top of your backend.js
+
 
 
 // --- INITIALIZATION ---
@@ -236,6 +238,79 @@ app.delete('/api/colleges/:collegeName', authMiddleware, async (req, res) => {
     } catch (error) {
         console.error("Delete College Error:", error);
         res.status(500).json({ message: 'Server error deleting college.' });
+    }
+});
+
+// =================================================================
+// --- DEPARTMENT MANAGEMENT ROUTES (ADMIN ONLY) [RECTIFIED] ---
+// =================================================================
+app.post('/api/departments', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { departmentName } = req.body;
+    if (!departmentName) {
+        return res.status(400).json({ message: 'Department name is required.' });
+    }
+    try {
+        const departmentId = `department#${departmentName}`;
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: "TestifyUsers", // Use existing table
+            Key: { email: departmentId } // Use a unique key for the department
+        }));
+        if (Item) {
+            return res.status(400).json({ message: 'Department with this name already exists.' });
+        }
+        
+        const newDepartment = {
+            email: departmentId,
+            departmentName: departmentName,
+            recordType: "Department" // Add a type to distinguish from users
+        };
+
+        await docClient.send(new PutCommand({
+            TableName: "TestifyUsers", // Use existing table
+            Item: newDepartment
+        }));
+        res.status(201).json({ message: 'Department added successfully.' });
+    } catch (error) {
+        console.error("Add Department Error:", error);
+        res.status(500).json({ message: 'Server error adding department.' });
+    }
+});
+
+app.get('/api/departments', async (req, res) => {
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyUsers", // Use existing table
+            FilterExpression: "recordType = :type", // Filter for department records
+            ExpressionAttributeValues: {
+                ":type": "Department"
+            }
+        }));
+        Items.sort((a, b) => a.departmentName.localeCompare(b.departmentName));
+        res.json(Items);
+    } catch (error) {
+        console.error("Get Departments Error:", error);
+        res.status(500).json({ message: 'Server error fetching departments.' });
+    }
+});
+
+app.delete('/api/departments/:departmentName', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { departmentName } = req.params;
+    try {
+        const departmentId = `department#${departmentName}`;
+        await docClient.send(new DeleteCommand({
+            TableName: "TestifyUsers", // Use existing table
+            Key: { email: departmentId } // Use the unique key to delete
+        }));
+        res.json({ message: 'Department deleted successfully.' });
+    } catch (error) {
+        console.error("Delete Department Error:", error);
+        res.status(500).json({ message: 'Server error deleting department.' });
     }
 });
 
@@ -494,8 +569,8 @@ app.get('/', (req, res) => {
 // =================================================================
 
 app.post('/api/signup', async (req, res) => {
-    const { fullName, email, mobile, college, department, rollNumber, password } = req.body;
-    if (!fullName || !email || !mobile || !college || !department || !rollNumber || !password) {
+    const { fullName, email, mobile, college, department, year, rollNumber, password } = req.body;
+    if (!fullName || !email || !mobile || !college || !department || !year || !rollNumber || !password) {
         return res.status(400).json({ message: 'Please fill all fields.' });
     }
     try {
@@ -510,6 +585,7 @@ app.post('/api/signup', async (req, res) => {
             fullName,
             mobile,
             college,
+            year,
             department,
             rollNumber,
             password: hashedPassword,
@@ -638,14 +714,6 @@ app.post('/api/assign-test', authMiddleware, adminOrModeratorAuth, async (req, r
                     return res.status(403).json({ message: 'You can only assign tests to your assigned colleges.' });
                 }
             }
-            for (const college of colleges) {
-                const assignmentId = uuidv4();
-                await docClient.send(new PutCommand({
-                    TableName: "TestifyAssignments",
-                    Item: { assignmentId, testId, college, assignedAt: new Date().toISOString() }
-                }));
-            }
-            
             const filterExpression = colleges.map((_, index) => `college = :c${index}`).join(' OR ');
             const expressionAttributeValues = {};
             colleges.forEach((college, index) => {
@@ -1239,68 +1307,49 @@ app.get('/api/student/dashboard-data', authMiddleware, async (req, res) => {
 // In backend.js, replace the '/api/student/tests' route
 
 app.get('/api/student/tests', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+    if (req.user.role !== 'Student') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
     
     try {
-        const studentCollege = req.user.college;
         const studentEmail = req.user.email;
-        if (!studentCollege) return res.json([]);
 
-        // Get all assignments for the student (both individual and by college)
-        const collegeAssignmentsResponse = await docClient.send(new ScanCommand({
-            TableName: "TestifyAssignments",
-            FilterExpression: "college = :c",
-            ExpressionAttributeValues: { ":c": studentCollege }
-        }));
-        const individualAssignmentsResponse = await docClient.send(new ScanCommand({
+        // Step 1: Get all assignment records for the logged-in student.
+        // For better performance, consider creating a Global Secondary Index (GSI) on `studentEmail` 
+        // in your `TestifyAssignments` table and using `QueryCommand` instead of `ScanCommand`.
+        const assignmentsResponse = await docClient.send(new ScanCommand({
             TableName: "TestifyAssignments",
             FilterExpression: "studentEmail = :email",
             ExpressionAttributeValues: { ":email": studentEmail }
         }));
         
-        const allAssignments = [
-            ...collegeAssignmentsResponse.Items, 
-            ...individualAssignmentsResponse.Items
-        ];
+        const assignments = assignmentsResponse.Items;
 
-        if (allAssignments.length === 0) return res.json([]);
+        if (!assignments || assignments.length === 0) {
+            return res.json([]); // No tests assigned to this student.
+        }
 
-        // Get all results submitted by the student
+        // Step 2: Get all test results submitted by this student.
         const resultsResponse = await docClient.send(new QueryCommand({
             TableName: "TestifyResults",
-            IndexName: "StudentEmailIndex",
+            IndexName: "StudentEmailIndex", // This assumes you have a GSI named 'StudentEmailIndex'
             KeyConditionExpression: "studentEmail = :email",
             ExpressionAttributeValues: { ":email": studentEmail }
         }));
-        const studentResults = resultsResponse.Items;
+        
+        const results = resultsResponse.Items;
+        const completedTestIds = new Set(results.map(r => r.testId));
 
-        // LOGIC CHANGE: Determine which tests are truly available
-        const availableTestIds = [];
-        const assignmentCounts = {};
-        const resultCounts = {};
+        // Step 3: Filter out tests that the student has already completed.
+        const availableTestIds = assignments
+            .map(assignment => assignment.testId)
+            .filter(testId => !completedTestIds.has(testId));
 
-        // Count how many times each test was assigned
-        for (const assignment of allAssignments) {
-            assignmentCounts[assignment.testId] = (assignmentCounts[assignment.testId] || 0) + 1;
+        if (availableTestIds.length === 0) {
+            return res.json([]); // All assigned tests have been completed.
         }
 
-        // Count how many times the student submitted results for each test
-        for (const result of studentResults) {
-            resultCounts[result.testId] = (resultCounts[result.testId] || 0) + 1;
-        }
-
-        // A test is available if it has been assigned more times than it has been attempted
-        for (const testId in assignmentCounts) {
-            const assignedCount = assignmentCounts[testId];
-            const attemptedCount = resultCounts[testId] || 0;
-            if (assignedCount > attemptedCount) {
-                availableTestIds.push(testId);
-            }
-        }
-
-        if (availableTestIds.length === 0) return res.json([]);
-
-        // Fetch the details for the available tests
+        // Step 4: Fetch the full details for the available tests.
         const uniqueTestIds = [...new Set(availableTestIds)];
         const keys = uniqueTestIds.map(testId => ({ testId }));
         
@@ -1975,8 +2024,6 @@ const rekognitionClient = new RekognitionClient({
 // const fetch = require('node-fetch');
 
 // --- REPLACE the existing face-verification route with this one ---
-// In backend.js, find and replace this entire route
-
 app.post('/api/student/face-verification', authMiddleware, async (req, res) => {
     const { profileImageUrl, webcamImage } = req.body;
 
@@ -1985,22 +2032,26 @@ app.post('/api/student/face-verification', authMiddleware, async (req, res) => {
     }
 
     try {
-        // --- Step 1: Fetch profile image from Cloudinary ---
+        // --- NEW LOGIC: Fetch profile image from Cloudinary ---
         const profileImageResponse = await fetch(profileImageUrl);
         if (!profileImageResponse.ok) {
-            // This will now throw a specific error if Cloudinary fails
             throw new Error('Failed to download profile image from Cloudinary.');
         }
         const profileImageBuffer = await profileImageResponse.buffer();
+        // --- END OF NEW LOGIC ---
 
-        // --- Step 2: Prepare webcam image ---
+        // Convert the base64 webcam image from the frontend to a buffer
         const webcamImageBuffer = Buffer.from(webcamImage.replace(/^data:image\/jpeg;base64,/, ""), 'base64');
 
-        // --- Step 3: Call AWS Rekognition ---
         const command = new CompareFacesCommand({
-            SourceImage: { Bytes: profileImageBuffer },
-            TargetImage: { Bytes: webcamImageBuffer },
-            SimilarityThreshold: 90,
+            // MODIFIED: Use Bytes for the source image instead of S3Object
+            SourceImage: {
+                Bytes: profileImageBuffer,
+            },
+            TargetImage: {
+                Bytes: webcamImageBuffer,
+            },
+            SimilarityThreshold: 90, // Set a similarity threshold
         });
 
         const response = await rekognitionClient.send(command);
@@ -2013,22 +2064,8 @@ app.post('/api/student/face-verification', authMiddleware, async (req, res) => {
         }
 
     } catch (error) {
-        // --- MODIFIED & IMPROVED ERROR HANDLING ---
-        console.error('Face Verification Error:', error); // Detailed log for you on Render
-        
-        let userMessage = 'An error occurred during face verification.';
-        
-        // Provide more specific feedback to the frontend
-        if (error.name === 'AccessDeniedException') {
-            userMessage = 'AWS Rekognition service access denied. Please check your IAM user permissions.';
-        } else if (error.message.includes('Cloudinary')) {
-            userMessage = 'Could not retrieve profile image from the server.';
-        } else if (error.name) {
-            // Send back the specific AWS error name
-            userMessage = `AWS Error: ${error.name}. Please check server logs.`;
-        }
-        
-        res.status(500).json({ message: userMessage });
+        console.error('Face Verification Error:', error);
+        res.status(500).json({ message: 'An error occurred during face verification.' });
     }
 });
 // Get ALL students (for Admin) or all students in assigned colleges (for Moderator)
@@ -2081,6 +2118,59 @@ app.get('/api/admin/all-students', authMiddleware, adminOrModeratorAuth, async (
         res.status(500).json({ message: 'Server error fetching all students.' });
     }
 });
+
+
+// NEW: Get filtered students based on college, year, and department
+app.get('/api/admin/students', authMiddleware, adminOrModeratorAuth, async (req, res) => {
+    const { college, year, department } = req.query;
+
+    if (!college) {
+        return res.status(400).json({ message: 'College filter is required.' });
+    }
+
+    if (req.user.role === 'Moderator' && !req.user.assignedColleges.includes(college)) {
+        return res.status(403).json({ message: 'Access denied to this college.' });
+    }
+
+    try {
+        let filterExpression = "college = :college AND #role = :student";
+        const expressionAttributeValues = {
+            ":college": college,
+            ":student": "Student"
+        };
+        const expressionAttributeNames = {
+            "#role": "role"
+        };
+
+        if (year && year !== 'All') {
+            filterExpression += " AND #year = :year";
+            expressionAttributeValues[":year"] = year;
+            expressionAttributeNames["#year"] = "year";
+        }
+        
+        if (department && department !== 'All') {
+            filterExpression += " AND department = :department";
+            expressionAttributeValues[":department"] = department;
+        }
+
+        const params = {
+            TableName: "TestifyUsers",
+            FilterExpression: filterExpression,
+            ExpressionAttributeValues: expressionAttributeValues,
+            ExpressionAttributeNames: expressionAttributeNames
+        };
+
+        const studentsResponse = await docClient.send(new ScanCommand(params));
+        const students = studentsResponse.Items;
+        
+        res.json(students);
+        
+    } catch (error) {
+        console.error("Get Filtered Students Error:", error);
+        res.status(500).json({ message: 'Server error fetching filtered students.' });
+    }
+});
+
 
 // =================================================================
 // --- NEW: IMPACT STATS ROUTES ---
@@ -2367,8 +2457,185 @@ app.post('/api/student/submit-practice-test', authMiddleware, async (req, res) =
         res.status(500).json({ message: 'Server error submitting practice test.' });
     }
 });
+
+app.post('/api/unassign-test', authMiddleware, adminOrModeratorAuth, async (req, res) => {
+    const { testId, colleges, studentEmails } = req.body;
+
+    if (!testId || (!colleges && !studentEmails)) {
+        return res.status(400).json({ message: 'Test ID and either colleges or student emails are required.' });
+    }
+
+    try {
+        let assignmentsToDelete = [];
+        let emailsToProcess = [];
+
+        if (studentEmails && studentEmails.length > 0) {
+            emailsToProcess = studentEmails;
+        } else if (colleges && colleges.length > 0) {
+            // Check moderator permissions
+            if (req.user.role === 'Moderator') {
+                const isAllowed = colleges.every(college => req.user.assignedColleges.includes(college));
+                if (!isAllowed) {
+                    return res.status(403).json({ message: 'You can only un-assign tests from your assigned colleges.' });
+                }
+            }
+
+            // Find all students in the specified colleges
+            const collegeStudentFilter = colleges.map((_, index) => `college = :c${index}`).join(' OR ');
+            const collegeStudentValues = {};
+            colleges.forEach((college, index) => {
+                collegeStudentValues[`:c${index}`] = college;
+            });
+
+            const { Items: studentsInColleges } = await docClient.send(new ScanCommand({
+                TableName: "TestifyUsers",
+                FilterExpression: collegeStudentFilter,
+                ExpressionAttributeValues: collegeStudentValues,
+                ProjectionExpression: "email"
+            }));
+            
+            emailsToProcess = studentsInColleges.map(s => s.email);
+        }
+
+        if (emailsToProcess.length > 0) {
+            // Find all assignments for the specified test and students
+            // Note: Scanning can be inefficient on very large tables. 
+            // For production at scale, consider a secondary index on studentEmail if not already present.
+            const emailFilters = emailsToProcess.map((_, index) => `:email${index}`).join(', ');
+            const expressionAttributeValues = { ":tid": testId };
+            emailsToProcess.forEach((email, index) => {
+                expressionAttributeValues[`:email${index}`] = email;
+            });
+
+            const scanParams = {
+                TableName: "TestifyAssignments",
+                FilterExpression: `testId = :tid AND studentEmail IN (${emailFilters})`,
+                ExpressionAttributeValues: expressionAttributeValues,
+                ProjectionExpression: "assignmentId" // Only get the ID for deletion
+            };
+
+            const { Items } = await docClient.send(new ScanCommand(scanParams));
+            assignmentsToDelete = Items;
+        }
+        
+        if (assignmentsToDelete.length === 0) {
+            return res.status(200).json({ message: 'No matching assignments found to remove.' });
+        }
+
+        // DynamoDB BatchWriteCommand can only handle 25 items at a time.
+        const deleteRequests = assignmentsToDelete.map(item => ({
+            DeleteRequest: { Key: { assignmentId: item.assignmentId } }
+        }));
+
+        const batches = [];
+        for (let i = 0; i < deleteRequests.length; i += 25) {
+            batches.push(deleteRequests.slice(i, i + 25));
+        }
+
+        for (const batch of batches) {
+            await docClient.send(new BatchWriteCommand({
+                RequestItems: { "TestifyAssignments": batch }
+            }));
+        }
+
+        res.status(200).json({ message: `Successfully removed ${assignmentsToDelete.length} assignments.` });
+
+    } catch (error) {
+        console.error("Un-assign Test Error:", error);
+        res.status(500).json({ message: 'Server error while un-assigning test.' });
+    }
+});
+
+app.get('/api/admin/assignment-report', authMiddleware, adminOrModeratorAuth, async (req, res) => {
+    const { testId, courseId } = req.query;
+
+    if (!testId && !courseId) {
+        return res.status(400).json({ message: 'A testId or courseId is required.' });
+    }
+
+    try {
+        let assignments = [];
+        let studentEmails = new Set();
+
+        if (testId) {
+            const { Items } = await docClient.send(new ScanCommand({
+                TableName: "TestifyAssignments",
+                FilterExpression: "testId = :tid",
+                ExpressionAttributeValues: { ":tid": testId }
+            }));
+            assignments = Items.map(item => ({
+                studentEmail: item.studentEmail,
+                assignedAt: item.assignedAt
+            }));
+            Items.forEach(item => studentEmails.add(item.studentEmail));
+        } else if (courseId) {
+            const { Items } = await docClient.send(new ScanCommand({
+                TableName: "TestifyCourseProgress",
+                FilterExpression: "courseId = :cid",
+                ExpressionAttributeValues: { ":cid": courseId }
+            }));
+            assignments = Items.map(item => ({
+                studentEmail: item.studentEmail,
+                assignedAt: item.assignedAt
+            }));
+            Items.forEach(item => studentEmails.add(item.studentEmail));
+        }
+
+        if (studentEmails.size === 0) {
+            return res.json([]);
+        }
+
+        // --- FIX STARTS HERE ---
+        // Filter out any null, undefined, or non-string email values to prevent crashes
+        const studentEmailArray = Array.from(studentEmails).filter(email => email && typeof email === 'string');
+
+        // If after filtering there are no valid emails, return an empty report
+        if (studentEmailArray.length === 0) {
+            return res.json([]);
+        }
+        // --- FIX ENDS HERE ---
+
+        const keys = studentEmailArray.map(email => ({ email }));
+        
+        const { Responses } = await docClient.send(new BatchGetCommand({
+            RequestItems: { "TestifyUsers": { Keys: keys } }
+        }));
+        let students = Responses.TestifyUsers || [];
+        
+        // If moderator, filter students by assigned colleges
+        if (req.user.role === 'Moderator') {
+            const allowedColleges = new Set(req.user.assignedColleges);
+            students = students.filter(student => allowedColleges.has(student.college));
+        }
+        
+        const studentMap = new Map(students.map(s => [s.email, { fullName: s.fullName, college: s.college }]));
+
+        // Enrich assignments with student details and filter out those not in the moderator's scope
+        const finalReport = assignments
+            .map(assignment => {
+                // Ensure the assignment's email is one of the valid ones we fetched
+                const studentInfo = studentMap.get(assignment.studentEmail);
+                if (studentInfo) {
+                    return {
+                        ...assignment,
+                        studentName: studentInfo.fullName,
+                        college: studentInfo.college
+                    };
+                }
+                return null; // This will be filtered out
+            })
+            .filter(Boolean); // Removes null entries
+
+        res.json(finalReport);
+
+    } catch (error) {
+        console.error("Get Assignment Report Error:", error);
+        res.status(500).json({ message: 'Server error fetching assignment report.' });
+    }
+});
+
+
 // --- SERVER START ---
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-
