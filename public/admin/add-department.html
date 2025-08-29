@@ -3,26 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - TESTIFY</title>
+    <title>Add Department - TESTIFY</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .sidebar-link:hover {
-            background-color: #4338CA;
-        }
-        .sidebar-link.active {
-            background-color: #4F46E5;
-            font-weight: 600;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar { background-color: #111827; }
+        .sidebar-link { color: #D1D5DB; }
+        .sidebar-link:hover { background-color: #374151; color: #FFFFFF; }
+        .sidebar-link.active { background-color: #4F46E5; color: #FFFFFF; font-weight: 600; }
         .sidebar-heading {
             padding: 0.75rem 1rem;
             font-size: 0.75rem;
             letter-spacing: 0.05em;
-            color: #9CA3AF; /* gray-400 */
+            color: #9CA3AF;
             text-transform: uppercase;
         }
     </style>
@@ -31,24 +25,22 @@
 
     <div class="flex h-screen bg-gray-100">
         <!-- Sidebar -->
-        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+        <div class="hidden md:flex flex-col w-64 sidebar text-white">
             <div class="flex items-center justify-center h-20 border-b border-gray-700">
                 <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
                 <span class="ml-3 text-2xl font-bold">TESTIFY</span>
             </div>
             <nav class="flex-grow p-4 overflow-y-auto">
-                
-                <a href="dashboard.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                <a href="dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                     <span class="ml-3">Dashboard</span>
                 </a>
-
                 <div class="sidebar-heading mt-4">User Management</div>
                 <a href="add-college.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A11.953 11.953 0 0112 13.5c-2.998 0-5.74-1.1-7.843-2.918" /></svg>
                     <span class="ml-3">Colleges</span>
                 </a>
-                <a href="add-department.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                <a href="add-department.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
                      <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
                     <span class="ml-3">Departments</span>
                 </a>
@@ -56,7 +48,6 @@
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.228a4.5 4.5 0 00-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 001.13-1.897L16.863 4.487M16.863 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z" /></svg>
                     <span class="ml-3">Students</span>
                 </a>
-
                 <div class="sidebar-heading mt-4">Course Management</div>
                 <a href="create-course.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path></svg>
@@ -70,7 +61,6 @@
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     <span class="ml-3">Assign Course</span>
                 </a>
-
                 <div class="sidebar-heading mt-4">Test Management</div>
                 <a href="create-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
@@ -84,7 +74,6 @@
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                     <span class="ml-3">Assign Test</span>
                 </a>
-
                 <div class="sidebar-heading mt-4">Academics & Reports</div>
                 <a href="test-history.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -108,9 +97,9 @@
 
         <!-- Main content -->
         <div class="flex flex-col flex-1 overflow-y-auto">
-            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
-                <h1 class="text-2xl font-bold text-gray-800">Dashboard</h1>
-                <div class="flex items-center">
+            <header class="flex items-center justify-between h-20 bg-white border-b px-6">
+                <h1 class="text-2xl font-semibold text-gray-800">Departments</h1>
+                 <div class="flex items-center">
                     <div class="relative">
                         <button id="user-menu-button" class="flex items-center space-x-2">
                             <span id="user-name" class="font-semibold text-gray-700">Admin User</span>
@@ -121,105 +110,51 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </header>
 
-            <div class="p-6">
-                <!-- Stat Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="bg-white p-6 rounded-xl shadow-md flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-500">Total Tests</p>
-                            <p id="total-tests" class="text-3xl font-bold text-gray-800">0</p>
-                        </div>
-                        <div class="bg-indigo-100 text-indigo-600 p-3 rounded-full">
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                        </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-md flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-500">Active Students</p>
-                            <p id="active-students" class="text-3xl font-bold text-gray-800">0</p>
-                        </div>
-                        <div class="bg-green-100 text-green-600 p-3 rounded-full">
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                        </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-md flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-500">Total Attempts</p>
-                            <p id="total-attempts" class="text-3xl font-bold text-gray-800">0</p>
-                        </div>
-                        <div class="bg-yellow-100 text-yellow-600 p-3 rounded-full">
-                           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-md flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-500">Avg. Pass Rate</p>
-                            <p id="avg-pass-rate" class="text-3xl font-bold text-gray-800">0%</p>
-                        </div>
-                        <div class="bg-blue-100 text-blue-600 p-3 rounded-full">
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg>
-                        </div>
-                    </div>
+            <main class="p-6">
+                <div class="bg-white p-6 rounded-lg shadow-sm mb-6">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Add New Department</h2>
+                    <form id="add-department-form" class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                        <input type="text" id="department-name" name="departmentName" required placeholder="Enter new department name" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                        <button type="submit" class="w-full sm:w-auto px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition">Add Department</button>
+                    </form>
+                    <div id="add-message" class="mt-4 text-center p-3 rounded-lg font-medium hidden"></div>
                 </div>
-
-                <!-- Charts Section -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h3 class="font-semibold text-gray-800 text-lg">Test Performance</h3>
-                        <div class="relative h-80 mt-4">
-                            <canvas id="performanceChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h3 class="font-semibold text-gray-800 text-lg">Students by College</h3>
-                        <div class="relative h-80 mt-4">
-                            <canvas id="collegeChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Activity Table -->
-                <div class="bg-white p-6 rounded-xl shadow-md mt-6">
-                    <h3 class="font-semibold text-gray-800 text-lg mb-4">Recent Test Submissions</h3>
+                
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Existing Departments</h2>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-sm text-left text-gray-500">
+                        <table class="min-w-full text-sm text-left text-gray-600">
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3">Student Name</th>
-                                    <th scope="col" class="px-6 py-3">Test Name</th>
-                                    <th scope="col" class="px-6 py-3">Score</th>
-                                    <th scope="col" class="px-6 py-3">Date</th>
+                                    <th scope="col" class="px-6 py-3">Department Name</th>
+                                    <th scope="col" class="px-6 py-3 text-right">Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="recent-submissions-body">
-                                <!-- Dynamic data will be loaded here -->
+                            <tbody id="departments-table-body">
+                                <!-- Departments will be dynamically populated here -->
                             </tbody>
                         </table>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            // --- AUTHENTICATION & USER INFO ---
             const user = JSON.parse(localStorage.getItem('user'));
             const token = localStorage.getItem('token');
-
             if (!token || !user || user.role !== 'Admin') {
                 window.location.href = '/login.html';
                 return;
             }
             document.getElementById('user-name').textContent = user.fullName;
             
-            // --- UI INTERACTIVITY ---
             const userMenuButton = document.getElementById('user-menu-button');
             const userMenu = document.getElementById('user-menu');
             const logoutButton = document.getElementById('logout-button');
-
             userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
             logoutButton.addEventListener('click', () => {
                 localStorage.removeItem('token');
@@ -227,87 +162,107 @@
                 window.location.href = '/login.html';
             });
 
-            // --- FETCH AND RENDER DASHBOARD DATA ---
-            async function fetchDashboardData() {
+            const addForm = document.getElementById('add-department-form');
+            const departmentNameInput = document.getElementById('department-name');
+            const tableBody = document.getElementById('departments-table-body');
+            const messageDiv = document.getElementById('add-message');
+
+            async function fetchDepartments() {
                 try {
-                    const response = await fetch('/api/admin/dashboard-data', {
+                    const response = await fetch('/api/departments', {
                         headers: { 'x-auth-token': token }
                     });
-                    if (!response.ok) throw new Error('Failed to fetch dashboard data');
-                    const data = await response.json();
-
-                    // Populate Stat Cards
-                    document.getElementById('total-tests').textContent = data.stats.totalTests;
-                    document.getElementById('active-students').textContent = data.stats.totalStudents;
-                    document.getElementById('total-attempts').textContent = data.stats.totalAttempts;
-                    document.getElementById('avg-pass-rate').textContent = `${data.stats.avgPassRate}%`;
-
-                    // Render Recent Submissions
-                    const submissionsBody = document.getElementById('recent-submissions-body');
-                    submissionsBody.innerHTML = '';
-                    if (data.recentSubmissions.length > 0) {
-                        data.recentSubmissions.forEach(sub => {
-                            const row = document.createElement('tr');
-                            row.className = 'bg-white border-b';
-                            const scoreClass = sub.result === 'Pass' ? 'text-green-600' : 'text-red-600';
-                            const date = new Date(sub.submittedAt).toLocaleDateString();
-                            row.innerHTML = `
-                                <td class="px-6 py-4 font-medium text-gray-900">${sub.studentName}</td>
-                                <td class="px-6 py-4">${sub.testTitle}</td>
-                                <td class="px-6 py-4 font-semibold ${scoreClass}">${sub.score}%</td>
-                                <td class="px-6 py-4">${date}</td>
-                            `;
-                            submissionsBody.appendChild(row);
-                        });
-                    } else {
-                        submissionsBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">No recent submissions.</td></tr>';
-                    }
-
-                    // Render Charts
-                    renderPerformanceChart(data.performanceData);
-                    renderCollegeChart(data.collegeData);
-
+                    if (!response.ok) throw new Error('Failed to fetch departments');
+                    const departments = await response.json();
+                    renderDepartments(departments);
                 } catch (error) {
-                    console.error('Error fetching dashboard data:', error);
+                    messageDiv.classList.remove('hidden', 'bg-green-100', 'text-green-700');
+                    messageDiv.classList.add('bg-red-100', 'text-red-700');
+                    messageDiv.textContent = 'Error loading departments. Please try again.';
+                    console.error('Error fetching departments:', error);
                 }
             }
 
-            function renderPerformanceChart(performanceData) {
-                const perfCtx = document.getElementById('performanceChart').getContext('2d');
-                new Chart(perfCtx, {
-                    type: 'line',
-                    data: {
-                        labels: performanceData.labels,
-                        datasets: [{
-                            label: 'Average Score %',
-                            data: performanceData.scores,
-                            fill: false,
-                            borderColor: '#4F46E5',
-                            tension: 0.1
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false }
+            function renderDepartments(departments) {
+                tableBody.innerHTML = '';
+                if (departments.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="2" class="text-center py-4 text-gray-500">No departments found.</td></tr>';
+                    return;
+                }
+                departments.forEach(department => {
+                    const row = `
+                        <tr class="bg-white border-b hover:bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${department.departmentName}</td>
+                            <td class="px-6 py-4 text-right">
+                                <button class="delete-btn font-medium text-red-600 hover:text-red-900" data-name="${department.departmentName}">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
                 });
             }
 
-            function renderCollegeChart(collegeData) {
-                const collegeCtx = document.getElementById('collegeChart').getContext('2d');
-                new Chart(collegeCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: collegeData.labels,
-                        datasets: [{
-                            label: 'Students per College',
-                            data: collegeData.counts,
-                            backgroundColor: ['#4F46E5', '#6D28D9', '#8B5CF6', '#A78BFA', '#C4B5FD', '#E0E7FF', '#60A5FA'],
-                            hoverOffset: 4
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false }
-                });
-            }
+            addForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const departmentName = departmentNameInput.value.trim();
+                if (!departmentName) return;
 
-            await fetchDashboardData();
+                try {
+                    const response = await fetch('/api/departments', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify({ departmentName })
+                    });
+                    const result = await response.json();
+
+                    messageDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+                    if (response.ok) {
+                        messageDiv.textContent = result.message;
+                        messageDiv.classList.add('bg-green-100', 'text-green-700');
+                        await fetchDepartments();
+                        departmentNameInput.value = '';
+                    } else {
+                        messageDiv.textContent = result.message;
+                        messageDiv.classList.add('bg-red-100', 'text-red-700');
+                    }
+                } catch (error) {
+                    messageDiv.classList.remove('hidden', 'bg-green-100', 'text-green-700');
+                    messageDiv.classList.add('bg-red-100', 'text-red-700');
+                    messageDiv.textContent = 'An unexpected error occurred.';
+                    console.error('Error adding department:', error);
+                }
+            });
+
+            tableBody.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('delete-btn')) {
+                    const departmentName = e.target.dataset.name;
+                    if (confirm(`Are you sure you want to delete the department "${departmentName}"?`)) {
+                        try {
+                            const response = await fetch(`/api/departments/${encodeURIComponent(departmentName)}`, {
+                                method: 'DELETE',
+                                headers: { 'x-auth-token': token }
+                            });
+                            const result = await response.json();
+                            messageDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+                            if (response.ok) {
+                                messageDiv.textContent = result.message;
+                                messageDiv.classList.add('bg-green-100', 'text-green-700');
+                                await fetchDepartments();
+                            } else {
+                                messageDiv.textContent = result.message;
+                                messageDiv.classList.add('bg-red-100', 'text-red-700');
+                            }
+                        } catch (error) {
+                            messageDiv.classList.remove('hidden', 'bg-green-100', 'text-green-700');
+                            messageDiv.classList.add('bg-red-100', 'text-red-700');
+                            messageDiv.textContent = 'An unexpected error occurred.';
+                            console.error('Error deleting department:', error);
+                        }
+                    }
+                }
+            });
+
+            await fetchDepartments();
         });
     </script>
 </body>

@@ -47,6 +47,10 @@
                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A11.953 11.953 0 0112 13.5c-2.998 0-5.74-1.1-7.843-2.918" /></svg>
                     <span class="ml-3">Colleges</span>
                 </a>
+                <a href="add-department.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+                    <span class="ml-3">Departments</span>
+                </a>
                  <a href="admin-students.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.228a4.5 4.5 0 00-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 001.13-1.897L16.863 4.487M16.863 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z" /></svg>
                     <span class="ml-3">Students</span>
@@ -92,6 +96,11 @@
                 <a href="issue-certificates.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     <span class="ml-3">Issue Certificates</span>
+                </a>
+                <div class="sidebar-heading mt-4">Advanced</div>
+                 <a href="addl-features.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.451l-1.043.862c-.29.24-.435.636-.435 1.028v.018c0 .392.145.787.435 1.028l1.043.862a1.125 1.125 0 01.242 1.451l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.242-1.451l1.043-.862c.29-.24.435-.636.435-1.028v-.018c0-.392-.145-.787-.435-1.028l-1.043-.862a1.125 1.125 0 01-.242-1.451l1.296-2.247a1.125 1.125 0 011.37-.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    <span class="ml-3">Additional Features</span>
                 </a>
             </nav>
         </div>
@@ -160,9 +169,39 @@
                     </div>
                     
                     <div id="tab-panel-student" class="hidden mt-6">
-                        <label for="student-search" class="block text-sm font-medium text-gray-700 mb-2">Select Students</label>
-                        <input type="text" id="student-search" placeholder="Search by name or email..." class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-                        <div id="student-list" class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-4 mt-2"></div>
+                        <p class="block text-sm font-medium text-gray-700 mb-2">Filter Students</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label for="filter-college" class="block text-sm font-medium text-gray-700">College</label>
+                                <select id="filter-college" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
+                            </div>
+                            <div>
+                                <label for="filter-year" class="block text-sm font-medium text-gray-700">Year</label>
+                                <select id="filter-year" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                    <option value="All">All</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="filter-department" class="block text-sm font-medium text-gray-700">Department</label>
+                                <select id="filter-department" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                    <option value="All">All Departments</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="button" id="load-students-btn" class="w-full mb-4 px-4 py-2 bg-indigo-100 text-indigo-700 font-semibold rounded-md hover:bg-indigo-200 transition-colors">Load Students</button>
+                        
+                        <hr class="mb-4">
+    
+                        <label for="student-search" class="block text-sm font-medium text-gray-700 mb-2">Search & Select Students</label>
+                        <input type="text" id="student-search" placeholder="Search loaded students..." class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" disabled>
+                        <div id="student-list" class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-4 mt-2">
+                           <p class="text-sm text-gray-500 text-center">Use filters to load students.</p>
+                        </div>
                     </div>
                     
                     <div class="mt-6 flex items-center justify-between">
@@ -214,32 +253,56 @@
             const tabPanelCollege = document.getElementById('tab-panel-college');
             const tabStudent = document.getElementById('tab-student');
             const tabPanelStudent = document.getElementById('tab-panel-student');
+            const filterCollegeSelect = document.getElementById('filter-college');
+            const filterYearSelect = document.getElementById('filter-year');
+            const filterDepartmentSelect = document.getElementById('filter-department');
+            const loadStudentsBtn = document.getElementById('load-students-btn');
             
             let colleges = [];
-            let students = [];
+            let departments = [];
+            let loadedStudents = [];
             let currentAssignType = 'college';
 
             async function fetchData() {
                 try {
-                    const [collegesRes, studentsRes, coursesRes] = await Promise.all([
+                    const [collegesRes, coursesRes, departmentsRes] = await Promise.all([
                         fetch('/api/colleges', { headers: { 'x-auth-token': token } }),
-                        fetch('/api/admin/all-students', { headers: { 'x-auth-token': token } }),
-                        fetch('/api/admin/courses', { headers: { 'x-auth-token': token } })
+                        fetch('/api/admin/courses', { headers: { 'x-auth-token': token } }),
+                        fetch('/api/departments', { headers: { 'x-auth-token': token } })
                     ]);
                     
-                    if (!collegesRes.ok || !studentsRes.ok || !coursesRes.ok) throw new Error('Failed to fetch initial data.');
+                    if (!collegesRes.ok || !coursesRes.ok || !departmentsRes.ok) throw new Error('Failed to fetch initial data.');
 
                     const collegeData = await collegesRes.json();
                     colleges = user.role === 'Admin' ? collegeData.map(c => c.collegeName) : user.assignedColleges;
-                    students = await studentsRes.json();
+                    departments = await departmentsRes.json();
                     const courses = await coursesRes.json();
                     
                     displayCourses(courses);
+                    populateFilterDropdowns();
 
                 } catch (error) {
                     console.error('Error fetching data:', error);
                     alert('Could not load page data. Please try again.');
                 }
+            }
+
+            function populateFilterDropdowns() {
+                filterCollegeSelect.innerHTML = '';
+                colleges.forEach(college => {
+                    const option = document.createElement('option');
+                    option.value = college;
+                    option.textContent = college;
+                    filterCollegeSelect.appendChild(option);
+                });
+
+                filterDepartmentSelect.innerHTML = '<option value="All">All Departments</option>';
+                departments.forEach(dept => {
+                    const option = document.createElement('option');
+                    option.value = dept.departmentName;
+                    option.textContent = dept.departmentName;
+                    filterDepartmentSelect.appendChild(option);
+                });
             }
 
             function displayCourses(courses) {
@@ -267,8 +330,10 @@
                 modalCourseIdInput.value = courseId;
                 
                 populateCollegeList();
-                populateStudentList();
-                
+                studentListDiv.innerHTML = '<p class="text-sm text-gray-500 text-center">Use filters to load students.</p>';
+                studentSearchInput.value = '';
+                studentSearchInput.disabled = true;
+
                 assignModal.classList.remove('hidden');
             }
 
@@ -287,17 +352,17 @@
                 }
             }
 
-            function populateStudentList(searchTerm = '') {
+            function displayStudentsInList(studentsToDisplay, searchTerm = '') {
                 studentListDiv.innerHTML = '';
-                const filteredStudents = students.filter(s => 
+                 const filtered = studentsToDisplay.filter(s => 
                     s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
                     s.email.toLowerCase().includes(searchTerm.toLowerCase())
                 );
 
-                if (filteredStudents.length === 0) {
-                    studentListDiv.innerHTML = '<p class="text-sm text-gray-500">No students found.</p>';
+                if (filtered.length === 0) {
+                    studentListDiv.innerHTML = '<p class="text-sm text-gray-500 text-center">No students match your criteria.</p>';
                 } else {
-                    filteredStudents.forEach(student => {
+                    filtered.forEach(student => {
                         studentListDiv.innerHTML += `
                             <div class="flex items-center">
                                 <input id="student-${student.email}" name="studentEmails" value="${student.email}" type="checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
@@ -334,7 +399,42 @@
                 }
             });
 
-            studentSearchInput.addEventListener('input', (e) => populateStudentList(e.target.value));
+            loadStudentsBtn.addEventListener('click', async () => {
+                const college = filterCollegeSelect.value;
+                const year = filterYearSelect.value;
+                const department = filterDepartmentSelect.value;
+
+                if (!college) {
+                    alert('Please select a college.');
+                    return;
+                }
+
+                loadStudentsBtn.textContent = 'Loading...';
+                loadStudentsBtn.disabled = true;
+
+                try {
+                    const response = await fetch(`/api/admin/students?college=${encodeURIComponent(college)}&year=${encodeURIComponent(year)}&department=${encodeURIComponent(department)}`, {
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!response.ok) {
+                        const err = await response.json();
+                        throw new Error(err.message || 'Failed to fetch students.');
+                    }
+                    loadedStudents = await response.json();
+                    displayStudentsInList(loadedStudents);
+                    studentSearchInput.disabled = false;
+
+                } catch (error) {
+                    console.error('Error fetching students:', error);
+                    alert(`Error: ${error.message}`);
+                    studentListDiv.innerHTML = '<p class="text-sm text-red-500 text-center">Could not load students.</p>';
+                } finally {
+                    loadStudentsBtn.textContent = 'Load Students';
+                    loadStudentsBtn.disabled = false;
+                }
+            });
+
+            studentSearchInput.addEventListener('input', (e) => displayStudentsInList(loadedStudents, e.target.value));
             tabCollege.addEventListener('click', () => switchTab('college'));
             tabStudent.addEventListener('click', () => switchTab('student'));
             cancelBtn.addEventListener('click', closeModal);

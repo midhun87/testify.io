@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment Report - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        .sidebar-heading {
+            padding: 0.75rem 1rem;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            color: #9CA3AF;
+            text-transform: uppercase;
+        }
+        .tab-btn.active {
+            border-color: #4F46E5;
+            color: #4F46E5;
+            background-color: #EEF2FF;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #print-area, #print-area * {
+                visibility: visible;
+            }
+            #print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 1rem;
+            }
+            #sidebar, #header, #controls {
+                display: none;
+            }
+            table {
+                font-size: 12px;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div id="sidebar" class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold">TESTIFY</span>
+            </div>
+            <nav class="flex-grow p-4 overflow-y-auto">
+                
+                <a href="dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+
+                <div class="sidebar-heading mt-4">User Management</div>
+                <a href="add-college.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                   <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A11.953 11.953 0 0112 13.5c-2.998 0-5.74-1.1-7.843-2.918" /></svg>
+                    <span class="ml-3">Colleges</span>
+                </a>
+                 <a href="admin-students.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.228a4.5 4.5 0 00-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 001.13-1.897L16.863 4.487M16.863 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487z" /></svg>
+                    <span class="ml-3">Students</span>
+                </a>
+
+                <div class="sidebar-heading mt-4">Course Management</div>
+                <a href="create-course.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path></svg>
+                    <span class="ml-3">Create Course</span>
+                </a>
+                <a href="modify-course.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path></svg>
+                    <span class="ml-3">Modify Course</span>
+                </a>
+                <a href="assign-course.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <span class="ml-3">Assign Course</span>
+                </a>
+
+                <div class="sidebar-heading mt-4">Test Management</div>
+                <a href="create-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    <span class="ml-3">Create Test</span>
+                </a>
+                <a href="modify-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                    <span class="ml-3">Modify Test</span>
+                </a>
+                <a href="assign-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <span class="ml-3">Assign Test</span>
+                </a>
+                 <a href="unassign-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M22 10.5h-6m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.5a2.25 2.25 0 002.25 2.25h10.5A2.25 2.25 0 0019 19.5v-1.5a2.25 2.25 0 00-2.25-2.25H6.25A2.25 2.25 0 004 18v1.5z" /></svg>
+                    <span class="ml-3">Un-assign Test</span>
+                </a>
+
+                <div class="sidebar-heading mt-4">Academics & Reports</div>
+                <a href="test-history.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span class="ml-3">Test History</span>
+                </a>
+                <a href="assignment-report.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                    <span class="ml-3">Assignment Report</span>
+                </a>
+                <a href="issue-certificates.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span class="ml-3">Issue Certificates</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <header id="header" class="flex items-center justify-between h-20 bg-white border-b px-6">
+                <h1 class="text-2xl font-semibold text-gray-800">Assignment Reports</h1>
+                 <div class="flex items-center">
+                    <div class="relative">
+                        <button id="user-menu-button" class="flex items-center space-x-2">
+                            <span id="user-name" class="font-semibold text-gray-700">Admin User</span>
+                            <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </button>
+                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                            <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="p-6">
+                <div id="controls" class="bg-white p-6 rounded-lg shadow-sm">
+                    <!-- TABS -->
+                    <div class="border-b border-gray-200">
+                        <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                            <button type="button" id="tab-test" class="tab-btn active whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Test Assignments</button>
+                            <button type="button" id="tab-course" class="tab-btn text-gray-500 hover:text-gray-700 whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm">Course Assignments</button>
+                        </nav>
+                    </div>
+
+                    <!-- FILTERS -->
+                    <div class="mt-6 flex flex-wrap items-end gap-4">
+                        <div id="test-filter" class="flex-grow">
+                            <label for="test-select" class="block text-sm font-medium text-gray-700">Select a Test</label>
+                            <select id="test-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="">Loading tests...</option>
+                            </select>
+                        </div>
+                         <div id="course-filter" class="flex-grow hidden">
+                            <label for="course-select" class="block text-sm font-medium text-gray-700">Select a Course</label>
+                            <select id="course-select" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="">Loading courses...</option>
+                            </select>
+                        </div>
+                        <button id="print-btn" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed flex items-center gap-2" disabled>
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6 3.189m0 10.64l.72-3.638m-3.638.72l3.638-.72m6.08 12.032V15.75m-6.08 0v-6.08m6.08 0l-6.08-3.35m6.08 3.35l.48-2.4m-4.8 14.93l.48-2.4m-.48 2.4l.48-2.4m-4.8-12.032l-3.35-6.08m0 0l-2.4.48m2.4-.48l2.4.48m12.032 6.08l-3.35 6.08m0 0l2.4-.48m-2.4.48l-2.4-.48m-12.032-6.08l3.35-6.08m0 0l-2.4.48m2.4-.48l2.4.48" /></svg>
+                            Print Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- REPORT AREA -->
+                <div id="print-area" class="mt-6 bg-white p-6 rounded-lg shadow-sm">
+                    <h2 id="report-title" class="text-xl font-semibold text-gray-800 mb-5">Select a test or course to generate a report.</h2>
+                    <div id="report-table-container" class="overflow-x-auto">
+                       <!-- Table will be injected here -->
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!token || !user || (user.role !== 'Admin' && user.role !== 'Moderator')) { 
+                window.location.href = '/login.html'; 
+                return; 
+            }
+
+            document.getElementById('user-name').textContent = user.fullName;
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userMenu = document.getElementById('user-menu');
+            const logoutButton = document.getElementById('logout-button');
+            userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
+            logoutButton.addEventListener('click', () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login.html';
+            });
+
+            // Page elements
+            const tabTest = document.getElementById('tab-test');
+            const tabCourse = document.getElementById('tab-course');
+            const testFilterDiv = document.getElementById('test-filter');
+            const courseFilterDiv = document.getElementById('course-filter');
+            const testSelect = document.getElementById('test-select');
+            const courseSelect = document.getElementById('course-select');
+            const printBtn = document.getElementById('print-btn');
+            const reportTitle = document.getElementById('report-title');
+            const reportTableContainer = document.getElementById('report-table-container');
+
+            let currentReportType = 'test';
+
+            // Fetch initial data for dropdowns
+            async function fetchData() {
+                try {
+                    const [testsRes, coursesRes] = await Promise.all([
+                        fetch('/api/tests', { headers: { 'x-auth-token': token } }),
+                        fetch('/api/admin/courses', { headers: { 'x-auth-token': token } })
+                    ]);
+
+                    if (!testsRes.ok || !coursesRes.ok) throw new Error('Failed to fetch initial data.');
+
+                    const tests = await testsRes.json();
+                    const courses = await coursesRes.json();
+
+                    populateSelect(testSelect, tests, 'testId', 'title', 'Select a test');
+                    populateSelect(courseSelect, courses, 'courseId', 'title', 'Select a course');
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                    alert('Could not load page data. Please try again.');
+                }
+            }
+            
+            function populateSelect(selectElement, items, valueKey, textKey, defaultText) {
+                selectElement.innerHTML = `<option value="">-- ${defaultText} --</option>`;
+                items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item[valueKey];
+                    option.textContent = item[textKey];
+                    selectElement.appendChild(option);
+                });
+            }
+
+            async function generateReport() {
+                const testId = testSelect.value;
+                const courseId = courseSelect.value;
+                let url = '/api/admin/assignment-report?';
+                let selectedItemName = '';
+
+                if (currentReportType === 'test' && testId) {
+                    url += `testId=${testId}`;
+                    selectedItemName = testSelect.options[testSelect.selectedIndex].text;
+                } else if (currentReportType === 'course' && courseId) {
+                    url += `courseId=${courseId}`;
+                    selectedItemName = courseSelect.options[courseSelect.selectedIndex].text;
+                } else {
+                    reportTitle.textContent = 'Select a test or course to generate a report.';
+                    reportTableContainer.innerHTML = '';
+                    printBtn.disabled = true;
+                    return;
+                }
+                
+                reportTitle.textContent = `Loading report...`;
+                reportTableContainer.innerHTML = '<p class="text-center text-gray-500">Fetching assignment data...</p>';
+
+                try {
+                    const response = await fetch(url, { headers: { 'x-auth-token': token } });
+                    if (!response.ok) throw new Error('Failed to fetch report.');
+                    const data = await response.json();
+                    
+                    reportTitle.textContent = `Assignment Report for: ${selectedItemName}`;
+                    displayReport(data);
+                    printBtn.disabled = data.length === 0;
+
+                } catch (error) {
+                    console.error('Error generating report:', error);
+                    reportTitle.textContent = 'Error generating report.';
+                    reportTableContainer.innerHTML = `<p class="text-center text-red-500">${error.message}</p>`;
+                }
+            }
+
+            function displayReport(data) {
+                if (data.length === 0) {
+                    reportTableContainer.innerHTML = '<p class="text-center text-gray-500">No assignments found for the selected item.</p>';
+                    return;
+                }
+
+                // Group by college
+                const groupedByCollege = data.reduce((acc, item) => {
+                    (acc[item.college] = acc[item.college] || []).push(item);
+                    return acc;
+                }, {});
+
+                let tableHtml = '';
+                for (const college in groupedByCollege) {
+                    tableHtml += `<h3 class="text-lg font-semibold text-gray-700 mt-6 mb-3">${college}</h3>`;
+                    tableHtml += `
+                        <table class="w-full text-sm text-left text-gray-600">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Student Name</th>
+                                    <th scope="col" class="px-6 py-3">Student Email</th>
+                                    <th scope="col" class="px-6 py-3">Assigned On</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    groupedByCollege[college].forEach(item => {
+                        tableHtml += `
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium text-gray-800">${item.studentName}</td>
+                                <td class="px-6 py-4">${item.studentEmail}</td>
+                                <td class="px-6 py-4">${new Date(item.assignedAt).toLocaleString()}</td>
+                            </tr>
+                        `;
+                    });
+                    tableHtml += '</tbody></table>';
+                }
+                reportTableContainer.innerHTML = tableHtml;
+            }
+
+            function switchTab(tab) {
+                currentReportType = tab;
+                if (tab === 'test') {
+                    tabTest.classList.add('active');
+                    tabCourse.classList.remove('active');
+                    testFilterDiv.classList.remove('hidden');
+                    courseFilterDiv.classList.add('hidden');
+                } else {
+                    tabCourse.classList.add('active');
+                    tabTest.classList.remove('active');
+                    courseFilterDiv.classList.remove('hidden');
+                    testFilterDiv.classList.add('hidden');
+                }
+                generateReport(); // Regenerate report for the new tab
+            }
+
+            // Event Listeners
+            tabTest.addEventListener('click', () => switchTab('test'));
+            tabCourse.addEventListener('click', () => switchTab('course'));
+            testSelect.addEventListener('change', generateReport);
+            courseSelect.addEventListener('change', generateReport);
+            printBtn.addEventListener('click', () => window.print());
+
+            // Initial Load
+            fetchData();
+        });
+    </script>
+</body>
+</html>

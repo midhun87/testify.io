@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Practice Test - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        #ai-loader { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="p-4 sm:p-6">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">Create a New Practice Test</h1>
+            <form id="create-test-form">
+                <!-- AI Generation Section -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border-2 border-dashed border-indigo-200 mb-6">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-2">Generate with AI</h2>
+                    <p class="text-sm text-gray-500 mb-4">Upload a PDF with questions and answers, and our AI will structure the test for you.</p>
+                    <div class="flex flex-col sm:flex-row items-center sm:space-x-4 space-y-2 sm:space-y-0">
+                        <input type="file" id="pdf-upload" accept=".pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                        <button type="button" id="analyze-pdf-btn" class="w-full sm:w-auto px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-sm hover:bg-indigo-700 whitespace-nowrap">Analyze PDF</button>
+                    </div>
+                     <div id="ai-loader" class="mt-4 flex items-center text-gray-600">
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span>AI is reading and structuring your test... please wait.</span>
+                    </div>
+                </div>
+
+                <!-- Test Details Section -->
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Test Details</h2>
+                    <div>
+                        <label for="testTitle" class="block text-sm font-medium text-gray-700">Test Title</label>
+                        <input type="text" id="testTitle" name="testTitle" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <!-- Questions Section -->
+                <div class="mt-6">
+                    <div class="flex justify-between items-center mb-4">
+                         <h2 class="text-xl font-bold text-gray-800">Questions</h2>
+                         <button type="button" id="add-question-btn" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                            Add Question
+                        </button>
+                    </div>
+                    <div id="questions-container" class="space-y-6">
+                        <!-- Dynamic questions will be inserted here -->
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="mt-8 flex justify-end">
+                    <button type="submit" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                        Create Practice Test
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            if (!token) window.location.href = '/login.html';
+
+            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js`;
+            const analyzePdfBtn = document.getElementById('analyze-pdf-btn');
+            const pdfUploadInput = document.getElementById('pdf-upload');
+            const aiLoader = document.getElementById('ai-loader');
+            const questionsContainer = document.getElementById('questions-container');
+            let questionCounter = 0;
+
+            const addQuestion = (data = {}) => {
+                questionCounter++;
+                const questionId = `q-${questionCounter}`;
+                const questionBlock = document.createElement('div');
+                questionBlock.className = 'bg-white p-6 rounded-xl shadow-md relative';
+                questionBlock.innerHTML = `
+                    <button type="button" class="absolute top-3 right-3 text-red-500 hover:text-red-700" onclick="this.parentElement.remove()">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Question ${questionCounter}</h3>
+                    <textarea name="${questionId}-text" rows="3" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Question Text">${data.text || ''}</textarea>
+                    <div class="mt-4">
+                        <h4 class="text-md font-semibold text-gray-700 mb-2">Options</h4>
+                        <div id="${questionId}-options-container" class="space-y-2"></div>
+                         <button type="button" class="add-option-btn mt-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800" data-question-id="${questionId}">+ Add Option</button>
+                    </div>
+                `;
+                questionsContainer.appendChild(questionBlock);
+                
+                const optionsContainer = document.getElementById(`${questionId}-options-container`);
+                const options = data.options || ['', ''];
+                options.forEach((optText, index) => {
+                    const isCorrect = data.correctAnswer === optText;
+                    addOption(optionsContainer, questionId, optText, isCorrect);
+                });
+            };
+
+            const addOption = (container, qId, text = '', isChecked = false) => {
+                 const optionIndex = container.children.length;
+                 const optionDiv = document.createElement('div');
+                 optionDiv.className = 'flex items-center space-x-3';
+                 optionDiv.innerHTML = `
+                    <input id="${qId}-opt-${optionIndex}" name="${qId}-correct" type="radio" value="${optionIndex}" class="h-4 w-4 text-indigo-600 border-gray-300" ${isChecked ? 'checked' : ''}>
+                    <input type="text" name="${qId}-option" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Option ${optionIndex + 1}" value="${text}">
+                 `;
+                 container.appendChild(optionDiv);
+            };
+
+            questionsContainer.addEventListener('click', (e) => {
+                if (e.target.closest('.add-option-btn')) {
+                    const button = e.target.closest('.add-option-btn');
+                    const qId = button.dataset.questionId;
+                    const container = document.getElementById(`${qId}-options-container`);
+                    addOption(container, qId);
+                }
+            });
+
+            document.getElementById('add-question-btn').addEventListener('click', () => addQuestion());
+
+            analyzePdfBtn.addEventListener('click', async () => {
+                const file = pdfUploadInput.files[0];
+                if (!file) return alert('Please select a PDF file.');
+                aiLoader.style.display = 'flex';
+                analyzePdfBtn.disabled = true;
+
+                const fileReader = new FileReader();
+                fileReader.onload = async (event) => {
+                    try {
+                        const typedarray = new Uint8Array(event.target.result);
+                        const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                        let fullText = '';
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+                        }
+                        
+                        const response = await fetch('/api/admin/generate-test-from-pdf', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                            body: JSON.stringify({ text: fullText })
+                        });
+
+                        if (!response.ok) throw new Error((await response.json()).message);
+                        
+                        const structuredTest = await response.json();
+                        document.getElementById('testTitle').value = structuredTest.testTitle || '';
+                        questionsContainer.innerHTML = '';
+                        questionCounter = 0;
+                        if (structuredTest.questions) {
+                            structuredTest.questions.forEach(q => {
+                                // AI gives correct answer as index, convert to text for our logic
+                                if(q.options && q.correctAnswer) {
+                                    q.correctAnswer = q.options[q.correctAnswer];
+                                }
+                                addQuestion(q)
+                            });
+                        }
+                    } catch (err) {
+                        alert(`AI Error: ${err.message}`);
+                    } finally {
+                        aiLoader.style.display = 'none';
+                        analyzePdfBtn.disabled = false;
+                    }
+                };
+                fileReader.readAsArrayBuffer(file);
+            });
+
+            document.getElementById('create-test-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const payload = {
+                    testTitle: document.getElementById('testTitle').value,
+                    questions: []
+                };
+                
+                document.querySelectorAll('.bg-white.p-6.rounded-xl.shadow-md.relative').forEach((qBlock) => {
+                    const text = qBlock.querySelector(`textarea[name^="q-"]`).value;
+                    const options = Array.from(qBlock.querySelectorAll(`input[name$="-option"]`)).map(inp => inp.value).filter(Boolean);
+                    
+                    const correctRadio = qBlock.querySelector(`input[type="radio"]:checked`);
+                    let correctAnswer = '';
+                    if (correctRadio) {
+                        const correctIndex = parseInt(correctRadio.value, 10);
+                        correctAnswer = options[correctIndex] || '';
+                    }
+
+                    if (text && options.length > 1 && correctAnswer) {
+                         payload.questions.push({ text, options, correctAnswer, type: 'mcq-single' });
+                    }
+                });
+
+                if (payload.questions.length === 0) {
+                    alert('Please add at least one valid question with options and a selected correct answer.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/admin/practice-tests', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error((await response.json()).message);
+                    alert('Practice test created successfully!');
+                    e.target.reset();
+                    questionsContainer.innerHTML = '';
+                    questionCounter = 0;
+                    addQuestion();
+                } catch (error) {
+                    alert(`Error: ${error.message}`);
+                }
+            });
+            
+            addQuestion();
+        });
+    </script>
+</body>
+</html>

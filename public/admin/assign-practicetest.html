@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Assign Practice Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-4 sm:p-8">
+    <div class="max-w-lg mx-auto bg-white p-6 sm:p-8 rounded-xl shadow-lg">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">Assign Practice Test</h1>
+        <form id="assign-practice-test-form" class="space-y-6">
+            <div>
+                <label for="test-select" class="block text-sm font-medium text-gray-700">Select Practice Test</label>
+                <select id="test-select" required class="mt-1 block w-full pl-3 pr-10 py-2 border-gray-300 rounded-md shadow-sm"></select>
+            </div>
+            <div>
+                <label for="college-select" class="block text-sm font-medium text-gray-700">Assign to Colleges</label>
+                <select id="college-select" multiple required class="mt-1 block w-full h-40 border-gray-300 rounded-md shadow-sm"></select>
+                <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple.</p>
+            </div>
+            <button type="submit" class="w-full flex items-center justify-center bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition-transform transform hover:scale-105">
+                <i class="fas fa-paper-plane mr-2"></i>Assign Test
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = '/admin-login.html';
+
+        const testSelect = document.getElementById('test-select');
+        const collegeSelect = document.getElementById('college-select');
+
+        async function fetchData() {
+            try {
+                const [testsRes, collegesRes] = await Promise.all([
+                    fetch('/api/admin/practice-tests', { headers: { 'x-auth-token': token } }),
+                    fetch('/api/colleges', { headers: { 'x-auth-token': token } })
+                ]);
+                const tests = await testsRes.json();
+                const colleges = await collegesRes.json();
+                
+                tests.forEach(t => testSelect.add(new Option(t.title, t.testId)));
+                colleges.forEach(c => collegeSelect.add(new Option(c.collegeName, c.collegeName)));
+            } catch (error) {
+                alert('Failed to load data.');
+            }
+        }
+
+        document.getElementById('assign-practice-test-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const testId = testSelect.value;
+            const colleges = Array.from(collegeSelect.selectedOptions).map(opt => opt.value);
+
+            if (!testId || colleges.length === 0) {
+                alert('Please select a test and at least one college.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/assign-practice-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                    body: JSON.stringify({ testId, colleges })
+                });
+                if (!response.ok) throw new Error('Failed to assign test');
+                alert('Practice test assigned successfully!');
+                e.target.reset();
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+
+        fetchData();
+    </script>
+</body>
+</html>
