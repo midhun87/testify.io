@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex min-h-screen">
+        <!-- Branding Section -->
+        <div class="hidden lg:flex w-1/2 items-center justify-center bg-gradient-to-tr from-indigo-800 to-purple-700 text-white p-12">
+            <div class="text-center">
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-24 h-24 mx-auto mb-4">
+                <h1 class="text-5xl font-bold tracking-tight">TESTIFY</h1>
+                <p class="mt-4 text-lg text-indigo-200">The professional platform for secure online Training & assessments.</p>
+                <!-- Added Flyer Image -->
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756491151/FREE_TESTS_jianct.png" alt="Free Tests Flyer" class="mt-10 w-full max-w-md rounded-lg shadow-2xl mx-auto">
+            </div>
+        </div>
+
+        <!-- Form Section -->
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
+            <div class="w-full max-w-md">
+                <div class="lg:hidden text-center mb-8">
+                      <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-16 h-16 mx-auto mb-2 invert">
+                      <h1 class="text-3xl font-bold text-gray-800">TESTIFY</h1>
+                </div>
+                
+                <div class="bg-white p-8 rounded-2xl shadow-lg">
+                    <h2 class="text-2xl font-bold text-gray-900 text-center">Create Student Account</h2>
+                    <p class="text-gray-600 text-center mt-2 mb-8">Join the platform to start your journey.</p>
+                    
+                    <form id="signup-form">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                            <div class="mb-5">
+                                <label for="fullName" class="block mb-2 text-sm font-medium text-gray-700">Full Name</label>
+                                <input type="text" id="fullName" name="fullName" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
+                            </div>
+                             <div class="mb-5">
+                                <label for="mobile" class="block mb-2 text-sm font-medium text-gray-700">Mobile Number</label>
+                                <input type="tel" id="mobile" name="mobile" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
+                            </div>
+                        </div>
+                        <div class="mb-5">
+                            <label for="email" class="block mb-2 text-sm font-medium text-gray-700">Email Address</label>
+                            <input type="email" id="email" name="email" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        </div>
+                        <div class="mb-5">
+                            <label for="college" class="block mb-2 text-sm font-medium text-gray-700">College Name</label>
+                            <select id="college" name="college" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
+                                <option value="" disabled selected>Loading colleges...</option>
+                            </select>
+                        </div>
+                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
+                            <div class="mb-5">
+                                <label for="year" class="block mb-2 text-sm font-medium text-gray-700">Year</label>
+                                <select id="year" name="year" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
+                                    <option value="" disabled selected>Select year</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="mb-5">
+                                <label for="department" class="block mb-2 text-sm font-medium text-gray-700">Department</label>
+                                <select id="department" name="department" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
+                                    <option value="" disabled selected>Loading departments...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-5">
+                            <label for="rollNumber" class="block mb-2 text-sm font-medium text-gray-700">Roll Number</label>
+                            <input type="text" id="rollNumber" name="rollNumber" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        </div>
+                        <div class="mb-6">
+                            <label for="password" class="block mb-2 text-sm font-medium text-gray-700">Password</label>
+                            <input type="password" id="password" name="password" required minlength="6" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
+                        </div>
+                        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300">Create Account</button>
+                    </form>
+
+                    <div id="message" class="hidden text-center mt-4 p-3 rounded-lg font-medium"></div>
+                    
+                    <div class="mt-8 text-center space-y-4">
+                         <a href="/login.html" class="block w-full bg-gray-200 text-gray-800 font-bold py-3 px-4 rounded-lg hover:bg-gray-300 transition duration-300">Already have an account? Log In</a>
+                         <div class="flex justify-center items-center space-x-4">
+                            <a href="/moderator/login.html" class="text-sm font-medium text-purple-600 hover:text-purple-500">Moderator</a>
+                            <span class="text-gray-300">|</span>
+                            <a href="/welcome.html" class="text-sm font-medium text-gray-600 hover:text-gray-500">Home</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const collegeSelect = document.getElementById('college');
+            const departmentSelect = document.getElementById('department');
+            
+            async function fetchAndPopulateColleges() {
+                try {
+                    const response = await fetch('/api/colleges');
+                    if (!response.ok) throw new Error('Failed to fetch colleges');
+                    const colleges = await response.json();
+                    
+                    collegeSelect.innerHTML = '<option value="" disabled selected>Select your college</option>';
+                    
+                    if (colleges.length > 0) {
+                        colleges.forEach(college => {
+                            const option = document.createElement('option');
+                            option.value = college.collegeName;
+                            option.textContent = college.collegeName;
+                            collegeSelect.appendChild(option);
+                        });
+                    } else {
+                         collegeSelect.innerHTML = '<option value="" disabled selected>No colleges available</option>';
+                    }
+                } catch (error) {
+                    console.error('Error fetching colleges:', error);
+                    collegeSelect.innerHTML = '<option value="" disabled selected>Error loading colleges</option>';
+                }
+            }
+
+            async function fetchAndPopulateDepartments() {
+                try {
+                    const response = await fetch('/api/departments');
+                    if (!response.ok) throw new Error('Failed to fetch departments');
+                    const departments = await response.json();
+                    
+                    departmentSelect.innerHTML = '<option value="" disabled selected>Select your department</option>';
+                    
+                    if (departments.length > 0) {
+                        departments.forEach(department => {
+                            const option = document.createElement('option');
+                            option.value = department.departmentName;
+                            option.textContent = department.departmentName;
+                            departmentSelect.appendChild(option);
+                        });
+                    } else {
+                         departmentSelect.innerHTML = '<option value="" disabled selected>No departments available</option>';
+                    }
+                } catch (error) {
+                    console.error('Error fetching departments:', error);
+                    departmentSelect.innerHTML = '<option value="" disabled selected>Error loading departments</option>';
+                }
+            }
+
+            await Promise.all([
+                fetchAndPopulateColleges(),
+                fetchAndPopulateDepartments()
+            ]);
+
+            const signupForm = document.getElementById('signup-form');
+            const messageDiv = document.getElementById('message');
+
+            signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(signupForm);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch('/api/signup', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await response.json();
+
+                    messageDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+                    if (response.ok) {
+                        messageDiv.textContent = result.message;
+                        messageDiv.classList.add('bg-green-100', 'text-green-700');
+                        setTimeout(() => {
+                            window.location.href = '/login.html';
+                        }, 2000);
+                    } else {
+                        messageDiv.textContent = result.message;
+                        messageDiv.classList.add('bg-red-100', 'text-red-700');
+                    }
+                } catch (error) {
+                    messageDiv.classList.remove('hidden');
+                    messageDiv.classList.add('bg-red-100', 'text-red-700');
+                    messageDiv.textContent = 'An unexpected error occurred.';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
