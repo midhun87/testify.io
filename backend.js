@@ -2211,7 +2211,150 @@ app.post('/api/compile', authMiddleware, async (req, res) => {
     }
 });
 
+app.post('/api/admin/practice-tests', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { testTitle, questions } = req.body;
+    const testId = uuidv4();
 
+    const newPracticeTest = {
+        testId,
+        title: testTitle,
+        questions,
+        createdAt: new Date().toISOString(),
+    };
+
+    try {
+        await docClient.send(new PutCommand({ TableName: "TestifyPracticeTests", Item: newPracticeTest }));
+        res.status(201).json({ message: 'Practice test created successfully!', test: newPracticeTest });
+    } catch (error) {
+        console.error("Create Practice Test Error:", error);
+        res.status(500).json({ message: 'Server error creating practice test.' });
+    }
+});
+
+// ADMIN: Get all practice tests
+app.get('/api/admin/practice-tests', authMiddleware, async (req, res) => {
+     if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const { Items } = await docClient.send(new ScanCommand({ TableName: "TestifyPracticeTests" }));
+        res.json(Items);
+    } catch (error) {
+        console.error("Get Practice Tests Error:", error);
+        res.status(500).json({ message: 'Server error fetching practice tests.' });
+    }
+});
+
+// ADMIN: Assign a practice test
+app.post('/api/admin/assign-practice-test', authMiddleware, async (req, res) => {
+     if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { testId, colleges } = req.body;
+
+    try {
+        for (const college of colleges) {
+            const assignmentId = uuidv4();
+            const assignment = {
+                assignmentId,
+                testId,
+                college,
+                assignedAt: new Date().toISOString()
+            };
+            await docClient.send(new PutCommand({ TableName: "TestifyPracticeAssignments", Item: assignment }));
+        }
+        res.status(200).json({ message: 'Practice test assigned successfully!' });
+    } catch (error) {
+        console.error("Assign Practice Test Error:", error);
+        res.status(500).json({ message: 'Server error assigning practice test.' });
+    }
+});
+
+// STUDENT: Get assigned practice tests
+app.get('/api/student/practice-tests', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+    
+    try {
+        // CORRECTED: Use req.user which is set by the authMiddleware
+        const studentCollege = req.user.college;
+        if (!studentCollege) return res.json([]);
+
+        const assignmentsResponse = await docClient.send(new ScanCommand({
+            TableName: "TestifyPracticeAssignments",
+            FilterExpression: "college = :c",
+            ExpressionAttributeValues: { ":c": studentCollege }
+        }));
+        
+        const assignedTestIds = assignmentsResponse.Items.map(a => a.testId);
+        if (assignedTestIds.length === 0) return res.json([]);
+
+        const uniqueTestIds = [...new Set(assignedTestIds)];
+        const keys = uniqueTestIds.map(testId => ({ testId }));
+        
+        const testsResponse = await docClient.send(new BatchGetCommand({
+            RequestItems: { "TestifyPracticeTests": { Keys: keys } }
+        }));
+        
+        res.json(testsResponse.Responses.TestifyPracticeTests || []);
+
+    } catch (error) {
+        console.error("Get Student Practice Tests Error:", error);
+        res.status(500).json({ message: 'Server error fetching practice tests.' });
+    }
+});
+
+// STUDENT: Submit practice test (simplified)
+app.post('/api/student/submit-practice-test', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+    
+    const { testId, answers } = req.body;
+
+    try {
+        const { Item: test } = await docClient.send(new GetCommand({
+            TableName: "TestifyPracticeTests",
+            Key: { testId }
+        }));
+
+        if (!test) return res.status(404).json({ message: "Practice test not found." });
+
+        let score = 0;
+        let totalMarks = 0;
+        test.questions.forEach((question, index) => {
+            const studentAnswer = answers[index];
+            totalMarks += (question.marks || 1); // Assume 1 mark if not specified
+            if (studentAnswer === null || studentAnswer === undefined) return;
+
+            if (question.type === 'mcq-single' || question.type === 'fill-blank') {
+                if (String(studentAnswer).trim().toLowerCase() === String(question.correctAnswer).trim().toLowerCase()) {
+                    score += (question.marks || 1);
+                }
+            } else if (question.type === 'mcq-multiple') {
+                const correctAnswers = new Set(question.correctAnswers);
+                const studentAnswersSet = new Set(studentAnswer);
+                if (correctAnswers.size === studentAnswersSet.size && [...correctAnswers].every(val => studentAnswersSet.has(val))) {
+                     score += (question.marks || 1);
+                }
+            }
+        });
+
+        const percentageScore = totalMarks > 0 ? Math.round((score / totalMarks) * 100) : 0;
+
+        // We don't save practice test results, just return the score
+        res.status(200).json({ 
+            message: 'Practice test submitted!',
+            score: score,
+            totalMarks: totalMarks,
+            percentage: percentageScore
+        });
+
+    } catch (error) {
+        console.error("Submit Practice Test Error:", error);
+        res.status(500).json({ message: 'Server error submitting practice test.' });
+    }
+});
 // --- SERVER START ---
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
