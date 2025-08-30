@@ -14,8 +14,8 @@ const multer = require('multer');
 const pdf = require('pdf-parse');
 const fetch = require('node-fetch');
 const cloudinary = require('cloudinary').v2;
-const { BatchWriteCommand } = require("@aws-sdk/lib-dynamodb"); // Make sure this is imported at the top of your backend.js
-
+const { BatchWriteCommand } = require("@aws-sdk/lib-dynamodb");
+const { RekognitionClient, CompareFacesCommand } = require("@aws-sdk/client-rekognition");
 
 
 // --- INITIALIZATION ---
@@ -37,8 +37,8 @@ const docClient = DynamoDBDocumentClient.from(client);
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'craids22@gmail.com',
-        pass: 'opok nwqf kukx aihh'
+        user: 'testifylearning.help@gmail.com',
+        pass: 'gkiz belc koar elxi '
     }
 });
 
@@ -50,12 +50,20 @@ cloudinary.config({
 });
 const upload = multer({ storage: multer.memoryStorage() });
 
+// --- AWS REKOGNITION CLIENT SETUP ---
+const rekognitionClient = new RekognitionClient({
+    region: 'ap-south-1',
+    credentials: {
+        accessKeyId: 'AKIAVEP3EDM5MKMROQRB',
+        secretAccessKey: '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'
+    }
+});
+
+
 // --- MIDDLEWARE ---
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
-// --- NEW LINE ADDED ---
-// This makes sure that files inside the 'moderator' folder are also served correctly.
 app.use('/moderator', express.static(path.join(__dirname, 'public/moderator')));
 
 
@@ -82,7 +90,6 @@ const authMiddleware = async (req, res, next) => {
             return res.status(403).json({ message: 'Your account has been blocked by the administrator.' });
         }
 
-        // Add assignedColleges to the request object if the user is a Moderator
         if (Item.role === 'Moderator') {
             req.user.assignedColleges = Item.assignedColleges || [];
         }
@@ -93,6 +100,49 @@ const authMiddleware = async (req, res, next) => {
         res.status(401).json({ message: 'Token is not valid' });
     }
 };
+
+
+// =================================================================
+// --- OTP IMPLEMENTATION ---
+// =================================================================
+// In-memory store for OTPs. In a real application, use a database with TTL.
+const otpStore = {};
+
+// NEW ENDPOINT: Send OTP to user's email
+app.post('/api/send-otp', async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required.' });
+    }
+
+    try {
+        const existingUser = await docClient.send(new GetCommand({ TableName: "TestifyUsers", Key: { email: email.toLowerCase() } }));
+        if (existingUser.Item) {
+            return res.status(400).json({ message: 'User with this email already exists.' });
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expirationTime = Date.now() + 5 * 60 * 1000; // 5 minutes from now
+
+        otpStore[email.toLowerCase()] = { otp, expirationTime };
+        console.log(`Generated OTP for ${email}: ${otp}`);
+
+        const mailOptions = {
+            from: '"TESTIFY" <testifylearning.help@gmail.com>',
+            to: email,
+            subject: 'TESTIFY Account Verification',
+            html: `<p>Your OTP for TESTIFY account creation is: <strong>${otp}</strong></p>
+                   <p>This OTP is valid for 5 minutes. Do not share it with anyone.</p>`
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(200).json({ message: 'OTP sent successfully. Please check your email.' });
+    } catch (error) {
+        console.error("Send OTP Error:", error);
+        res.status(500).json({ message: 'Server error sending OTP. Please try again.' });
+    }
+});
 
 
 // =================================================================
@@ -124,7 +174,7 @@ app.post('/api/admin/moderators', authMiddleware, async (req, res) => {
             fullName,
             password: hashedPassword,
             role: "Moderator",
-            assignedColleges, // Array of college names
+            assignedColleges,
             isBlocked: false
         };
 
@@ -148,7 +198,7 @@ app.get('/api/admin/moderators', authMiddleware, async (req, res) => {
             ExpressionAttributeNames: { "#role": "role" },
             ExpressionAttributeValues: { ":moderator": "Moderator" }
         }));
-        res.json(Items.map(({ password, ...rest }) => rest)); // Exclude password from response
+        res.json(Items.map(({ password, ...rest }) => rest));
     } catch (error) {
         console.error("Get Moderators Error:", error);
         res.status(500).json({ message: 'Server error fetching moderators.' });
@@ -184,7 +234,6 @@ app.get('/api/colleges', async (req, res) => {
         const { Items } = await docClient.send(new ScanCommand({
             TableName: "TestifyColleges"
         }));
-        // Sort colleges alphabetically for consistent display
         Items.sort((a, b) => a.collegeName.localeCompare(b.collegeName));
         res.json(Items);
     } catch (error) {
@@ -203,7 +252,6 @@ app.post('/api/colleges', authMiddleware, async (req, res) => {
         return res.status(400).json({ message: 'College name is required.' });
     }
     try {
-        // Check if college already exists to prevent duplicates
         const { Item } = await docClient.send(new GetCommand({
             TableName: "TestifyColleges",
             Key: { collegeName }
@@ -255,21 +303,21 @@ app.post('/api/departments', authMiddleware, async (req, res) => {
     try {
         const departmentId = `department#${departmentName}`;
         const { Item } = await docClient.send(new GetCommand({
-            TableName: "TestifyUsers", // Use existing table
-            Key: { email: departmentId } // Use a unique key for the department
+            TableName: "TestifyUsers",
+            Key: { email: departmentId }
         }));
         if (Item) {
             return res.status(400).json({ message: 'Department with this name already exists.' });
         }
-        
+
         const newDepartment = {
             email: departmentId,
             departmentName: departmentName,
-            recordType: "Department" // Add a type to distinguish from users
+            recordType: "Department"
         };
 
         await docClient.send(new PutCommand({
-            TableName: "TestifyUsers", // Use existing table
+            TableName: "TestifyUsers",
             Item: newDepartment
         }));
         res.status(201).json({ message: 'Department added successfully.' });
@@ -282,8 +330,8 @@ app.post('/api/departments', authMiddleware, async (req, res) => {
 app.get('/api/departments', async (req, res) => {
     try {
         const { Items } = await docClient.send(new ScanCommand({
-            TableName: "TestifyUsers", // Use existing table
-            FilterExpression: "recordType = :type", // Filter for department records
+            TableName: "TestifyUsers",
+            FilterExpression: "recordType = :type",
             ExpressionAttributeValues: {
                 ":type": "Department"
             }
@@ -304,8 +352,8 @@ app.delete('/api/departments/:departmentName', authMiddleware, async (req, res) 
     try {
         const departmentId = `department#${departmentName}`;
         await docClient.send(new DeleteCommand({
-            TableName: "TestifyUsers", // Use existing table
-            Key: { email: departmentId } // Use the unique key to delete
+            TableName: "TestifyUsers",
+            Key: { email: departmentId }
         }));
         res.json({ message: 'Department deleted successfully.' });
     } catch (error) {
@@ -531,7 +579,7 @@ async function issueCertificateAutomatically(testId, studentEmail) {
         }));
 
         const mailOptions = {
-            from: '"TESTIFY" <craids22@gmail.com>',
+            from: '"TESTIFY" <testifylearning.help@gmail.com>',
             to: studentEmail,
             subject: `Congratulations! You've earned a certificate for ${testTitle}`,
             html: `
@@ -569,17 +617,29 @@ app.get('/', (req, res) => {
 // =================================================================
 
 app.post('/api/signup', async (req, res) => {
+    // This endpoint now expects all the fields from the new signup form
     const { fullName, email, mobile, college, department, year, rollNumber, password } = req.body;
+    
+    // Validate that all required fields are present
     if (!fullName || !email || !mobile || !college || !department || !year || !rollNumber || !password) {
         return res.status(400).json({ message: 'Please fill all fields.' });
     }
+
     try {
-        const existingUser = await docClient.send(new GetCommand({ TableName: "TestifyUsers", Key: { email: email.toLowerCase() } }));
+        // Check if a user with the same email already exists
+        const existingUser = await docClient.send(new GetCommand({ 
+            TableName: "TestifyUsers", 
+            Key: { email: email.toLowerCase() } 
+        }));
         if (existingUser.Item) {
             return res.status(400).json({ message: 'User with this email already exists.' });
         }
+
+        // Hash the password for security
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Create the new user object
         const newUser = {
             email: email.toLowerCase(),
             fullName,
@@ -589,11 +649,15 @@ app.post('/api/signup', async (req, res) => {
             department,
             rollNumber,
             password: hashedPassword,
-            role: "Student",
+            role: "Student", // Default role for signup
             isBlocked: false
         };
+
+        // Save the new user to the database
         await docClient.send(new PutCommand({ TableName: "TestifyUsers", Item: newUser }));
-        res.status(201).json({ message: 'Account created successfully!' });
+        
+        res.status(201).json({ message: 'Account created successfully! Please log in.' });
+
     } catch (error) {
         console.error("Signup Error:", error);
         res.status(500).json({ message: 'Server error during registration.' });
@@ -619,8 +683,8 @@ app.post('/api/login', async (req, res) => {
                 email: Item.email, 
                 fullName: Item.fullName, 
                 role: Item.role, 
-                college: Item.college, // For students
-                assignedColleges: Item.assignedColleges, // For moderators
+                college: Item.college,
+                assignedColleges: Item.assignedColleges,
                 profileImageUrl: Item.profileImageUrl || null 
             } 
         };
@@ -640,7 +704,6 @@ app.post('/api/login', async (req, res) => {
 // --- ADMIN & MODERATOR SHARED ROUTES (TESTS) ---
 // =================================================================
 
-// This middleware checks if the user is an Admin or a Moderator
 const adminOrModeratorAuth = (req, res, next) => {
     if (req.user.role !== 'Admin' && req.user.role !== 'Moderator') {
         return res.status(403).json({ message: 'Access denied.' });
@@ -649,7 +712,6 @@ const adminOrModeratorAuth = (req, res, next) => {
 };
 
 app.post('/api/tests', authMiddleware, async (req, res) => {
-    // Only Admins can create tests from scratch
     if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Access denied.' });
     
     const { testTitle, duration, totalMarks, passingPercentage, questions } = req.body;
@@ -678,7 +740,6 @@ app.post('/api/tests', authMiddleware, async (req, res) => {
 });
 
 app.get('/api/tests', authMiddleware, adminOrModeratorAuth, async (req, res) => {
-    // Both Admin and Moderator can see the list of available tests
     try {
         const { Items } = await docClient.send(new ScanCommand({ TableName: "TestifyTests" }));
         res.json(Items);
@@ -688,14 +749,12 @@ app.get('/api/tests', authMiddleware, adminOrModeratorAuth, async (req, res) => 
     }
 });
 
-// In backend.js, replace the '/api/assign-test' route
 app.post('/api/assign-test', authMiddleware, adminOrModeratorAuth, async (req, res) => {
     const { testId, testName, colleges, studentEmails, sendEmail, autoIssueCertificates } = req.body;
 
     try {
         let studentsToNotify = [];
 
-        // Prioritize individual student assignment
         if (studentEmails && studentEmails.length > 0) {
             for (const email of studentEmails) {
                 const assignmentId = uuidv4();
@@ -706,7 +765,6 @@ app.post('/api/assign-test', authMiddleware, adminOrModeratorAuth, async (req, r
             }
             studentsToNotify = studentEmails;
         } 
-        // Fallback to college-based assignment
         else if (colleges && colleges.length > 0) {
             if (req.user.role === 'Moderator') {
                 const isAllowed = colleges.every(college => req.user.assignedColleges.includes(college));
@@ -739,7 +797,7 @@ app.post('/api/assign-test', authMiddleware, adminOrModeratorAuth, async (req, r
 
         if (sendEmail && studentsToNotify.length > 0) {
             const mailOptions = {
-                from: '"TESTIFY" <craids22@gmail.com>',
+                from: '"TESTIFY" <testifylearning.help@gmail.com>',
                 to: studentsToNotify.join(','),
                 subject: `New Test Assigned: ${testName}`,
                 html: `<p>Hello,</p><p>A new test, "<b>${testName}</b>", has been assigned to you. Please log in to your TESTIFY dashboard to take the test.</p><p>Best regards,<br/>The TESTIFY Team</p>`
@@ -783,7 +841,6 @@ app.get('/api/admin/test-history', authMiddleware, adminOrModeratorAuth, async (
         const { Items: tests } = await docClient.send(new ScanCommand({ TableName: "TestifyTests" }));
         let { Items: results } = await docClient.send(new ScanCommand({ TableName: "TestifyResults" }));
 
-        // If moderator, filter results by their colleges
         if (req.user.role === 'Moderator') {
             const { Items: studentsInColleges } = await docClient.send(new ScanCommand({
                 TableName: "TestifyUsers",
@@ -976,7 +1033,6 @@ app.put('/api/admin/courses/:id', authMiddleware, async (req, res) => {
     }
 });
 
-// In backend.js, replace the '/api/admin/assign-course' route
 app.post('/api/admin/assign-course', authMiddleware, adminOrModeratorAuth, async (req, res) => {
     const { courseId, colleges, studentEmails, sendEmail } = req.body;
     let studentsToAssign = [];
@@ -987,7 +1043,6 @@ app.post('/api/admin/assign-course', authMiddleware, adminOrModeratorAuth, async
             return res.status(404).json({ message: "Course not found." });
         }
 
-        // Prioritize individual student assignment
         if (studentEmails && studentEmails.length > 0) {
             const keys = studentEmails.map(email => ({ email }));
             const { Responses } = await docClient.send(new BatchGetCommand({
@@ -995,7 +1050,6 @@ app.post('/api/admin/assign-course', authMiddleware, adminOrModeratorAuth, async
             }));
             studentsToAssign = Responses.TestifyUsers || [];
         } 
-        // Fallback to college-based assignment
         else if (colleges && colleges.length > 0) {
             if (req.user.role === 'Moderator') {
                 const isAllowed = colleges.every(college => req.user.assignedColleges.includes(college));
@@ -1038,7 +1092,7 @@ app.post('/api/admin/assign-course', authMiddleware, adminOrModeratorAuth, async
         if (sendEmail) {
             const studentEmails = studentsToAssign.map(s => s.email);
             const mailOptions = {
-                from: '"TESTIFY" <craids22@gmail.com>',
+                from: '"TESTIFY" <testifylearning.help@gmail.com>',
                 to: studentEmails.join(','),
                 subject: `New Course Assigned: ${course.title}`,
                 html: `<p>Hello,</p><p>A new course, "<b>${course.title}</b>", has been assigned to you. Please log in to your TESTIFY dashboard to begin learning.</p><p>Best regards,<br/>The TESTIFY Team</p>`
@@ -1196,7 +1250,7 @@ app.post('/api/student/courses/progress', authMiddleware, async (req, res) => {
                 }));
                 
                 const mailOptions = {
-                    from: '"TESTIFY" <craids22@gmail.com>',
+                    from: '"TESTIFY" <testifylearning.help@gmail.com>',
                     to: studentEmail,
                     subject: `Final Test Unlocked for ${course.title}`,
                     html: `<p>Congratulations!</p><p>You have completed the course "<b>${course.title}</b>". The final test, "<b>${test.title}</b>", is now available in your dashboard.</p><p>Best of luck!</p>`
@@ -1304,8 +1358,6 @@ app.get('/api/student/dashboard-data', authMiddleware, async (req, res) => {
     }
 });
 
-// In backend.js, replace the '/api/student/tests' route
-
 app.get('/api/student/tests', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Student') {
         return res.status(403).json({ message: 'Access denied.' });
@@ -1313,10 +1365,6 @@ app.get('/api/student/tests', authMiddleware, async (req, res) => {
     
     try {
         const studentEmail = req.user.email;
-
-        // Step 1: Get all assignment records for the logged-in student.
-        // For better performance, consider creating a Global Secondary Index (GSI) on `studentEmail` 
-        // in your `TestifyAssignments` table and using `QueryCommand` instead of `ScanCommand`.
         const assignmentsResponse = await docClient.send(new ScanCommand({
             TableName: "TestifyAssignments",
             FilterExpression: "studentEmail = :email",
@@ -1326,13 +1374,12 @@ app.get('/api/student/tests', authMiddleware, async (req, res) => {
         const assignments = assignmentsResponse.Items;
 
         if (!assignments || assignments.length === 0) {
-            return res.json([]); // No tests assigned to this student.
+            return res.json([]);
         }
 
-        // Step 2: Get all test results submitted by this student.
         const resultsResponse = await docClient.send(new QueryCommand({
             TableName: "TestifyResults",
-            IndexName: "StudentEmailIndex", // This assumes you have a GSI named 'StudentEmailIndex'
+            IndexName: "StudentEmailIndex",
             KeyConditionExpression: "studentEmail = :email",
             ExpressionAttributeValues: { ":email": studentEmail }
         }));
@@ -1340,16 +1387,14 @@ app.get('/api/student/tests', authMiddleware, async (req, res) => {
         const results = resultsResponse.Items;
         const completedTestIds = new Set(results.map(r => r.testId));
 
-        // Step 3: Filter out tests that the student has already completed.
         const availableTestIds = assignments
             .map(assignment => assignment.testId)
             .filter(testId => !completedTestIds.has(testId));
 
         if (availableTestIds.length === 0) {
-            return res.json([]); // All assigned tests have been completed.
+            return res.json([]);
         }
 
-        // Step 4: Fetch the full details for the available tests.
         const uniqueTestIds = [...new Set(availableTestIds)];
         const keys = uniqueTestIds.map(testId => ({ testId }));
         
@@ -1364,12 +1409,10 @@ app.get('/api/student/tests', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Server error fetching student tests.' });
     }
 });
-// --- In backend.js, replace your existing '/api/student/submit-test' route ---
 
 app.post('/api/student/submit-test', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
     
-    // Destructure the new 'violationReason' field from the request body
     const { testId, answers, timeTaken, violationReason } = req.body;
     const studentEmail = req.user.email;
     const resultId = uuidv4();
@@ -1412,7 +1455,6 @@ app.post('/api/student/submit-test', authMiddleware, async (req, res) => {
             score: percentageScore,
             result,
             submittedAt: new Date().toISOString(),
-            // Add the violation reason to the result object. If it's undefined, it won't be saved.
             violationReason: violationReason || null 
         };
     
@@ -1429,6 +1471,7 @@ app.post('/api/student/submit-test', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Server error submitting test.' });
     }
 });
+
 app.get('/api/student/history', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
     try {
@@ -1519,7 +1562,6 @@ app.put('/api/tests/:id', authMiddleware, async (req, res) => {
             ...existingTest, 
             title: testTitle,
             duration,
-            totalMarks,
             passingPercentage,
             questions
         };
@@ -1534,8 +1576,6 @@ app.put('/api/tests/:id', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Server error updating test.' });
     }
 });
-
-// --- In backend.js, find and replace this entire route ---
 
 app.get('/api/admin/test-report/:testId', authMiddleware, adminOrModeratorAuth, async (req, res) => {
     const { testId } = req.params;
@@ -1564,7 +1604,6 @@ app.get('/api/admin/test-report/:testId', authMiddleware, adminOrModeratorAuth, 
         }));
 
         let students = allStudents;
-        // Moderator can only see reports for their colleges
         if (req.user.role === 'Moderator') {
             students = allStudents.filter(s => req.user.assignedColleges.includes(s.college));
             const studentEmails = new Set(students.map(s => s.email));
@@ -1651,7 +1690,7 @@ app.post('/api/admin/issue-certificates', authMiddleware, async (req, res) => {
             }));
 
             const mailOptions = {
-                from: '"TESTIFY" <craids22@gmail.com>',
+                from: '"TESTIFY" <testifylearning.help@gmail.com>',
                 to: result.studentEmail,
                 subject: `Congratulations! You've earned a certificate for ${testTitle}`,
                 html: `
@@ -1839,7 +1878,6 @@ app.post('/api/admin/generate-course-from-pdf', authMiddleware, async (req, res)
 // --- ADMIN & MODERATOR ROUTES FOR STUDENT MANAGEMENT ---
 // =================================================================
 
-// Get students by college (for Admin) or assigned colleges (for Moderator)
 app.get('/api/admin/students/:college', authMiddleware, adminOrModeratorAuth, async (req, res) => {
     const { college } = req.params;
 
@@ -1856,7 +1894,6 @@ app.get('/api/admin/students/:college', authMiddleware, adminOrModeratorAuth, as
         }));
         const students = studentsResponse.Items;
 
-        // This part can be optimized if performance becomes an issue
         const resultsResponse = await docClient.send(new ScanCommand({ TableName: "TestifyResults" }));
         const coursesResponse = await docClient.send(new ScanCommand({ TableName: "TestifyCourseProgress" }));
 
@@ -1884,7 +1921,6 @@ app.get('/api/admin/students/:college', authMiddleware, adminOrModeratorAuth, as
 });
 
 
-// Update student details
 app.put('/api/admin/students/:email', authMiddleware, adminOrModeratorAuth, async (req, res) => {
     const { email } = req.params;
     const { fullName, mobile, college, department, rollNumber } = req.body;
@@ -1916,7 +1952,6 @@ app.put('/api/admin/students/:email', authMiddleware, adminOrModeratorAuth, asyn
     }
 });
 
-// Admin or Moderator can change a student's profile image
 app.post('/api/admin/student/:email/image', authMiddleware, adminOrModeratorAuth, upload.single('profileImage'), async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No image file uploaded.' });
@@ -1962,7 +1997,6 @@ app.post('/api/admin/student/:email/image', authMiddleware, adminOrModeratorAuth
 });
 
 
-// Delete a student (Admin only)
 app.delete('/api/admin/students/:email', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Admin') {
         return res.status(403).json({ message: 'Access denied.' });
@@ -1980,7 +2014,6 @@ app.delete('/api/admin/students/:email', authMiddleware, async (req, res) => {
     }
 });
 
-// Block/Unblock a student
 app.patch('/api/admin/students/:email/status', authMiddleware, adminOrModeratorAuth, async (req, res) => {
     const { email } = req.params;
     const { isBlocked } = req.body;
@@ -2005,25 +2038,6 @@ app.patch('/api/admin/students/:email/status', authMiddleware, adminOrModeratorA
     }
 });
 
-//face verification
-
-// Add this with your other imports at the top of backend.js
-const { RekognitionClient, CompareFacesCommand } = require("@aws-sdk/client-rekognition");
-
-// Add this with your other client setups
-const rekognitionClient = new RekognitionClient({
-    region: 'ap-south-1', // Or your preferred AWS region
-    credentials: {
-        accessKeyId: 'AKIAVEP3EDM5MKMROQRB', // It's better to use environment variables for these
-        secretAccessKey: 'cvELln8Bg4cmGv7Uhwcd1KWdxW14ulZbVf8Xo+gr'
-    }
-});
-
-// --- Make sure 'fetch' is available at the top of your file ---
-// You already have this line, but just confirming:
-// const fetch = require('node-fetch');
-
-// --- REPLACE the existing face-verification route with this one ---
 app.post('/api/student/face-verification', authMiddleware, async (req, res) => {
     const { profileImageUrl, webcamImage } = req.body;
 
@@ -2032,26 +2046,21 @@ app.post('/api/student/face-verification', authMiddleware, async (req, res) => {
     }
 
     try {
-        // --- NEW LOGIC: Fetch profile image from Cloudinary ---
         const profileImageResponse = await fetch(profileImageUrl);
         if (!profileImageResponse.ok) {
             throw new Error('Failed to download profile image from Cloudinary.');
         }
         const profileImageBuffer = await profileImageResponse.buffer();
-        // --- END OF NEW LOGIC ---
-
-        // Convert the base64 webcam image from the frontend to a buffer
         const webcamImageBuffer = Buffer.from(webcamImage.replace(/^data:image\/jpeg;base64,/, ""), 'base64');
 
         const command = new CompareFacesCommand({
-            // MODIFIED: Use Bytes for the source image instead of S3Object
             SourceImage: {
                 Bytes: profileImageBuffer,
             },
             TargetImage: {
                 Bytes: webcamImageBuffer,
             },
-            SimilarityThreshold: 90, // Set a similarity threshold
+            SimilarityThreshold: 90,
         });
 
         const response = await rekognitionClient.send(command);
@@ -2068,7 +2077,6 @@ app.post('/api/student/face-verification', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'An error occurred during face verification.' });
     }
 });
-// Get ALL students (for Admin) or all students in assigned colleges (for Moderator)
 app.get('/api/admin/all-students', authMiddleware, adminOrModeratorAuth, async (req, res) => {
     try {
         let filterExpression = "#role = :student";
@@ -2076,7 +2084,7 @@ app.get('/api/admin/all-students', authMiddleware, adminOrModeratorAuth, async (
         
         if (req.user.role === 'Moderator') {
             if (req.user.assignedColleges.length === 0) {
-                return res.json([]); // Moderator with no colleges sees no students
+                return res.json([]);
             }
             filterExpression += ' AND (' + req.user.assignedColleges.map((_, i) => `college = :c${i}`).join(' OR ') + ')';
             req.user.assignedColleges.forEach((college, i) => {
@@ -2092,7 +2100,6 @@ app.get('/api/admin/all-students', authMiddleware, adminOrModeratorAuth, async (
         }));
         const students = studentsResponse.Items;
 
-        // Fetch all test results and course progresses to enrich student data
         const resultsResponse = await docClient.send(new ScanCommand({ TableName: "TestifyResults" }));
         const coursesResponse = await docClient.send(new ScanCommand({ TableName: "TestifyCourseProgress" }));
 
@@ -2120,7 +2127,6 @@ app.get('/api/admin/all-students', authMiddleware, adminOrModeratorAuth, async (
 });
 
 
-// NEW: Get filtered students based on college, year, and department
 app.get('/api/admin/students', authMiddleware, adminOrModeratorAuth, async (req, res) => {
     const { college, year, department } = req.query;
 
@@ -2176,12 +2182,6 @@ app.get('/api/admin/students', authMiddleware, adminOrModeratorAuth, async (req,
 // --- NEW: IMPACT STATS ROUTES ---
 // =================================================================
 
-// GET route for public "About Us" page (no auth needed)
-// =================================================================
-// --- IMPACT STATS & FLYER ROUTES (USING TestifyUsers TABLE) ---
-// =================================================================
-
-// GET route for public pages (no auth needed)
 app.get('/api/impact-stats', async (req, res) => {
     try {
         const { Item } = await docClient.send(new GetCommand({
@@ -2190,7 +2190,6 @@ app.get('/api/impact-stats', async (req, res) => {
         }));
         
         if (Item) {
-            // Return all stats, including the flyer image URL if it exists
             res.json({
                 institutions: Item.institutions,
                 exams: Item.exams,
@@ -2198,7 +2197,6 @@ app.get('/api/impact-stats', async (req, res) => {
                 flyerImageUrl: Item.flyerImageUrl || null
             });
         } else {
-            // Return default values if nothing is saved yet
             res.json({ institutions: "0+", exams: "0+", uptime: "0%", flyerImageUrl: null });
         }
     } catch (error) {
@@ -2207,8 +2205,6 @@ app.get('/api/impact-stats', async (req, res) => {
     }
 });
 
-// POST route for admin to update stats and upload flyer (auth needed)
-// Using upload.single() to handle the flyer image file
 app.post('/api/admin/impact-stats', authMiddleware, upload.single('flyerImage'), async (req, res) => {
     if (req.user.role !== 'Admin') {
         return res.status(403).json({ message: 'Access denied.' });
@@ -2218,13 +2214,11 @@ app.post('/api/admin/impact-stats', authMiddleware, upload.single('flyerImage'),
     let flyerImageUrl;
 
     try {
-        // First, fetch the existing record to see if there's an old image URL
         const { Item: existingStats } = await docClient.send(new GetCommand({
             TableName: "TestifyUsers",
             Key: { email: "_system_impact_stats" }
         }));
 
-        // If a new file is uploaded, send it to Cloudinary
         if (req.file) {
             const b64 = Buffer.from(req.file.buffer).toString("base64");
             const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
@@ -2233,21 +2227,18 @@ app.post('/api/admin/impact-stats', authMiddleware, upload.single('flyerImage'),
             });
             flyerImageUrl = result.secure_url;
         } else {
-            // If no new file, keep the existing URL
             flyerImageUrl = existingStats ? existingStats.flyerImageUrl : null;
         }
 
-        // Prepare the data for DynamoDB
         const statsData = {
             email: "_system_impact_stats",
             recordType: "ImpactStats",
             institutions,
             exams,
             uptime,
-            flyerImageUrl // Add the new or existing image URL
+            flyerImageUrl
         };
 
-        // Use PutCommand to create or overwrite the item
         await docClient.send(new PutCommand({
             TableName: "TestifyUsers",
             Item: statsData
@@ -2262,7 +2253,7 @@ app.post('/api/admin/impact-stats', authMiddleware, upload.single('flyerImage'),
 });
 
 app.post('/api/compile', authMiddleware, async (req, res) => {
-    const { language, code, input } = req.body; // Added 'input'
+    const { language, code, input } = req.body;
 
     if (!language || !code) {
         return res.status(400).json({ message: 'Language and code are required.' });
@@ -2277,7 +2268,7 @@ app.post('/api/compile', authMiddleware, async (req, res) => {
             body: JSON.stringify({
                 language: language,
                 source_code: code,
-                input: input || "", // Pass the input to the execution API
+                input: input || "",
                 api_key: 'guest'
             })
         });
@@ -2285,7 +2276,6 @@ app.post('/api/compile', authMiddleware, async (req, res) => {
         const data = await response.json();
 
         if (data.id) {
-            // Wait a moment for the execution to start
             await new Promise(resolve => setTimeout(resolve, 2000));
 
             const statusResponse = await fetch(`https://api.paiza.io/runners/get_details?id=${data.id}&api_key=guest`);
@@ -2336,7 +2326,6 @@ app.post('/api/admin/practice-tests', authMiddleware, async (req, res) => {
     }
 });
 
-// ADMIN: Get all practice tests
 app.get('/api/admin/practice-tests', authMiddleware, async (req, res) => {
      if (req.user.role !== 'Admin') {
         return res.status(403).json({ message: 'Access denied.' });
@@ -2350,7 +2339,6 @@ app.get('/api/admin/practice-tests', authMiddleware, async (req, res) => {
     }
 });
 
-// ADMIN: Assign a practice test
 app.post('/api/admin/assign-practice-test', authMiddleware, async (req, res) => {
      if (req.user.role !== 'Admin') {
         return res.status(403).json({ message: 'Access denied.' });
@@ -2375,12 +2363,10 @@ app.post('/api/admin/assign-practice-test', authMiddleware, async (req, res) => 
     }
 });
 
-// STUDENT: Get assigned practice tests
 app.get('/api/student/practice-tests', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
     
     try {
-        // CORRECTED: Use req.user which is set by the authMiddleware
         const studentCollege = req.user.college;
         if (!studentCollege) return res.json([]);
 
@@ -2408,7 +2394,6 @@ app.get('/api/student/practice-tests', authMiddleware, async (req, res) => {
     }
 });
 
-// STUDENT: Submit practice test (simplified)
 app.post('/api/student/submit-practice-test', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
     
@@ -2426,7 +2411,7 @@ app.post('/api/student/submit-practice-test', authMiddleware, async (req, res) =
         let totalMarks = 0;
         test.questions.forEach((question, index) => {
             const studentAnswer = answers[index];
-            totalMarks += (question.marks || 1); // Assume 1 mark if not specified
+            totalMarks += (question.marks || 1);
             if (studentAnswer === null || studentAnswer === undefined) return;
 
             if (question.type === 'mcq-single' || question.type === 'fill-blank') {
@@ -2444,7 +2429,6 @@ app.post('/api/student/submit-practice-test', authMiddleware, async (req, res) =
 
         const percentageScore = totalMarks > 0 ? Math.round((score / totalMarks) * 100) : 0;
 
-        // We don't save practice test results, just return the score
         res.status(200).json({ 
             message: 'Practice test submitted!',
             score: score,
@@ -2472,7 +2456,6 @@ app.post('/api/unassign-test', authMiddleware, adminOrModeratorAuth, async (req,
         if (studentEmails && studentEmails.length > 0) {
             emailsToProcess = studentEmails;
         } else if (colleges && colleges.length > 0) {
-            // Check moderator permissions
             if (req.user.role === 'Moderator') {
                 const isAllowed = colleges.every(college => req.user.assignedColleges.includes(college));
                 if (!isAllowed) {
@@ -2480,7 +2463,6 @@ app.post('/api/unassign-test', authMiddleware, adminOrModeratorAuth, async (req,
                 }
             }
 
-            // Find all students in the specified colleges
             const collegeStudentFilter = colleges.map((_, index) => `college = :c${index}`).join(' OR ');
             const collegeStudentValues = {};
             colleges.forEach((college, index) => {
@@ -2497,32 +2479,30 @@ app.post('/api/unassign-test', authMiddleware, adminOrModeratorAuth, async (req,
             emailsToProcess = studentsInColleges.map(s => s.email);
         }
 
-        if (emailsToProcess.length > 0) {
-            // Find all assignments for the specified test and students
-            // Note: Scanning can be inefficient on very large tables. 
-            // For production at scale, consider a secondary index on studentEmail if not already present.
-            const emailFilters = emailsToProcess.map((_, index) => `:email${index}`).join(', ');
-            const expressionAttributeValues = { ":tid": testId };
-            emailsToProcess.forEach((email, index) => {
-                expressionAttributeValues[`:email${index}`] = email;
-            });
-
-            const scanParams = {
-                TableName: "TestifyAssignments",
-                FilterExpression: `testId = :tid AND studentEmail IN (${emailFilters})`,
-                ExpressionAttributeValues: expressionAttributeValues,
-                ProjectionExpression: "assignmentId" // Only get the ID for deletion
-            };
-
-            const { Items } = await docClient.send(new ScanCommand(scanParams));
-            assignmentsToDelete = Items;
+        if (emailsToProcess.length === 0) {
+            return res.status(200).json({ message: 'No matching assignments found to remove.' });
         }
+
+        const emailFilters = emailsToProcess.map((_, index) => `:email${index}`).join(', ');
+        const expressionAttributeValues = { ":tid": testId };
+        emailsToProcess.forEach((email, index) => {
+            expressionAttributeValues[`:email${index}`] = email;
+        });
+
+        const scanParams = {
+            TableName: "TestifyAssignments",
+            FilterExpression: `testId = :tid AND studentEmail IN (${emailFilters})`,
+            ExpressionAttributeValues: expressionAttributeValues,
+            ProjectionExpression: "assignmentId"
+        };
+
+        const { Items } = await docClient.send(new ScanCommand(scanParams));
+        assignmentsToDelete = Items;
         
         if (assignmentsToDelete.length === 0) {
             return res.status(200).json({ message: 'No matching assignments found to remove.' });
         }
 
-        // DynamoDB BatchWriteCommand can only handle 25 items at a time.
         const deleteRequests = assignmentsToDelete.map(item => ({
             DeleteRequest: { Key: { assignmentId: item.assignmentId } }
         }));
@@ -2585,15 +2565,11 @@ app.get('/api/admin/assignment-report', authMiddleware, adminOrModeratorAuth, as
             return res.json([]);
         }
 
-        // --- FIX STARTS HERE ---
-        // Filter out any null, undefined, or non-string email values to prevent crashes
         const studentEmailArray = Array.from(studentEmails).filter(email => email && typeof email === 'string');
 
-        // If after filtering there are no valid emails, return an empty report
         if (studentEmailArray.length === 0) {
             return res.json([]);
         }
-        // --- FIX ENDS HERE ---
 
         const keys = studentEmailArray.map(email => ({ email }));
         
@@ -2602,7 +2578,6 @@ app.get('/api/admin/assignment-report', authMiddleware, adminOrModeratorAuth, as
         }));
         let students = Responses.TestifyUsers || [];
         
-        // If moderator, filter students by assigned colleges
         if (req.user.role === 'Moderator') {
             const allowedColleges = new Set(req.user.assignedColleges);
             students = students.filter(student => allowedColleges.has(student.college));
@@ -2610,10 +2585,8 @@ app.get('/api/admin/assignment-report', authMiddleware, adminOrModeratorAuth, as
         
         const studentMap = new Map(students.map(s => [s.email, { fullName: s.fullName, college: s.college }]));
 
-        // Enrich assignments with student details and filter out those not in the moderator's scope
         const finalReport = assignments
             .map(assignment => {
-                // Ensure the assignment's email is one of the valid ones we fetched
                 const studentInfo = studentMap.get(assignment.studentEmail);
                 if (studentInfo) {
                     return {
@@ -2622,9 +2595,9 @@ app.get('/api/admin/assignment-report', authMiddleware, adminOrModeratorAuth, as
                         college: studentInfo.college
                     };
                 }
-                return null; // This will be filtered out
+                return null;
             })
-            .filter(Boolean); // Removes null entries
+            .filter(Boolean);
 
         res.json(finalReport);
 
@@ -2633,6 +2606,524 @@ app.get('/api/admin/assignment-report', authMiddleware, adminOrModeratorAuth, as
         res.status(500).json({ message: 'Server error fetching assignment report.' });
     }
 });
+
+//////////////////////////////////////////////////////////////////////////////////interview part
+app.post('/api/admin/interviews', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { title, questions } = req.body;
+    if (!title || !questions || !Array.isArray(questions) || questions.length === 0) {
+        return res.status(400).json({ message: 'Title and at least one question are required.' });
+    }
+    const interviewId = uuidv4();
+    const newInterview = {
+        PK: `INTERVIEW#${interviewId}`,
+        SK: `METADATA`,
+        interviewId,
+        title,
+        questions,
+        createdAt: new Date().toISOString(),
+    };
+    try {
+        await docClient.send(new PutCommand({ TableName: "TestifyInterviews", Item: newInterview }));
+        res.status(201).json({ message: 'Interview created successfully!', interview: newInterview });
+    } catch (error) {
+        console.error("Create Interview Error:", error);
+        res.status(500).json({ message: 'Server error creating interview.' });
+    }
+});
+
+app.get('/api/admin/interviews', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyInterviews",
+            FilterExpression: "SK = :sk",
+            ExpressionAttributeValues: { ":sk": "METADATA" }
+        }));
+        res.json(Items);
+    } catch (error) {
+        console.error("Get Interviews Error:", error);
+        res.status(500).json({ message: 'Server error fetching interviews.' });
+    }
+});
+
+app.post('/api/admin/assign-interview', authMiddleware, adminOrModeratorAuth, async (req, res) => {
+    const { interviewId, colleges, studentEmails } = req.body;
+    if (!interviewId) {
+        return res.status(400).json({ message: 'Interview ID is required.' });
+    }
+
+    try {
+        let studentsToNotify = [];
+
+        if (studentEmails && studentEmails.length > 0) {
+            studentsToNotify = studentEmails.map(email => email.trim()).filter(Boolean);
+        } else if (colleges && colleges.length > 0) {
+            const filterExpression = colleges.map((_, index) => `college = :c${index}`).join(' OR ');
+            const expressionAttributeValues = {};
+            colleges.forEach((college, index) => {
+                expressionAttributeValues[`:c${index}`] = college;
+            });
+            const { Items } = await docClient.send(new ScanCommand({
+                TableName: "TestifyUsers",
+                FilterExpression: filterExpression,
+                ExpressionAttributeValues: expressionAttributeValues,
+                ProjectionExpression: "email"
+            }));
+            studentsToNotify = Items.map(s => s.email);
+        }
+
+        if (studentsToNotify.length === 0) {
+             return res.status(400).json({ message: "No students found to assign." });
+        }
+
+        const assignments = studentsToNotify.map(email => ({
+            PutRequest: {
+                Item: {
+                    PK: `ASSIGNMENT#${interviewId}`,
+                    SK: `STUDENT#${email}`,
+                    GSI1PK: `STUDENT#${email}`,
+                    GSI1SK: `ASSIGNMENT#${interviewId}`,
+                    interviewId,
+                    studentEmail: email,
+                    assignedAt: new Date().toISOString()
+                }
+            }
+        }));
+
+        const batches = [];
+        for (let i = 0; i < assignments.length; i += 25) {
+            batches.push(assignments.slice(i, i + 25));
+        }
+
+        for (const batch of batches) {
+            await docClient.send(new BatchWriteCommand({
+                RequestItems: { "TestifyInterviews": batch }
+            }));
+        }
+
+        res.status(200).json({ message: `Interview assigned to ${studentsToNotify.length} students successfully!` });
+
+    } catch (error) {
+        console.error("Assign Interview Error:", error);
+        res.status(500).json({ message: 'Server error assigning interview.' });
+    }
+});
+
+app.get('/api/student/interviews', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const { Items: assignments } = await docClient.send(new QueryCommand({
+            TableName: "TestifyInterviews",
+            IndexName: "GSI1",
+            KeyConditionExpression: "GSI1PK = :gsi1pk",
+            ExpressionAttributeValues: { ":gsi1pk": `STUDENT#${req.user.email}` }
+        }));
+        
+        if (!assignments || assignments.length === 0) {
+            return res.json([]);
+        }
+        
+        const interviewIds = [...new Set(assignments.map(a => a.interviewId))];
+        
+        const keys = interviewIds.map(id => ({ 
+            PK: `INTERVIEW#${id}`, 
+            SK: 'METADATA' 
+        }));
+
+        const { Responses } = await docClient.send(new BatchGetCommand({
+            RequestItems: { "TestifyInterviews": { Keys: keys } }
+        }));
+        
+        res.json(Responses.TestifyInterviews || []);
+
+    } catch (error) {
+        console.error("Get Student Interviews Error:", error);
+        res.status(500).json({ message: 'Server error fetching interviews.' });
+    }
+});
+
+app.post('/api/student/submit-interview', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+    
+    const { interviewId, answers, violationReason } = req.body;
+    const studentEmail = req.user.email;
+    const resultId = uuidv4();
+
+    try {
+        const { Item: interview } = await docClient.send(new GetCommand({
+            TableName: "TestifyInterviews",
+            Key: { PK: `INTERVIEW#${interviewId}`, SK: 'METADATA' }
+        }));
+        
+        if (!interview) {
+            return res.status(404).json({ message: 'Interview definition not found.' });
+        }
+
+        let questionScore = 0;
+        const processedAnswers = answers.map(ans => {
+            const originalQuestion = interview.questions.find(q => q.questionText === ans.questionText);
+            const isCorrect = originalQuestion && ans.studentAnswerText.toLowerCase().includes(originalQuestion.correctAnswer.toLowerCase());
+            if (isCorrect) {
+                questionScore += 1;
+            }
+            return { ...ans, isCorrect };
+        });
+
+        const fluencyMarks = 5.0; 
+        const sittingMarks = 5.0;
+        const totalScore = questionScore + fluencyMarks + sittingMarks;
+
+        const newResult = {
+            PK: `RESULT#${interviewId}`,
+            SK: `STUDENT#${studentEmail}`,
+            GSI1PK: `INTERVIEW#${interviewId}`,
+            GSI1SK: `RESULT#${resultId}`,
+            GSI2PK: `STUDENT#${studentEmail}`,
+            GSI2SK: `RESULT#${interviewId}`,
+            interviewId,
+            studentEmail,
+            answers: processedAnswers,
+            fluencyMarks,
+            sittingMarks,
+            score: totalScore,
+            violationReason,
+            resultsPublished: false,
+            submittedAt: new Date().toISOString(),
+        };
+        
+        await docClient.send(new PutCommand({ TableName: "TestifyInterviews", Item: newResult }));
+        res.status(201).json({ message: 'Interview submitted successfully! Your results will be available after review.' });
+
+    } catch (error) {
+        console.error("Submit Interview Error:", error);
+        res.status(500).json({ message: 'Server error submitting interview.' });
+    }
+});
+
+app.get('/api/admin/interview-report/:interviewId', authMiddleware, adminOrModeratorAuth, async (req, res) => {
+    const { interviewId } = req.params;
+    try {
+        const { Item: interview } = await docClient.send(new GetCommand({
+            TableName: "TestifyInterviews",
+            Key: { PK: `INTERVIEW#${interviewId}`, SK: 'METADATA' }
+        }));
+
+        if (!interview) {
+            return res.status(404).json({ message: "Interview not found." });
+        }
+        
+        const { Items: results } = await docClient.send(new QueryCommand({
+            TableName: "TestifyInterviews",
+            IndexName: "GSI1",
+            KeyConditionExpression: "GSI1PK = :gsi1pk",
+            FilterExpression: "begins_with(GSI1SK, :gsi1sk)",
+            ExpressionAttributeValues: { 
+                ":gsi1pk": `INTERVIEW#${interviewId}`,
+                ":gsi1sk": "RESULT#"
+            }
+        }));
+
+        const studentEmails = [...new Set(results.map(r => r.studentEmail))];
+        if (studentEmails.length === 0) {
+            return res.json({ title: interview.title, results: [] });
+        }
+
+        const keys = studentEmails.map(email => ({ email }));
+        const { Responses } = await docClient.send(new BatchGetCommand({
+            RequestItems: { "TestifyUsers": { Keys: keys } }
+        }));
+        const students = Responses.TestifyUsers || [];
+        const studentMap = new Map(students.map(s => [s.email, { fullName: s.fullName, college: s.college }]));
+
+        const reportResults = results.map(result => {
+            const studentInfo = studentMap.get(result.studentEmail) || { fullName: 'Unknown', college: 'Unknown' };
+            return {
+                ...result, 
+                studentName: studentInfo.fullName,
+                college: studentInfo.college
+            };
+        });
+
+        res.json({
+            title: interview.title,
+            results: reportResults
+        });
+
+    } catch (error) {
+        console.error("Get Interview Report Error:", error);
+        res.status(500).json({ message: 'Server error fetching report.' });
+    }
+});
+
+app.post('/api/admin/generate-interview-from-file', authMiddleware, upload.single('file'), async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded.' });
+    }
+
+    try {
+        const data = await pdf(req.file.buffer);
+        const text = data.text;
+        if (!text) {
+             return res.status(400).json({ message: 'Could not extract text from the uploaded file.' });
+        }
+        
+        const fetch = (await import('node-fetch')).default;
+
+        const prompt = `Based on the following text, create a structured JSON object for an interview. The JSON must have an array of 'questions'. Each question object in the array must have 'questionText' (string) and 'correctAnswer' (string, for the interviewer's reference). Here is the text:\n\n${text}`;
+        const schema = {
+            type: "OBJECT",
+            properties: {
+                "questions": {
+                    "type": "ARRAY",
+                    "items": {
+                        "type": "OBJECT",
+                        "properties": {
+                            "questionText": { "type": "STRING" },
+                            "correctAnswer": { "type": "STRING" }
+                        },
+                        "required": ["questionText", "correctAnswer"]
+                    }
+                }
+            },
+            required: ["questions"]
+        };
+
+        const apiKey = 'AIzaSyAR_X4MZ75vxwV7OTU3dabFRcVe4SxWpb8';
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: "application/json", responseSchema: schema }
+        };
+
+        const apiResponse = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!apiResponse.ok) {
+            const errorBody = await apiResponse.text();
+            console.error("Gemini API Error:", errorBody);
+            return res.status(502).json({ message: 'AI API call failed. Please check the backend logs.'});
+        }
+
+        const result = await apiResponse.json();
+        const jsonText = result.candidates[0].content.parts[0].text;
+        const structuredResponse = JSON.parse(jsonText);
+
+        res.json(structuredResponse);
+
+    } catch (error) {
+        console.error('Error generating interview from text:', error);
+        res.status(500).json({ message: 'Failed to generate interview from file due to a server error.' });
+    }
+});
+
+app.get('/api/student/interviews/:id', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    const { id: interviewId } = req.params;
+    const studentEmail = req.user.email;
+
+    try {
+        const assignmentCheck = await docClient.send(new GetCommand({
+            TableName: "TestifyInterviews",
+            Key: {
+                PK: `ASSIGNMENT#${interviewId}`,
+                SK: `STUDENT#${studentEmail}`
+            }
+        }));
+
+        if (!assignmentCheck.Item) {
+            return res.status(403).json({ message: "Access denied. You are not assigned to this interview." });
+        }
+
+        const { Item: interviewDetails } = await docClient.send(new GetCommand({
+            TableName: "TestifyInterviews",
+            Key: {
+                PK: `INTERVIEW#${interviewId}`,
+                SK: 'METADATA'
+            }
+        }));
+
+        if (!interviewDetails) {
+            return res.status(404).json({ message: "Interview details not found." });
+        }
+
+        res.json(interviewDetails);
+
+    } catch (error) {
+        console.error("Get Single Student Interview Error:", error);
+        res.status(500).json({ message: 'Server error fetching interview details.' });
+    }
+});
+
+app.post('/api/admin/publish-interview-results', authMiddleware, adminOrModeratorAuth, async (req, res) => {
+    const { interviewId, studentEmail } = req.body;
+    
+    try {
+        await docClient.send(new UpdateCommand({
+            TableName: "TestifyInterviews",
+            Key: {
+                PK: `RESULT#${interviewId}`,
+                SK: `STUDENT#${studentEmail}`
+            },
+            UpdateExpression: "set resultsPublished = :true",
+            ExpressionAttributeValues: {
+                ":true": true
+            }
+        }));
+        res.status(200).json({ message: "Results published successfully for the student." });
+    } catch (error) {
+        console.error("Publish Interview Results Error:", error);
+        res.status(500).json({ message: 'Server error publishing results.' });
+    }
+});
+
+app.get('/api/student/interview-results', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const { Items } = await docClient.send(new QueryCommand({
+            TableName: "TestifyInterviews",
+            IndexName: "GSI2",
+            KeyConditionExpression: "GSI2PK = :gsi2pk",
+            ExpressionAttributeValues: { ":gsi2pk": `STUDENT#${req.user.email}` }
+        }));
+        res.json(Items || []);
+    } catch (error) {
+        console.error("Get Student Interview Results Error:", error);
+        res.status(500).json({ message: 'Server error fetching interview results.' });
+    }
+});
+
+// --- NEW ENDPOINT: Request Password Reset ---
+app.post('/api/forgot-password', async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required.' });
+    }
+
+    try {
+        const emailLower = email.toLowerCase();
+        const { Item } = await docClient.send(new GetCommand({ TableName: "TestifyUsers", Key: { email: emailLower } }));
+
+        if (!Item) {
+            return res.status(404).json({ message: 'User not found. Please check your email address.' });
+        }
+
+        const resetToken = uuidv4();
+        const resetTokenExpiry = Date.now() + 3600000; // 1 hour expiration
+
+        await docClient.send(new UpdateCommand({
+            TableName: "TestifyUsers",
+            Key: { email: emailLower },
+            UpdateExpression: "set resetToken = :token, resetTokenExpiry = :expiry",
+            ExpressionAttributeValues: { ":token": resetToken, ":expiry": resetTokenExpiry }
+        }));
+
+        const resetLink = `http://localhost:3000/reset-password.html?token=${resetToken}&email=${email}`;
+        
+        const mailOptions = {
+            from: '"TESTIFY" <craids22@gmail.com>',
+            to: email,
+            subject: 'Password Reset Request',
+            html: `<p>You have requested a password reset for your TESTIFY account.</p>
+                   <p>Click <a href="${resetLink}">here</a> to reset your password.</p>
+                   <p>If you did not request this, please ignore this email.</p>`
+        };
+
+        await transporter.sendMail(mailOptions);
+        res.status(200).json({ message: 'Password reset link sent to your email.' });
+
+    } catch (error) {
+        console.error("Forgot Password Error:", error);
+        res.status(500).json({ message: 'Server error. Please try again later.' });
+    }
+});
+
+// --- NEW ENDPOINT: Reset Password ---
+app.post('/api/reset-password', async (req, res) => {
+    const { email, token, newPassword } = req.body;
+    
+    if (!email || !token || !newPassword) {
+        return res.status(400).json({ message: 'Missing required fields.' });
+    }
+
+    try {
+        const emailLower = email.toLowerCase();
+        const { Item } = await docClient.send(new GetCommand({ TableName: "TestifyUsers", Key: { email: emailLower } }));
+
+        if (!Item || Item.resetToken !== token || Date.now() > Item.resetTokenExpiry) {
+            return res.status(400).json({ message: 'Invalid or expired token.' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        await docClient.send(new UpdateCommand({
+            TableName: "TestifyUsers",
+            Key: { email: emailLower },
+            UpdateExpression: "set #pass = :newPassword remove resetToken, resetTokenExpiry",
+            ExpressionAttributeNames: { "#pass": "password" },
+            ExpressionAttributeValues: { ":newPassword": hashedPassword }
+        }));
+        
+        res.status(200).json({ message: 'Password reset successfully. You can now log in with your new password.' });
+
+    } catch (error) {
+        console.error("Reset Password Error:", error);
+        res.status(500).json({ message: 'Server error during password reset.' });
+    }
+});
+// --- NEW ENDPOINT: Reset Password ---
+app.post('/api/reset-password', async (req, res) => {
+    const { email, token, newPassword } = req.body;
+    
+    if (!email || !token || !newPassword) {
+        return res.status(400).json({ message: 'Missing required fields.' });
+    }
+
+    try {
+        const emailLower = email.toLowerCase();
+        const { Item } = await docClient.send(new GetCommand({ TableName: "TestifyUsers", Key: { email: emailLower } }));
+
+        if (!Item || Item.resetToken !== token || Date.now() > Item.resetTokenExpiry) {
+            return res.status(400).json({ message: 'Invalid or expired token.' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        await docClient.send(new UpdateCommand({
+            TableName: "TestifyUsers",
+            Key: { email: emailLower },
+            UpdateExpression: "set #pass = :newPassword remove resetToken, resetTokenExpiry",
+            ExpressionAttributeNames: { "#pass": "password" },
+            ExpressionAttributeValues: { ":newPassword": hashedPassword }
+        }));
+        
+        res.status(200).json({ message: 'Password reset successfully. You can now log in with your new password.' });
+
+    } catch (error) {
+        console.error("Reset Password Error:", error);
+        res.status(500).json({ message: 'Server error during password reset.' });
+    }
+});
+
 
 
 // --- SERVER START ---
