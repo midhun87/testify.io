@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Interview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .full-screen-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #f3f4f6;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        #timer {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ef4444;
+            margin-bottom: 1rem;
+        }
+        #question-box {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            max-width: 800px;
+            width: 90%;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+<div id="app" class="full-screen-container">
+    <div id="intro-screen" class="text-center p-8 bg-white rounded-lg shadow-xl max-w-lg">
+        <h1 class="text-3xl font-bold mb-4 text-gray-800">Online Interview</h1>
+        <p class="text-gray-600 mb-6">
+            You are about to start a proctored interview.
+            Please ensure you are in a quiet room and have your microphone enabled.
+            This interview will be in full-screen mode and will end if you switch tabs.
+        </p>
+        <button id="start-btn" class="bg-indigo-600 text-white px-6 py-3 rounded-full hover:bg-indigo-700 transition-colors duration-300 shadow-md">
+            Start Interview
+        </button>
+    </div>
+
+    <div id="interview-screen" class="hidden">
+        <div id="timer">15</div>
+        <div id="question-box">
+            <p id="question-text" class="text-2xl font-semibold text-gray-700">Loading question...</p>
+        </div>
+        <div class="mt-8 flex space-x-4">
+            <button id="record-btn" class="bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition-colors duration-300 shadow-md">
+                Start Recording
+            </button>
+            <button id="next-btn" class="bg-green-600 text-white px-6 py-3 rounded-full hover:bg-green-700 transition-colors duration-300 shadow-md hidden">
+                Next Question
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const startBtn = document.getElementById('start-btn');
+        const introScreen = document.getElementById('intro-screen');
+        const interviewScreen = document.getElementById('interview-screen');
+        const questionTextEl = document.getElementById('question-text');
+        const timerEl = document.getElementById('timer');
+        const recordBtn = document.getElementById('record-btn');
+        const nextBtn = document.getElementById('next-btn');
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const interviewId = urlParams.get('id');
+        const auth = { token: localStorage.getItem('token') };
+
+        let interviewData = null;
+        let currentQuestionIndex = 0;
+        let timerInterval = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let answers = [];
+        let violationReason = null;
+        
+        async function fetchInterview() {
+            try {
+                const response = await fetch(`/api/student/interviews/${interviewId}`, {
+                    headers: { 'x-auth-token': auth.token },
+                });
+                if (!response.ok) throw new Error('Failed to fetch interview data.');
+                interviewData = await response.json();
+                loadQuestion();
+            } catch (error) {
+                console.error('Error fetching interview:', error);
+                alert('Failed to load interview. Please check your credentials and try again.');
+            }
+        }
+        
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            speechSynthesis.speak(utterance);
+        }
+
+        function startTimer(duration, onEnd) {
+            let timeLeft = duration;
+            timerEl.textContent = timeLeft;
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerEl.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    onEnd();
+                }
+            }, 1000);
+        }
+        
+        function loadQuestion() {
+            if (currentQuestionIndex < interviewData.questions.length) {
+                const question = interviewData.questions[currentQuestionIndex];
+                questionTextEl.textContent = question.questionText;
+                
+                // Speak the question
+                speak(question.questionText);
+                
+                // Start a 15-second timer to prepare
+                startTimer(15, () => {});
+                recordBtn.disabled = false;
+                recordBtn.textContent = 'Start Recording';
+                nextBtn.classList.add('hidden');
+            } else {
+                submitInterview();
+            }
+        }
+
+        async function handleEndOfQuestion(reason) {
+            clearInterval(timerInterval);
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+            }
+            if (reason) {
+                violationReason = reason;
+                submitInterview();
+            }
+        }
+
+        async function submitInterview() {
+             if (violationReason) {
+                // If there's a violation, we might not have any answers to submit, handle this gracefully.
+                if (answers.length === 0) {
+                    answers.push({
+                         questionText: "No questions answered due to violation.",
+                         studentAnswerText: "N/A",
+                    });
+                }
+            }
+            try {
+                const response = await fetch('/api/student/submit-interview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': auth.token },
+                    body: JSON.stringify({
+                        interviewId,
+                        answers: answers,
+                        violationReason: violationReason,
+                    }),
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.message);
+                }
+                const data = await response.json();
+                window.location.href = `/student/interview-complete.html`;
+            } catch (error) {
+                console.error('Submission error:', error);
+                alert('An error occurred during submission: ' + error.message);
+            }
+        }
+        
+        async function getMicrophone() {
+            try {
+                return await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (error) {
+                alert('Microphone access denied. Cannot proceed with the interview.');
+                return null;
+            }
+        }
+
+        startBtn.addEventListener('click', async () => {
+            const stream = await getMicrophone();
+            if (!stream) return;
+            stream.getTracks().forEach(track => track.stop()); // Stop the initial stream check
+            
+            document.documentElement.requestFullscreen().catch(err => {});
+            introScreen.classList.add('hidden');
+            interviewScreen.classList.remove('hidden');
+            fetchInterview();
+        });
+
+        recordBtn.addEventListener('click', () => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                recordBtn.textContent = 'Recording Stopped';
+                recordBtn.disabled = true;
+                nextBtn.classList.remove('hidden');
+            } else {
+                startRecording();
+                recordBtn.textContent = 'Stop Recording (5 min limit)';
+            }
+        });
+        
+        nextBtn.addEventListener('click', () => {
+            currentQuestionIndex++;
+            loadQuestion();
+        });
+        
+        function startRecording() {
+            getMicrophone().then(stream => {
+                if (!stream) return;
+                mediaRecorder = new MediaRecorder(stream);
+                recordedChunks = [];
+
+                mediaRecorder.ondataavailable = event => recordedChunks.push(event.data);
+                mediaRecorder.onstop = () => {
+                    // In a real app, you would send the audio to a speech-to-text API.
+                    // For now, we use a placeholder.
+                    answers.push({
+                         questionText: interviewData.questions[currentQuestionIndex].questionText,
+                         studentAnswerText: "Recorded audio converted to text (placeholder)",
+                         correctAnswer: interviewData.questions[currentQuestionIndex].correctAnswer,
+                    });
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                
+                clearInterval(timerInterval); // Stop the prep timer
+                // Start a 5-minute (300s) recording timer
+                startTimer(300, () => {
+                    if (mediaRecorder.state === 'recording') mediaRecorder.stop();
+                });
+                
+                mediaRecorder.start();
+            }).catch(e => console.error('Error starting recording:', e));
+        }
+        
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) handleEndOfQuestion('Exited full-screen mode');
+        });
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) handleEndOfQuestion('Switched tabs or window');
+        });
+    });
+</script>
+</body>
+</html>
