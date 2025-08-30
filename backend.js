@@ -3035,10 +3035,11 @@ app.post('/api/forgot-password', async (req, res) => {
             ExpressionAttributeValues: { ":token": resetToken, ":expiry": resetTokenExpiry }
         }));
 
-        const resetLink = `http://localhost:3000/reset-password.html?token=${resetToken}&email=${email}`;
+        const appBaseUrl = req.headers.origin || 'http://localhost:3000';
+        const resetLink = `${appBaseUrl}/reset-password.html?token=${resetToken}&email=${email}`;
         
         const mailOptions = {
-            from: '"TESTIFY" <craids22@gmail.com>',
+            from: '"TESTIFY" <testifylearning.help@gmail.com>',
             to: email,
             subject: 'Password Reset Request',
             html: `<p>You have requested a password reset for your TESTIFY account.</p>
@@ -3130,3 +3131,4 @@ app.post('/api/reset-password', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
