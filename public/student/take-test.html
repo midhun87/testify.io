@@ -660,7 +660,7 @@
                     audioProcessor.fftSize = 512;
                     audioSource.connect(audioProcessor);
 
-                    proctorStatus.textContent = 'Loading AI models...';
+                    proctorStatus.textContent = 'Please Wait Connecting to Server....';
                     [objectDetector, faceDetector] = await Promise.all([
                         cocoSsd.load(),
                         blazeface.load()
@@ -830,4 +830,5 @@
         });
     </script>
 </body>
+
 </html>
