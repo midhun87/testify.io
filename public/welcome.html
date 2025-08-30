@@ -243,6 +243,9 @@
                 &times;
             </button>
             <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756491151/FREE_TESTS_jianct.png" alt="Promotional Flyer for Free Tests" class="rounded-2xl shadow-lg">
+           <p class="mt-4 p-3 bg-violet-50 text-violet-800 rounded-xl font-semibold text-center text-sm sm:text-base">
+                Students who created an account before 31 August 2025 12:00 PM (IST) will only get the offer. Hurry UP!!! & test will be enabled aftet 5:00 PM(IST)
+            </p>
         </div>
     </div>
 
@@ -274,7 +277,7 @@
             };
 
             // --- Dynamic Impact Stats ---
- 			// NOTE: This is a placeholder fetch call and will not work without a backend API endpoint.
+            // NOTE: This is a placeholder fetch call and will not work without a backend API endpoint.
             fetch('/api/impact-stats')
                 .then(response => {
                     if (!response.ok) {
@@ -311,8 +314,8 @@
                 popupModal.classList.remove('opacity-100');
                 popupContent.classList.remove('scale-100');
                 popupContent.classList.add('scale-95');
-                 setTimeout(() => {
-                     popupModal.classList.add('pointer-events-none');
+                setTimeout(() => {
+                    popupModal.classList.add('pointer-events-none');
                 }, 300); // Wait for transition to finish
             };
 
@@ -331,4 +334,3 @@
 
 </body>
 </html>
-
