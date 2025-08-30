@@ -10,6 +10,19 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+        /* Custom styles for spinner */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4F46E5;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -44,7 +57,33 @@
                     <h2 class="text-3xl font-bold text-gray-900 text-center">Create Student Account</h2>
                     <p class="text-gray-600 text-center mt-2 mb-8 text-sm">Join the platform to start your journey.</p>
                     
-                    <form id="signup-form">
+                    <!-- First Step: Email Input and OTP Request -->
+                    <div id="otp-step" class="space-y-6">
+                        <div class="mb-5">
+                            <label for="email-otp" class="block mb-2 text-sm font-medium text-gray-700">Email Address</label>
+                            <input type="email" id="email-otp" name="email-otp" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-violet-500 focus:border-violet-500 transition-all duration-200">
+                        </div>
+                        <div class="mb-5">
+                            <label for="mobile-otp" class="block mb-2 text-sm font-medium text-gray-700">Mobile Number</label>
+                            <input type="tel" id="mobile-otp" name="mobile-otp" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-violet-500 focus:border-violet-500 transition-all duration-200">
+                        </div>
+                        <button id="send-otp-btn" class="w-full bg-violet-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2">
+                            <span id="send-otp-text">Send OTP</span>
+                            <div id="send-otp-spinner" class="loader hidden"></div>
+                        </button>
+                    </div>
+
+                    <!-- Second Step: Full Signup Form (Initially hidden) -->
+                    <form id="signup-form" class="hidden">
+                        <input type="hidden" id="email-final" name="email">
+                        <input type="hidden" id="mobile-final" name="mobile">
+                        
+                        <!-- OTP Input Field -->
+                        <div class="mb-5">
+                            <label for="otp" class="block mb-2 text-sm font-medium text-gray-700">OTP</label>
+                            <input type="text" id="otp" name="otp" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-violet-500 focus:border-violet-500 transition-all duration-200">
+                            <a href="#" id="resend-otp" class="text-sm text-violet-600 hover:underline mt-2 inline-block">Resend OTP?</a>
+                        </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
                             <!-- Full Name -->
                             <div class="mb-5">
@@ -123,6 +162,19 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const collegeSelect = document.getElementById('college');
             const departmentSelect = document.getElementById('department');
+            const otpStepDiv = document.getElementById('otp-step');
+            const signupForm = document.getElementById('signup-form');
+            const sendOtpBtn = document.getElementById('send-otp-btn');
+            const resendOtpLink = document.getElementById('resend-otp');
+            const messageDiv = document.getElementById('message');
+            const emailOtpInput = document.getElementById('email-otp');
+            const mobileOtpInput = document.getElementById('mobile-otp');
+            const emailFinalInput = document.getElementById('email-final');
+            const mobileFinalInput = document.getElementById('mobile-final');
+            const emailFinalInputDisplay = document.getElementById('email');
+            const mobileFinalInputDisplay = document.getElementById('mobile');
+            const sendOtpText = document.getElementById('send-otp-text');
+            const sendOtpSpinner = document.getElementById('send-otp-spinner');
             
             async function fetchAndPopulateColleges() {
                 try {
@@ -171,15 +223,100 @@
                     departmentSelect.innerHTML = '<option value="" disabled selected>Error loading departments</option>';
                 }
             }
+            
+            function showMessage(message, isSuccess) {
+                if (!messageDiv) return;
+                
+                messageDiv.textContent = message;
+                messageDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+                
+                if (isSuccess) {
+                    messageDiv.classList.add('bg-green-100', 'text-green-700');
+                } else {
+                    messageDiv.classList.add('bg-red-100', 'text-red-700');
+                }
+            }
 
+            // Initially populate dropdowns
             await Promise.all([
                 fetchAndPopulateColleges(),
                 fetchAndPopulateDepartments()
             ]);
 
-            const signupForm = document.getElementById('signup-form');
-            const messageDiv = document.getElementById('message');
+            // Handle "Send OTP" button click
+            sendOtpBtn.addEventListener('click', async () => {
+                const email = emailOtpInput.value.trim();
+                const mobile = mobileOtpInput.value.trim();
 
+                if (!email || !mobile) {
+                    showMessage('Please enter your email and mobile number.', false);
+                    return;
+                }
+                
+                sendOtpBtn.disabled = true;
+                sendOtpText.classList.add('hidden');
+                sendOtpSpinner.classList.remove('hidden');
+
+                try {
+                    const response = await fetch('/api/send-otp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, mobile })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        showMessage(result.message, true);
+                        otpStepDiv.classList.add('hidden');
+                        signupForm.classList.remove('hidden');
+                        
+                        emailFinalInput.value = email;
+                        mobileFinalInput.value = mobile;
+                        emailFinalInputDisplay.value = email;
+                        mobileFinalInputDisplay.value = mobile;
+                    } else {
+                        showMessage(result.message, false);
+                    }
+                } catch (error) {
+                    console.error('Send OTP Fetch Error:', error);
+                    showMessage('An error occurred. Please try again.', false);
+                } finally {
+                    sendOtpBtn.disabled = false;
+                    sendOtpText.classList.remove('hidden');
+                    sendOtpSpinner.classList.add('hidden');
+                }
+            });
+
+            // Handle "Resend OTP" link click
+            resendOtpLink.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const email = emailOtpInput.value.trim();
+                const mobile = mobileOtpInput.value.trim();
+
+                if (!email || !mobile) {
+                    showMessage('Please go back and enter your email and mobile number first.', false);
+                    return;
+                }
+
+                // Temporary message while sending
+                showMessage('Resending OTP...', true);
+
+                try {
+                     const response = await fetch('/api/send-otp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, mobile })
+                    });
+                    const result = await response.json();
+                    showMessage(result.message, response.ok);
+                } catch (error) {
+                    console.error('Resend OTP Fetch Error:', error);
+                    showMessage('An error occurred while resending. Please try again.', false);
+                }
+            });
+
+            // Handle full signup form submission
             signupForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const formData = new FormData(signupForm);
@@ -193,21 +330,15 @@
                     });
                     const result = await response.json();
 
-                    messageDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+                    showMessage(result.message, response.ok);
                     if (response.ok) {
-                        messageDiv.textContent = result.message;
-                        messageDiv.classList.add('bg-green-100', 'text-green-700');
                         setTimeout(() => {
                             window.location.href = '/login.html';
                         }, 2000);
-                    } else {
-                        messageDiv.textContent = result.message;
-                        messageDiv.classList.add('bg-red-100', 'text-red-700');
                     }
                 } catch (error) {
-                    messageDiv.classList.remove('hidden');
-                    messageDiv.classList.add('bg-red-100', 'text-red-700');
-                    messageDiv.textContent = 'An unexpected error occurred.';
+                    console.error('Signup Fetch Error:', error);
+                    showMessage('An unexpected error occurred.', false);
                 }
             });
         });
