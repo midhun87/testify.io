@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Interviews</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+
+<div id="app" class="max-w-7xl mx-auto bg-white p-8 rounded-lg shadow-xl">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Online Interviews</h1>
+        <button id="create-interview-btn" class="bg-indigo-600 text-white px-6 py-3 rounded-full hover:bg-indigo-700 transition-colors duration-300 shadow-md">
+            Create Interview
+        </button>
+    </div>
+
+    <!-- Create Interview Modal -->
+    <div id="create-interview-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-3/4 md:w-1/2 shadow-lg rounded-md bg-white">
+            <h3 class="text-2xl font-bold mb-4">Create New Interview</h3>
+            <div class="flex flex-col space-y-4">
+                <input type="text" id="interview-title" placeholder="Interview Title" class="p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <label for="source-type" class="text-sm font-medium text-gray-700">Creation Method:</label>
+                <select id="source-type" class="p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="manual">Manual</option>
+                    <option value="file-upload">From PDF/Excel File (AI Generated)</option>
+                </select>
+
+                <!-- Manual Creation Form -->
+                <div id="manual-form" class="space-y-4">
+                    <div class="flex items-center space-x-4">
+                        <input type="number" id="num-questions" placeholder="Number of Questions" class="p-3 border rounded-md w-full focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div id="manual-questions-container" class="space-y-2"></div>
+                </div>
+
+                <!-- File Upload Form -->
+                <div id="file-form" class="hidden space-y-4">
+                    <input type="file" id="file-input" class="p-3 border rounded-md w-full focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <div id="file-details" class="mt-2 text-sm text-gray-500"></div>
+                </div>
+
+                <button id="submit-create-btn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors duration-300">Create</button>
+                <button id="cancel-create-btn" class="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500 transition-colors duration-300">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Interview Modal -->
+    <div id="assign-interview-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-3/4 md:w-1/2 shadow-lg rounded-md bg-white">
+            <h3 class="text-2xl font-bold mb-4">Assign Interview: <span id="assign-interview-title" class="font-normal text-indigo-600"></span></h3>
+            <div class="flex flex-col space-y-4">
+                <label for="assign-colleges" class="text-sm font-medium text-gray-700">Assign to Colleges:</label>
+                <select id="assign-colleges" class="p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+                <label for="assign-emails" class="text-sm font-medium text-gray-700">Assign to specific students (emails separated by comma):</label>
+                <textarea id="assign-emails" placeholder="student1@college.edu, student2@college.edu" rows="3" class="p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                
+                <button id="submit-assign-btn" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors duration-300">Assign</button>
+                <button id="cancel-assign-btn" class="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500 transition-colors duration-300">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="interview-list-container" class="mt-8 space-y-4">
+        <!-- Interview cards will be dynamically added here -->
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const createInterviewBtn = document.getElementById('create-interview-btn');
+        const createInterviewModal = document.getElementById('create-interview-modal');
+        const cancelCreateBtn = document.getElementById('cancel-create-btn');
+        const submitCreateBtn = document.getElementById('submit-create-btn');
+        const sourceTypeSelect = document.getElementById('source-type');
+        const manualForm = document.getElementById('manual-form');
+        const fileForm = document.getElementById('file-form');
+        const fileInput = document.getElementById('file-input');
+        const numQuestionsInput = document.getElementById('num-questions');
+        const manualQuestionsContainer = document.getElementById('manual-questions-container');
+
+        const assignInterviewModal = document.getElementById('assign-interview-modal');
+        const cancelAssignBtn = document.getElementById('cancel-assign-btn');
+        const submitAssignBtn = document.getElementById('submit-assign-btn');
+        const assignInterviewTitleSpan = document.getElementById('assign-interview-title');
+        const assignEmailsInput = document.getElementById('assign-emails');
+        let currentInterviewId = null;
+
+        const auth = { token: localStorage.getItem('token') };
+
+        createInterviewBtn.addEventListener('click', () => {
+            createInterviewModal.classList.remove('hidden');
+        });
+
+        cancelCreateBtn.addEventListener('click', () => {
+            createInterviewModal.classList.add('hidden');
+        });
+
+        cancelAssignBtn.addEventListener('click', () => {
+            assignInterviewModal.classList.add('hidden');
+        });
+
+        sourceTypeSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'manual') {
+                manualForm.classList.remove('hidden');
+                fileForm.classList.add('hidden');
+            } else {
+                manualForm.classList.add('hidden');
+                fileForm.classList.remove('hidden');
+            }
+        });
+
+        numQuestionsInput.addEventListener('input', (e) => {
+            const num = parseInt(e.target.value);
+            manualQuestionsContainer.innerHTML = '';
+            if (num > 0) {
+                for (let i = 0; i < num; i++) {
+                    const questionDiv = document.createElement('div');
+                    questionDiv.className = 'p-3 border rounded-md space-y-2';
+                    questionDiv.innerHTML = `
+                        <p class="font-medium text-sm">Question ${i + 1}</p>
+                        <input type="text" placeholder="Question Text" data-q-type="text" class="question-text p-2 w-full border rounded-md">
+                        <input type="text" placeholder="Correct Answer (for reference)" class="correct-answer p-2 w-full border rounded-md">
+                    `;
+                    manualQuestionsContainer.appendChild(questionDiv);
+                }
+            }
+        });
+
+        submitCreateBtn.addEventListener('click', async () => {
+            const title = document.getElementById('interview-title').value;
+            const sourceType = sourceTypeSelect.value;
+            
+            if (sourceType === 'manual') {
+                const questionElements = manualQuestionsContainer.querySelectorAll('.question-text');
+                const answerElements = manualQuestionsContainer.querySelectorAll('.correct-answer');
+                const questions = Array.from(questionElements).map((q, i) => ({
+                    questionText: q.value,
+                    correctAnswer: answerElements[i].value,
+                }));
+                
+                await createInterview(title, questions);
+            } else {
+                if (fileInput.files.length > 0) {
+                    await generateInterviewFromFile(title, fileInput.files[0]);
+                } else {
+                    alert('Please upload a file.');
+                }
+            }
+        });
+
+        submitAssignBtn.addEventListener('click', async () => {
+            const colleges = Array.from(document.getElementById('assign-colleges').selectedOptions).map(opt => opt.value);
+            const emails = assignEmailsInput.value.split(',').map(email => email.trim()).filter(email => email);
+            await assignInterview(currentInterviewId, colleges, emails);
+            assignInterviewModal.classList.add('hidden');
+        });
+        
+        async function createInterview(title, questions) {
+            try {
+                const response = await fetch('/api/admin/interviews', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': auth.token },
+                    body: JSON.stringify({ title, questions }),
+                });
+                const data = await response.json();
+                alert(data.message);
+                if (response.ok) {
+                    createInterviewModal.classList.add('hidden');
+                    fetchInterviews();
+                }
+            } catch (error) {
+                console.error('Error creating interview:', error);
+                alert('Failed to create interview.');
+            }
+        }
+        
+        // --- RECTIFIED FUNCTION ---
+        // This version is more robust and prevents the JSON parsing error on non-JSON server responses.
+        async function generateInterviewFromFile(title, file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const response = await fetch('/api/admin/generate-interview-from-file', {
+                    method: 'POST',
+                    headers: { 'x-auth-token': auth.token },
+                    body: formData,
+                });
+
+                // The key is to handle the response body carefully.
+                // It might not be JSON if something went wrong on the server (like a 404).
+                if (!response.ok) {
+                    let errorText = await response.text(); // Get response body as text first
+                    let errorMessage = `Failed with status ${response.status}. See console for details.`;
+                    try {
+                        // Try to parse it as JSON to get a more specific message
+                        const errorJson = JSON.parse(errorText);
+                        errorMessage = errorJson.message || errorMessage;
+                    } catch (e) {
+                        // It wasn't JSON, which is the source of the original error.
+                        console.error("Server Error Response:", errorText);
+                    }
+                    throw new Error(errorMessage);
+                }
+
+                const data = await response.json(); // Now it should be safe to assume it's JSON
+                if (!data.questions) {
+                    throw new Error("AI response did not contain a 'questions' field.");
+                }
+                
+                await createInterview(title, data.questions);
+
+            } catch (error) {
+                console.error('Error generating interview from file:', error);
+                alert(error.message); // Show a more informative error
+            }
+        }
+
+
+        async function assignInterview(interviewId, colleges, studentEmails) {
+            try {
+                const response = await fetch('/api/admin/assign-interview', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': auth.token },
+                    body: JSON.stringify({ interviewId, colleges, studentEmails }),
+                });
+                const data = await response.json();
+                alert(data.message);
+            } catch (error) {
+                console.error('Error assigning interview:', error);
+                alert('Failed to assign interview.');
+            }
+        }
+
+        async function fetchInterviews() {
+            try {
+                const response = await fetch('/api/admin/interviews', {
+                    headers: { 'x-auth-token': auth.token },
+                });
+                const interviews = await response.json();
+                const container = document.getElementById('interview-list-container');
+                container.innerHTML = '';
+                if (interviews.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-500">No interviews found. Create one to get started.</p>';
+                    return;
+                }
+                
+                interviews.forEach(interview => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white p-6 rounded-lg shadow-md border border-gray-200 flex justify-between items-center';
+                    card.innerHTML = `
+                        <div>
+                            <h2 class="text-xl font-semibold">${interview.title}</h2>
+                            <p class="text-gray-600">Questions: ${interview.questions.length}</p>
+                        </div>
+                        <div class="space-x-2">
+                            <button data-interview-id="${interview.interviewId}" class="assign-btn bg-indigo-500 text-white px-4 py-2 rounded-full text-sm hover:bg-indigo-600 transition-colors duration-300">Assign</button>
+                            <a href="/admin/interview-report.html?id=${interview.interviewId}" class="view-report-btn bg-green-500 text-white px-4 py-2 rounded-full text-sm hover:bg-green-600 transition-colors duration-300">View Report</a>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+                document.querySelectorAll('.assign-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        currentInterviewId = e.target.dataset.interviewId;
+                        const card = e.target.closest('.bg-white');
+                        const title = card.querySelector('h2').textContent;
+                        assignInterviewTitleSpan.textContent = title;
+                        assignInterviewModal.classList.remove('hidden');
+                    });
+                });
+
+            } catch (error) {
+                console.error('Error fetching interviews:', error);
+            }
+        }
+        
+        // Initial fetch
+        fetchInterviews();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+
+<div id="app" class="max-w-7xl mx-auto bg-white p-8 rounded-lg shadow-xl">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800">Interview Report</h1>
+        <a href="/admin/interview-dashboard.html" class="bg-gray-400 text-white px-4 py-2 rounded-md hover:bg-gray-500">Back</a>
+    </div>
+    
+    <div id="report-details" class="space-y-6">
+        <div id="loading" class="text-center text-gray-500">Loading report...</div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const interviewId = urlParams.get('id');
+        const auth = { token: localStorage.getItem('token') };
+        const reportDetailsEl = document.getElementById('report-details');
+        
+        async function fetchReport() {
+            try {
+                const response = await fetch(`/api/admin/interview-report/${interviewId}`, {
+                    headers: { 'x-auth-token': auth.token },
+                });
+                const report = await response.json();
+                if (!response.ok) throw new Error(report.message);
+                renderReport(report);
+            } catch (error) {
+                reportDetailsEl.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+            }
+        }
+        
+        function renderReport(report) {
+            let html = `<div class="bg-gray-50 p-4 rounded-lg"><h2 class="text-2xl font-bold">${report.title}</h2><p>Attempts: ${report.results.length}</p></div>`;
+            if (report.results.length === 0) {
+                html += '<p>No students have taken this interview yet.</p>';
+            } else {
+                report.results.forEach(result => {
+                    const answersHtml = result.answers.map(ans => `
+                        <div class="p-3 border-l-4 ${ans.isCorrect ? 'border-green-400' : 'border-red-400'} bg-gray-50">
+                            <p><strong>Q:</strong> ${ans.questionText}</p>
+                            <p><strong>Answer:</strong> ${ans.studentAnswerText}</p>
+                            <p class="text-sm text-gray-500"><strong>Expected:</strong> ${ans.correctAnswer}</p>
+                        </div>`).join('');
+                    
+                    const publishButtonHtml = result.resultsPublished 
+                        ? `<span class="text-green-600 font-semibold">Published</span>`
+                        : `<button data-interview-id="${result.interviewId}" data-student-email="${result.studentEmail}" class="publish-btn bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600">Publish</button>`;
+
+                    html += `
+                        <div class="bg-white p-4 rounded-lg shadow-md border">
+                            <div class="flex justify-between items-center mb-3">
+                                <div>
+                                    <h3 class="text-lg font-semibold">${result.studentName} (${result.studentEmail})</h3>
+                                    <p class="text-sm text-gray-500">${result.college}</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-lg font-bold text-indigo-600">Score: ${result.score}</span>
+                                    <div class="mt-1">${publishButtonHtml}</div>
+                                </div>
+                            </div>
+                            <div class="text-sm space-y-1 text-gray-700 mb-3">
+                                <p><strong>Submitted:</strong> ${new Date(result.submittedAt).toLocaleString()}</p>
+                                <p><strong>Fluency:</strong> ${result.fluencyMarks}, <strong>Posture:</strong> ${result.sittingMarks}</p>
+                                ${result.violationReason ? `<p class="text-red-500"><strong>Violation:</strong> ${result.violationReason}</p>` : ''}
+                            </div>
+                            <h4 class="font-semibold mb-2">Answers:</h4>
+                            <div class="space-y-2">${answersHtml}</div>
+                        </div>`;
+                });
+            }
+            reportDetailsEl.innerHTML = html;
+            addPublishListeners();
+        }
+
+        function addPublishListeners() {
+            document.querySelectorAll('.publish-btn').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const { interviewId, studentEmail } = e.target.dataset;
+                    try {
+                        const response = await fetch('/api/admin/publish-interview-results', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'x-auth-token': auth.token },
+                            body: JSON.stringify({ interviewId, studentEmail })
+                        });
+                        const data = await response.json();
+                        if (!response.ok) throw new Error(data.message);
+                        alert('Results published!');
+                        fetchReport(); // Refresh the report to show the updated status
+                    } catch (error) {
+                        alert('Failed to publish results: ' + error.message);
+                    }
+                });
+            });
+        }
+
+        fetchReport();
+    });
+</script>
+</body>
+</html>

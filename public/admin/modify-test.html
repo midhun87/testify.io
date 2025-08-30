@@ -188,6 +188,9 @@
                         
                         <!-- Form Actions -->
                         <div class="mt-8 flex justify-end space-x-3">
+                            <button type="button" id="delete-test-btn" class="px-6 py-3 bg-red-600 text-white font-bold rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                Delete Test
+                            </button>
                             <button type="button" id="back-to-list-btn" class="px-6 py-3 bg-gray-200 text-gray-800 font-bold rounded-lg hover:bg-gray-300">
                                 Back to List
                             </button>
@@ -237,6 +240,7 @@
             const modifyForm = document.getElementById('modify-test-form');
             const questionsContainer = document.getElementById('questions-container');
             const addQuestionBtn = document.getElementById('add-question-btn');
+            const deleteTestBtn = document.getElementById('delete-test-btn');
             let questionCounter = 0;
 
             // --- PAGE LOGIC ---
@@ -407,6 +411,9 @@
                 optionDiv.innerHTML = `
                     <input name="correct-option-${optionsContainer.closest('.question-block').id}" type="${inputType}" value="${optionIndex}" class="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500" ${isChecked ? 'checked' : ''}>
                     <input type="text" placeholder="Option ${optionIndex + 1}" required class="option-text flex-grow px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" value="${optionText}">
+                    <button type="button" class="remove-option-btn text-gray-400 hover:text-red-500">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                 `;
                 optionsContainer.appendChild(optionDiv);
             }
@@ -414,6 +421,12 @@
             questionsContainer.addEventListener('click', (e) => {
                 if (e.target.closest('.remove-question-btn')) {
                     e.target.closest('.question-block').remove();
+                    reIndexQuestions();
+                }
+                if (e.target.closest('.remove-option-btn')) {
+                    const optionContainer = e.target.closest('.flex.items-center.space-x-3');
+                    optionContainer.remove();
+                    reIndexOptions(optionContainer.closest('.options-container'));
                 }
                 if (e.target.closest('.add-option-btn')) {
                     const button = e.target.closest('.add-option-btn');
@@ -428,13 +441,67 @@
                 }
             });
 
+            function reIndexQuestions() {
+                const questionBlocks = document.querySelectorAll('.question-block');
+                questionBlocks.forEach((block, index) => {
+                    const newIndex = index + 1;
+                    const h3 = block.querySelector('h3');
+                    if (h3) h3.textContent = `Question ${newIndex}`;
+                });
+                questionCounter = questionBlocks.length;
+            }
+
+            function reIndexOptions(optionsContainer) {
+                const options = optionsContainer.querySelectorAll('.flex.items-center.space-x-3');
+                options.forEach((optionDiv, index) => {
+                    const radioOrCheckbox = optionDiv.querySelector('input[type="radio"], input[type="checkbox"]');
+                    if (radioOrCheckbox) {
+                        radioOrCheckbox.value = index;
+                    }
+                    const optionText = optionDiv.querySelector('.option-text');
+                    if (optionText) {
+                        optionText.placeholder = `Option ${index + 1}`;
+                    }
+                });
+            }
+
+            // --- DELETE TEST LOGIC ---
+            deleteTestBtn.addEventListener('click', async () => {
+                const testId = document.getElementById('testId').value;
+                const testTitle = document.getElementById('testTitle').value;
+
+                // Use a custom modal or inline confirmation since alert() is not allowed.
+                if (!window.confirm(`Are you sure you want to delete the test "${testTitle}"? This action cannot be undone.`)) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/tests/${testId}`, {
+                        method: 'DELETE',
+                        headers: { 'x-auth-token': token }
+                    });
+
+                    if (!response.ok) {
+                        const errorResult = await response.json();
+                        throw new Error(errorResult.message || `API call failed with status: ${response.status}`);
+                    }
+
+                    alert(`Test "${testTitle}" deleted successfully!`);
+                    await fetchAndDisplayTests();
+                    showListView();
+                } catch (error) {
+                    console.error('Delete Test Error:', error);
+                    alert(`Error deleting test: ${error.message}`);
+                }
+            });
+
             // --- FORM SUBMISSION ---
             modifyForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
                 const testId = document.getElementById('testId').value;
                 const payload = {
-                    title: document.getElementById('testTitle').value,
+                    testTitle: document.getElementById('testTitle').value,
                     duration: parseInt(document.getElementById('duration').value),
                     totalMarks: parseInt(document.getElementById('totalMarks').value),
                     passingPercentage: parseInt(document.getElementById('passingPercentage').value),
