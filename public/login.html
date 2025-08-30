@@ -12,54 +12,104 @@
         }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50">
     <div class="flex min-h-screen">
-        <div class="hidden lg:flex w-1/2 items-center justify-center bg-gradient-to-tr from-indigo-800 to-purple-700 text-white p-12">
-            <div class="text-center">
-                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-24 h-24 mx-auto mb-4">
-                <h1 class="text-5xl font-bold tracking-tight">TESTIFY</h1>
-                <p class="mt-4 text-lg text-indigo-200">The professional platform for secure online Training & assessments.</p>
+        <!-- Branding Section (Left side) -->
+        <div class="hidden lg:flex w-1/2 items-center justify-center bg-gradient-to-tr from-violet-800 to-indigo-600 text-white p-12 relative overflow-hidden">
+            <div class="absolute inset-0 z-0 opacity-10">
+                <!-- Decorative background elements -->
+                <svg class="absolute top-0 right-0 h-full w-auto text-white opacity-20" fill="currentColor" viewBox="0 0 100 100">
+                    <rect x="0" y="0" width="100" height="100" />
+                </svg>
+            </div>
+            <div class="relative z-10 text-center">
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-28 h-28 mx-auto mb-6 rounded-full shadow-2xl">
+                <h1 class="text-5xl font-extrabold tracking-tight drop-shadow-lg">TESTIFY</h1>
+                <p class="mt-4 text-xl text-indigo-200 drop-shadow-md">The professional platform for secure online assessments.</p>
+                <!-- Added Flyer Image with modern styling -->
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756491151/FREE_TESTS_jianct.png" alt="Free Tests Flyer" class="mt-12 w-full max-w-sm rounded-3xl shadow-2xl mx-auto transform hover:scale-105 transition-all duration-300">
             </div>
         </div>
 
+        <!-- Form Section (Right side) -->
         <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
             <div class="w-full max-w-md">
+                <!-- Mobile Branding -->
                 <div class="lg:hidden text-center mb-8">
-                      <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-16 h-16 mx-auto mb-2 invert">
-                     <h1 class="text-3xl font-bold text-gray-800">TESTIFY</h1>
+                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-20 h-20 mx-auto mb-4 rounded-full">
+                    <h1 class="text-3xl font-bold text-gray-800">TESTIFY</h1>
                 </div>
                 
-                <div class="bg-white p-8 rounded-2xl shadow-lg">
-                    <h2 class="text-2xl font-bold text-gray-900 text-center">Welcome Back!</h2>
-                    <p class="text-gray-600 text-center mt-2 mb-8">Log in to access your dashboard.</p>
+                <div class="bg-white p-8 rounded-3xl shadow-xl transition-all duration-300 hover:shadow-2xl">
+                    <h2 class="text-3xl font-bold text-gray-900 text-center">Welcome Back!</h2>
+                    <p class="text-gray-600 text-center mt-2 mb-8 text-sm">Log in to access your dashboard.</p>
                     
                     <form id="login-form">
+                        <!-- Email Address -->
                         <div class="mb-5">
                             <label for="email" class="block mb-2 text-sm font-medium text-gray-700">Email Address</label>
-                            <input type="email" id="email" name="email" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
+                            <input type="email" id="email" name="email" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-violet-500 focus:border-violet-500 transition-all duration-200">
                         </div>
+                        <!-- Password -->
                         <div class="mb-6">
                             <label for="password" class="block mb-2 text-sm font-medium text-gray-700">Password</label>
-                            <input type="password" id="password" name="password" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
+                            <input type="password" id="password" name="password" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-violet-500 focus:border-violet-500 transition-all duration-200">
                         </div>
-                        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300">Log In</button>
+                        <!-- Submit Button -->
+                        <button type="submit" class="w-full bg-violet-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all duration-300 transform hover:scale-105">Log In</button>
                     </form>
 
                     <div id="message" class="hidden text-center mt-4 p-3 rounded-lg font-medium"></div>
                     
-                    <div class="mt-8 flex justify-center items-center space-x-4">
-                        <a href="/signup.html" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Sign Up</a>
-                        <span class="text-gray-300">|</span>
-                        <a href="/moderator/login.html" class="text-sm font-medium text-purple-600 hover:text-purple-500">Moderator</a>
-                         <span class="text-gray-300">|</span>
-                        <a href="/welcome.html" class="text-sm font-medium text-gray-600 hover:text-gray-500">Home</a>
+                    <div class="mt-8 text-center space-y-4">
+                        <a href="/signup.html" class="block w-full bg-gray-200 text-gray-800 font-bold py-3 px-4 rounded-lg hover:bg-gray-300 transition-all duration-300">Don't have an account? Sign Up</a>
+                        <div class="flex justify-center items-center space-x-4">
+                            <a href="/moderator/login.html" class="text-sm font-medium text-violet-600 hover:text-violet-500">Moderator Login</a>
+                            <span class="text-gray-300">|</span>
+                            <a href="/welcome.html" class="text-sm font-medium text-gray-600 hover:text-gray-500">Home</a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <script src="auth.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const loginForm = document.getElementById('login-form');
+            const messageDiv = document.getElementById('message');
+
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(loginForm);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await response.json();
+
+                    messageDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+                    if (response.ok) {
+                        messageDiv.textContent = result.message;
+                        messageDiv.classList.add('bg-green-100', 'text-green-700');
+                        setTimeout(() => {
+                            window.location.href = '/dashboard.html';
+                        }, 2000);
+                    } else {
+                        messageDiv.textContent = result.message;
+                        messageDiv.classList.add('bg-red-100', 'text-red-700');
+                    }
+                } catch (error) {
+                    messageDiv.classList.remove('hidden');
+                    messageDiv.classList.add('bg-red-100', 'text-red-700');
+                    messageDiv.textContent = 'An unexpected error occurred.';
+                }
+            });
+        });
+    </script>
 </body>
-
 </html>
-
