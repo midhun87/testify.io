@@ -1,72 +1,143 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to TESTIFY</title>
+    <title>Welcome to TESTIFY | AI-Powered Assessments</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Use Inter font from Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Custom Styles -->
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
-        /* Custom gradient background for the hero section */
+        
+        /* Custom hero gradient with a slightly different angle and colors for more vibrancy */
         .gradient-bg-custom {
-            background-image: linear-gradient(to bottom, rgba(79, 70, 229, 0.9), rgba(109, 40, 217, 0.9));
+            background-image: linear-gradient(to bottom right, rgba(79, 70, 229, 0.85), rgba(109, 40, 217, 0.9));
+        }
+
+        /* Animated shine effect for the 'Powered by AI' text */
+        @keyframes shine {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        .shine-effect {
+            background: linear-gradient(to right, #a78bfa, #ffffff, #a78bfa, #ffffff, #a78bfa);
+            background-size: 200% auto;
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: shine 5s linear infinite;
+        }
+
+        /* Improved focus rings for accessibility */
+        :focus-visible {
+            outline: 2px solid #6d28d9;
+            outline-offset: 2px;
+        }
+
+        /* Style for scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #6d28d9;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5b21b6;
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-slate-50 text-slate-800">
 
     <!-- Navigation Bar -->
-    <nav class="bg-white shadow-lg sticky top-0 z-50 rounded-b-xl">
+    <nav id="navbar" class="bg-white/80 backdrop-blur-lg shadow-md sticky top-0 z-50 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
+            <div class="flex justify-between items-center h-20">
+                <!-- Logo -->
                 <div class="flex-shrink-0 flex items-center">
-                    <!-- TESTIFY Logo with rounded corners -->
-                    <img class="h-10 w-10 rounded-full" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
-                    <span class="ml-3 text-2xl font-bold text-gray-800">TESTIFY</span>
-                </div>
-                <!-- Desktop Navigation Links -->
-                <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-                    <a href="/features.html" class="border-transparent text-gray-500 hover:border-violet-600 hover:text-violet-600 transition-all duration-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Features</a>
-                    <a href="/about.html" class="border-transparent text-gray-500 hover:border-violet-600 hover:text-violet-600 transition-all duration-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">About Us</a>
-                    <a href="/contact.html" class="border-transparent text-gray-500 hover:border-violet-600 hover:text-violet-600 transition-all duration-300 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Contact</a>
-                </div>
-                <!-- Login and Sign Up Buttons -->
-                <div class="flex items-center space-x-4">
-                    <a href="/login.html" class="text-sm font-medium text-gray-600 hover:text-violet-600 transition-colors duration-300">Log in</a>
-                    <a href="/signup.html" class="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-full shadow-lg text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 transition-colors duration-300 transform hover:scale-105">
-                        Sign up for free
+                    <a href="#" class="flex items-center space-x-3">
+                        <img class="h-10 w-10 rounded-full object-cover" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                        <span class="text-2xl font-bold text-slate-800">TESTIFY</span>
                     </a>
                 </div>
+                
+                <!-- Desktop Navigation Links -->
+                <div class="hidden md:flex md:ml-6 md:space-x-2 lg:space-x-8">
+                    <a href="#features" class="text-gray-600 hover:text-violet-700 transition-colors duration-300 inline-flex items-center px-1 pt-1 text-sm font-semibold">Features</a>
+                    <a href="#about" class="text-gray-600 hover:text-violet-700 transition-colors duration-300 inline-flex items-center px-1 pt-1 text-sm font-semibold">About Us</a>
+                    <a href="#contact" class="text-gray-600 hover:text-violet-700 transition-colors duration-300 inline-flex items-center px-1 pt-1 text-sm font-semibold">Contact</a>
+                </div>
+
+                <!-- Auth Buttons & Mobile Menu Button -->
+                <div class="flex items-center space-x-2">
+                    <a href="/login.html" class="hidden sm:inline-block px-4 py-2 text-sm font-semibold text-violet-700 bg-violet-100/50 hover:bg-violet-100 rounded-full transition-all duration-300">Log in</a>
+                    <a href="/signup.html" class="inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-full shadow-lg text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 transition-all duration-300 transform hover:scale-105">
+                        Sign up for free
+                    </a>
+                    <!-- Hamburger Menu Button -->
+                    <div class="md:hidden flex items-center">
+                        <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-slate-600 hover:text-violet-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-violet-500">
+                            <span class="sr-only">Open main menu</span>
+                            <!-- Icon for menu open -->
+                            <svg id="menu-open-icon" class="h-6 w-6 block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                            </svg>
+                            <!-- Icon for menu close -->
+                            <svg id="menu-close-icon" class="h-6 w-6 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu, show/hide based on menu state. -->
+        <div class="md:hidden hidden" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#features" class="text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Features</a>
+                <a href="#about" class="text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">About Us</a>
+                <a href="#contact" class="text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Contact</a>
             </div>
         </div>
     </nav>
 
     <main>
         <!-- Hero Section -->
-        <div class="relative overflow-hidden pt-16 pb-32">
+        <div class="relative overflow-hidden pt-20 pb-32">
             <div class="absolute inset-0">
-                <!-- Background Image and Gradient Overlay -->
-                <img class="h-full w-full object-cover" src="https://images.unsplash.com/photo-1521737852567-6949f3f9f2b5?q=80&w=2070&auto=format&fit=crop" alt="People working on laptops">
+                <img class="h-full w-full object-cover" src="https://images.unsplash.com/photo-1521737852567-6949f3f9f2b5?q=80&w=2070&auto=format&fit=crop" alt="Collaborative team working in a modern office">
                 <div class="absolute inset-0 gradient-bg-custom mix-blend-multiply"></div>
             </div>
             <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
                 <h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl leading-tight drop-shadow-lg">
                     <span class="block">The Future of Assessment is Here</span>
-                    <span class="block text-indigo-200">Powered by AI</span>
+                    <span class="block shine-effect mt-2">Powered by AI</span>
                 </h1>
                 <p class="mt-6 max-w-lg mx-auto text-xl text-indigo-100 sm:max-w-3xl leading-relaxed">
                     Welcome to TESTIFY, the intelligent platform that leverages AI to create, manage, and proctor secure online assessments with unparalleled ease and integrity.
                 </p>
-                <div class="mt-10 max-w-sm mx-auto sm:max-w-none sm:flex sm:justify-center">
+                <div class="mt-12 max-w-sm mx-auto sm:max-w-none sm:flex sm:justify-center">
                     <div class="space-y-4 sm:space-y-0 sm:mx-auto sm:inline-grid sm:grid-cols-2 sm:gap-5">
-                        <a href="/signup.html" class="flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-lg text-violet-700 bg-white hover:bg-gray-100 transition-colors duration-300 transform hover:scale-105">
+                        <a href="/signup.html" class="flex items-center justify-center px-8 py-3 border border-transparent text-base font-bold rounded-full shadow-lg text-violet-700 bg-white hover:bg-gray-100 transition-all duration-300 transform hover:scale-105">
                             Get started
                         </a>
-                        <a href="/login.html" class="flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-full shadow-lg text-white bg-indigo-500 bg-opacity-70 hover:bg-opacity-80 transition-colors duration-300 transform hover:scale-105">
+                        <a href="/login.html" class="flex items-center justify-center px-8 py-3 border border-transparent text-base font-bold rounded-full shadow-lg text-white bg-indigo-500 bg-opacity-80 hover:bg-opacity-100 transition-all duration-300 transform hover:scale-105">
                             Log In
                         </a>
                     </div>
@@ -75,38 +146,34 @@
         </div>
 
         <!-- Features Section -->
-        <div class="bg-gray-50 py-16 sm:py-24">
+        <div id="features" class="bg-slate-50 py-20 sm:py-28">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
-                    <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Why TESTIFY?</h2>
+                    <h2 class="text-base font-semibold text-violet-600 tracking-wider uppercase">Our Features</h2>
+                    <p class="mt-2 text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Unlock the Power of AI Assessment</p>
                     <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-500">We blend cutting-edge AI with user-friendly design to solve the biggest challenges in online education.</p>
                 </div>
                 <div class="mt-16 grid gap-10 md:grid-cols-2 lg:grid-cols-3">
                     <!-- Feature Card 1 -->
                     <div class="p-8 bg-white rounded-3xl shadow-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl text-center">
-                        <div class="flex items-center justify-center h-16 w-16 rounded-full bg-violet-600 text-white mx-auto shadow-lg">
-                            <!-- AI Icon - a star/sparkle for a magical, intelligent touch -->
-                            <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.898 20.562L16.25 22.5l-.648-1.938a3.375 3.375 0 00-2.684-2.684L11.25 18l1.938-.648a3.375 3.375 0 002.684-2.684L16.25 13.5l.648 1.938a3.375 3.375 0 002.684 2.684L21.75 18l-1.938.648a3.375 3.375 0 00-2.684 2.684z" />
-                            </svg>
+                        <div class="flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white mx-auto shadow-lg">
+                            <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
                         </div>
                         <h3 class="mt-6 text-xl font-bold text-gray-900">AI-Powered Content Creation</h3>
                         <p class="mt-4 text-base text-gray-600">Transform your existing documents into engaging courses and comprehensive tests in minutes. Our AI understands your content and structures it for you.</p>
                     </div>
                     <!-- Feature Card 2 -->
                     <div class="p-8 bg-white rounded-3xl shadow-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl text-center">
-                        <div class="flex items-center justify-center h-16 w-16 rounded-full bg-violet-600 text-white mx-auto shadow-lg">
-                            <!-- Proctoring Icon - a modern lock for security and integrity -->
-                            <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                        <div class="flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white mx-auto shadow-lg">
+                            <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                         </div>
                         <h3 class="mt-6 text-xl font-bold text-gray-900">AI-Powered Proctoring</h3>
                         <p class="mt-4 text-base text-gray-600">Ensure the highest level of academic integrity. Our AI monitors exams for suspicious behavior, providing you with detailed reports and peace of mind.</p>
                     </div>
                     <!-- Feature Card 3 -->
                     <div class="p-8 bg-white rounded-3xl shadow-xl transition-all duration-300 transform hover:scale-105 hover:shadow-2xl text-center">
-                        <div class="flex items-center justify-center h-16 w-16 rounded-full bg-violet-600 text-white mx-auto shadow-lg">
-                            <!-- Insights Icon - a bar chart for data-driven analytics -->
-                            <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm4 0V9a2 2 0 00-2-2h-2a2 2 0 00-2 2v10a2 2 0 002 2h2a2 2 0 002-2zm4 0V5a2 2 0 00-2-2h-2a2 2 0 00-2 2v14a2 2 0 002 2h2a2 2 0 002-2z" /></svg>
+                        <div class="flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white mx-auto shadow-lg">
+                            <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         </div>
                         <h3 class="mt-6 text-xl font-bold text-gray-900">Data-Driven Insights</h3>
                         <p class="mt-4 text-base text-gray-600">Go beyond simple scores. Our analytics provide a deep understanding of student performance, helping you identify trends and improve learning outcomes.</p>
@@ -116,22 +183,23 @@
         </div>
 
         <!-- Impact Numbers Section -->
-        <div class="bg-white py-16 sm:py-24">
+        <div id="about" class="bg-slate-100 py-20 sm:py-28">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
-                    <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Our Impact in Numbers</h2>
-                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-500">We're proud to support institutions in their mission to deliver quality education.</p>
+                    <h2 class="text-base font-semibold text-violet-600 tracking-wider uppercase">Our Impact</h2>
+                    <p class="mt-2 text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Trusted by Leading Institutions</p>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-500">We're proud to support institutions in their mission to deliver quality education, securely and efficiently.</p>
                 </div>
-                <div class="mt-16 grid gap-10 md:grid-cols-3 text-center">
-                    <div class="p-8 bg-gray-100 rounded-3xl shadow-lg">
+                <div class="mt-16 grid gap-8 md:grid-cols-3 text-center">
+                    <div class="p-8 bg-white rounded-3xl shadow-lg">
                         <h3 id="institutions-count" class="text-5xl font-bold text-violet-600">...</h3>
                         <p class="mt-2 text-lg font-medium text-gray-700">Institutions Empowered</p>
                     </div>
-                    <div class="p-8 bg-gray-100 rounded-3xl shadow-lg">
+                    <div class="p-8 bg-white rounded-3xl shadow-lg">
                         <h3 id="exams-count" class="text-5xl font-bold text-violet-600">...</h3>
                         <p class="mt-2 text-lg font-medium text-gray-700">Exams Proctored</p>
                     </div>
-                    <div class="p-8 bg-gray-100 rounded-3xl shadow-lg">
+                    <div class="p-8 bg-white rounded-3xl shadow-lg">
                         <h3 id="uptime-count" class="text-5xl font-bold text-violet-600">...</h3>
                         <p class="mt-2 text-lg font-medium text-gray-700">Platform Uptime</p>
                     </div>
@@ -141,33 +209,86 @@
     </main>
     
     <!-- Footer -->
-    <footer class="bg-gray-200">
-        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <p class="text-center text-base text-gray-500">&copy; 2024 TESTIFY. All rights reserved.</p>
+    <footer id="contact" class="bg-slate-800 text-slate-300">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="xl:grid xl:grid-cols-3 xl:gap-8">
+                <div class="space-y-8 xl:col-span-1">
+                     <a href="#" class="flex items-center space-x-3">
+                        <img class="h-10 w-10 rounded-full object-cover" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                        <span class="text-2xl font-bold text-white">TESTIFY</span>
+                    </a>
+                    <p class="text-slate-400 text-base">The future of intelligent and secure online assessments.</p>
+                </div>
+            </div>
+            <div class="mt-8 border-t border-slate-700 pt-8 flex flex-col sm:flex-row justify-between items-center">
+                <p class="text-base text-slate-400">&copy; 2025 TESTIFY. All rights reserved.</p>
+                <div class="flex space-x-6 mt-4 sm:mt-0">
+                    <a href="#" class="text-slate-400 hover:text-white">
+                        <span class="sr-only">Facebook</span>
+                        <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd" /></svg>
+                    </a>
+                    <a href="#" class="text-slate-400 hover:text-white">
+                        <span class="sr-only">Twitter</span>
+                        <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.71v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" /></svg>
+                    </a>
+                </div>
+            </div>
         </div>
     </footer>
 
     <!-- Pop-up Modal -->
-    <div id="popup-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-gray-900 bg-opacity-75 transition-opacity duration-300 ease-in-out opacity-0">
-        <div class="relative max-w-lg p-4 rounded-3xl shadow-2xl transition-transform duration-300 transform scale-95">
-            <button id="close-popup" class="absolute -top-2 -right-2 text-white bg-red-600 rounded-full h-8 w-8 flex items-center justify-center text-xl font-bold transition-transform duration-200 transform hover:rotate-90">
+    <div id="popup-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 transition-opacity duration-300 ease-in-out opacity-0 pointer-events-none">
+        <div id="popup-content" class="relative w-full max-w-lg p-4 rounded-3xl shadow-2xl transition-all duration-300 transform scale-95">
+            <button id="close-popup" class="absolute -top-2 -right-2 text-slate-600 bg-white/80 backdrop-blur-sm rounded-full h-8 w-8 flex items-center justify-center text-xl font-bold transition-all duration-200 transform hover:rotate-90 hover:bg-white hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-white">
                 &times;
             </button>
-            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756491151/FREE_TESTS_jianct.png" alt="Free Tests Flyer" class="rounded-3xl shadow-lg">
+            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756491151/FREE_TESTS_jianct.png" alt="Promotional Flyer for Free Tests" class="rounded-2xl shadow-lg">
+            <p class="mt-4 p-3 bg-violet-50 text-violet-800 rounded-xl font-semibold text-center text-sm sm:text-base">
+                Students who created an account before 31 August 2025 12:00 PM (IST) will only get the offer. Hurry UP!!!
+            </p>
         </div>
     </div>
 
-    <!-- JavaScript for dynamic content and modal functionality -->
+    <!-- JavaScript for dynamic content and interactivity -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Fetch and display dynamic impact stats
+            // --- Mobile Menu Logic ---
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const menuOpenIcon = document.getElementById('menu-open-icon');
+            const menuCloseIcon = document.getElementById('menu-close-icon');
+
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+                menuOpenIcon.classList.toggle('block');
+                menuOpenIcon.classList.toggle('hidden');
+                menuCloseIcon.classList.toggle('hidden');
+                menuCloseIcon.classList.toggle('block');
+            });
+            
+            // --- Navbar style change on scroll ---
+            const navbar = document.getElementById('navbar');
+            window.onscroll = () => {
+                if (window.scrollY > 50) {
+                    navbar.classList.add("shadow-xl");
+                } else {
+                    navbar.classList.remove("shadow-xl");
+                }
+            };
+
+            // --- Dynamic Impact Stats ---
             // NOTE: This is a placeholder fetch call and will not work without a backend API endpoint.
             fetch('/api/impact-stats')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(stats => {
-                    document.getElementById('institutions-count').textContent = stats.institutions || '0+';
-                    document.getElementById('exams-count').textContent = stats.exams || '0+';
-                    document.getElementById('uptime-count').textContent = stats.uptime || '0%';
+                    document.getElementById('institutions-count').textContent = stats.institutions ? `${stats.institutions}+` : '0+';
+                    document.getElementById('exams-count').textContent = stats.exams ? `${stats.exams.toLocaleString()}+` : '0+';
+                    document.getElementById('uptime-count').textContent = stats.uptime ? `${stats.uptime}%` : '0%';
                 })
                 .catch(error => {
                     console.error('Error fetching impact stats:', error);
@@ -176,24 +297,37 @@
                     document.getElementById('uptime-count').textContent = 'N/A';
                 });
 
-            // Pop-up Modal Logic with Transitions
+
+            // --- Pop-up Modal Logic ---
             const popupModal = document.getElementById('popup-modal');
+            const popupContent = document.getElementById('popup-content');
             const closeButton = document.getElementById('close-popup');
-
-            // Show the modal on page load with a fade-in effect
-            setTimeout(() => {
-                popupModal.classList.remove('hidden');
-                setTimeout(() => popupModal.classList.add('opacity-100'), 10);
-            }, 500); // 500ms delay to allow the page to load
-
-            // Add event listener to close the modal
-            closeButton.addEventListener('click', function() {
+            
+            const showModal = () => {
+                popupModal.classList.remove('pointer-events-none');
+                popupModal.classList.add('opacity-100');
+                popupContent.classList.add('scale-100');
+                popupContent.classList.remove('scale-95');
+            };
+            
+            const hideModal = () => {
                 popupModal.classList.remove('opacity-100');
-                popupModal.querySelector('div').classList.remove('scale-100');
-                popupModal.querySelector('div').classList.add('scale-95');
+                popupContent.classList.remove('scale-100');
+                popupContent.classList.add('scale-95');
                 setTimeout(() => {
-                    popupModal.classList.add('hidden');
-                }, 300);
+                    popupModal.classList.add('pointer-events-none');
+                }, 300); // Wait for transition to finish
+            };
+
+            // Show modal after a delay
+            setTimeout(showModal, 1500);
+
+            // Close modal on button click or clicking outside
+            closeButton.addEventListener('click', hideModal);
+            popupModal.addEventListener('click', (event) => {
+                if (event.target === popupModal) {
+                    hideModal();
+                }
             });
         });
     </script>
