@@ -13,56 +13,126 @@
         .prose {
             max-width: 800px;
         }
+        .prose h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937; /* text-gray-900 */
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e5e7eb; /* gray-200 */
+        }
+        .prose h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937; /* text-gray-900 */
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+        .prose p, .prose ul {
+            color: #374151; /* text-gray-700 */
+            line-height: 1.6;
+        }
+        .prose ul {
+            list-style-position: inside;
+            list-style-type: disc;
+            padding-left: 1rem;
+        }
+        .prose li {
+            margin-bottom: 0.75rem;
+        }
+        .prose a {
+            color: #4f46e5; /* indigo-600 */
+            text-decoration: none;
+        }
+        .prose a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
     <!-- Main Content Container -->
     <div class="container mx-auto px-4 py-16 sm:px-6 lg:px-8">
-        <div class="bg-white p-8 rounded-3xl shadow-xl">
+        <div class="bg-white p-8 sm:p-12 rounded-3xl shadow-xl">
             <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 text-center mb-6">Terms & Conditions</h1>
             <p class="text-center text-gray-500 mb-12">Last Updated: August 31, 2025</p>
 
             <div class="prose mx-auto">
-                <p>Welcome to TESTIFY. By using our platform, you agree to these Terms & Conditions. This document outlines your rights and responsibilities and, most importantly, our commitment to your data privacy and safety.</p>
+                <h2>1. Agreement to Terms</h2>
+                <p>Welcome to TESTIFY ("Company," "we," "us," or "our"). These Terms & Conditions constitute a legally binding agreement made between you, whether personally or on behalf of an entity ("you"), and TESTIFY, concerning your access to and use of the TESTIFY website as well as any other media form, media channel, mobile website, or mobile application related, linked, or otherwise connected thereto (collectively, the "Platform").</p>
+                <p>You agree that by accessing the Platform, you have read, understood, and agreed to be bound by all of these Terms & Conditions. If you do not agree with all of these terms, then you are expressly prohibited from using the Platform and you must discontinue use immediately.</p>
 
-                <h2 class="text-2xl font-bold text-gray-900 mt-10 mb-4">1. Data Privacy and AI Proctoring</h2>
-                <p>Your privacy and the security of your data are our highest priorities. We have designed TESTIFY with a core principle of "data minimalism" when it comes to live AI proctoring. </p>
-                <ul class="list-disc list-inside space-y-2 text-gray-700">
-                    <li><strong>No Data Storage:</strong> During a live test, the AI proctoring system analyzes your video and audio stream in real-time. We **do not** store any video recordings, audio, or images of you during the proctoring session. The AI models process the data live and then discard it.</li>
-                    <li><strong>Live Analysis Only:</strong> The AI's sole purpose is to detect potential violations (e.g., a phone, a second person, or background noise) based on predefined parameters. This analysis is conducted live on the platform without saving any of the input media.</li>
-                    <li><strong>Violation Data:</strong> If a violation is detected, the system will only log the **type of violation** (e.g., "phone detected," "person not present," or "excessive noise"). No image, video, or audio evidence is stored or sent to the test administrator. The violation log serves as a flag for review and is not a record of your live session.</li>
-                    <li><strong>Local Processing:</strong> All AI processing is performed locally within the secure test environment. The AI models are loaded and run within your browser, ensuring your data is not transmitted to our servers for analysis.</li>
+                <h2>2. Intellectual Property Rights</h2>
+                <p>Unless otherwise indicated, the Platform is our proprietary property. All source code, databases, functionality, software, website designs, audio, video, text, photographs, and graphics on the Platform (collectively, the "Content") and the trademarks, service marks, and logos contained therein (the "Marks") are owned or controlled by us or licensed to us, and are protected by copyright and trademark laws. The Content and the Marks are provided on the Platform "AS IS" for your information and personal use only. Except as expressly provided in these Terms & Conditions, no part of the Platform and no Content or Marks may be copied, reproduced, aggregated, republished, uploaded, posted, publicly displayed, encoded, translated, transmitted, distributed, sold, licensed, or otherwise exploited for any commercial purpose whatsoever, without our express prior written permission.</p>
+
+                <h2>3. User Accounts, Responsibilities, and Conduct</h2>
+                <h3>3.1. Registration and Accounts</h3>
+                <p>To use certain features of the Platform, you must register for an account. You agree to (a) provide true, accurate, current, and complete information about yourself as prompted by the registration form, including OTP verification via email; and (b) maintain and promptly update your information to keep it true, accurate, current, and complete. You are responsible for all activities that occur under your account and must keep your password confidential and secure.</p>
+                <h3>3.2. Prohibited Activities</h3>
+                <p>As a user of the Platform, you agree not to:</p>
+                <ul class="space-y-2">
+                    <li>Systematically retrieve data or other content from the Platform to create or compile, directly or indirectly, a collection, compilation, database, or directory without written permission from us.</li>
+                    <li>Circumvent, disable, or otherwise interfere with security-related features of the Platform, including features that prevent or restrict the use or copying of any Content or enforce limitations on the use of the Platform.</li>
+                    <li>Engage in any form of academic dishonesty, including but not limited to cheating, plagiarism, or impersonation during tests, interviews, or any other assessment.</li>
+                    <li>Use any information obtained from the Platform to harass, abuse, or harm another person.</li>
+                    <li>Decipher, decompile, disassemble, or reverse engineer any of the software comprising or in any way making up a part of the Platform.</li>
+                    <li>Attempt to bypass any measures of the Platform designed to prevent or restrict access to the Platform, or any portion of the Platform.</li>
                 </ul>
 
-                <h2 class="text-2xl font-bold text-gray-900 mt-10 mb-4">2. Website Security and Data Safety</h2>
-                <p>We are committed to providing a secure and safe environment for all our users. We implement multiple layers of security to protect your information, including:</p>
-                <ul class="list-disc list-inside space-y-2 text-gray-700">
-                    <li><strong>Encryption:</strong> All data transmitted between your browser and our servers is encrypted using industry-standard protocols to prevent unauthorized access.</li>
-                    <li><strong>Access Control:</strong> We enforce strict access controls to ensure that only authorized personnel can access sensitive information.</li>
-                    <li><strong>Regular Audits:</strong> Our systems undergo regular security audits to identify and fix potential vulnerabilities.</li>
-                    <li><strong>Data Minimization:</strong> We only collect the data necessary to provide our services and do not store any information we don't need.</li>
-                    <li><strong>Secure Authentication:</strong> We use industry-standard secure authentication methods to protect your account and personal information.</li>
-                    <li><strong>Incident Response:</strong> We have an incident response plan in place to quickly and effectively address any potential security breaches.</li>
-                    <li><strong>Compliance:</strong> We adhere to relevant data protection and privacy laws and regulations to ensure the highest standards of data safety.</li>
-                    <li><strong>Continuous Monitoring:</strong> Our security systems are continuously monitored to detect and prevent any malicious activity.</li>
+                <h2>4. Platform Services</h2>
+                <h3>4.1. Proctored Tests & Interviews</h3>
+                <p>The Platform provides AI-proctored tests and interviews to maintain academic integrity. During these sessions, the system may monitor your video and audio feed in real-time. Any violation of test rules (e.g., presence of another person, use of unauthorized devices, excessive background noise) may result in penalties, including immediate termination of the test and a report of the violation to the test administrator.</p>
+                <h3>4.2. Courses & Learning Materials</h3>
+                <p>All courses, including text, videos, and associated materials, are the intellectual property of TESTIFY or its licensors. You are granted a limited, non-exclusive, non-transferable license to access and view the course materials for your personal, non-commercial use. You may not reproduce, redistribute, or sell any course content.</p>
+                <h3>4.3. Code Compilation Service</h3>
+                <p>The Platform includes a code compilation service for practice and assessment. You agree to use this service only for its intended purpose. You shall not submit any code that is malicious, infringes on intellectual property rights, or is designed to disrupt the service. Your code may be transmitted to a third-party service for compilation and execution.</p>
+
+                <h2>5. Data Privacy & Security</h2>
+                <h3>5.1. AI Proctoring and Face Verification</h3>
+                <p>Our commitment to your privacy is paramount. For AI proctoring and face verification:</p>
+                <ul class="space-y-2">
+                    <li><strong>No Media Storage:</strong> During a live proctoring session, your video and audio stream are analyzed in real-time and are <strong>not stored</strong> on our servers. The data is processed and immediately discarded.</li>
+                    <li><strong>Violation Logging:</strong> If a potential violation is detected, the system logs only the type of violation and the timestamp. No images, video clips, or audio recordings are stored.</li>
+                    <li><strong>Face Verification:</strong> To ensure your identity, we use a face verification system. This requires an initial profile image upload. During a test, the system compares your live video feed against this stored profile image. This process is automated, and the comparison data is not permanently stored.</li>
                 </ul>
-
-                <h2 class="text-2xl font-bold text-gray-900 mt-10 mb-4">3. Your Responsibilities</h2>
-                <ul class="list-disc list-inside space-y-2 text-gray-700">
-                    <li>You must provide accurate and complete registration information.</li>
-                    <li>You are responsible for maintaining the confidentiality of your account password.</li>
-                    <li>You must not share your login credentials with anyone else.</li>
-                    <li>You must follow all instructions during a proctored test. Failure to do so may result in your test being automatically submitted.</li>
+                <h3>5.2. General Data Handling</h3>
+                <p>We collect and store information necessary for the functioning of the platform, including your profile information, test answers, course progress, and violation logs. We implement robust security measures, including encryption and access controls, to protect your data.</p>
+                <h3>5.3. Third-Party Services Disclosure</h3>
+                <p>We utilize several third-party services to provide our platform's functionality. By using our Platform, you acknowledge that your data may be processed by these services. These include:</p>
+                <ul class="space-y-2">
+                    <li><strong>Amazon Web Services (AWS):</strong> For database hosting (DynamoDB) and facial recognition (Rekognition).</li>
+                    <li><strong>Cloudinary:</strong> For secure storage of your profile image and other platform-related media.</li>
+                    <li><strong>Google Gemini:</strong> For AI-powered generation of test and course content.</li>
+                    <li><strong>Paiza.io:</strong> For executing and compiling code submitted through our code compiler service.</li>
                 </ul>
+                <p>We encourage you to review the privacy policies of these third-party services.</p>
 
-                <h2 class="text-2xl font-bold text-gray-900 mt-10 mb-4">4. Limitation of Liability</h2>
-                <p>TESTIFY is provided "as is." We do not guarantee uninterrupted access to the platform, and we are not liable for any damages or losses related to your use of the service. You use the platform at your own risk.</p>
+                <h2>6. User Generated Content</h2>
+                <p>You retain ownership of the content you submit, such as test answers and code ("User Content"). However, by submitting User Content, you grant us a worldwide, non-exclusive, royalty-free license to use, reproduce, modify, and display this content in connection with providing the Platform services.</p>
 
-                <h2 class="text-2xl font-bold text-gray-900 mt-10 mb-4">5. Changes to Terms</h2>
-                <p>We may update these Terms & Conditions from time to time. We will notify you of any significant changes by posting the new terms on our website. Your continued use of the platform after the changes constitutes your acceptance of the new terms.</p>
+                <h2>7. Term and Termination</h2>
+                <p>These Terms & Conditions shall remain in full force and effect while you use the Platform. WE RESERVE THE RIGHT TO, IN OUR SOLE DISCRETION AND WITHOUT NOTICE OR LIABILITY, DENY ACCESS TO AND USE OF THE PLATFORM (INCLUDING BLOCKING ACCOUNTS OR IP ADDRESSES), TO ANY PERSON FOR ANY REASON, INCLUDING FOR BREACH OF ANY REPRESENTATION, WARRANTY, OR COVENANT CONTAINED IN THESE TERMS.</p>
+
+                <h2>8. Governing Law & Dispute Resolution</h2>
+                <p>These Terms & Conditions and your use of the Platform are governed by and construed in accordance with the laws of the State of Delaware, without regard to its conflict of law principles. Any legal action of whatever nature brought by either you or us shall be commenced or prosecuted in the state and federal courts located in Delaware, and the Parties hereby consent to, and waive all defenses of lack of personal jurisdiction and forum non conveniens with respect to venue and jurisdiction in such courts.</p>
+
+                <h2>9. Disclaimer of Warranty</h2>
+                <p>THE PLATFORM IS PROVIDED ON AN AS-IS AND AS-AVAILABLE BASIS. YOU AGREE THAT YOUR USE OF THE PLATFORM WILL BE AT YOUR SOLE RISK. TO THE FULLEST EXTENT PERMITTED BY LAW, WE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED, IN CONNECTION WITH THE PLATFORM AND YOUR USE THEREOF, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.</p>
+
+                <h2>10. Limitation of Liability</h2>
+                <p>IN NO EVENT WILL WE OR OUR DIRECTORS, EMPLOYEES, OR AGENTS BE LIABLE TO YOU OR ANY THIRD PARTY FOR ANY DIRECT, INDIRECT, CONSEQUENTIAL, EXEMPLARY, INCIDENTAL, SPECIAL, OR PUNITIVE DAMAGES, INCLUDING LOST PROFIT, LOST REVENUE, LOSS OF DATA, OR OTHER DAMAGES ARISING FROM YOUR USE OF THE PLATFORM, EVEN IF WE HAVE BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.</p>
+
+                <h2>11. Indemnification</h2>
+                <p>You agree to defend, indemnify, and hold us harmless, including our subsidiaries, affiliates, and all of our respective officers, agents, partners, and employees, from and against any loss, damage, liability, claim, or demand, including reasonable attorneys’ fees and expenses, made by any third party due to or arising out of: (1) your use of the Platform; (2) your breach of these Terms & Conditions; or (3) your violation of the rights of a third party, including but not limited to intellectual property rights.</p>
+
+                <h2>12. Changes to Terms</h2>
+                <p>We may update these Terms & Conditions from time to time. We will notify you of any significant changes by posting the new terms on our website and updating the "Last Updated" date. Your continued use of the Platform after such changes constitutes your acceptance of the new terms.</p>
+
+                <h2>13. Miscellaneous</h2>
+                <p>These Terms & Conditions and any policies or operating rules posted by us on the Platform constitute the entire agreement and understanding between you and us. Our failure to exercise or enforce any right or provision of these Terms & Conditions shall not operate as a waiver of such right or provision. If any provision or part of a provision of these Terms & Conditions is determined to be unlawful, void, or unenforceable, that provision or part of the provision is deemed severable from these Terms & Conditions and does not affect the validity and enforceability of any remaining provisions.</p>
                 
-                <h2 class="text-2xl font-bold text-gray-900 mt-10 mb-4">6. Contact Us</h2>
-                <p>If you have any questions about these Terms & Conditions, please contact us at: <a href="mailto:support@testify.com" class="text-violet-600 hover:underline">support@testify.com</a></p>
+                <h2>14. Contact Us</h2>
+                <p>If you have any questions about these Terms & Conditions, please contact us at: <a href="mailto:testifylearning.help@gmail.com">testifylearning.help@gmail.com</a></p>
             </div>
         </div>
     </div>
