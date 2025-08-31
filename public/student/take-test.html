@@ -8,7 +8,8 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
     <!-- AI Proctoring Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
@@ -63,7 +64,7 @@
                     <span class="ml-3">Dashboard</span>
                 </a>
                 <a href="/student/take-test.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002 2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                     <span class="ml-3">Take Test</span>
                 </a>
                 <a href="/student/test-history.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
@@ -83,8 +84,8 @@
                 <span class="ml-3">My Profile</span>
                 </a>
                  <a href="compiler.html" class="sidebar-link  flex items-center py-2.5 px-4 rounded transition duration-200">
-                     <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
-                     <span>Compiler</span>
+                      <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
+                      <span>Compiler</span>
                  </a>
             </div>
         </div>
@@ -94,16 +95,16 @@
             <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
                 <h1 class="text-2xl font-bold text-gray-800">Available Tests</h1>
                  <div class="flex items-center">
-                       <div class="relative">
+                      <div class="relative">
                            <button id="user-menu-button" class="flex items-center space-x-2">
-                               <span id="user-name" class="font-semibold text-gray-700">Student Name</span>
-                               <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                <span id="user-name" class="font-semibold text-gray-700">Student Name</span>
+                                <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                            </button>
                            <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                               <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                                <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
                            </div>
-                       </div>
-               </div>
+                      </div>
+                </div>
             </div>
 
             <div class="p-6">
@@ -112,6 +113,71 @@
                         <!-- Dynamically loaded tests will appear here -->
                     </div>
                 </div>
+
+                <!-- FAQ Toggle Button -->
+                <div class="text-center mt-8">
+                    <button id="faq-toggle" class="text-indigo-600 hover:text-indigo-800 font-semibold py-2 px-4 transition-colors duration-300">
+                        Have questions? Read our FAQs
+                    </button>
+                </div>
+
+                <!-- FAQ Section -->
+                <div id="faq-section" class="hidden mt-6 bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Frequently Asked Questions</h2>
+                    <div class="space-y-4">
+                        <!-- FAQ Item 1 -->
+                        <div class="border-b pb-4">
+                            <button class="faq-question w-full flex justify-between items-center text-left text-lg font-semibold text-gray-700">
+                                <span>Why is my face verification failing?</span>
+                                <svg class="w-6 h-6 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <div class="faq-answer hidden mt-3 text-gray-600 space-y-3">
+                                <p>Face verification can fail due to poor lighting, your face being too far or too close to the camera, or something obstructing your face (like hair or glasses). Please ensure you are in a well-lit room and your entire face is clearly visible.</p>
+                            </div>
+                        </div>
+                        <!-- FAQ Item 2 -->
+                        <div class="border-b pb-4">
+                            <button class="faq-question w-full flex justify-between items-center text-left text-lg font-semibold text-gray-700">
+                                <span>What is considered a proctoring violation?</span>
+                                <svg class="w-6 h-6 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <div class="faq-answer hidden mt-3 text-gray-600 space-y-3">
+                                <p>Our AI proctoring system monitors for several potential violations to ensure a fair test environment. These include:</p>
+                                <ul class="list-disc list-inside ml-4">
+                                    <li>Someone else entering the camera view.</li>
+                                    <li>You leaving the camera view for an extended period.</li>
+                                    <li>Consistently looking away from the screen.</li>
+                                    <li>Using a mobile phone or other unauthorized devices.</li>
+                                    <li>Excessive noise or talking in the background.</li>
+                                </ul>
+                                <p>A detected violation will result in the automatic submission of your test.</p>
+                            </div>
+                        </div>
+                        <!-- FAQ Item 3 -->
+                        <div class="border-b pb-4">
+                            <button class="faq-question w-full flex justify-between items-center text-left text-lg font-semibold text-gray-700">
+                                <span>What happens if my internet disconnects?</span>
+                                <svg class="w-6 h-6 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <div class="faq-answer hidden mt-3 text-gray-600 space-y-3">
+                                <p>Your answers are saved periodically. If you get disconnected, simply log back in and resume the test. The timer will continue from where it left off. However, prolonged disconnection might be flagged for review. We recommend using a stable internet connection.</p>
+                            </div>
+                        </div>
+                        <!-- FAQ Item 4 -->
+                        <div class="border-b pb-4">
+                            <button class="faq-question w-full flex justify-between items-center text-left text-lg font-semibold text-gray-700">
+                                <span>Why did I get a "Permissions check failed" error?</span>
+                                <svg class="w-6 h-6 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <div class="faq-answer hidden mt-3 text-gray-600 space-y-3">
+                                <p>Refresh the page & start if not please follow below step</p>
+                                <p>This error appears when the website is not granted permission to access your camera and microphone, which are required for AI proctoring. Please check your browser's settings to ensure that you have allowed camera and microphone access for this website, then refresh the page and try starting the test again.</p>
+                                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756622890/Screenshot_2025-08-31_115534_r8bbiy.png" alt="Browser permission settings" class="rounded-lg shadow-md mx-auto" style="max-width: 400px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
         
@@ -157,10 +223,7 @@
                         <p id="test-title" class="text-sm text-gray-600 font-medium"></p>
                     </div>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <div class="text-lg font-bold text-red-600" id="timer">00:00</div>
-                    <button id="submit-test-btn" class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700">Submit Test</button>
-                </div>
+                <button id="submit-test-btn" class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700">Submit Test</button>
             </div>
 
             <!-- Test Body -->
@@ -174,18 +237,27 @@
                     </div>
                 </div>
 
-                <!-- Question Palette -->
-                <div class="w-64 bg-gray-50 border-l border-gray-200 p-4 overflow-y-auto">
-                    <h3 class="font-bold text-gray-800 mb-4">Question Palette</h3>
-                    <div id="question-palette" class="grid grid-cols-5 gap-2"></div>
-                </div>
-            </div>
+                <!-- Right Sidebar -->
+                <div class="w-72 bg-gray-100 border-l border-gray-200 p-4 flex flex-col space-y-4">
+                    <!-- AI PROCTORING VIEW -->
+                    <div id="proctor-container" class="hidden relative w-full h-48 bg-black rounded-lg shadow-lg border-2 border-gray-300">
+                        <video id="webcam" class="w-full h-full rounded-lg object-cover" autoplay muted playsinline></video>
+                        <div id="proctor-status" class="absolute bottom-0 left-0 w-full bg-black bg-opacity-60 text-white text-xs text-center py-1 font-semibold">
+                            Initializing...
+                        </div>
+                    </div>
+                    
+                    <!-- Timer -->
+                    <div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
+                         <h3 class="font-semibold text-gray-700">Time Left:</h3>
+                         <div class="text-2xl font-bold text-red-600" id="timer">00:00</div>
+                    </div>
 
-            <!-- AI PROCTORING VIEW -->
-            <div id="proctor-container" class="hidden fixed bottom-4 right-4 w-48 h-36 bg-black rounded-lg shadow-2xl z-50 border-2 border-gray-400">
-                <video id="webcam" class="w-full h-full rounded-lg object-cover" autoplay muted playsinline></video>
-                <div id="proctor-status" class="absolute bottom-0 left-0 w-full bg-black bg-opacity-60 text-white text-xs text-center py-1 font-semibold">
-                    Initializing...
+                    <!-- Question Palette -->
+                    <div class="flex-grow overflow-y-auto bg-white p-3 rounded-lg shadow-sm">
+                         <h3 class="font-bold text-gray-800 mb-2 text-center">Question Palette</h3>
+                         <div id="question-palette" class="grid grid-cols-5 gap-2"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -238,6 +310,8 @@
             const audioWarningModal = document.getElementById('audio-warning-modal');
             const warningCountSpan = document.getElementById('warning-count');
             const closeWarningBtn = document.getElementById('close-warning-btn');
+            const faqToggleBtn = document.getElementById('faq-toggle');
+            const faqSection = document.getElementById('faq-section');
             
             // --- TEST STATE ---
             let testInProgress = false;
@@ -274,8 +348,8 @@
             const NO_FACE_FRAME_LIMIT = 90;
             const LOOKING_AWAY_HORIZONTAL_THRESHOLD = 30;
             const LOOKING_AWAY_FRAME_LIMIT = 120;
-            const AUDIO_VIOLATION_LIMIT = 5; // MODIFIED: Changed from 4 to 5
-            const AUDIO_LEVEL_THRESHOLD = 0.20; // MODIFIED: Increased sensitivity threshold from 0.12
+            const AUDIO_VIOLATION_LIMIT = 5; 
+            const AUDIO_LEVEL_THRESHOLD = 0.20; 
 
             // --- FETCH AND DISPLAY AVAILABLE TESTS ---
             async function fetchAndDisplayTests() {
@@ -346,6 +420,26 @@
             prevBtn.addEventListener('click', navigatePrev);
             nextBtn.addEventListener('click', navigateNext);
             closeWarningBtn.addEventListener('click', () => audioWarningModal.classList.add('hidden'));
+
+            faqToggleBtn.addEventListener('click', () => {
+                faqSection.classList.toggle('hidden');
+            });
+
+            faqSection.addEventListener('click', (e) => {
+                const questionBtn = e.target.closest('.faq-question');
+                if (questionBtn) {
+                    const answer = questionBtn.nextElementSibling;
+                    const icon = questionBtn.querySelector('svg');
+                    if (answer.classList.contains('hidden')) {
+                        answer.classList.remove('hidden');
+                        icon.classList.add('rotate-180');
+                    } else {
+                        answer.classList.add('hidden');
+                        icon.classList.remove('rotate-180');
+                    }
+                }
+            });
+
 
             document.addEventListener('contextmenu', event => {
                 if (testInProgress) {
@@ -434,11 +528,11 @@
             async function startTest(testData) {
                 const proctoringConsent = confirm(
                      'This test requires AI proctoring.\n\n' +
-        'Your webcam and microphone will be activated to monitor for violations. Any violation will result in automatic test submission.\n\n' +
-        'This test will also start in fullscreen mode. Exiting fullscreen will submit the test.\n\n' +
-        'By proceeding, you agree to the terms outlined in our T&C:\n' +
-        'https://testify-io-ai.onrender.com/T&C.html\n\n' +
-        'Are you ready to begin?'
+                     'Your webcam and microphone will be activated to monitor for violations. Any violation will result in automatic test submission.\n\n' +
+                     'This test will also start in fullscreen mode. Exiting fullscreen will submit the test.\n\n' +
+                     'By proceeding, you agree to the terms outlined in our T&C:\n' +
+                     'https://testify-io-ai.onrender.com/T&C.html\n\n' +
+                     'Are you ready to begin?'
                 );
                 
                 if (!proctoringConsent) return;
@@ -700,7 +794,7 @@
 
                 if (volume > AUDIO_LEVEL_THRESHOLD) {
                     if (!audioWarningModal.classList.contains('hidden')) {
-                         // If modal is already open, don't do anything until it's closed
+                          // If modal is already open, don't do anything until it's closed
                     } else {
                         audioViolationCount++;
                         if (audioViolationCount >= AUDIO_VIOLATION_LIMIT) {
@@ -836,3 +930,4 @@
     </script>
 </body>
 </html>
+
