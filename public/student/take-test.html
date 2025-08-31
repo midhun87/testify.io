@@ -433,9 +433,12 @@
             // --- TEST LOGIC ---
             async function startTest(testData) {
                 const proctoringConsent = confirm(
-                    'This test requires AI proctoring.\n\n' +
-                    'Your webcam and microphone will be activated to monitor for violations. Any violation will result in automatic test submission.\n\n' +
-                    'This test will also start in fullscreen mode. Exiting fullscreen will submit the test. Are you ready to begin?'
+                     'This test requires AI proctoring.\n\n' +
+        'Your webcam and microphone will be activated to monitor for violations. Any violation will result in automatic test submission.\n\n' +
+        'This test will also start in fullscreen mode. Exiting fullscreen will submit the test.\n\n' +
+        'By proceeding, you agree to the terms outlined in our T&C:\n' +
+        'https://testify-io-ai.onrender.com/T&C.html\n\n' +
+        'Are you ready to begin?'
                 );
                 
                 if (!proctoringConsent) return;
