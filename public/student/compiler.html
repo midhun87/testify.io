@@ -13,26 +13,44 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         
+        .sidebar-link {
+            color: #4b5563; /* gray-600 */
+            transition: all 0.2s ease-in-out;
+        }
+        .sidebar-link:hover {
+            background-color: #e5e7eb; /* gray-200 */
+            color: #1f2937; /* gray-800 */
+        }
+        .sidebar-link.active {
+            background-color: #4f46e5; /* indigo-600 */
+            color: white;
+            font-weight: 500;
+        }
+
         #problems-sidebar {
+            /* For small screens, it's an overlay */
             transition: transform 0.3s ease-in-out;
             transform: translateX(0);
         }
-
         #problems-sidebar.closed {
+             /* Hides the overlay off-screen */
             transform: translateX(-100%);
         }
+        
+        @media (min-width: 1024px) { /* lg breakpoint */
+            #problems-sidebar {
+                /* On large screens, we transition margin instead of transform */
+                transition: margin-left 0.3s ease-in-out;
+            }
+            #problems-sidebar.closed {
+               transform: translateX(0); /* Reset small screen transform */
+               /* Pulls the sidebar off-screen, allowing main content to expand */
+               margin-left: -17rem; /* width (16rem) + gap (1rem) = 17rem */
+            }
+        }
 
-        #main-content {
-            transition: margin-left 0.3s ease-in-out;
-            margin-left: 18rem; /* 16rem width + 2rem gap */
-        }
-        
-        #problems-sidebar.closed + #main-content {
-            margin-left: 2rem; /* The gap */
-        }
-        
         .CodeMirror {
-            height: 500px;
+            height: 50vh;
             border-radius: 0.5rem;
             font-size: 14px;
             user-select: none;
@@ -43,6 +61,19 @@
         .problem-list-item.selected { background-color: #4F46E5; color: white; }
         .problem-list-item.selected .difficulty-tag { background-color: white !important; color: #4F46E5 !important; }
 
+        .problem-list-item.submitted {
+            color: #6b7280; /* gray-500 */
+        }
+        .submitted-badge {
+            background-color: #dcfce7; /* green-100 */
+            color: #166534; /* green-800 */
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 9999px;
+            margin-left: 8px;
+        }
+
         .test-case-tab { transition: all 0.2s; }
         .test-case-tab.active { border-color: #4F46E5; color: #4F46E5; background-color: #EEF2FF; }
 
@@ -52,7 +83,7 @@
 
         .confetti {
             width: 10px; height: 10px; position: absolute;
-            animation: confetti-fall 3s ease-out forwards; z-index: 100;
+            animation: confetti-fall 3s ease-out forwards; z-index: 1000;
         }
         @keyframes confetti-fall {
             0% { transform: translateY(0) rotate(0deg); opacity: 1; }
@@ -66,84 +97,125 @@
     </style>
 </head>
 <body class="bg-gray-100">
-
-    <div class="flex flex-col h-screen">
-        <!-- Header & Top Navigation -->
-        <header class="bg-white shadow-md p-4 flex justify-between items-center flex-shrink-0 z-20">
-             <div class="flex items-center space-x-4">
-                 <button id="menu-toggle" class="p-2 rounded-md hover:bg-gray-200 focus:outline-none">
-                     <svg class="h-6 w-6 text-gray-700" id="menu-open-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                     <svg class="h-6 w-6 text-gray-700 hidden" id="menu-close-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                 </button>
-                 <div class="flex items-center">
-                    <img class="h-8 w-8" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
-                    <span class="ml-2 text-xl font-bold text-gray-800">TESTIFY</span>
-                 </div>
-             </div>
-             <nav class="hidden md:flex items-center space-x-6">
-                <a href="#" class="text-gray-600 hover:text-indigo-600">Dashboard</a>
-                <a href="#" class="text-gray-600 hover:text-indigo-600">Take Test</a>
-                <a href="#" class="text-indigo-600 font-semibold border-b-2 border-indigo-600">Compiler</a>
-             </nav>
-            <div class="relative">
-                   <button id="user-menu-button" class="flex items-center space-x-2">
-                       <span id="user-name" class="font-semibold text-gray-700">Student User</span>
-                       <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                   </button>
-                   <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                       <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
-                   </div>
+    <div class="flex h-screen bg-gray-200 font-sans">
+        <!-- Main Sidebar -->
+        <aside class="w-64 bg-white shadow-md hidden lg:flex flex-col">
+            <div class="flex items-center justify-center p-4 border-b">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold text-gray-800">TESTIFY</span>
             </div>
-        </header>
+            <div class="flex flex-col flex-grow p-4">
+                <a href="/student/dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <a href="/student/take-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    <span class="ml-3">Take Test</span>
+                </a>
+                <a href="/student/test-history.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="ml-3">Test History</span>
+                </a>
+                <a href="/student/my-certificates.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span class="ml-3">My Certificates</span>
+                </a>
+                <a href="/student/my-courses.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
+                    <span class="ml-3">My Courses</span>
+                </a>
+                 <a href="/compiler.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
+                    <span class="ml-3">Compiler</span>
+                </a>
+                <a href="/student/student-profile.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"/></svg>
+                    <span class="ml-3">My Profile</span>
+                </a>
+            </div>
+        </aside>
 
-        <!-- Main Body -->
-        <div class="flex-1 flex overflow-hidden relative">
-            <!-- Problems Sidebar -->
-            <aside id="problems-sidebar" class="w-64 bg-white p-4 shadow-lg flex flex-col flex-shrink-0 absolute top-0 left-0 h-full z-10">
-                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">Problems</h2>
-                <div id="problem-list" class="overflow-y-auto flex-grow">
-                    <!-- Problems will be dynamically inserted here -->
-                </div>
-            </aside>
+        <!-- Main Content Wrapper -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <header class="bg-white shadow-md p-4 flex justify-between items-center flex-shrink-0 z-20">
+                 <div class="flex items-center space-x-4">
+                     <button id="menu-toggle" class="p-2 rounded-md hover:bg-gray-200 focus:outline-none">
+                         <svg class="h-6 w-6 text-gray-700" id="menu-open-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                         <svg class="h-6 w-6 text-gray-700 hidden" id="menu-close-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                     </button>
+                     <span class="text-xl font-semibold text-gray-800">Compiler</span>
+                 </div>
+                 
+                <div class="flex items-center space-x-6">
+                    <div class="flex items-center space-x-2 bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-full">
+                        <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                        <span class="font-semibold text-sm">Score:</span>
+                        <span id="user-score" class="font-bold text-sm">0</span>
+                    </div>
 
-            <!-- Main Content Area -->
-            <main id="main-content" class="flex-1 p-8 overflow-y-auto">
-                 <div id="compiler-view" class="bg-white rounded-lg shadow-md hidden flex flex-col overflow-hidden">
-                    <div class="p-6 overflow-y-auto">
-                        <div class="flex items-center mb-2">
-                            <h2 id="problem-title" class="text-2xl font-bold text-gray-800"></h2>
-                            <span id="problem-difficulty-tag" class="ml-4 text-sm font-semibold px-3 py-1 rounded-full"></span>
-                        </div>
-                        <div id="problem-description-container" class="mt-4 text-gray-700 leading-relaxed">
-                            <!-- Problem description will be injected here -->
-                        </div>
-                    
-                        <div class="flex justify-between items-center my-6">
-                            <select id="language-select" class="p-2 border rounded-md bg-gray-50">
-                                <option value="c">C</option>
-                                <option value="cpp">C++</option>
-                                <option value="java">Java</option>
-                                <option value="python">Python</option>
-                            </select>
-                            <button id="submit-button" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition">Run & Submit</button>
-                        </div>
-                        
-                        <div class="flex-grow">
-                            <textarea id="code-editor"></textarea>
-                        </div>
-
-                        <div id="results-view" class="mt-6 hidden">
-                            <h3 class="text-xl font-semibold mb-4 text-gray-800">Results</h3>
-                            <div id="test-case-tabs" class="flex border-b mb-2"></div>
-                            <div id="test-case-details" class="p-2"></div>
-                        </div>
+                    <div class="relative">
+                       <button id="user-menu-button" class="flex items-center space-x-2">
+                           <span id="user-name" class="font-semibold text-gray-700">Student User</span>
+                           <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                       </button>
+                       <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                           <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                       </div>
                     </div>
                 </div>
+            </header>
 
-                <div id="welcome-view" class="flex items-center justify-center bg-white p-6 rounded-lg shadow-md h-full">
-                    <p class="text-gray-500 text-lg text-center">Select a problem from the sidebar to begin.<br>Click the ☰ icon to open the problems list.</p>
-                </div>
-            </main>
+            <!-- Compiler Content -->
+            <div class="flex-1 flex overflow-hidden p-4 lg:p-6 lg:gap-x-4">
+                <!-- Problems Sidebar -->
+                <aside id="problems-sidebar" class="w-64 bg-white p-4 shadow-lg rounded-lg flex flex-col flex-shrink-0 absolute lg:relative top-0 left-0 h-full z-10">
+                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">Problems</h2>
+                    <div id="problem-list" class="overflow-y-auto flex-grow pr-2">
+                        <!-- Problems will be dynamically inserted here -->
+                    </div>
+                </aside>
+
+                <!-- Main Content Area -->
+                <main id="compiler-content-area" class="flex-1 overflow-y-auto">
+                     <div id="compiler-view" class="bg-white rounded-lg shadow-md hidden flex flex-col overflow-hidden h-full">
+                        <div class="p-6 overflow-y-auto">
+                            <div class="flex items-center mb-2">
+                                <h2 id="problem-title" class="text-2xl font-bold text-gray-800"></h2>
+                                <span id="problem-difficulty-tag" class="ml-4 text-sm font-semibold px-3 py-1 rounded-full"></span>
+                            </div>
+                            <div id="problem-description-container" class="mt-4 text-gray-700 leading-relaxed prose">
+                                <!-- Problem description will be injected here -->
+                            </div>
+                        
+                            <div class="flex justify-between items-center my-6">
+                                <select id="language-select" class="p-2 border rounded-md bg-gray-50">
+                                    <option value="c">C</option>
+                                    <option value="cpp">C++</option>
+                                    <option value="java">Java</option>
+                                    <option value="python">Python</option>
+                                </select>
+                                <button id="submit-button" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition">Run & Submit</button>
+                            </div>
+                            
+                            <div class="flex-grow">
+                                <textarea id="code-editor"></textarea>
+                            </div>
+
+                            <div id="results-view" class="mt-6 hidden">
+                                <h3 class="text-xl font-semibold mb-4 text-gray-800">Results</h3>
+                                <div id="test-case-tabs" class="flex border-b mb-2"></div>
+                                <div id="test-case-details" class="p-2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="welcome-view" class="flex items-center justify-center bg-white p-6 rounded-lg shadow-md h-full">
+                        <p class="text-gray-500 text-lg text-center">Select a problem from the sidebar to begin.<br>Click the ☰ icon to open the problems list.</p>
+                    </div>
+                </main>
+            </div>
         </div>
     </div>
 
@@ -162,12 +234,29 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // --- MOCK AUTH ---
-            const user = { fullName: "Student User" };
-            document.getElementById('user-name').textContent = user.fullName;
+            // --- AUTHENTICATION & USER INFO ---
+            let user = null;
+            const token = localStorage.getItem('token');
+            const userString = localStorage.getItem('user');
+
+            if (token && userString) {
+                user = JSON.parse(userString);
+                document.getElementById('user-name').textContent = user.fullName || 'Student';
+            } else {
+                window.location.href = '/login.html';
+                return;
+            }
+
             const userMenuButton = document.getElementById('user-menu-button');
             const userMenu = document.getElementById('user-menu');
             userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
+
+            document.getElementById('logout-button').addEventListener('click', () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login.html';
+            });
+
 
             // --- DATA ---
             const starterTemplates = {
@@ -177,18 +266,8 @@
                 python: '# Your code here'
             };
 
-            const solutionBank = {
-                'two-sum': {
-                    python: `nums_map = {}\nfor i, num in enumerate(nums):\n    complement = target - num\n    if complement in nums_map:\n        return [nums_map[complement], i]\n    nums_map[num] = i`,
-                },
-                'reverse-string': {
-                    python: `s.reverse()`,
-                    java: `int left = 0, right = s.length - 1;\nwhile (left < right) {\n    char temp = s[left];\n    s[left] = s[right];\n    s[right] = temp;\n    left++;\n    right--;\n}`,
-                },
-            };
-
             const problems = [
-                // Easy
+                 // Easy
                 { id: 'two-sum', title: 'Two Sum', description: `### Problem Statement\nGiven an array of integers \`nums\` and an integer \`target\`, return the indices of the two numbers such that they add up to the \`target\`.\nYou may assume that each input would have **exactly one solution**, and you may not use the same element twice.\n\nYou can return the answer in any order.\n\n### Input Format\n- The first line contains the target integer.\n- The second line contains space-separated integers for the array \`nums\`.\n\n### Output Format\n- A single line with two space-separated integers representing the indices.\n\n### Constraints\n- \`2 <= nums.length <= 10^4\`\n- \`-10^9 <= nums[i] <= 10^9\`\n- \`-10^9 <= target <= 10^9\`\n\n### Example\n**Input:**\n\`9\`\n\`2 7 11 15\`\n\n**Output:**\n\`0 1\`\n\n**Explanation:**\nBecause nums[0] + nums[1] == 9, we return [0, 1].`, difficulty: 'Easy', testCases: [{ input: '9\n2 7 11 15', expected: '0 1' }, { input: '6\n3 2 4', expected: '1 2' }] },
                 { id: 'reverse-string', title: 'Reverse a String', description: `### Problem Statement\nWrite a function that reverses a string. The input string is given as an array of characters \`s\`.\nYou must do this by modifying the input array in-place with O(1) extra memory.\n\n### Input Format\n- A single line containing the string.\n\n### Output Format\n- A single line containing the reversed string.\n\n### Constraints\n- \`1 <= s.length <= 10^5\`\n- \`s[i]\` is a printable ascii character.\n\n### Example\n**Input:**\n\`hello\`\n\n**Output:**\n\`olleh\``, difficulty: 'Easy', testCases: [{ input: 'hello', expected: 'olleh' }, { input: 'world', expected: 'dlrow' }] },
                 { id: 'palindrome', title: 'Palindrome Check', description: `### Problem Statement\nA phrase is a palindrome if, after converting all uppercase letters into lowercase letters and removing all non-alphanumeric characters, it reads the same forward and backward. Alphanumeric characters include letters and numbers.\nGiven a string \`s\`, return \`true\` if it is a palindrome, or \`false\` otherwise.\n\n### Input Format\n- A single line containing the string.\n\n### Output Format\n- \`true\` or \`false\`.\n\n### Constraints\n- \`1 <= s.length <= 2 * 10^5\`\n- \`s\` consists only of printable ASCII characters.\n\n### Example\n**Input:**\n\`A man, a plan, a canal: Panama\`\n\n**Output:**\n\`true\`\n\n**Explanation:**\nAfter processing, the string becomes "amanaplanacanalpanama", which is a palindrome.`, difficulty: 'Easy', testCases: [{ input: 'racecar', expected: 'true' }, { input: 'hello', expected: 'false' }] },
@@ -255,8 +334,14 @@
             const testCaseDetails = document.getElementById('test-case-details');
             const celebrationModal = document.getElementById('celebration-modal');
             const closeModalButton = document.getElementById('close-modal-button');
+            const menuToggle = document.getElementById('menu-toggle');
+            const problemsSidebar = document.getElementById('problems-sidebar');
+            const mainContent = document.getElementById('compiler-content-area'); // Corrected from 'main-content'
+            const menuOpenIcon = document.getElementById('menu-open-icon');
+            const menuCloseIcon = document.getElementById('menu-close-icon');
             
             let currentProblem = null;
+            let submittedProblemIds = new Set(); // To store IDs of submitted problems
 
             const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
                 lineNumbers: true,
@@ -271,6 +356,34 @@
             document.addEventListener('contextmenu', event => event.preventDefault());
 
             // --- FUNCTIONS ---
+            async function fetchUserScore() {
+                try {
+                    const response = await fetch('/api/compiler/my-score', {
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch score');
+                    const data = await response.json();
+                    document.getElementById('user-score').textContent = data.totalScore || 0;
+                } catch (error) {
+                    console.error('Error fetching user score:', error);
+                    document.getElementById('user-score').textContent = 'N/A';
+                }
+            }
+
+            async function fetchSubmittedProblems() {
+                try {
+                    const response = await fetch('/api/compiler/submitted-problems', {
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch submitted problems');
+                    const problemIds = await response.json();
+                    submittedProblemIds = new Set(problemIds);
+                } catch (error) {
+                    console.error(error);
+                    // Handle error silently, the page can still function
+                }
+            }
+
             function displayProblems() {
                 problemListDiv.innerHTML = '';
                 const groupedProblems = problems.reduce((acc, p) => {
@@ -299,9 +412,20 @@
 
                         groupedProblems[difficulty].forEach(problem => {
                             const item = document.createElement('div');
+                            const isSubmitted = submittedProblemIds.has(problem.id);
+
                             item.className = 'problem-list-item p-3 rounded-md flex justify-between items-center';
+                             if (isSubmitted) {
+                                item.classList.add('submitted');
+                            }
                             item.dataset.problemId = problem.id;
-                            item.innerHTML = `<span>${problem.title}</span><span class="difficulty-tag text-xs font-semibold px-2 py-1 rounded-full ${difficultyColors[problem.difficulty]}">${problem.difficulty}</span>`;
+                            
+                            item.innerHTML = `
+                                <div class="flex items-center">
+                                    <span>${problem.title}</span>
+                                    ${isSubmitted ? '<span class="submitted-badge">Submitted</span>' : ''}
+                                </div>
+                                <span class="difficulty-tag text-xs font-semibold px-2 py-1 rounded-full ${difficultyColors[problem.difficulty]}">${problem.difficulty}</span>`;
                             item.addEventListener('click', () => selectProblem(problem.id));
                             content.appendChild(item);
                         });
@@ -359,6 +483,11 @@
                 const currentLang = languageSelect.value;
                 editor.setValue(currentProblem.starterCode[currentLang]);
                 editor.refresh();
+                
+                // Close sidebar on problem selection on smaller screens
+                if (window.innerWidth < 1024) {
+                    toggleProblemsSidebar(true); // Force close
+                }
             }
 
             function renderTestCaseDetail(index, result = null) {
@@ -370,7 +499,7 @@
                 switch(status) {
                     case 'Accepted':
                         resultHeader = `<div class="text-lg font-semibold text-green-600 mb-3">Case ${index + 1}: Accepted</div>`;
-                        outputContent = `<div><strong class="font-semibold text-gray-700">Your Output:</strong><pre class="bg-green-50 text-green-800 p-2 rounded mt-1">${tc.expected}</pre></div>`;
+                        outputContent = `<div><strong class="font-semibold text-gray-700">Your Output:</strong><pre class="bg-green-50 text-green-800 p-2 rounded mt-1">${result.actual}</pre></div>`;
                         break;
                     case 'Wrong Answer':
                          resultHeader = `<div class="text-lg font-semibold text-red-600 mb-3">Case ${index + 1}: Wrong Answer</div>`;
@@ -378,6 +507,10 @@
                         break;
                     case 'Skipped':
                         resultHeader = `<div class="text-lg font-semibold text-gray-500 mb-3">Case ${index + 1}: Skipped</div>`;
+                        break;
+                    case 'Error':
+                         resultHeader = `<div class="text-lg font-semibold text-red-600 mb-3">Case ${index + 1}: Error</div>`;
+                         outputContent = `<div><strong class="font-semibold text-gray-700">Error Details:</strong><pre class="bg-red-50 text-red-800 p-2 rounded mt-1">${result.actual}</pre></div>`;
                         break;
                     default:
                          resultHeader = `<div class="text-lg font-semibold text-gray-500 mb-3">Case ${index + 1}: Pending</div>`;
@@ -420,47 +553,68 @@
                 testCaseTabs.innerHTML = '';
                 testCaseDetails.innerHTML = '<div class="text-center p-4">Running test cases...</div>';
 
-                await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-
-                const userCode = editor.getValue();
-                const language = languageSelect.value;
-                const correctSolution = solutionBank[currentProblem.id] ? solutionBank[currentProblem.id][language] : null;
-
-                // Normalize code by removing whitespace and comments for a more robust comparison
-                const normalizeCode = (codeStr) => {
-                    if (!codeStr) return "";
-                    // Remove single-line comments
-                    let noComments = codeStr.replace(/\/\/.*$/gm, '');
-                     noComments = noComments.replace(/#.*$/gm, '');
-                    // Remove multi-line comments
-                     noComments = noComments.replace(/\/\*[\s\S]*?\*\//g, '');
-                    // Remove all whitespace
-                    return noComments.replace(/\s+/g, '');
-                };
-                
-                const isCorrect = correctSolution && normalizeCode(userCode) === normalizeCode(correctSolution);
-
-                let allPassed = isCorrect;
+                let allPassed = true;
                 const results = [];
 
-                currentProblem.testCases.forEach((tc, i) => {
-                    let status, actual;
-                    if (isCorrect) {
-                        status = 'Accepted';
-                        actual = tc.expected;
-                    } else {
-                        if (i === 0) { // Only fail the first test case if code is wrong
-                            status = 'Wrong Answer';
-                            actual = 'Incorrect output'; // Generic wrong output
+                for (let i = 0; i < currentProblem.testCases.length; i++) {
+                    const tc = currentProblem.testCases[i];
+                    let result = { status: 'Pending', actual: '' };
+
+                    try {
+                        const response = await fetch('/api/compile', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'x-auth-token': token,
+                            },
+                            body: JSON.stringify({
+                                language: languageSelect.value,
+                                code: editor.getValue(),
+                                input: tc.input,
+                            }),
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            const actualOutput = data.output.trim();
+                            const expectedOutput = tc.expected.trim();
+                            
+                            // Normalize whitespace for comparison
+                            const normalizedActual = actualOutput.replace(/\s+/g, ' ');
+                            const normalizedExpected = expectedOutput.replace(/\s+/g, ' ');
+
+                            if (normalizedActual === normalizedExpected) {
+                                result.status = 'Accepted';
+                            } else {
+                                result.status = 'Wrong Answer';
+                                allPassed = false;
+                            }
+                            result.actual = actualOutput;
                         } else {
-                            status = 'Skipped';
-                            actual = null;
+                            result.status = 'Error';
+                            result.actual = data.message || 'Unknown compilation error';
+                            allPassed = false;
                         }
+
+                    } catch (error) {
+                        result.status = 'Error';
+                        result.actual = 'Failed to communicate with the server.';
+                        allPassed = false;
                     }
-                    results.push({ status, actual });
-                });
+                    
+                    results.push(result);
 
+                    if (!allPassed) {
+                        // If one test case fails, mark subsequent ones as skipped
+                        for (let j = i + 1; j < currentProblem.testCases.length; j++) {
+                           results.push({ status: 'Skipped', actual: '' });
+                        }
+                        break; 
+                    }
+                }
 
+                testCaseTabs.innerHTML = '';
                 results.forEach((result, i) => {
                     const tab = document.createElement('button');
                     tab.className = 'test-case-tab px-4 py-2 border-b-2 font-medium text-sm';
@@ -469,7 +623,7 @@
                     
                     if (result.status === 'Accepted') {
                         tab.classList.add('text-green-600', 'border-green-500');
-                    } else if (result.status === 'Wrong Answer') {
+                    } else if (result.status === 'Wrong Answer' || result.status === 'Error') {
                         tab.classList.add('text-red-600', 'border-red-500');
                     } else {
                          tab.classList.add('text-gray-500', 'border-gray-300');
@@ -483,10 +637,12 @@
                     testCaseTabs.appendChild(tab);
                 });
 
-                const firstFailedIndex = results.findIndex(r => r.status === 'Wrong Answer');
+                const firstFailedIndex = results.findIndex(r => r.status !== 'Accepted' && r.status !== 'Skipped');
                 const activeIndex = firstFailedIndex !== -1 ? firstFailedIndex : 0;
                 
-                testCaseTabs.children[activeIndex].classList.add('active');
+                if(testCaseTabs.children[activeIndex]){
+                    testCaseTabs.children[activeIndex].classList.add('active');
+                }
                 renderTestCaseDetail(activeIndex, results[activeIndex]);
                 
 
@@ -497,10 +653,64 @@
                     void modalContent.offsetWidth; 
                     modalContent.classList.remove('scale-95', 'opacity-0');
                     modalContent.classList.add('scale-100', 'opacity-100');
+                    
+                    // --- SAVE SCORE ON SUCCESS ---
+                    saveScore();
                 }
 
                 submitButton.disabled = false;
                 submitButton.textContent = 'Run & Submit';
+            }
+            
+            async function saveScore() {
+                if (!currentProblem || !user) return;
+                
+                const difficultyScores = {
+                    'Easy': 10,
+                    'Medium': 20,
+                    'Hard': 30,
+                    'CTS Specific': 15
+                };
+
+                const score = difficultyScores[currentProblem.difficulty] || 0;
+
+                try {
+                    const response = await fetch('/api/compiler/save-score', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-auth-token': token
+                        },
+                        body: JSON.stringify({
+                            problemId: currentProblem.id,
+                            problemTitle: currentProblem.title,
+                            difficulty: currentProblem.difficulty,
+                            score: score
+                        })
+                    });
+
+                    const result = await response.json();
+                    if (response.ok) {
+                        console.log('Score saved successfully:', result.message);
+                        if (!submittedProblemIds.has(currentProblem.id)) {
+                            submittedProblemIds.add(currentProblem.id);
+                            displayProblems(); 
+                        }
+                        // Refresh total score display after successful submission
+                        fetchUserScore(); 
+                    } else {
+                        console.warn('Could not save score:', result.message);
+                    }
+                } catch (error) {
+                    console.error('Error saving score:', error);
+                }
+            }
+
+            function toggleProblemsSidebar(forceClose = false) {
+                const shouldBeClosed = forceClose || !problemsSidebar.classList.contains('closed');
+                problemsSidebar.classList.toggle('closed', shouldBeClosed);
+                menuOpenIcon.classList.toggle('hidden', !shouldBeClosed);
+                menuCloseIcon.classList.toggle('hidden', shouldBeClosed);
             }
 
             languageSelect.addEventListener('change', () => {
@@ -520,11 +730,18 @@
                 modalContent.classList.add('scale-95', 'opacity-0');
                 setTimeout(() => celebrationModal.classList.add('hidden'), 300);
             });
+            
+            menuToggle.addEventListener('click', () => toggleProblemsSidebar());
 
-            displayProblems();
+            async function initializeApp() {
+                await fetchSubmittedProblems();
+                await fetchUserScore(); // Fetch score on page load
+                displayProblems();
+            }
+
+            initializeApp();
         });
     </script>
 </body>
 </html>
-
 
