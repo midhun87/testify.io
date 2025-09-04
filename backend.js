@@ -800,7 +800,7 @@ app.post('/api/assign-test', authMiddleware, adminOrModeratorAuth, async (req, r
                 from: '"TESTIFY" <testifylearning.help@gmail.com>',
                 to: studentsToNotify.join(','),
                 subject: `New Test Assigned: ${testName}`,
-                html: `<p>Hello,</p><p>A new test, "<b>${testName}</b>", has been assigned to you. Please log in to your TESTIFY dashboard to take the test.</p><p>Best regards,<br/>The TESTIFY Team</p>`
+                html: `<p>Hello,</p><p>A new test, "<b>${testName}</b>", has been assigned to you. Please log in to your TESTIFY dashboard to take the test.<a href="https://testify-io-ai.onrender.com/student/take-test.html">Click here to login</a></p><p>Best regards,<br/>The TESTIFY Team</p>`
             };
             await transporter.sendMail(mailOptions);
         }
@@ -3126,9 +3126,149 @@ app.post('/api/reset-password', async (req, res) => {
 });
 
 
+////////////////////////////////////////Compiler End Points
+
+app.post('/api/compiler/save-score', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') {
+        return res.status(403).json({ message: 'Only students can save compiler scores.' });
+    }
+    
+    const { problemId, problemTitle, difficulty, score } = req.body;
+    const studentEmail = req.user.email;
+
+    if (!problemId || !problemTitle || !difficulty || score === undefined) {
+        return res.status(400).json({ message: 'Missing required score data.' });
+    }
+    
+    // To prevent duplicate score submissions for the same problem
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyCompilerScores",
+            FilterExpression: "studentEmail = :email AND problemId = :pid",
+            ExpressionAttributeValues: {
+                ":email": studentEmail,
+                ":pid": problemId
+            }
+        }));
+
+        if (Items && Items.length > 0) {
+            return res.status(409).json({ message: 'Score for this problem has already been submitted.' });
+        }
+
+        const scoreId = uuidv4();
+        const newScore = {
+            scoreId,
+            studentEmail,
+            problemId,
+            problemTitle,
+            difficulty,
+            score,
+            submittedAt: new Date().toISOString()
+        };
+
+        await docClient.send(new PutCommand({
+            TableName: "TestifyCompilerScores",
+            Item: newScore
+        }));
+
+        res.status(201).json({ message: 'Score saved successfully!' });
+
+    } catch (error) {
+        console.error("Save Compiler Score Error:", error);
+        res.status(500).json({ message: 'Server error saving score.' });
+    }
+});
+
+
+// GET endpoint for admins/moderators to view all compiler scores
+app.get('/api/admin/compiler-scores', authMiddleware, adminOrModeratorAuth, async (req, res) => {
+    try {
+        const { Items: scores } = await docClient.send(new ScanCommand({
+            TableName: "TestifyCompilerScores"
+        }));
+
+        if (!scores || scores.length === 0) {
+            return res.json([]);
+        }
+
+        const studentEmails = [...new Set(scores.map(s => s.studentEmail))];
+        
+        const keys = studentEmails.map(email => ({ email }));
+        
+        const { Responses } = await docClient.send(new BatchGetCommand({
+            RequestItems: { "TestifyUsers": { Keys: keys, ProjectionExpression: "email, fullName, college" } }
+        }));
+        
+        const students = Responses.TestifyUsers || [];
+        const studentMap = new Map(students.map(s => [s.email, { fullName: s.fullName, college: s.college }]));
+
+        const enrichedScores = scores.map(score => {
+            const studentInfo = studentMap.get(score.studentEmail);
+            return {
+                ...score,
+                studentName: studentInfo ? studentInfo.fullName : 'Unknown',
+                college: studentInfo ? studentInfo.college : 'Unknown'
+            };
+        });
+        
+        // Sort by submission date, newest first
+        enrichedScores.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+
+        res.json(enrichedScores);
+
+    } catch (error) {
+        console.error("Get Compiler Scores Error:", error);
+        res.status(500).json({ message: 'Server error fetching compiler scores.' });
+    }
+});
+
+app.get('/api/compiler/submitted-problems', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') {
+        return res.status(403).json({ message: 'Only students can view their submitted problems.' });
+    }
+
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyCompilerScores",
+            FilterExpression: "studentEmail = :email",
+            ExpressionAttributeValues: { ":email": req.user.email },
+            ProjectionExpression: "problemId" // Only get the problemId to be efficient
+        }));
+
+        const problemIds = Items.map(item => item.problemId);
+        res.json(problemIds);
+
+    } catch (error) {
+        console.error("Get Submitted Problems Error:", error);
+        res.status(500).json({ message: 'Server error fetching submitted problems.' });
+    }
+});
+
+app.get('/api/compiler/my-score', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') {
+        return res.status(403).json({ message: 'Only students have a compiler score.' });
+    }
+
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyCompilerScores",
+            FilterExpression: "studentEmail = :email",
+            ExpressionAttributeValues: { ":email": req.user.email },
+            ProjectionExpression: "score" // Only fetch the score attribute for efficiency
+        }));
+
+        const totalScore = Items.reduce((sum, item) => sum + (item.score || 0), 0);
+
+        res.json({ totalScore });
+
+    } catch (error) {
+        console.error("Get My Score Error:", error);
+        res.status(500).json({ message: 'Server error fetching score.' });
+    }
+});
+
 
 // --- SERVER START ---
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-
