@@ -2252,6 +2252,9 @@ app.post('/api/admin/impact-stats', authMiddleware, upload.single('flyerImage'),
     }
 });
 
+// =================================================================
+// --- COMPILER ENDPOINT (REVISED WITH JUDGE0) ---
+// =================================================================
 app.post('/api/compile', authMiddleware, async (req, res) => {
     const { language, code, input } = req.body;
 
@@ -2259,44 +2262,66 @@ app.post('/api/compile', authMiddleware, async (req, res) => {
         return res.status(400).json({ message: 'Language and code are required.' });
     }
 
+    // Map your language names to Judge0 language IDs
+    // Find more here: https://judge0.com/
+    const languageMap = {
+        'c': 50,      // GCC 9.2.0
+        'cpp': 54,    // GCC 9.2.0
+        'java': 62,   // OpenJDK 13.0.1
+        'python': 71, // Python 3.8.1
+    };
+
+    const languageId = languageMap[language];
+    if (!languageId) {
+        return res.status(400).json({ message: `Language '${language}' is not supported.` });
+    }
+
     try {
-        const response = await fetch('https://api.paiza.io/runners/create', {
+        const submissionPayload = {
+            language_id: languageId,
+            source_code: Buffer.from(code).toString('base64'),
+            stdin: Buffer.from(input || "").toString('base64'),
+            encode_base64: true
+        };
+
+        const submissionResponse = await fetch('https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=true&wait=true', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-RapidAPI-Key': 'YOUR_RAPIDAPI_KEY', // IMPORTANT: Replace with your actual RapidAPI key for Judge0
+                'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
             },
-            body: JSON.stringify({
-                language: language,
-                source_code: code,
-                input: input || "",
-                api_key: 'guest'
-            })
+            body: JSON.stringify(submissionPayload)
         });
 
-        const data = await response.json();
-
-        if (data.id) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-
-            const statusResponse = await fetch(`https://api.paiza.io/runners/get_details?id=${data.id}&api_key=guest`);
-            const statusData = await statusResponse.json();
-            
-            let output = '';
-            if (statusData.stdout) {
-                output += statusData.stdout;
-            }
-            if (statusData.stderr) {
-                output += `\nError:\n${statusData.stderr}`;
-            }
-            if (statusData.build_stderr) {
-                output += `\nBuild Error:\n${statusData.build_stderr}`;
-            }
-            
-            res.json({ output: output || 'No output.' });
-
-        } else {
-            res.status(500).json({ message: 'Failed to create runner.' });
+        if (!submissionResponse.ok) {
+            const errorBody = await submissionResponse.text();
+            console.error("Judge0 API Error:", errorBody);
+            return res.status(500).json({ message: 'Error communicating with the compilation service.' });
         }
+
+        const result = await submissionResponse.json();
+
+        // Decode the output from base64
+        let output = '';
+        if (result.stdout) {
+            output = Buffer.from(result.stdout, 'base64').toString('utf-8');
+        }
+        
+        // Handle different kinds of errors
+        if (result.stderr) {
+            output += `\nError:\n${Buffer.from(result.stderr, 'base64').toString('utf-8')}`;
+        }
+        if (result.compile_output) {
+             output += `\nCompilation Error:\n${Buffer.from(result.compile_output, 'base64').toString('utf-8')}`;
+        }
+        if(result.status.description === 'Time Limit Exceeded'){
+             output = 'Error: Time Limit Exceeded. Your code took too long to run.';
+        }
+
+
+        res.json({ output: output || 'No output.' });
+
     } catch (error) {
         console.error("Compile Error:", error);
         res.status(500).json({ message: 'Server error during compilation.' });
