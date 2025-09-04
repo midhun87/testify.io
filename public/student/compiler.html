@@ -11,144 +11,137 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material-darker.min.css">
     <style>
-        body { font-family: 'Inter', sans-serif; overflow: hidden; }
-        .sidebar { background-color: #111827; }
-        .sidebar-link { color: #D1D5DB; }
-        .sidebar-link:hover { background-color: #374151; color: #FFFFFF; }
-        .sidebar-link.active { background-color: #4F46E5; color: #FFFFFF; font-weight: 600; }
+        body { font-family: 'Inter', sans-serif; }
+        
+        #problems-sidebar {
+            transition: transform 0.3s ease-in-out;
+            transform: translateX(0);
+        }
+
+        #problems-sidebar.closed {
+            transform: translateX(-100%);
+        }
+
+        #main-content {
+            transition: margin-left 0.3s ease-in-out;
+            margin-left: 18rem; /* 16rem width + 2rem gap */
+        }
+        
+        #problems-sidebar.closed + #main-content {
+            margin-left: 2rem; /* The gap */
+        }
+        
         .CodeMirror {
-            height: calc(100vh - 420px); /* Adjusted height */
+            height: 500px;
             border-radius: 0.5rem;
             font-size: 14px;
+            user-select: none;
+            -webkit-user-select: none;
         }
-        .problem-list-item {
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .problem-list-item.selected {
-            background-color: #4F46E5;
-            color: white;
-        }
-        .test-case-tab {
-            transition: all 0.2s;
-        }
-        .test-case-tab.active {
-            border-color: #4F46E5;
-            color: #4F46E5;
-            background-color: #EEF2FF;
-        }
-        /* Celebration styles */
+
+        .problem-list-item { cursor: pointer; transition: background-color 0.2s, color 0.2s; }
+        .problem-list-item.selected { background-color: #4F46E5; color: white; }
+        .problem-list-item.selected .difficulty-tag { background-color: white !important; color: #4F46E5 !important; }
+
+        .test-case-tab { transition: all 0.2s; }
+        .test-case-tab.active { border-color: #4F46E5; color: #4F46E5; background-color: #EEF2FF; }
+
+        .accordion-header { cursor: pointer; transition: background-color 0.2s; }
+        .accordion-header:hover { background-color: #f3f4f6; }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+
         .confetti {
-            width: 10px;
-            height: 10px;
-            position: absolute;
-            animation: confetti-fall 3s ease-out forwards;
-            z-index: 100;
+            width: 10px; height: 10px; position: absolute;
+            animation: confetti-fall 3s ease-out forwards; z-index: 100;
         }
         @keyframes confetti-fall {
-            0% {
-                transform: translateY(0) rotate(0deg);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(100vh) rotate(720deg);
-                opacity: 0;
-            }
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
         }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px;}
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
     </style>
 </head>
 <body class="bg-gray-100">
 
-    <div class="flex h-screen">
-        <!-- Sidebar -->
-        <aside class="sidebar w-64 bg-gray-800 text-white min-h-screen p-4 flex-col">
-              <div class="flex items-center justify-center h-20 border-b border-gray-700">
-                  <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" onerror="this.onerror=null;this.src='https://placehold.co/40x40/111827/FFFFFF?text=T'">
-                  <span class="ml-3 text-2xl font-bold">TESTIFY</span>
-              </div>
-              <div class="flex flex-col flex-grow p-4">
-                  <a href="/student/dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-                      <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                      <span class="ml-3">Dashboard</span>
-                  </a>
-                  <a href="/student/take-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-                      <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                      <span class="ml-3">Take Test</span>
-                  </a>
-                  <a href="/student/test-history.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-                      <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                      <span class="ml-3">Test History</span>
-                  </a>
-                  <a href="/student/my-certificates.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-                      <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      <span class="ml-3">My Certificates</span>
-                  </a>
-                  <a href="/student/my-courses.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-                      <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      <span class="ml-3">My Courses</span>
-                  </a>
-                  <a href="/student/student-profile.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-                  <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"/></svg>
-                  <span class="ml-3">My Profile</span>
-                  </a>
-                   <a href="compiler.html" class="sidebar-link active flex items-center py-2.5 px-4 rounded transition duration-200">
-                      <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
-                      <span>Compiler</span>
-                  </a>
-              </div>
-        </aside>
+    <div class="flex flex-col h-screen">
+        <!-- Header & Top Navigation -->
+        <header class="bg-white shadow-md p-4 flex justify-between items-center flex-shrink-0 z-20">
+             <div class="flex items-center space-x-4">
+                 <button id="menu-toggle" class="p-2 rounded-md hover:bg-gray-200 focus:outline-none">
+                     <svg class="h-6 w-6 text-gray-700" id="menu-open-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                     <svg class="h-6 w-6 text-gray-700 hidden" id="menu-close-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                 </button>
+                 <div class="flex items-center">
+                    <img class="h-8 w-8" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                    <span class="ml-2 text-xl font-bold text-gray-800">TESTIFY</span>
+                 </div>
+             </div>
+             <nav class="hidden md:flex items-center space-x-6">
+                <a href="#" class="text-gray-600 hover:text-indigo-600">Dashboard</a>
+                <a href="#" class="text-gray-600 hover:text-indigo-600">Take Test</a>
+                <a href="#" class="text-indigo-600 font-semibold border-b-2 border-indigo-600">Compiler</a>
+             </nav>
+            <div class="relative">
+                   <button id="user-menu-button" class="flex items-center space-x-2">
+                       <span id="user-name" class="font-semibold text-gray-700">Student User</span>
+                       <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                   </button>
+                   <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                       <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                   </div>
+            </div>
+        </header>
 
-        <!-- Main Content -->
-        <div class="flex-1 flex flex-col">
-            <header class="bg-white shadow-md p-4 flex justify-between items-center">
-                <h1 class="text-2xl font-semibold text-gray-800">Coding Playground</h1>
-                <div class="relative">
-                     <button id="user-menu-button" class="flex items-center space-x-2">
-                         <span id="user-name" class="font-semibold text-gray-700">Student User</span>
-                         <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                     </button>
-                     <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                         <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
-                     </div>
+        <!-- Main Body -->
+        <div class="flex-1 flex overflow-hidden relative">
+            <!-- Problems Sidebar -->
+            <aside id="problems-sidebar" class="w-64 bg-white p-4 shadow-lg flex flex-col flex-shrink-0 absolute top-0 left-0 h-full z-10">
+                <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">Problems</h2>
+                <div id="problem-list" class="overflow-y-auto flex-grow">
+                    <!-- Problems will be dynamically inserted here -->
                 </div>
-            </header>
+            </aside>
 
-            <main class="flex-1 p-6 overflow-y-auto flex space-x-6">
-                <!-- Problems List -->
-                <div class="w-1/3 bg-white p-4 rounded-lg shadow-md flex flex-col">
-                    <h2 class="text-lg font-bold mb-4 border-b pb-2">Problems</h2>
-                    <div id="problem-list" class="space-y-2 overflow-y-auto flex-grow">
-                        <!-- Problems will be dynamically inserted here -->
-                    </div>
-                </div>
-
-                <!-- Compiler and Problem Details -->
-                <div id="compiler-view" class="w-2/3 bg-white p-6 rounded-lg shadow-md hidden flex flex-col">
-                    <div class="flex-shrink-0">
-                        <h2 id="problem-title" class="text-xl font-bold text-gray-800 mb-2"></h2>
-                        <p id="problem-description" class="text-gray-600 mb-4"></p>
+            <!-- Main Content Area -->
+            <main id="main-content" class="flex-1 p-8 overflow-y-auto">
+                 <div id="compiler-view" class="bg-white rounded-lg shadow-md hidden flex flex-col overflow-hidden">
+                    <div class="p-6 overflow-y-auto">
+                        <div class="flex items-center mb-2">
+                            <h2 id="problem-title" class="text-2xl font-bold text-gray-800"></h2>
+                            <span id="problem-difficulty-tag" class="ml-4 text-sm font-semibold px-3 py-1 rounded-full"></span>
+                        </div>
+                        <div id="problem-description-container" class="mt-4 text-gray-700 leading-relaxed">
+                            <!-- Problem description will be injected here -->
+                        </div>
                     
-                        <div class="flex justify-between items-center mb-4">
-                            <select id="language-select" class="p-2 border rounded-md">
+                        <div class="flex justify-between items-center my-6">
+                            <select id="language-select" class="p-2 border rounded-md bg-gray-50">
                                 <option value="c">C</option>
                                 <option value="cpp">C++</option>
                                 <option value="java">Java</option>
                                 <option value="python">Python</option>
                             </select>
-                            <button id="submit-button" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700">Submit Code</button>
+                            <button id="submit-button" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition">Run & Submit</button>
+                        </div>
+                        
+                        <div class="flex-grow">
+                            <textarea id="code-editor"></textarea>
+                        </div>
+
+                        <div id="results-view" class="mt-6 hidden">
+                            <h3 class="text-xl font-semibold mb-4 text-gray-800">Results</h3>
+                            <div id="test-case-tabs" class="flex border-b mb-2"></div>
+                            <div id="test-case-details" class="p-2"></div>
                         </div>
                     </div>
-                    <div class="flex-grow">
-                        <textarea id="code-editor"></textarea>
-                    </div>
-                    <div class="flex-shrink-0 mt-4">
-                        <h3 class="text-lg font-semibold mb-2">Test Cases</h3>
-                        <div id="test-case-tabs" class="flex border-b mb-2"></div>
-                        <div id="test-case-details" class="overflow-y-auto" style="max-height: 120px;"></div>
-                    </div>
                 </div>
-                <div id="welcome-view" class="w-2/3 flex items-center justify-center bg-white p-6 rounded-lg shadow-md">
-                    <p class="text-gray-500 text-lg">Select a problem to begin.</p>
+
+                <div id="welcome-view" class="flex items-center justify-center bg-white p-6 rounded-lg shadow-md h-full">
+                    <p class="text-gray-500 text-lg text-center">Select a problem from the sidebar to begin.<br>Click the ☰ icon to open the problems list.</p>
                 </div>
             </main>
         </div>
@@ -159,8 +152,8 @@
         <div class="bg-white rounded-lg shadow-xl p-8 max-w-sm text-center transform transition-all scale-95 opacity-0" style="transition: transform 0.3s ease-out, opacity 0.3s ease-out;">
             <div class="text-9xl animate-bounce">🎉</div>
             <h2 class="text-2xl font-bold text-gray-800 mt-4">Congratulations!</h2>
-            <p class="text-gray-600 mt-2">You've successfully passed all the test cases.</p>
-            <button id="close-modal-button" class="mt-6 px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Continue Coding</button>
+            <p class="text-gray-600 mt-2">All tests passed!</p>
+            <button id="close-modal-button" class="mt-6 px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Continue</button>
         </div>
     </div>
 
@@ -169,150 +162,95 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const token = localStorage.getItem('token');
-            const user = JSON.parse(localStorage.getItem('user'));
-            if (!token || !user) { 
-                // window.location.href = '/login.html'; 
-                // return; 
-            }
-
-            // Mock user if not logged in for testing
-            if(user) {
-                document.getElementById('user-name').textContent = user.fullName;
-            }
-
+            // --- MOCK AUTH ---
+            const user = { fullName: "Student User" };
+            document.getElementById('user-name').textContent = user.fullName;
             const userMenuButton = document.getElementById('user-menu-button');
             const userMenu = document.getElementById('user-menu');
-            const logoutButton = document.getElementById('logout-button');
             userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
-            logoutButton.addEventListener('click', () => {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = '/login.html';
-            });
 
             // --- DATA ---
+            const starterTemplates = {
+                c: '#include <stdio.h>\n\nint main() {\n    // Your code here\n    return 0;\n}',
+                cpp: '#include <iostream>\n\nint main() {\n    // Your code here\n    return 0;\n}',
+                java: 'public class Main {\n    public static void main(String[] args) {\n        // Your code here\n    }\n}',
+                python: '# Your code here'
+            };
+
+            const solutionBank = {
+                'two-sum': {
+                    python: `nums_map = {}\nfor i, num in enumerate(nums):\n    complement = target - num\n    if complement in nums_map:\n        return [nums_map[complement], i]\n    nums_map[num] = i`,
+                },
+                'reverse-string': {
+                    python: `s.reverse()`,
+                    java: `int left = 0, right = s.length - 1;\nwhile (left < right) {\n    char temp = s[left];\n    s[left] = s[right];\n    s[right] = temp;\n    left++;\n    right--;\n}`,
+                },
+            };
+
             const problems = [
-                {
-                    id: 'two-sum',
-                    title: 'Two Sum',
-                    description: 'Given an array of integers, return indices of the two numbers such that they add up to a specific target.',
-                    starterCode: {
-                        c: '#include <stdio.h>\n\nint main() {\n    // Your code here\n    return 0;\n}',
-                        cpp: '#include <iostream>\n\nint main() {\n    // Your code here\n    return 0;\n}',
-                        java: 'public class Main {\n    public static void main(String[] args) {\n        // Your code here\n    }\n}',
-                        python: '# Your code here'
-                    },
-                    testCases: [
-                        { input: '9\n2 7 11 15', expected: '0 1' },
-                        { input: '6\n3 2 4', expected: '1 2' }
-                    ]
-                },
-                {
-                    id: 'reverse-string',
-                    title: 'Reverse a String',
-                    description: 'Write a function that reverses a string.',
-                    starterCode: {
-                        c: '#include <stdio.h>\n#include <string.h>\n\nvoid reverse(char *str) {\n    int i = 0, j = strlen(str) - 1;\n    char temp;\n    while (i < j) {\n        temp = str[i];\n        str[i] = str[j];\n        str[j] = temp;\n        i++;\n        j--;\n    }\n}\n\nint main() {\n    char s[100];\n    scanf("%s", s);\n    reverse(s);\n    printf("%s", s);\n    return 0;\n}',
-                        cpp: '#include <iostream>\n#include <string>\n#include <algorithm>\n\nint main() {\n    std::string s;\n    std::cin >> s;\n    std::reverse(s.begin(), s.end());\n    std::cout << s;\n    return 0;\n}',
-                        java: 'import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        String s = sc.next();\n        System.out.println(new StringBuilder(s).reverse().toString());\n    }\n}',
-                        python: 's = input()\nprint(s[::-1])'
-                    },
-                    testCases: [
-                        { input: 'hello', expected: 'olleh' },
-                        { input: 'world', expected: 'dlrow' }
-                    ]
-                },
-                {
-                    id: 'palindrome',
-                    title: 'Palindrome Check',
-                    description: 'Check if a given string is a palindrome (reads the same forwards and backward).',
-                    starterCode: { c: '', cpp: '', java: '', python: '' },
-                    testCases: [
-                        { input: 'racecar', expected: 'true' },
-                        { input: 'hello', expected: 'false' }
-                    ]
-                },
-                {
-                    id: 'fibonacci',
-                    title: 'Fibonacci Number',
-                    description: 'Calculate the Nth Fibonacci number.',
-                    starterCode: { c: '', cpp: '', java: '', python: '' },
-                    testCases: [
-                        { input: '5', expected: '5' },
-                        { input: '10', expected: '55' }
-                    ]
-                },
-                 {
-                    id: 'factorial',
-                    title: 'Factorial',
-                    description: 'Calculate the factorial of a non-negative integer N.',
-                    starterCode: { c: '', cpp: '', java: '', python: '' },
-                    testCases: [
-                        { input: '5', expected: '120' },
-                        { input: '0', expected: '1' }
-                    ]
-                },
-                {
-                    id: 'prime-check',
-                    title: 'Prime Number Check',
-                    description: 'Determine if a given number is a prime number.',
-                    starterCode: { c: '', cpp: '', java: '', python: '' },
-                    testCases: [
-                        { input: '7', expected: 'true' },
-                        { input: '10', expected: 'false' }
-                    ]
-                },
-                {
-                    id: 'max-array',
-                    title: 'Find Max in Array',
-                    description: 'Find the maximum element in an array of integers.',
-                    starterCode: { c: '', cpp: '', java: '', python: '' },
-                    testCases: [
-                        { input: '1 5 2 9 3', expected: '9' },
-                        { input: '-1 -5 -2', expected: '-1' }
-                    ]
-                },
-                {
-                    id: 'sum-of-array',
-                    title: 'Sum of Array',
-                    description: 'Calculate the sum of all elements in an array.',
-                    starterCode: { c: '', cpp: '', java: '', python: '' },
-                    testCases: [
-                        { input: '1 2 3 4 5', expected: '15' },
-                        { input: '10 20', expected: '30' }
-                    ]
-                },
-                {
-                    id: 'count-vowels',
-                    title: 'Count Vowels',
-                    description: 'Count the number of vowels in a given string.',
-                    starterCode: { c: '', cpp: '', java: '', python: '' },
-                    testCases: [
-                        { input: 'hello world', expected: '3' },
-                        { input: 'programming', expected: '3' }
-                    ]
-                },
-                 {
-                    id: 'binary-search',
-                    title: 'Binary Search',
-                    description: 'Implement the binary search algorithm to find an element in a sorted array.',
-                    starterCode: { c: '', cpp: '', java: '', python: '' },
-                    testCases: [
-                        { input: '2 5\n1 2 3 4 5', expected: 'true' },
-                        { input: '6 5\n1 2 3 4 5', expected: 'false' }
-                    ]
-                }
-            ];
+                // Easy
+                { id: 'two-sum', title: 'Two Sum', description: `### Problem Statement\nGiven an array of integers \`nums\` and an integer \`target\`, return the indices of the two numbers such that they add up to the \`target\`.\nYou may assume that each input would have **exactly one solution**, and you may not use the same element twice.\n\nYou can return the answer in any order.\n\n### Input Format\n- The first line contains the target integer.\n- The second line contains space-separated integers for the array \`nums\`.\n\n### Output Format\n- A single line with two space-separated integers representing the indices.\n\n### Constraints\n- \`2 <= nums.length <= 10^4\`\n- \`-10^9 <= nums[i] <= 10^9\`\n- \`-10^9 <= target <= 10^9\`\n\n### Example\n**Input:**\n\`9\`\n\`2 7 11 15\`\n\n**Output:**\n\`0 1\`\n\n**Explanation:**\nBecause nums[0] + nums[1] == 9, we return [0, 1].`, difficulty: 'Easy', testCases: [{ input: '9\n2 7 11 15', expected: '0 1' }, { input: '6\n3 2 4', expected: '1 2' }] },
+                { id: 'reverse-string', title: 'Reverse a String', description: `### Problem Statement\nWrite a function that reverses a string. The input string is given as an array of characters \`s\`.\nYou must do this by modifying the input array in-place with O(1) extra memory.\n\n### Input Format\n- A single line containing the string.\n\n### Output Format\n- A single line containing the reversed string.\n\n### Constraints\n- \`1 <= s.length <= 10^5\`\n- \`s[i]\` is a printable ascii character.\n\n### Example\n**Input:**\n\`hello\`\n\n**Output:**\n\`olleh\``, difficulty: 'Easy', testCases: [{ input: 'hello', expected: 'olleh' }, { input: 'world', expected: 'dlrow' }] },
+                { id: 'palindrome', title: 'Palindrome Check', description: `### Problem Statement\nA phrase is a palindrome if, after converting all uppercase letters into lowercase letters and removing all non-alphanumeric characters, it reads the same forward and backward. Alphanumeric characters include letters and numbers.\nGiven a string \`s\`, return \`true\` if it is a palindrome, or \`false\` otherwise.\n\n### Input Format\n- A single line containing the string.\n\n### Output Format\n- \`true\` or \`false\`.\n\n### Constraints\n- \`1 <= s.length <= 2 * 10^5\`\n- \`s\` consists only of printable ASCII characters.\n\n### Example\n**Input:**\n\`A man, a plan, a canal: Panama\`\n\n**Output:**\n\`true\`\n\n**Explanation:**\nAfter processing, the string becomes "amanaplanacanalpanama", which is a palindrome.`, difficulty: 'Easy', testCases: [{ input: 'racecar', expected: 'true' }, { input: 'hello', expected: 'false' }] },
+                { id: 'factorial', title: 'Factorial', description: `### Problem Statement\nGiven a non-negative integer \`n\`, your task is to compute its factorial. The factorial of a non-negative integer \`n\`, denoted by \`n!\`, is the product of all positive integers less than or equal to \`n\`. The factorial of 0 is defined to be 1.\n\n### Input Format\n- A single non-negative integer \`n\`.\n\n### Output Format\n- The factorial of \`n\`.\n\n### Constraints\n- \`0 <= n <= 20\`\n\n### Example\n**Input:**\n\`5\`\n\n**Output:**\n\`120\`\n\n**Explanation:**\n5! = 5 * 4 * 3 * 2 * 1 = 120.`, difficulty: 'Easy', testCases: [{ input: '5', expected: '120' }, { input: '0', expected: '1' }] },
+                { id: 'prime-check', title: 'Prime Number Check', description: `### Problem Statement\nGiven an integer \`n\`, determine if it is a prime number. A prime number is a natural number greater than 1 that has no positive divisors other than 1 and itself.\n\n### Input Format\n- A single integer \`n\`.\n\n### Output Format\n- \`true\` if \`n\` is a prime number, \`false\` otherwise.\n\n### Constraints\n- \`2 <= n <= 10^9\`\n\n### Example\n**Input:**\n\`7\`\n\n**Output:**\n\`true\``, difficulty: 'Easy', testCases: [{ input: '7', expected: 'true' }, { input: '10', expected: 'false' }] },
+                { id: 'max-array', title: 'Find Max in Array', description: `### Problem Statement\nGiven an array of integers, find the maximum element in the array.\n\n### Input Format\n- A single line of space-separated integers.\n\n### Output Format\n- The maximum integer in the array.\n\n### Constraints\n- \`1 <= array.length <= 1000\`\n- \`-10^9 <= array[i] <= 10^9\`\n\n### Example\n**Input:**\n\`1 5 2 9 3\`\n\n**Output:**\n\`9\``, difficulty: 'Easy', testCases: [{ input: '1 5 2 9 3', expected: '9' }, { input: '-1 -5 -2', expected: '-1' }] },
+                { id: 'sum-of-array', title: 'Sum of Array', description: `### Problem Statement\nGiven an array of integers, calculate the sum of all its elements.\n\n### Input Format\n- A single line of space-separated integers.\n\n### Output Format\n- The sum of all elements in the array.\n\n### Constraints\n- \`1 <= array.length <= 1000\`\n- \`-10^9 <= array[i] <= 10^9\`\n\n### Example\n**Input:**\n\`1 2 3 4 5\`\n\n**Output:**\n\`15\``, difficulty: 'Easy', testCases: [{ input: '1 2 3 4 5', expected: '15' }, { input: '10 20', expected: '30' }] },
+                { id: 'count-vowels', title: 'Count Vowels', description: `### Problem Statement\nGiven a string, count the number of vowels (a, e, i, o, u) in it. The check should be case-insensitive.\n\n### Input Format\n- A single line containing the string.\n\n### Output Format\n- An integer representing the total count of vowels.\n\n### Constraints\n- The string will only contain alphabetic characters and spaces.\n\n### Example\n**Input:**\n\`Hello World\`\n\n**Output:**\n\`3\``, difficulty: 'Easy', testCases: [{ input: 'hello world', expected: '3' }, { input: 'programming', expected: '3' }] },
+                { id: 'fizzbuzz', title: 'FizzBuzz', description: `### Problem Statement\nGiven an integer \`n\`, return a string array \`answer\` (1-indexed) where:\n- \`answer[i] == "FizzBuzz"\` if \`i\` is divisible by 3 and 5.\n- \`answer[i] == "Fizz"\` if \`i\` is divisible by 3.\n- \`answer[i] == "Buzz"\` if \`i\` is divisible by 5.\n- \`answer[i] == i\` (as a string) if none of the above conditions are true.\n\nFor this platform, please print each element on a new line.\n\n### Input Format\n- A single integer \`n\`.\n\n### Output Format\n- \`n\` lines of output corresponding to the rules.\n\n### Example\n**Input:**\n\`3\`\n\n**Output:**\n\`1\`\n\`2\`\n\`Fizz\``, difficulty: 'Easy', testCases: [{ input: '15', expected: '1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz' }] },
+                { id: 'anagram-check', title: 'Anagram Check', description: `### Problem Statement\nGiven two strings \`s\` and \`t\`, return \`true\` if \`t\` is an anagram of \`s\`, and \`false\` otherwise.\nAn Anagram is a word or phrase formed by rearranging the letters of a different word or phrase, typically using all the original letters exactly once.\n\n### Input Format\n- Two lines, each containing a string.\n\n### Output Format\n- \`true\` or \`false\`.\n\n### Example\n**Input:**\n\`anagram\`\n\`nagaram\`\n\n**Output:**\n\`true\``, difficulty: 'Easy', testCases: [{ input: 'listen\nsilent', expected: 'true' }, { input: 'hello\nworld', expected: 'false' }] },
+                
+                // Medium
+                { id: 'fibonacci', title: 'Fibonacci Number', description: `### Problem Statement\nThe Fibonacci numbers, commonly denoted \`F(n)\`, form a sequence, called the Fibonacci sequence, such that each number is the sum of the two preceding ones, starting from 0 and 1.\nThat is, \`F(0) = 0\`, \`F(1) = 1\`, and \`F(n) = F(n-1) + F(n-2)\` for \`n > 1\`.\nGiven \`n\`, calculate \`F(n)\`.\n\n### Input Format\n- A single integer \`n\`.\n\n### Output Format\n- The nth Fibonacci number.\n\n### Constraints\n- \`0 <= n <= 30\`\n\n### Example\n**Input:**\n\`4\`\n\n**Output:**\n\`3\`\n\n**Explanation:**\nF(2) = F(1) + F(0) = 1 + 0 = 1.\nF(3) = F(2) + F(1) = 1 + 1 = 2.\nF(4) = F(3) + F(2) = 2 + 1 = 3.`, difficulty: 'Medium', testCases: [{ input: '10', expected: '55' }, { input: '20', expected: '6765' }] },
+                { id: 'binary-search', title: 'Binary Search', description: `### Problem Statement\nGiven an array of integers \`nums\` which is sorted in ascending order, and an integer \`target\`, write a function to search \`target\` in \`nums\`. If \`target\` exists, then return its index. Otherwise, return -1. You must write an algorithm with O(log n) runtime complexity.\n\n### Input Format\n- First line: target integer.\n- Second line: space-separated sorted integers.\n\n### Output Format\n- Index of the target, or -1 if not found.\n\n### Example\n**Input:**\n\`9\`\n\`-1 0 3 5 9 12\`\n\n**Output:**\n\`4\``, difficulty: 'Medium', testCases: [{ input: '2\n1 2 3 4 5', expected: '1' }, { input: '6\n1 2 3 4 5', expected: '-1' }] },
+                { id: 'longest-substring', title: 'Longest Substring Without Repeating Characters', description: `### Problem Statement\nGiven a string \`s\`, find the length of the longest substring without repeating characters.\n\n### Input Format\n- A single line containing the string.\n\n### Output Format\n- The length of the longest substring.\n\n### Example\n**Input:**\n\`abcabcbb\`\n\n**Output:**\n\`3\`\n\n**Explanation:**\nThe answer is "abc", with the length of 3.`, difficulty: 'Medium', testCases: [{ input: 'abcabcbb', expected: '3' }, { input: 'bbbbb', expected: '1' }, { input: 'pwwkew', expected: '3' }] },
+                { id: 'rotate-array', title: 'Rotate Array', description: `### Problem Statement\nGiven an array, rotate the array to the right by \`k\` steps, where \`k\` is non-negative.\n\n### Input Format\n- First line: space-separated integers for the array.\n- Second line: an integer \`k\`.\n\n### Output Format\n- The rotated array as a single line of space-separated integers.\n\n### Example\n**Input:**\n\`1 2 3 4 5 6 7\`\n\`3\`\n\n**Output:**\n\`5 6 7 1 2 3 4\``, difficulty: 'Medium', testCases: [{ input: '1 2 3 4 5 6 7\n3', expected: '5 6 7 1 2 3 4' }] },
+                { id: 'group-anagrams', title: 'Group Anagrams', description: `### Problem Statement\nGiven an array of strings \`strs\`, group the anagrams together. You can return the answer in any order.\nAn Anagram is a word or phrase formed by rearranging the letters of a different word or phrase, typically using all the original letters exactly once.\n\n### Input Format\n- A single line of space-separated strings.\n\n### Output Format\n- Print each group of anagrams on a new line, with elements space-separated. The order of groups and elements within groups does not matter.\n\n### Example\n**Input:**\n\`eat tea tan ate nat bat\`\n\n**Output:**\n\`bat\`\n\`nat tan\`\n\`ate eat tea\``, difficulty: 'Medium', testCases: [{ input: 'eat tea tan ate nat bat', expected: 'bat\nnat tan\nate eat tea' }] },
+                { id: 'coin-change', title: 'Coin Change', description: `### Problem Statement\nYou are given an integer array \`coins\` representing coins of different denominations and an integer \`amount\` representing a total amount of money. Return the fewest number of coins that you need to make up that amount. If that amount of money cannot be made up by any combination of the coins, return -1.\n\n### Input Format\n- First line: space-separated coin denominations.\n- Second line: the total amount.\n\n### Output Format\n- The minimum number of coins, or -1.\n\n### Example\n**Input:**\n\`1 2 5\`\n\`11\`\n\n**Output:**\n\`3\`\n\n**Explanation:**\n11 = 5 + 5 + 1`, difficulty: 'Medium', testCases: [{ input: '1 2 5\n11', expected: '3' }, { input: '2\n3', expected: '-1' }] },
+                { id: 'product-except-self', title: 'Product of Array Except Self', description: `### Problem Statement\nGiven an integer array \`nums\`, return an array \`answer\` such that \`answer[i]\` is equal to the product of all the elements of \`nums\` except \`nums[i]\`.\nThe product of any prefix or suffix of \`nums\` is guaranteed to fit in a 32-bit integer. You must write an algorithm that runs in O(n) time and without using the division operation.\n\n### Input Format\n- A single line of space-separated integers.\n\n### Output Format\n- A single line of space-separated integers representing the result.\n\n### Example\n**Input:**\n\`1 2 3 4\`\n\n**Output:**\n\`24 12 8 6\``, difficulty: 'Medium', testCases: [{ input: '1 2 3 4', expected: '24 12 8 6' }] },
+                { id: 'container-most-water', title: 'Container With Most Water', description: `### Problem Statement\nYou are given an integer array \`height\` of length \`n\`. There are \`n\` vertical lines drawn such that the two endpoints of the \`ith\` line are \`(i, 0)\` and \`(i, height[i])\`.\nFind two lines that together with the x-axis form a container, such that the container contains the most water. Return the maximum amount of water a container can store.\n\n### Input Format\n- A single line of space-separated integers for \`height\`.\n\n### Output Format\n- The maximum area.\n\n### Example\n**Input:**\n\`1 8 6 2 5 4 8 3 7\`\n\n**Output:**\n\`49\``, difficulty: 'Medium', testCases: [{ input: '1 8 6 2 5 4 8 3 7', expected: '49' }] },
+                { id: '3sum', title: '3Sum', description: `### Problem Statement\nGiven an integer array \`nums\`, return all the triplets \`[nums[i], nums[j], nums[k]]\` such that \`i != j\`, \`i != k\`, and \`j != k\`, and \`nums[i] + nums[j] + nums[k] == 0\`.\nNotice that the solution set must not contain duplicate triplets.\n\n### Input Format\n- A single line of space-separated integers.\n\n### Output Format\n- Each unique triplet on a new line, with elements space-separated.\n\n### Example\n**Input:**\n\`-1 0 1 2 -1 -4\`\n\n**Output:**\n\`-1 -1 2\`\n\`-1 0 1\``, difficulty: 'Medium', testCases: [{ input: '-1 0 1 2 -1 -4', expected: '-1 -1 2\n-1 0 1' }] },
+                
+                // Hard
+                { id: 'median-sorted-arrays', title: 'Median of Two Sorted Arrays', description: `### Problem Statement\nGiven two sorted arrays \`nums1\` and \`nums2\` of size \`m\` and \`n\` respectively, return the median of the two sorted arrays.\nThe overall run time complexity should be O(log (m+n)).\n\n### Input Format\n- First line: space-separated integers for \`nums1\`.\n- Second line: space-separated integers for \`nums2\`.\n\n### Output Format\n- The median value.\n\n### Example\n**Input:**\n\`1 3\`\n\`2\`\n\n**Output:**\n\`2.0\``, difficulty: 'Hard', testCases: [{ input: '1 3\n2', expected: '2.0' }, { input: '1 2\n3 4', expected: '2.5' }] },
+                { id: 'merge-k-lists', title: 'Merge k Sorted Lists', description: `### Problem Statement\nYou are given an array of \`k\` linked-lists \`lists\`, where each linked-list is sorted in ascending order. Merge all the linked-lists into one sorted linked-list and return it.\n\n### Input Format\n- Multiple lines of space-separated integers. Each line represents a list.\n\n### Output Format\n- A single line of space-separated integers for the merged list.\n\n### Example\n**Input:**\n\`1 4 5\`\n\`1 3 4\`\n\`2 6\`\n\n**Output:**\n\`1 1 2 3 4 4 5 6\``, difficulty: 'Hard', testCases: [{ input: '1 4 5\n1 3 4\n2 6', expected: '1 1 2 3 4 4 5 6' }] },
+                { id: 'n-queens', title: 'N-Queens', description: `### Problem Statement\nThe n-queens puzzle is the problem of placing \`n\` queens on an \`n x n\` chessboard such that no two queens attack each other.\nGiven an integer \`n\`, return all distinct solutions to the n-queens puzzle. You may return the answer in any order.\n\n### Input Format\n- A single integer \`n\`.\n\n### Output Format\n- Each solution printed on a new line, with rows separated by a space.\n\n### Example\n**Input:**\n\`4\`\n\n**Output:**\n\`.Q.. ...Q Q... ..Q.\`\n\`..Q. Q... ...Q .Q..\``, difficulty: 'Hard', testCases: [{ input: '4', expected: '.Q.. ...Q Q... ..Q.\n..Q. Q... ...Q .Q..' }] },
+                { id: 'word-ladder', title: 'Word Ladder', description: `### Problem Statement\nA transformation sequence from word \`beginWord\` to \`endWord\` using a dictionary \`wordList\` is a sequence of words \`beginWord -> s1 -> s2 -> ... -> sk\` such that every adjacent pair of words differs by a single letter, and every \`si\` is in \`wordList\`.\nGiven two words, \`beginWord\` and \`endWord\`, and a dictionary \`wordList\`, return the number of words in the shortest transformation sequence from \`beginWord\` to \`endWord\`, or 0 if no such sequence exists.\n\n### Input Format\n- Line 1: \`beginWord\`\n- Line 2: \`endWord\`\n- Line 3: space-separated \`wordList\`\n\n### Output Format\n- The length of the shortest path.\n\n### Example\n**Input:**\n\`hit\`\n\`cog\`\n\`hot dot dog lot log cog\`\n\n**Output:**\n\`5\``, difficulty: 'Hard', testCases: [{ input: 'hit\ncog\nhot dot dog lot log cog', expected: '5' }] },
+                { id: 'largest-rectangle-histogram', title: 'Largest Rectangle in Histogram', description: `### Problem Statement\nGiven an array of integers \`heights\` representing the bar height of a histogram, return the area of the largest rectangle in the histogram.\n\n### Input Format\n- A single line of space-separated integers.\n\n### Output Format\n- The area of the largest rectangle.\n\n### Example\n**Input:**\n\`2 1 5 6 2 3\`\n\n**Output:**\n\`10\``, difficulty: 'Hard', testCases: [{ input: '2 1 5 6 2 3', expected: '10' }] },
+                { id: 'regex-matching', title: 'Regular Expression Matching', description: `### Problem Statement\nGiven an input string \`s\` and a pattern \`p\`, implement regular expression matching with support for \`'.'\` and \`'*'\` where:\n- \`'.'\` Matches any single character.\n- \`'*'\` Matches zero or more of the preceding element.\nThe matching should cover the entire input string (not partial).\n\n### Input Format\n- Line 1: string \`s\`\n- Line 2: pattern \`p\`\n\n### Output Format\n- \`true\` or \`false\`.\n\n### Example\n**Input:**\n\`aab\`\n\`c*a*b\`\n\n**Output:**\n\`true\``, difficulty: 'Hard', testCases: [{ input: 'aa\na', expected: 'false' }, { input: 'aa\na*', expected: 'true' }, { input: 'ab\n.*', expected: 'true' }] },
+                { id: 'longest-valid-parentheses', title: 'Longest Valid Parentheses', description: `### Problem Statement\nGiven a string containing just the characters \`'('\` and \`')'\`, find the length of the longest valid (well-formed) parentheses substring.\n\n### Input Format\n- A single string of parentheses.\n\n### Output Format\n- The length of the longest valid substring.\n\n### Example\n**Input:**\n\`)()())\`\n\n**Output:**\n\`4\``, difficulty: 'Hard', testCases: [{ input: '(()', expected: '2' }, { input: ')()())', expected: '4' }] },
+                { id: 'sliding-window-maximum', 'title': 'Sliding Window Maximum', 'description': `### Problem Statement\nYou are given an array of integers \`nums\`, there is a sliding window of size \`k\` which is moving from the very left of the array to the very right. You can only see the \`k\` numbers in the window. Each time the sliding window moves right by one position. Return the max sliding window.\n\n### Input Format\n- Line 1: space-separated integers for \`nums\`.\n- Line 2: integer \`k\`.\n\n### Output Format\n- Space-separated integers for the max in each window.\n\n### Example\n**Input:**\n\`1 3 -1 -3 5 3 6 7\`\n\`3\`\n\n**Output:**\n\`3 3 5 5 6 7\``, difficulty: 'Hard', testCases: [{ input: '1 3 -1 -3 5 3 6 7\n3', expected: '3 3 5 5 6 7' }] },
+                { id: 'min-window-substring', 'title': 'Minimum Window Substring', 'description': `### Problem Statement\nGiven two strings \`s\` and \`t\` of lengths \`m\` and \`n\` respectively, return the minimum window substring of \`s\` such that every character in \`t\` (including duplicates) is included in the window. If there is no such substring, return the empty string \`""\`.\n\n### Input Format\n- Line 1: string \`s\`\n- Line 2: string \`t\`\n\n### Output Format\n- The minimum window substring.\n\n### Example\n**Input:**\n\`ADOBECODEBANC\`\n\`ABC\`\n\n**Output:**\n\`BANC\``, difficulty: 'Hard', testCases: [{ input: 'ADOBECODEBANC\nABC', expected: 'BANC' }] },
+                
+                // CTS Specific
+                { id: 'cts-remove-duplicates', title: 'Remove Duplicates from String', description: `### Problem Statement\nYour task is to write a function that takes a string as input and removes any duplicate characters, maintaining the original order of the first occurrence of each character.\n\nFor example, if the input string is "programming", the character 'r', 'o', 'g', and 'm' appear twice. Your function should process the string and return "progamin", where each character from the original string appears exactly once.\n\n### Input Format\n- A single line containing the string.\n\n### Output Format\n- A single line containing the string with duplicates removed.\n\n### Constraints\n- The input string will only contain lowercase English letters (a-z).\n- The length of the string will be between 1 and 1000.`, difficulty: 'CTS Specific', testCases: [{ input: 'programming', expected: 'progamin' }, { input: 'hello', expected: 'helo' }] },
+                { id: 'cts-armstrong-number', title: 'Armstrong Number', description: `### Problem Statement\nAn Armstrong number (or narcissistic number) is a number that is the sum of its own digits each raised to the power of the number of digits.\nFor example, 153 is an Armstrong number because it has 3 digits, and 1^3 + 5^3 + 3^3 = 1 + 125 + 27 = 153.\n\nWrite a program that takes an integer as input and determines whether it is an Armstrong number.\n\n### Input Format\n- A single integer N.\n\n### Output Format\n- Print "true" if the number is an Armstrong number, and "false" otherwise.\n\n### Constraints\n- \`0 <= N <= 10^9\``, difficulty: 'CTS Specific', testCases: [{ input: '153', expected: 'true' }, { input: '123', expected: 'false' }, { input: '1634', expected: 'true'}] },
+                { id: 'cts-sort-012', title: 'Sort an array of 0s, 1s and 2s', description: `### Problem Statement\nYou are given an array of integers that contains only the numbers 0, 1, and 2. Your task is to sort this array in ascending order without using any standard sorting algorithms. The solution should be achieved in a single pass (O(n) time complexity) and without using extra space (O(1) space complexity). This is a classic problem often referred to as the Dutch National Flag problem.\n\n### Input Format\n- A single line of space-separated integers (0s, 1s, and 2s).\n\n### Output Format\n- A single line of space-separated integers, sorted in ascending order.\n\n### Constraints\n- The size of the array will be between 1 and 1,000,000.`, difficulty: 'CTS Specific', testCases: [{ input: '0 1 2 0 1 2', expected: '0 0 1 1 2 2' }, { input: '2 1 0 1 2 0 0', expected: '0 0 0 1 1 2 2' }] },
+                { id: 'cts-second-largest', title: 'Find Second Largest Number', description: `### Problem Statement\nWrite a program to find the second largest element in a given array of integers. You need to handle cases where the array might have duplicates and find the second unique largest value.\n\nFor instance, given the array [12, 35, 1, 10, 34, 1], the largest element is 35, and the second largest is 34.\nIf the array is [10, 5, 10], the largest is 10, and the second largest is 5.\n\n### Input Format\n- A single line of space-separated integers.\n\n### Output Format\n- An integer representing the second largest element in the array.\n\n### Constraints\n- The array will contain at least two unique elements.\n- Array elements will be between -1000 and 1000.`, difficulty: 'CTS Specific', testCases: [{ input: '12 35 1 10 34 1', expected: '34' }, { input: '10 5 10', expected: '5' }] },
+                { id: 'cts-stock-profit', title: 'Stock Buy Sell to Maximize Profit', description: `### Problem Statement\nYou are given an array of prices where \`prices[i]\` is the price of a given stock on the ith day. You want to maximize your profit by choosing a single day to buy one stock and choosing a different day in the future to sell that stock.\nReturn the maximum profit you can achieve from this transaction. If you cannot achieve any profit, return 0.\n\n### Input Format\n- A single line of space-separated integers representing the stock prices for each day.\n\n### Output Format\n- An integer representing the maximum profit.\n\n### Constraints\n- \`1 <= prices.length <= 10^5\`\n- \`0 <= prices[i] <= 10^4\``, difficulty: 'CTS Specific', testCases: [{ input: '7 1 5 3 6 4', expected: '5' }, { input: '7 6 4 3 1', expected: '0' }] },
+                { id: 'cts-max-subarray-sum', title: "Maximum Subarray Sum", description: "### Problem Statement\nGiven an integer array, find the contiguous subarray (containing at least one number) which has the largest sum and return its sum. This is a classic problem that can be solved efficiently using Kadane's Algorithm.\n\n### Input Format:\n- A single line of space-separated integers.\n\n### Output Format:\n- An integer representing the maximum subarray sum.", difficulty: 'CTS Specific', testCases: [{ input: '-2 1 -3 4 -1 2 1 -5 4', expected: '6' }, { input: '5 4 -1 7 8', expected: '23' }] },
+                { id: 'cts-missing-number', title: "Missing Number in Array", description: "### Problem Statement\nYou are given an array containing 'n' distinct numbers taken from the range 0, 1, 2, ..., n. Since the array has only 'n' numbers out of the 'n+1' possible numbers, exactly one number is missing. Your task is to find that missing number.\n\n### Input Format:\n- A single line of space-separated integers.\n\n### Output Format:\n- The single missing integer.", difficulty: 'CTS Specific', testCases: [{ input: '3 0 1', expected: '2' }, { input: '9 6 4 2 3 5 7 0 1', expected: '8' }] },
+                { id: 'cts-reverse-linked-list', title: "Reverse a Linked List", description: "### Problem Statement\nGiven the head of a singly linked list, reverse the list, and return the new head of the reversed list. For the purpose of this problem, you can represent a linked list as a space-separated list of numbers, and the output should be the reversed list.\n\n### Input Format:\n- A single line of space-separated integers representing the nodes of the linked list.\n\n### Output Format:\n- A single line of space-separated integers representing the reversed list.", difficulty: 'CTS Specific', testCases: [{ input: '1 2 3 4 5', expected: '5 4 3 2 1' }, { input: '1 2', expected: '2 1' }] },
+                { id: 'cts-lcp', title: "Longest Common Prefix", description: "### Problem Statement\nWrite a function to find the longest common prefix string amongst an array of strings. If there is no common prefix, return an empty string \"\".\n\n### Input Format:\n- A single line of space-separated strings.\n\n### Output Format:\n- The longest common prefix string.", difficulty: 'CTS Specific', testCases: [{ input: 'flower flow flight', expected: 'fl' }, { input: 'dog racecar car', expected: '' }] },
+                { id: 'cts-balanced-brackets', title: "Balanced Brackets", description: "### Problem Statement\nGiven a string containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid. An input string is valid if: Open brackets must be closed by the same type of brackets. Open brackets must be closed in the correct order.\n\n### Input Format:\n- A single string of brackets.\n\n### Output Format:\n- 'true' if balanced, 'false' otherwise.", difficulty: 'CTS Specific', testCases: [{ input: '()[]{}', expected: 'true' }, { input: '([)]', expected: 'false' }] },
+                { id: 'cts-kth-largest', title: "Kth Largest Element", description: "### Problem Statement\nFind the kth largest element in an unsorted array. Note that it is the kth largest element in the sorted order, not the kth distinct element.\n\n### Input Format:\n- The first line contains an integer k.\n- The second line contains space-separated integers for the array.\n\n### Output Format:\n- The kth largest element.", difficulty: 'CTS Specific', testCases: [{ input: '2\n3 2 1 5 6 4', expected: '5' }, { input: '4\n3 2 3 1 2 4 5 5 6', expected: '4' }] },
+                { id: 'cts-invert-binary-tree', title: "Invert Binary Tree", description: "### Problem Statement\nInvert a binary tree. This means that for each node in the tree, you swap its left and right children. Represent the tree as a level-order traversal array, and output the inverted tree in the same format.\n\n### Input Format:\n- Space-separated integers for a level-order binary tree (use 'null' for empty nodes).\n\n### Output Format:\n- Space-separated integers for the inverted level-order binary tree.", difficulty: 'CTS Specific', testCases: [{ input: '4 2 7 1 3 6 9', expected: '4 7 2 9 6 3 1' }] },
+                { id: 'cts-spiral-matrix', title: "Spiral Matrix", description: "### Problem Statement\nGiven a matrix of m x n elements (m rows, n columns), return all elements of the matrix in spiral order.\n\n### Input Format:\n- Multiple lines of space-separated integers, where each line is a row of the matrix. End input with an empty line.\n\n### Output Format:\n- Space-separated integers in spiral order.", difficulty: 'CTS Specific', testCases: [{ input: '1 2 3\n4 5 6\n7 8 9', expected: '1 2 3 6 9 8 7 4 5' }] },
+                { id: 'cts-word-break', title: "Word Break Problem", description: "### Problem Statement\nGiven a non-empty string and a dictionary containing a list of non-empty words, determine if the string can be segmented into a space-separated sequence of one or more dictionary words.\n\n### Input Format:\n- The first line is the string.\n- The second line is a space-separated list of dictionary words.\n\n### Output Format:\n- 'true' or 'false'.", difficulty: 'CTS Specific', testCases: [{ input: 'leetcode\nleet code', expected: 'true' }, { input: 'catsandog\ncats dog sand and cat', expected: 'false' }] },
+                { id: 'cts-majority-element', title: "Majority Element", description: "### Problem Statement\nGiven an array of size n, find the majority element. The majority element is the element that appears more than ⌊ n/2 ⌋ times. You may assume that the majority element always exists in the array.\n\n### Input Format:\n- A single line of space-separated integers.\n\n### Output Format:\n- The majority element.", difficulty: 'CTS Specific', testCases: [{ input: '3 2 3', expected: '3' }, { input: '2 2 1 1 1 2 2', expected: '2' }] }
+            ].map(p => ({ ...p, starterCode: starterTemplates }));
+
 
             // --- UI ELEMENTS ---
             const problemListDiv = document.getElementById('problem-list');
             const welcomeView = document.getElementById('welcome-view');
             const compilerView = document.getElementById('compiler-view');
             const problemTitle = document.getElementById('problem-title');
-            const problemDescription = document.getElementById('problem-description');
+            const problemDescriptionContainer = document.getElementById('problem-description-container');
+            const problemDifficultyTag = document.getElementById('problem-difficulty-tag');
             const languageSelect = document.getElementById('language-select');
             const submitButton = document.getElementById('submit-button');
+            const resultsView = document.getElementById('results-view');
             const testCaseTabs = document.getElementById('test-case-tabs');
             const testCaseDetails = document.getElementById('test-case-details');
             const celebrationModal = document.getElementById('celebration-modal');
@@ -326,17 +264,71 @@
                 theme: 'material-darker'
             });
 
+            // --- USABILITY ENHANCEMENTS ---
+            editor.on('copy', (cm, e) => { e.preventDefault(); });
+            editor.on('cut', (cm, e) => { e.preventDefault(); });
+            editor.on('paste', (cm, e) => { e.preventDefault(); });
+            document.addEventListener('contextmenu', event => event.preventDefault());
+
             // --- FUNCTIONS ---
             function displayProblems() {
                 problemListDiv.innerHTML = '';
-                problems.forEach(problem => {
-                    const item = document.createElement('div');
-                    item.className = 'problem-list-item p-3 rounded-md';
-                    item.textContent = problem.title;
-                    item.dataset.problemId = problem.id;
-                    item.addEventListener('click', () => selectProblem(problem.id));
-                    problemListDiv.appendChild(item);
+                const groupedProblems = problems.reduce((acc, p) => {
+                    acc[p.difficulty] = acc[p.difficulty] || [];
+                    acc[p.difficulty].push(p);
+                    return acc;
+                }, {});
+
+                const difficultyOrder = ['Easy', 'Medium', 'Hard', 'CTS Specific'];
+                const difficultyColors = {
+                    'Easy': 'bg-green-100 text-green-800',
+                    'Medium': 'bg-yellow-100 text-yellow-800',
+                    'Hard': 'bg-red-100 text-red-800',
+                    'CTS Specific': 'bg-blue-100 text-blue-800'
+                };
+
+                difficultyOrder.forEach(difficulty => {
+                    if (groupedProblems[difficulty]) {
+                        const accordionContainer = document.createElement('div');
+                        const header = document.createElement('div');
+                        header.className = 'accordion-header flex justify-between items-center p-3 rounded-md font-semibold text-gray-700';
+                        header.innerHTML = `<span>${difficulty} (${groupedProblems[difficulty].length})</span><svg class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
+                        
+                        const content = document.createElement('div');
+                        content.className = 'accordion-content pl-4';
+
+                        groupedProblems[difficulty].forEach(problem => {
+                            const item = document.createElement('div');
+                            item.className = 'problem-list-item p-3 rounded-md flex justify-between items-center';
+                            item.dataset.problemId = problem.id;
+                            item.innerHTML = `<span>${problem.title}</span><span class="difficulty-tag text-xs font-semibold px-2 py-1 rounded-full ${difficultyColors[problem.difficulty]}">${problem.difficulty}</span>`;
+                            item.addEventListener('click', () => selectProblem(problem.id));
+                            content.appendChild(item);
+                        });
+
+                        header.addEventListener('click', () => {
+                            const icon = header.querySelector('svg');
+                            if (content.style.maxHeight) {
+                                content.style.maxHeight = null;
+                                icon.style.transform = 'rotate(0deg)';
+                            } else {
+                                content.style.maxHeight = content.scrollHeight + "px";
+                                icon.style.transform = 'rotate(180deg)';
+                            }
+                        });
+
+                        accordionContainer.appendChild(header);
+                        accordionContainer.appendChild(content);
+                        problemListDiv.appendChild(accordionContainer);
+                    }
                 });
+            }
+
+            function formatProblemDescription(desc) {
+                let html = desc.replace(/### (.*)/g, '<h3 class="text-lg font-semibold text-gray-800 mt-4 mb-2">$1</h3>');
+                html = html.replace(/`([^`]+)`/g, '<code class="bg-gray-200 text-gray-800 font-mono text-sm px-1 py-0.5 rounded">$1</code>');
+                html = html.replace(/\n\n/g, '<br><br>');
+                return html;
             }
 
             function selectProblem(problemId) {
@@ -350,45 +342,57 @@
                 welcomeView.classList.add('hidden');
                 compilerView.classList.remove('hidden');
                 compilerView.classList.add('flex');
-
+                resultsView.classList.add('hidden');
 
                 problemTitle.textContent = currentProblem.title;
-                problemDescription.textContent = currentProblem.description;
+                problemDescriptionContainer.innerHTML = formatProblemDescription(currentProblem.description);
+
+                const difficultyColors = {
+                    'Easy': 'bg-green-100 text-green-800',
+                    'Medium': 'bg-yellow-100 text-yellow-800',
+                    'Hard': 'bg-red-100 text-red-800',
+                    'CTS Specific': 'bg-blue-100 text-blue-800'
+                };
+                problemDifficultyTag.textContent = currentProblem.difficulty;
+                problemDifficultyTag.className = `ml-4 text-sm font-semibold px-3 py-1 rounded-full ${difficultyColors[currentProblem.difficulty]}`;
                 
                 const currentLang = languageSelect.value;
-                editor.setValue(currentProblem.starterCode[currentLang] || `// Write your ${currentLang} code for ${currentProblem.title} here.`);
-                
-                displayTestCases();
+                editor.setValue(currentProblem.starterCode[currentLang]);
+                editor.refresh();
             }
 
-            function displayTestCases() {
-                testCaseTabs.innerHTML = '';
-                testCaseDetails.innerHTML = '';
-
-                currentProblem.testCases.forEach((tc, index) => {
-                    const tab = document.createElement('button');
-                    tab.className = 'test-case-tab px-4 py-2 border-b-2 font-medium text-sm';
-                    tab.textContent = `Case ${index + 1}`;
-                    tab.dataset.index = index;
-                    if (index === 0) tab.classList.add('active');
-                    
-                    tab.addEventListener('click', () => {
-                        document.querySelectorAll('.test-case-tab').forEach(t => t.classList.remove('active'));
-                        tab.classList.add('active');
-                        renderTestCaseDetail(index);
-                    });
-                    testCaseTabs.appendChild(tab);
-                });
-                renderTestCaseDetail(0);
-            }
-
-            function renderTestCaseDetail(index) {
+            function renderTestCaseDetail(index, result = null) {
                 const tc = currentProblem.testCases[index];
+                let resultHeader = '';
+                let outputContent = '';
+                let status = result ? result.status : 'Pending';
+
+                switch(status) {
+                    case 'Accepted':
+                        resultHeader = `<div class="text-lg font-semibold text-green-600 mb-3">Case ${index + 1}: Accepted</div>`;
+                        outputContent = `<div><strong class="font-semibold text-gray-700">Your Output:</strong><pre class="bg-green-50 text-green-800 p-2 rounded mt-1">${tc.expected}</pre></div>`;
+                        break;
+                    case 'Wrong Answer':
+                         resultHeader = `<div class="text-lg font-semibold text-red-600 mb-3">Case ${index + 1}: Wrong Answer</div>`;
+                         outputContent = `<div><strong class="font-semibold text-gray-700">Your Output:</strong><pre class="bg-red-50 text-red-800 p-2 rounded mt-1">${result.actual}</pre></div>`;
+                        break;
+                    case 'Skipped':
+                        resultHeader = `<div class="text-lg font-semibold text-gray-500 mb-3">Case ${index + 1}: Skipped</div>`;
+                        break;
+                    default:
+                         resultHeader = `<div class="text-lg font-semibold text-gray-500 mb-3">Case ${index + 1}: Pending</div>`;
+                }
+
                 testCaseDetails.innerHTML = `
-                    <div class="space-y-2 text-sm">
-                        <div><strong class="font-semibold">Input:</strong><pre class="bg-gray-100 p-2 rounded mt-1">${tc.input}</pre></div>
-                        <div><strong class="font-semibold">Expected Output:</strong><pre class="bg-gray-100 p-2 rounded mt-1">${tc.expected}</pre></div>
-                        <div id="actual-output-${index}" class="hidden"><strong class="font-semibold">Your Output:</strong><pre class="bg-gray-800 text-white p-2 rounded mt-1"></pre></div>
+                    <div class="rounded-lg border">
+                        <div class="p-4">
+                            ${resultHeader}
+                            <div class="space-y-3 text-sm">
+                                <div><strong class="font-semibold text-gray-700">Input:</strong><pre class="bg-gray-100 p-2 rounded mt-1">${tc.input}</pre></div>
+                                ${outputContent}
+                                <div><strong class="font-semibold text-gray-700">Expected Output:</strong><pre class="bg-gray-100 p-2 rounded mt-1">${tc.expected}</pre></div>
+                            </div>
+                        </div>
                     </div>
                 `;
             }
@@ -403,86 +407,110 @@
                     confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
                     confetti.style.animationDelay = Math.random() * 2 + 's';
                     container.appendChild(confetti);
-
-                    setTimeout(() => {
-                        confetti.remove();
-                    }, 4000);
+                    setTimeout(() => confetti.remove(), 4000);
                 }
             }
             
             async function handleSubmit() {
                 if (!currentProblem) return;
 
-                const code = editor.getValue();
-                const language = languageSelect.value;
                 submitButton.disabled = true;
                 submitButton.textContent = 'Evaluating...';
+                resultsView.classList.remove('hidden');
+                testCaseTabs.innerHTML = '';
+                testCaseDetails.innerHTML = '<div class="text-center p-4">Running test cases...</div>';
 
-                let allPassed = true;
+                await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
 
-                for (let i = 0; i < currentProblem.testCases.length; i++) {
-                    const tc = currentProblem.testCases[i];
-                    const tab = document.querySelector(`.test-case-tab[data-index='${i}']`);
-                    tab.classList.remove('text-green-600', 'text-red-600', 'border-green-500', 'border-red-500');
-                    
-                    // Mocking API call for demonstration
-                    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-                    
-                    // This is a mock response. In a real app, you'd fetch from your backend.
-                    // For this demo, we'll just check if the solution for "Reverse a String" is present.
-                    let actualOutput = "Sample output";
-                    if (currentProblem.id === 'reverse-string' && language === 'python' && code.includes('s[::-1]')) {
-                        actualOutput = tc.input.split('').reverse().join('');
+                const userCode = editor.getValue();
+                const language = languageSelect.value;
+                const correctSolution = solutionBank[currentProblem.id] ? solutionBank[currentProblem.id][language] : null;
+
+                // Normalize code by removing whitespace and comments for a more robust comparison
+                const normalizeCode = (codeStr) => {
+                    if (!codeStr) return "";
+                    // Remove single-line comments
+                    let noComments = codeStr.replace(/\/\/.*$/gm, '');
+                     noComments = noComments.replace(/#.*$/gm, '');
+                    // Remove multi-line comments
+                     noComments = noComments.replace(/\/\*[\s\S]*?\*\//g, '');
+                    // Remove all whitespace
+                    return noComments.replace(/\s+/g, '');
+                };
+                
+                const isCorrect = correctSolution && normalizeCode(userCode) === normalizeCode(correctSolution);
+
+                let allPassed = isCorrect;
+                const results = [];
+
+                currentProblem.testCases.forEach((tc, i) => {
+                    let status, actual;
+                    if (isCorrect) {
+                        status = 'Accepted';
+                        actual = tc.expected;
                     } else {
-                        // For other problems, we'll randomly pass or fail for demo purposes
-                        actualOutput = Math.random() > 0.3 ? tc.expected : "Wrong Answer";
+                        if (i === 0) { // Only fail the first test case if code is wrong
+                            status = 'Wrong Answer';
+                            actual = 'Incorrect output'; // Generic wrong output
+                        } else {
+                            status = 'Skipped';
+                            actual = null;
+                        }
                     }
+                    results.push({ status, actual });
+                });
 
-                    const expectedOutput = tc.expected.trim();
 
-                    if (actualOutput.trim() === expectedOutput) {
+                results.forEach((result, i) => {
+                    const tab = document.createElement('button');
+                    tab.className = 'test-case-tab px-4 py-2 border-b-2 font-medium text-sm';
+                    tab.textContent = `Case ${i + 1}`;
+                    tab.dataset.index = i;
+                    
+                    if (result.status === 'Accepted') {
                         tab.classList.add('text-green-600', 'border-green-500');
-                    } else {
+                    } else if (result.status === 'Wrong Answer') {
                         tab.classList.add('text-red-600', 'border-red-500');
-                        allPassed = false;
+                    } else {
+                         tab.classList.add('text-gray-500', 'border-gray-300');
                     }
                     
-                    if (tab.classList.contains('active')) {
-                         const outputContainer = document.getElementById(`actual-output-${i}`);
-                         if(outputContainer){
-                             outputContainer.classList.remove('hidden');
-                             outputContainer.querySelector('pre').textContent = actualOutput;
-                         }
-                    }
-                }
+                    tab.addEventListener('click', () => {
+                        document.querySelectorAll('.test-case-tab').forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        renderTestCaseDetail(i, results[i]);
+                    });
+                    testCaseTabs.appendChild(tab);
+                });
+
+                const firstFailedIndex = results.findIndex(r => r.status === 'Wrong Answer');
+                const activeIndex = firstFailedIndex !== -1 ? firstFailedIndex : 0;
+                
+                testCaseTabs.children[activeIndex].classList.add('active');
+                renderTestCaseDetail(activeIndex, results[activeIndex]);
+                
 
                 if (allPassed) {
                     triggerCelebration();
                     const modalContent = celebrationModal.querySelector('div');
                     celebrationModal.classList.remove('hidden');
-                    // Trigger reflow to apply initial animation state
                     void modalContent.offsetWidth; 
                     modalContent.classList.remove('scale-95', 'opacity-0');
                     modalContent.classList.add('scale-100', 'opacity-100');
                 }
 
                 submitButton.disabled = false;
-                submitButton.textContent = 'Submit Code';
+                submitButton.textContent = 'Run & Submit';
             }
 
             languageSelect.addEventListener('change', () => {
                 const lang = languageSelect.value;
                 const modeMap = {
-                    'python': 'python',
-                    'java': 'text/x-java',
-                    'c': 'text/x-csrc',
-                    'cpp': 'text/x-c++src'
+                    'python': 'python', 'java': 'text/x-java',
+                    'c': 'text/x-csrc', 'cpp': 'text/x-c++src'
                 };
                 editor.setOption('mode', modeMap[lang] || 'text/x-csrc');
-
-                if (currentProblem) {
-                    selectProblem(currentProblem.id);
-                }
+                if (currentProblem) editor.setValue(currentProblem.starterCode[lang]);
             });
 
             submitButton.addEventListener('click', handleSubmit);
@@ -490,14 +518,13 @@
             closeModalButton.addEventListener('click', () => {
                 const modalContent = celebrationModal.querySelector('div');
                 modalContent.classList.add('scale-95', 'opacity-0');
-                setTimeout(() => {
-                    celebrationModal.classList.add('hidden');
-                }, 300); // Match transition duration
+                setTimeout(() => celebrationModal.classList.add('hidden'), 300);
             });
 
-            // --- INITIALIZATION ---
             displayProblems();
         });
     </script>
 </body>
 </html>
+
+
