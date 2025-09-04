@@ -2288,11 +2288,12 @@ app.post('/api/compile', authMiddleware, async (req, res) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-RapidAPI-Key': 'YOUR_RAPIDAPI_KEY', // IMPORTANT: Replace with your actual RapidAPI key for Judge0
+                'X-RapidAPI-Key': '09ccf0b69bmsh066f3a3bc867b99p178664jsna5e9720da3f6', // IMPORTANT: Replace with your actual RapidAPI key for Judge0
                 'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
             },
             body: JSON.stringify(submissionPayload)
         });
+
 
         if (!submissionResponse.ok) {
             const errorBody = await submissionResponse.text();
@@ -3297,3 +3298,4 @@ app.get('/api/compiler/my-score', authMiddleware, async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
