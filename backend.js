@@ -2258,66 +2258,77 @@ app.post('/api/admin/impact-stats', authMiddleware, upload.single('flyerImage'),
 app.post('/api/compile', authMiddleware, async (req, res) => {
     const { language, code, input } = req.body;
 
+    // IMPORTANT: Replace with your actual RapidAPI Key for OneCompiler
+    // It's best to store this in an environment variable (.env file) for security
+    const ONECOMPILER_API_KEY = process.env.ONECOMPILER_API_KEY || '09ccf0b69bmsh066f3a3bc867b99p178664jsna5e9720da3f6';
+
     if (!language || !code) {
         return res.status(400).json({ message: 'Language and code are required.' });
     }
+    if (!ONECOMPILER_API_KEY || ONECOMPILER_API_KEY === 'YOUR_ONECOMPILER_RAPIDAPI_KEY') {
+         return res.status(500).json({ message: 'OneCompiler API key is not configured on the server.' });
+    }
 
-    // Map your language names to Judge0 language IDs
-    // Find more here: https://judge0.com/
+    // Map your language names to OneCompiler's language identifiers
     const languageMap = {
-        'c': 50,      // GCC 9.2.0
-        'cpp': 54,    // GCC 9.2.0
-        'java': 62,   // OpenJDK 13.0.1
-        'python': 71, // Python 3.8.1
+        'c': 'c',
+        'cpp': 'cpp',
+        'java': 'java',
+        'python': 'python'
+    };
+    
+    // Determine the main file name based on language
+    const fileNames = {
+        'c': 'main.c',
+        'cpp': 'main.cpp',
+        'java': 'Main.java',
+        'python': 'main.py'
     };
 
-    const languageId = languageMap[language];
-    if (!languageId) {
+    const langIdentifier = languageMap[language];
+    const fileName = fileNames[language];
+
+    if (!langIdentifier) {
         return res.status(400).json({ message: `Language '${language}' is not supported.` });
     }
 
     try {
         const submissionPayload = {
-            language_id: languageId,
-            source_code: Buffer.from(code).toString('base64'),
-            stdin: Buffer.from(input || "").toString('base64'),
-            encode_base64: true
+            language: langIdentifier,
+            stdin: input || "",
+            files: [
+                {
+                    name: fileName,
+                    content: code
+                }
+            ]
         };
 
-        const submissionResponse = await fetch('https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=true&wait=true', {
+        const submissionResponse = await fetch('https://onecompiler-apis.p.rapidapi.com/api/v1/run', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-RapidAPI-Key': '09ccf0b69bmsh066f3a3bc867b99p178664jsna5e9720da3f6', // IMPORTANT: Replace with your actual RapidAPI key for Judge0
-                'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com'
+                'X-RapidAPI-Key': ONECOMPILER_API_KEY,
+                'X-RapidAPI-Host': 'onecompiler-apis.p.rapidapi.com'
             },
             body: JSON.stringify(submissionPayload)
         });
 
-
         if (!submissionResponse.ok) {
             const errorBody = await submissionResponse.text();
-            console.error("Judge0 API Error:", errorBody);
+            console.error("OneCompiler API Error:", errorBody);
             return res.status(500).json({ message: 'Error communicating with the compilation service.' });
         }
 
         const result = await submissionResponse.json();
-
-        // Decode the output from base64
-        let output = '';
-        if (result.stdout) {
-            output = Buffer.from(result.stdout, 'base64').toString('utf-8');
-        }
         
-        // Handle different kinds of errors
+        // Combine stdout and stderr for the output
+        let output = result.stdout || '';
         if (result.stderr) {
-            output += `\nError:\n${Buffer.from(result.stderr, 'base64').toString('utf-8')}`;
+            output += `\nError:\n${result.stderr}`;
         }
-        if (result.compile_output) {
-             output += `\nCompilation Error:\n${Buffer.from(result.compile_output, 'base64').toString('utf-8')}`;
-        }
-        if(result.status.description === 'Time Limit Exceeded'){
-             output = 'Error: Time Limit Exceeded. Your code took too long to run.';
+        if (result.exception) {
+            output += `\nException:\n${result.exception}`;
         }
 
 
@@ -2328,6 +2339,7 @@ app.post('/api/compile', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Server error during compilation.' });
     }
 });
+
 
 app.post('/api/admin/practice-tests', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Admin') {
@@ -3159,15 +3171,17 @@ app.post('/api/compiler/save-score', authMiddleware, async (req, res) => {
         return res.status(403).json({ message: 'Only students can save compiler scores.' });
     }
     
-    const { problemId, problemTitle, difficulty, score } = req.body;
+    // Destructure the new fields from the request body
+    const { problemId, problemTitle, difficulty, score, submittedCode, language } = req.body;
     const studentEmail = req.user.email;
 
-    if (!problemId || !problemTitle || !difficulty || score === undefined) {
-        return res.status(400).json({ message: 'Missing required score data.' });
+    // Add validation for the new fields
+    if (!problemId || !problemTitle || !difficulty || score === undefined || !submittedCode || !language) {
+        return res.status(400).json({ message: 'Missing required score data, code, or language.' });
     }
     
-    // To prevent duplicate score submissions for the same problem
     try {
+        // Check if a submission already exists for this user and problem
         const { Items } = await docClient.send(new ScanCommand({
             TableName: "TestifyCompilerScores",
             FilterExpression: "studentEmail = :email AND problemId = :pid",
@@ -3177,27 +3191,50 @@ app.post('/api/compiler/save-score', authMiddleware, async (req, res) => {
             }
         }));
 
+        // If a submission exists, UPDATE it with the new code and score
         if (Items && Items.length > 0) {
-            return res.status(409).json({ message: 'Score for this problem has already been submitted.' });
+            const existingScoreId = Items[0].scoreId;
+             await docClient.send(new UpdateCommand({
+                TableName: "TestifyCompilerScores",
+                Key: { scoreId: existingScoreId },
+                UpdateExpression: "set #score = :s, #submittedCode = :c, #submittedAt = :t, #lang = :l",
+                ExpressionAttributeNames: {
+                    "#score": "score",
+                    "#submittedCode": "submittedCode",
+                    "#submittedAt": "submittedAt",
+                    "#lang": "language"
+                },
+                ExpressionAttributeValues: {
+                    ":s": score,
+                    ":c": submittedCode,
+                    ":t": new Date().toISOString(),
+                    ":l": language
+                }
+            }));
+            return res.status(200).json({ message: 'Submission updated successfully!' });
+        } 
+        // If it's a new submission, CREATE it
+        else {
+            const scoreId = uuidv4();
+            const newScore = {
+                scoreId,
+                studentEmail,
+                problemId,
+                problemTitle,
+                difficulty,
+                score,
+                submittedCode, // save the code
+                language,      // save the language
+                submittedAt: new Date().toISOString()
+            };
+
+            await docClient.send(new PutCommand({
+                TableName: "TestifyCompilerScores",
+                Item: newScore
+            }));
+
+            return res.status(201).json({ message: 'Score and code saved successfully!' });
         }
-
-        const scoreId = uuidv4();
-        const newScore = {
-            scoreId,
-            studentEmail,
-            problemId,
-            problemTitle,
-            difficulty,
-            score,
-            submittedAt: new Date().toISOString()
-        };
-
-        await docClient.send(new PutCommand({
-            TableName: "TestifyCompilerScores",
-            Item: newScore
-        }));
-
-        res.status(201).json({ message: 'Score saved successfully!' });
 
     } catch (error) {
         console.error("Save Compiler Score Error:", error);
@@ -3228,16 +3265,18 @@ app.get('/api/admin/compiler-scores', authMiddleware, adminOrModeratorAuth, asyn
         const students = Responses.TestifyUsers || [];
         const studentMap = new Map(students.map(s => [s.email, { fullName: s.fullName, college: s.college }]));
 
+        // We are removing 'submittedCode' from this main list view for performance.
+        // It will be fetched on demand when the admin clicks "View Code".
         const enrichedScores = scores.map(score => {
+            const { submittedCode, ...rest } = score; // Exclude submittedCode here
             const studentInfo = studentMap.get(score.studentEmail);
             return {
-                ...score,
+                ...rest,
                 studentName: studentInfo ? studentInfo.fullName : 'Unknown',
                 college: studentInfo ? studentInfo.college : 'Unknown'
             };
         });
         
-        // Sort by submission date, newest first
         enrichedScores.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
 
         res.json(enrichedScores);
@@ -3294,8 +3333,150 @@ app.get('/api/compiler/my-score', authMiddleware, async (req, res) => {
 });
 
 
+
+//////////////////////////Compiler scores
+app.post('/api/compiler/save-score', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') {
+        return res.status(403).json({ message: 'Only students can save compiler scores.' });
+    }
+    
+    // Destructure the new fields from the request body
+    const { problemId, problemTitle, difficulty, score, submittedCode, language } = req.body;
+    const studentEmail = req.user.email;
+
+    // Add validation for the new fields
+    if (!problemId || !problemTitle || !difficulty || score === undefined || !submittedCode || !language) {
+        return res.status(400).json({ message: 'Missing required score data, code, or language.' });
+    }
+    
+    try {
+        // Check if a submission already exists for this user and problem
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyCompilerScores",
+            FilterExpression: "studentEmail = :email AND problemId = :pid",
+            ExpressionAttributeValues: {
+                ":email": studentEmail,
+                ":pid": problemId
+            }
+        }));
+
+        // If a submission exists, UPDATE it with the new code and score
+        if (Items && Items.length > 0) {
+            const existingScoreId = Items[0].scoreId;
+             await docClient.send(new UpdateCommand({
+                TableName: "TestifyCompilerScores",
+                Key: { scoreId: existingScoreId },
+                UpdateExpression: "set #score = :s, #submittedCode = :c, #submittedAt = :t, #lang = :l",
+                ExpressionAttributeNames: {
+                    "#score": "score",
+                    "#submittedCode": "submittedCode",
+                    "#submittedAt": "submittedAt",
+                    "#lang": "language"
+                },
+                ExpressionAttributeValues: {
+                    ":s": score,
+                    ":c": submittedCode,
+                    ":t": new Date().toISOString(),
+                    ":l": language
+                }
+            }));
+            return res.status(200).json({ message: 'Submission updated successfully!' });
+        } 
+        // If it's a new submission, CREATE it
+        else {
+            const scoreId = uuidv4();
+            const newScore = {
+                scoreId,
+                studentEmail,
+                problemId,
+                problemTitle,
+                difficulty,
+                score,
+                submittedCode, // save the code
+                language,      // save the language
+                submittedAt: new Date().toISOString()
+            };
+
+            await docClient.send(new PutCommand({
+                TableName: "TestifyCompilerScores",
+                Item: newScore
+            }));
+
+            return res.status(201).json({ message: 'Score and code saved successfully!' });
+        }
+
+    } catch (error) {
+        console.error("Save Compiler Score Error:", error);
+        res.status(500).json({ message: 'Server error saving score.' });
+    }
+});
+
+/**
+ * NEW: Endpoint for an admin or moderator to get a single submission's details, including the code.
+ * This is used in the admin panel to view a student's code.
+ */
+app.get('/api/compiler/submission/:scoreId', authMiddleware, adminOrModeratorAuth, async (req, res) => {
+    const { scoreId } = req.params;
+
+    try {
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: "TestifyCompilerScores",
+            Key: { scoreId }
+        }));
+
+        if (!Item) {
+            return res.status(404).json({ message: 'Submission not found.' });
+        }
+
+        // Return all details for the admin/moderator
+        res.json(Item);
+
+    } catch (error) {
+        console.error("Get Submission Details Error:", error);
+        res.status(500).json({ message: 'Server error fetching submission details.' });
+    }
+});
+
+/**
+ * NEW: Endpoint for a student to get their own submission for a specific problem.
+ * This is used to load their previously submitted code back into the compiler editor.
+ */
+app.get('/api/compiler/my-submission/:problemId', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    const { problemId } = req.params;
+    const studentEmail = req.user.email;
+
+    try {
+         const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyCompilerScores",
+            FilterExpression: "studentEmail = :email AND problemId = :pid",
+            ExpressionAttributeValues: {
+                ":email": studentEmail,
+                ":pid": problemId
+            }
+        }));
+        
+        if (Items && Items.length > 0) {
+            // A student should only have one submission record per problem, so we return the first one found.
+            res.json(Items[0]);
+        } else {
+            res.status(404).json({ message: 'No submission found for this problem.' });
+        }
+    } catch (error) {
+        console.error("Get My Submission Error:", error);
+        res.status(500).json({ message: 'Server error fetching your submission.' });
+    }
+});
+
+
+// ... (the rest of your backend.js code)
+
+
+
 // --- SERVER START ---
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-
