@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Manage Problem Sections</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        .modal-overlay { transition: opacity 0.3s ease; }
+        .modal-container { transition: transform 0.3s ease, opacity 0.3s ease; }
+        select[multiple] { height: 150px; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+             <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold">TESTIFY</span>
+            </div>
+           <nav class="flex-grow p-4">
+                 <a href="compiler-scores.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">Scores</a>
+                 <a href="code-sections.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">Manage Sections</a>
+                 <a href="add-problems.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">Add Problems</a>
+                 <a href="addl-features.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">Additional Features</a>
+
+            </nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <header class="flex items-center justify-between h-20 bg-white border-b px-6">
+                <h1 class="text-2xl font-semibold text-gray-800">Manage Problem Sections</h1>
+                <button id="add-section-btn" class="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition">
+                    + Add New Section
+                </button>
+            </header>
+            
+            <main class="p-6">
+                <div class="container mx-auto">
+                    <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                        <div id="sections-list" class="space-y-4">
+                            <!-- Sections will be loaded here -->
+                        </div>
+                        <div id="loading-indicator" class="text-center py-12"><p>Loading Sections...</p></div>
+                        <div id="no-sections" class="hidden text-center py-12"><p>No sections found. Click 'Add New Section' to create one.</p></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Section Modal -->
+    <div id="section-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 modal-overlay">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white modal-container">
+            <form id="section-form">
+                <h3 id="modal-title" class="text-2xl font-bold text-gray-800 mb-4">Add New Section</h3>
+                <input type="hidden" id="section-id">
+                
+                <div class="space-y-4">
+                    <div>
+                        <label for="section-name" class="block text-sm font-medium text-gray-700">Section Name</label>
+                        <input type="text" id="section-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., CTS Specific Problems" required>
+                    </div>
+                    <div>
+                        <label for="assigned-colleges" class="block text-sm font-medium text-gray-700">Assign to Colleges (Optional)</label>
+                        <p class="text-xs text-gray-500 mb-2">If no colleges are selected, this section will be visible to everyone. Hold Ctrl/Cmd to select multiple.</p>
+                        <select id="assigned-colleges" multiple class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></select>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" id="close-modal-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
+                    <button type="submit" id="save-section-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Save Section</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            if (!token) window.location.href = '/login.html';
+
+            const sectionsListDiv = document.getElementById('sections-list');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const noSectionsDiv = document.getElementById('no-sections');
+            const modal = document.getElementById('section-modal');
+            const form = document.getElementById('section-form');
+            const collegeSelect = document.getElementById('assigned-colleges');
+            let allSections = [];
+            let allColleges = [];
+            
+            const openModal = () => modal.classList.remove('hidden');
+            const closeModal = () => modal.classList.add('hidden');
+
+            const fetchColleges = async () => {
+                try {
+                    const response = await fetch('/api/colleges', { headers: { 'x-auth-token': token } });
+                    allColleges = await response.json();
+                    collegeSelect.innerHTML = allColleges.map(c => `<option value="${c.collegeName}">${c.collegeName}</option>`).join('');
+                } catch (error) {
+                    console.error('Failed to fetch colleges', error);
+                }
+            };
+            
+            const fetchSections = async () => {
+                loadingIndicator.style.display = 'block';
+                noSectionsDiv.style.display = 'none';
+                sectionsListDiv.innerHTML = '';
+                try {
+                    const response = await fetch('/api/compiler/sections', { headers: { 'x-auth-token': token } });
+                    allSections = await response.json();
+                    renderSections(allSections);
+                } catch (error) {
+                    sectionsListDiv.innerHTML = `<p class="text-red-500">Failed to load sections.</p>`;
+                } finally {
+                    loadingIndicator.style.display = 'none';
+                }
+            };
+            
+            const renderSections = (sections) => {
+                if (sections.length === 0) {
+                    noSectionsDiv.style.display = 'block';
+                    sectionsListDiv.innerHTML = '';
+                    return;
+                }
+                noSectionsDiv.style.display = 'none';
+                sectionsListDiv.innerHTML = sections.map(s => `
+                    <div class="border rounded-lg p-4 flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold text-lg text-gray-800">${s.sectionName}</h3>
+                            <p class="text-sm text-gray-500">${(s.assignedColleges && s.assignedColleges.length > 0) ? s.assignedColleges.join(', ') : 'Visible to all colleges'}</p>
+                        </div>
+                        <div class="space-x-2">
+                            <button class="edit-btn px-3 py-1 bg-gray-200 text-sm rounded hover:bg-gray-300" data-id="${s.sectionId}">Edit</button>
+                            <button class="delete-btn px-3 py-1 bg-red-100 text-red-700 text-sm rounded hover:bg-red-200" data-id="${s.sectionId}">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            };
+
+            const resetAndOpenModalForCreate = () => {
+                form.reset();
+                document.getElementById('section-id').value = '';
+                document.getElementById('modal-title').textContent = 'Add New Section';
+                Array.from(collegeSelect.options).forEach(opt => opt.selected = false);
+                openModal();
+            };
+
+            const openModalForEdit = (sectionId) => {
+                const section = allSections.find(s => s.sectionId === sectionId);
+                if (!section) return;
+                form.reset();
+                document.getElementById('section-id').value = section.sectionId;
+                document.getElementById('section-name').value = section.sectionName;
+                document.getElementById('modal-title').textContent = 'Edit Section';
+                
+                Array.from(collegeSelect.options).forEach(opt => {
+                    opt.selected = section.assignedColleges && section.assignedColleges.includes(opt.value);
+                });
+                openModal();
+            };
+            
+            const deleteSection = async (sectionId) => {
+                if (!confirm('Are you sure you want to delete this section? This will not delete the problems inside it, but they will become unassigned.')) return;
+                try {
+                    await fetch(`/api/compiler/sections/${sectionId}`, { method: 'DELETE', headers: { 'x-auth-token': token }});
+                    await fetchSections();
+                } catch (error) {
+                    alert('Failed to delete section.');
+                }
+            };
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const sectionId = document.getElementById('section-id').value;
+                const assignedColleges = Array.from(collegeSelect.selectedOptions).map(opt => opt.value);
+                
+                const body = JSON.stringify({
+                    sectionName: document.getElementById('section-name').value,
+                    assignedColleges
+                });
+                
+                const url = sectionId ? `/api/compiler/sections/${sectionId}` : '/api/compiler/sections';
+                const method = sectionId ? 'PUT' : 'POST';
+
+                try {
+                    const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'x-auth-token': token }, body });
+                    if (!response.ok) throw new Error(await response.text());
+                    closeModal();
+                    await fetchSections();
+                } catch (error) {
+                    alert('Failed to save section.');
+                }
+            });
+
+            document.getElementById('add-section-btn').onclick = resetAndOpenModalForCreate;
+            document.getElementById('close-modal-btn').onclick = closeModal;
+
+            sectionsListDiv.addEventListener('click', (e) => {
+                if (e.target.classList.contains('edit-btn')) openModalForEdit(e.target.dataset.id);
+                if (e.target.classList.contains('delete-btn')) deleteSection(e.target.dataset.id);
+            });
+            
+            const init = async () => {
+                await fetchColleges();
+                await fetchSections();
+            };
+            init();
+        });
+    </script>
+</body>
+</html>
