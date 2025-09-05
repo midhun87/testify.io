@@ -1272,7 +1272,6 @@ app.post('/api/student/courses/progress', authMiddleware, async (req, res) => {
 // =================================================================
 // --- STUDENT ROUTES (TESTS) ---
 // =================================================================
-
 app.get('/api/student/dashboard-data', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
 
@@ -1280,6 +1279,7 @@ app.get('/api/student/dashboard-data', authMiddleware, async (req, res) => {
         const studentEmail = req.user.email;
         const studentCollege = req.user.college;
 
+        // --- Fetch Test Data ---
         const historyResponse = await docClient.send(new QueryCommand({
             TableName: "TestifyResults",
             IndexName: "StudentEmailIndex",
@@ -1306,21 +1306,13 @@ app.get('/api/student/dashboard-data', authMiddleware, async (req, res) => {
 
         let availableTests = [];
         if (studentCollege) {
-            const collegeAssignmentsResponse = await docClient.send(new ScanCommand({
-                TableName: "TestifyAssignments",
-                FilterExpression: "college = :c",
-                ExpressionAttributeValues: { ":c": studentCollege }
-            }));
-            const collegeAssignedTestIds = collegeAssignmentsResponse.Items.map(a => a.testId);
-
-            const individualAssignmentsResponse = await docClient.send(new ScanCommand({
+            // This logic can be simplified in a real-world app with better indexing
+            const assignmentsResponse = await docClient.send(new ScanCommand({
                 TableName: "TestifyAssignments",
                 FilterExpression: "studentEmail = :email",
                 ExpressionAttributeValues: { ":email": studentEmail }
             }));
-            const individualAssignedTestIds = individualAssignmentsResponse.Items.map(a => a.testId);
-
-            const assignedTestIds = [...new Set([...collegeAssignedTestIds, ...individualAssignedTestIds])];
+            const assignedTestIds = assignmentsResponse.Items.map(a => a.testId);
 
             if (assignedTestIds.length > 0) {
                 const completedTestIds = allHistory.map(r => r.testId); 
@@ -1346,10 +1338,35 @@ app.get('/api/student/dashboard-data', authMiddleware, async (req, res) => {
             .slice(0, 3)
             .map(item => ({ ...item, testTitle: allTestsMap.get(item.testId)?.title || 'Unknown Test' }));
 
+        // --- CORRECTED: Fetch Compiler/CodeLab Stats from the correct table ---
+        // Scores are being saved to "TestifyCompilerScores", so we must read from there.
+        const compilerScoresResponse = await docClient.send(new ScanCommand({
+            TableName: "TestifyCompilerScores", // Corrected table name
+            FilterExpression: "studentEmail = :email", // Simplified filter as this table only holds scores
+            ExpressionAttributeValues: {
+                ":email": studentEmail
+            }
+        }));
+        const compilerScores = compilerScoresResponse.Items || [];
+
+        const problemsSolved = compilerScores.length;
+        const totalCodingScore = compilerScores.reduce((sum, item) => sum + (item.score || 0), 0);
+
+        const recentCodingHistory = compilerScores
+            .sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))
+            .slice(0, 3);
+
         res.json({
-            stats: { overallScore, testsCompleted, passRate },
+            stats: { 
+                overallScore, 
+                testsCompleted, 
+                passRate,
+                problemsSolved,
+                totalCodingScore
+            },
             newTests: availableTests,
-            recentHistory
+            recentHistory,
+            recentCodingHistory
         });
 
     } catch (error) {
@@ -1357,7 +1374,6 @@ app.get('/api/student/dashboard-data', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Server error fetching dashboard data.' });
     }
 });
-
 app.get('/api/student/tests', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Student') {
         return res.status(403).json({ message: 'Access denied.' });
@@ -3675,20 +3691,27 @@ app.get('/api/compiler/problems', authMiddleware, adminOnlyAuth, async (req, res
 
 app.put('/api/compiler/problems/:id', authMiddleware, adminOnlyAuth, async (req, res) => {
     const { id } = req.params;
-    const { sectionId, title, description, difficulty, inputFormat, outputFormat, constraints, example, testCases } = req.body;
+    // Destructure all problem fields from the request body, including the new 'score'
+    const { sectionId, title, description, difficulty, score, inputFormat, outputFormat, constraints, example, testCases } = req.body;
+    
     try {
+        // Use the UpdateCommand to modify the item in DynamoDB
         await docClient.send(new UpdateCommand({
             TableName: TABLE_NAME,
             Key: { id },
-            UpdateExpression: "set sectionId = :sid, title = :t, description = :d, difficulty = :diff, inputFormat = :if, outputFormat = :of, #c = :cVal, example = :e, testCases = :tc",
+            // UpdateExpression includes all fields that can be changed. We've added 'score = :s'.
+            UpdateExpression: "set sectionId = :sid, title = :t, description = :d, difficulty = :diff, score = :s, inputFormat = :if, outputFormat = :of, #c = :cVal, example = :e, testCases = :tc",
+            // ExpressionAttributeNames is used for attributes that are reserved keywords, like 'constraints'.
             ExpressionAttributeNames: {
                 "#c": "constraints"
             },
+            // ExpressionAttributeValues maps the placeholders in the UpdateExpression to the actual values.
             ExpressionAttributeValues: { 
                 ":sid": sectionId, 
                 ":t": title, 
                 ":d": description, 
-                ":diff": difficulty, 
+                ":diff": difficulty,
+                ":s": score, // Added the score value here
                 ":if": inputFormat, 
                 ":of": outputFormat, 
                 ":cVal": constraints,
@@ -3696,8 +3719,10 @@ app.put('/api/compiler/problems/:id', authMiddleware, adminOnlyAuth, async (req,
                 ":tc": testCases 
             }
         }));
+        // Send a success response
         res.status(200).json({ message: 'Problem updated successfully.' });
     } catch (error) {
+        // Log any errors and send a server error response
         console.error("Update Problem Error:", error);
         res.status(500).json({ message: 'Server error updating problem.' });
     }
