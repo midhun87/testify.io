@@ -3471,9 +3471,439 @@ app.get('/api/compiler/my-submission/:problemId', authMiddleware, async (req, re
     }
 });
 
+// =================================================================
+// --- COMPLETE & REFACTORED COMPILER APIS (SINGLE TABLE DESIGN) ---
+// =================================================================
+// This is the complete set of backend endpoints for the dynamic compiler.
+// It uses the new "TestifyCodeLab" table to keep data separate.
+// =================================================================
+// --- NEW: AI-POWERED PROBLEM GENERATION (ADMIN ONLY) ---
+// =================================================================
+// Add this endpoint to your backend.js file.
 
-// ... (the rest of your backend.js code)
+const adminOnlyAuth = (req, res, next) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied. Administrator privileges required.' });
+    }
+    next();
+};
 
+
+const TABLE_NAME = "TestifyCodeLab"; // Using a constant for the new table name
+
+app.post('/api/admin/generate-problem-from-pdf', authMiddleware, adminOnlyAuth, async (req, res) => {
+    const { text } = req.body;
+    if (!text) {
+        return res.status(400).json({ message: 'No text provided to generate problem.' });
+    }
+
+    try {
+        const prompt = `Based on the following text from a coding problem document, create a structured JSON object representing the problem. The JSON must adhere strictly to the provided schema. Analyze the text to fill in all fields as accurately as possible. The 'example' field should contain both the input and output. The 'testCases' array must contain at least two distinct test cases extracted or inferred from the text.
+
+Here is the text:\n\n${text}`;
+
+        const schema = {
+            type: "OBJECT",
+            properties: {
+                "title": { "type": "STRING", "description": "A concise title for the problem." },
+                "description": { "type": "STRING", "description": "A detailed description of the problem statement." },
+                "difficulty": { "type": "STRING", "enum": ["Easy", "Medium", "Hard", "CTS Specific"] },
+                "inputFormat": { "type": "STRING", "description": "Description of the input format." },
+                "outputFormat": { "type": "STRING", "description": "Description of the output format." },
+                "constraints": { "type": "STRING", "description": "A list of constraints, each on a new line." },
+                "example": { "type": "STRING", "description": "A formatted example showing sample input and output." },
+                "testCases": {
+                    "type": "ARRAY",
+                    "description": "An array of at least two test cases.",
+                    "items": {
+                        "type": "OBJECT",
+                        "properties": {
+                            "input": { "type": "STRING", "description": "The input for the test case." },
+                            "expected": { "type": "STRING", "description": "The expected output for the test case." }
+                        },
+                        "required": ["input", "expected"]
+                    }
+                }
+            },
+            required: ["title", "description", "difficulty", "testCases"]
+        };
+
+        const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyAR_X4MZ75vxwV7OTU3dabFRcVe4SxWpb8';
+        if (apiKey === 'YOUR_GEMINI_API_KEY') {
+             return res.status(500).json({ message: 'Gemini API key is not configured on the server.' });
+        }
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: schema
+            }
+        };
+
+        const apiResponse = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!apiResponse.ok) {
+            const errorBody = await apiResponse.text();
+            console.error("Gemini API Error:", errorBody);
+            throw new Error(`AI API call failed with status: ${apiResponse.status}`);
+        }
+
+        const result = await apiResponse.json();
+        const jsonText = result.candidates[0].content.parts[0].text;
+        const structuredProblem = JSON.parse(jsonText);
+
+        res.json(structuredProblem);
+
+    } catch (error) {
+        console.error('Error in AI problem generation backend:', error);
+        res.status(500).json({ message: 'Failed to generate problem using AI.' });
+    }
+});
+
+
+
+// --- SECTION MANAGEMENT (ADMIN ONLY) ---
+
+app.post('/api/compiler/sections', authMiddleware, adminOnlyAuth, async (req, res) => {
+    const { sectionName, assignedColleges } = req.body;
+    if (!sectionName) return res.status(400).json({ message: 'Section name is required.' });
+    
+    const sectionId = `section_${uuidv4()}`;
+    const newSection = { 
+        id: sectionId, 
+        recordType: 'SECTION',
+        sectionName, 
+        assignedColleges: assignedColleges || [], 
+        createdAt: new Date().toISOString() 
+    };
+    
+    try {
+        await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: newSection }));
+        res.status(201).json(newSection);
+    } catch (error) {
+        console.error("Create Section Error:", error);
+        res.status(500).json({ message: 'Server error creating section.' });
+    }
+});
+
+app.get('/api/compiler/sections', authMiddleware, adminOnlyAuth, async (req, res) => {
+    try {
+        const { Items } = await docClient.send(new ScanCommand({ 
+            TableName: TABLE_NAME,
+            FilterExpression: "recordType = :type",
+            ExpressionAttributeValues: { ":type": "SECTION" }
+        }));
+        Items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        res.json(Items.map(item => ({...item, sectionId: item.id})));
+    } catch (error) {
+        console.error("Get Sections Error:", error);
+        res.status(500).json({ message: 'Server error fetching sections.' });
+    }
+});
+
+app.put('/api/compiler/sections/:id', authMiddleware, adminOnlyAuth, async (req, res) => {
+    const { id } = req.params;
+    const { sectionName, assignedColleges } = req.body;
+    try {
+        await docClient.send(new UpdateCommand({
+            TableName: TABLE_NAME,
+            Key: { id },
+            UpdateExpression: "set sectionName = :name, assignedColleges = :colleges",
+            ExpressionAttributeValues: { ":name": sectionName, ":colleges": assignedColleges || [] }
+        }));
+        res.status(200).json({ message: 'Section updated successfully.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error updating section.' });
+    }
+});
+
+app.delete('/api/compiler/sections/:id', authMiddleware, adminOnlyAuth, async (req, res) => {
+    const { id } = req.params;
+    try {
+        await docClient.send(new DeleteCommand({ TableName: TABLE_NAME, Key: { id } }));
+        res.status(200).json({ message: 'Section deleted successfully.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error deleting section.' });
+    }
+});
+
+
+// --- PROBLEM MANAGEMENT (ADMIN ONLY) ---
+
+app.post('/api/compiler/problems', authMiddleware, adminOnlyAuth, async (req, res) => {
+    const { sectionId, title, description, difficulty, inputFormat, outputFormat, constraints, example, testCases } = req.body;
+    if (!sectionId || !title || !description || !difficulty || !testCases || testCases.length === 0) {
+        return res.status(400).json({ message: 'Required fields are missing.' });
+    }
+    const problemId = `problem_${uuidv4()}`;
+    const newProblem = { 
+        id: problemId,
+        recordType: 'PROBLEM',
+        sectionId, title, description, difficulty, inputFormat, outputFormat, constraints, example, testCases, 
+        createdAt: new Date().toISOString() 
+    };
+
+    try {
+        await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: newProblem }));
+        res.status(201).json(newProblem);
+    } catch (error) {
+        console.error("Create Problem Error:", error);
+        res.status(500).json({ message: 'Server error creating problem.' });
+    }
+});
+
+app.get('/api/compiler/problems', authMiddleware, adminOnlyAuth, async (req, res) => {
+    try {
+        const { Items } = await docClient.send(new ScanCommand({ 
+            TableName: TABLE_NAME,
+            FilterExpression: "recordType = :type",
+            ExpressionAttributeValues: { ":type": "PROBLEM" }
+        }));
+        Items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        res.json(Items.map(item => ({...item, problemId: item.id})));
+    } catch (error) {
+        console.error("Get Problems Error:", error);
+        res.status(500).json({ message: 'Server error fetching problems.' });
+    }
+});
+
+app.put('/api/compiler/problems/:id', authMiddleware, adminOnlyAuth, async (req, res) => {
+    const { id } = req.params;
+    const { sectionId, title, description, difficulty, inputFormat, outputFormat, constraints, example, testCases } = req.body;
+    try {
+        await docClient.send(new UpdateCommand({
+            TableName: TABLE_NAME,
+            Key: { id },
+            UpdateExpression: "set sectionId = :sid, title = :t, description = :d, difficulty = :diff, inputFormat = :if, outputFormat = :of, #c = :cVal, example = :e, testCases = :tc",
+            ExpressionAttributeNames: {
+                "#c": "constraints"
+            },
+            ExpressionAttributeValues: { 
+                ":sid": sectionId, 
+                ":t": title, 
+                ":d": description, 
+                ":diff": difficulty, 
+                ":if": inputFormat, 
+                ":of": outputFormat, 
+                ":cVal": constraints,
+                ":e": example, 
+                ":tc": testCases 
+            }
+        }));
+        res.status(200).json({ message: 'Problem updated successfully.' });
+    } catch (error) {
+        console.error("Update Problem Error:", error);
+        res.status(500).json({ message: 'Server error updating problem.' });
+    }
+});
+
+
+
+app.delete('/api/compiler/problems/:id', authMiddleware, adminOnlyAuth, async (req, res) => {
+     const { id } = req.params;
+    try {
+        await docClient.send(new DeleteCommand({ TableName: TABLE_NAME, Key: { id } }));
+        res.status(200).json({ message: 'Problem deleted successfully.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error deleting problem.' });
+    }
+});
+
+
+// --- STUDENT-FACING API TO GET ASSIGNED PROBLEMS ---
+
+app.get('/api/student/compiler/problems', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Only students can access this resource.' });
+    const studentCollege = req.user.college;
+    if (!studentCollege) return res.json([]);
+
+    try {
+        const { Items } = await docClient.send(new ScanCommand({ TableName: TABLE_NAME }));
+
+        const allSections = Items.filter(item => item.recordType === 'SECTION');
+        const allProblems = Items.filter(item => item.recordType === 'PROBLEM');
+
+        const allowedSections = allSections.filter(s => !s.assignedColleges || s.assignedColleges.length === 0 || s.assignedColleges.includes(studentCollege));
+        const allowedSectionIds = new Set(allowedSections.map(s => s.id));
+        const sectionMap = new Map(allSections.map(s => [s.id, s.sectionName]));
+
+        const studentProblems = allProblems
+            .filter(p => allowedSectionIds.has(p.sectionId))
+            .map(p => ({ ...p, problemId: p.id, sectionName: sectionMap.get(p.sectionId) || 'Uncategorized' }));
+            
+        studentProblems.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        res.json(studentProblems);
+
+    } catch (error) {
+        console.error("Get Student Problems Error:", error);
+        res.status(500).json({ message: 'Server error fetching problems.' });
+    }
+});
+
+
+// --- SCORE & SUBMISSION APIS (SINGLE TABLE DESIGN) ---
+
+app.post('/api/compiler/save-score', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Only students can save scores.' });
+    
+    const { problemId, problemTitle, difficulty, score, submittedCode, language } = req.body;
+    const studentEmail = req.user.email;
+    if (!problemId || !problemTitle || score === undefined || !submittedCode || !language) {
+        return res.status(400).json({ message: 'Missing required score data.' });
+    }
+    
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: TABLE_NAME,
+            FilterExpression: "recordType = :type AND studentEmail = :email AND problemId = :pid",
+            ExpressionAttributeValues: { ":type": "SCORE", ":email": studentEmail, ":pid": problemId }
+        }));
+
+        if (Items && Items.length > 0) {
+            const existingId = Items[0].id;
+             await docClient.send(new UpdateCommand({
+                TableName: TABLE_NAME,
+                Key: { id: existingId },
+                UpdateExpression: "set #score = :s, submittedCode = :c, submittedAt = :t, #lang = :l",
+                ExpressionAttributeNames: { "#score": "score", "#lang": "language" },
+                ExpressionAttributeValues: { ":s": score, ":c": submittedCode, ":t": new Date().toISOString(), ":l": language }
+            }));
+            return res.status(200).json({ message: 'Submission updated successfully!' });
+        } else {
+            const scoreId = `score_${uuidv4()}`;
+            const newScore = {
+                id: scoreId,
+                recordType: 'SCORE',
+                problemId, problemTitle, difficulty, score, submittedCode, language, studentEmail,
+                submittedAt: new Date().toISOString()
+            };
+            await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: newScore }));
+            return res.status(201).json({ message: 'Score and code saved successfully!' });
+        }
+    } catch (error) {
+        console.error("Save Compiler Score Error:", error);
+        res.status(500).json({ message: 'Server error saving score.' });
+    }
+});
+
+app.get('/api/admin/compiler-scores', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin' && req.user.role !== 'Moderator') {
+         return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const { Items: scores } = await docClient.send(new ScanCommand({
+            TableName: TABLE_NAME,
+            FilterExpression: "recordType = :type",
+            ExpressionAttributeValues: { ":type": "SCORE" }
+        }));
+        
+        if (!scores || scores.length === 0) return res.json([]);
+
+        const studentEmails = [...new Set(scores.map(s => s.studentEmail))];
+        const keys = studentEmails.map(email => ({ email }));
+        
+        const { Responses } = await docClient.send(new BatchGetCommand({
+            RequestItems: { "TestifyUsers": { Keys: keys, ProjectionExpression: "email, fullName, college" } }
+        }));
+        
+        const students = Responses.TestifyUsers || [];
+        const studentMap = new Map(students.map(s => [s.email, { fullName: s.fullName, college: s.college }]));
+
+        const enrichedScores = scores.map(score => {
+            const studentInfo = studentMap.get(score.studentEmail);
+            return {
+                ...score,
+                scoreId: score.id,
+                studentName: studentInfo ? studentInfo.fullName : 'Unknown',
+                college: studentInfo ? studentInfo.college : 'Unknown'
+            };
+        });
+        
+        enrichedScores.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+        res.json(enrichedScores);
+
+    } catch (error) {
+        console.error("Get All Scores Error:", error);
+        res.status(500).json({ message: 'Server error fetching scores.' });
+    }
+});
+
+app.get('/api/compiler/submission/:scoreId', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin' && req.user.role !== 'Moderator') {
+         return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { scoreId } = req.params;
+    try {
+        const { Item } = await docClient.send(new GetCommand({ TableName: TABLE_NAME, Key: { id: scoreId } }));
+        if (!Item || Item.recordType !== 'SCORE') {
+            return res.status(404).json({ message: 'Submission not found.' });
+        }
+        res.json(Item);
+    } catch (error) {
+        console.error("Get Submission Details Error:", error);
+        res.status(500).json({ message: 'Server error fetching submission details.' });
+    }
+});
+
+
+app.get('/api/compiler/my-score', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: TABLE_NAME,
+            FilterExpression: "recordType = :type AND studentEmail = :email",
+            ExpressionAttributeValues: { ":type": "SCORE", ":email": req.user.email }
+        }));
+        const totalScore = Items.reduce((sum, item) => sum + (item.score || 0), 0);
+        res.json({ totalScore });
+    } catch (error) {
+        console.error("Get My Score Error:", error);
+        res.status(500).json({ message: 'Server error fetching score.' });
+    }
+});
+
+app.get('/api/compiler/submitted-problems', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: TABLE_NAME,
+            FilterExpression: "recordType = :type AND studentEmail = :email",
+            ExpressionAttributeValues: { ":type": "SCORE", ":email": req.user.email }
+        }));
+        res.json(Items.map(item => item.problemId));
+    } catch (error) {
+        console.error("Get Submitted Problems Error:", error);
+        res.status(500).json({ message: 'Server error fetching submitted problems.' });
+    }
+});
+
+app.get('/api/compiler/my-submission/:problemId', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+    const { problemId } = req.params;
+    try {
+         const { Items } = await docClient.send(new ScanCommand({
+            TableName: TABLE_NAME,
+            FilterExpression: "recordType = :type AND studentEmail = :email AND problemId = :pid",
+            ExpressionAttributeValues: { ":type": "SCORE", ":email": req.user.email, ":pid": problemId }
+        }));
+        if (Items && Items.length > 0) {
+            res.json(Items[0]);
+        } else {
+            res.status(404).json({ message: 'No submission found for this problem.' });
+        }
+    } catch (error) {
+        console.error("Get My Submission Error:", error);
+        res.status(500).json({ message: 'Server error fetching your submission.' });
+    }
+});
+
+// --- (Make sure this section is placed before your server starts listening) ---
 
 
 // --- SERVER START ---
