@@ -13,57 +13,73 @@
         }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50 text-gray-800">
     <div class="flex min-h-screen">
-        <!-- Left Pane: Branding and Flyer -->
-        <div class="hidden lg:flex w-1/2 items-center justify-center bg-gradient-to-tr from-indigo-800 to-purple-700 text-white p-12">
-            <div class="text-center">
-                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-24 h-24 mx-auto mb-4">
-                <h1 class="text-5xl font-bold tracking-tight">TESTIFY</h1>
-                <p class="mt-4 text-lg text-indigo-200">The professional platform for secure online assessments.</p>
-                <!-- Added Flyer Image -->
-                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756491151/FREE_TESTS_jianct.png" alt="Free Tests Flyer" class="mt-10 w-full max-w-md rounded-lg shadow-2xl mx-auto">
-            <p class="mt-4 p-3 bg-violet-50 text-violet-800 rounded-xl font-semibold text-center text-sm sm:text-base">
-                Students who created an account before 31 August 2025 12:00 PM (IST) will only get the offer. Hurry UP!!! & test will be enabled aftet 5:00 PM(IST)
-            </p>
-            </div>
+        <!-- Left Pane: Branding and Visuals -->
+        <div class="hidden lg:flex w-1/2 items-center justify-center bg-white p-12 relative overflow-hidden border-r border-gray-200">
+             <!-- Background decorative elements -->
+            <div class="absolute top-0 left-0 w-72 h-72 bg-indigo-50 rounded-full -translate-x-1/2 -translate-y-1/2 filter blur-3xl"></div>
+            <div class="absolute bottom-0 right-0 w-96 h-96 bg-purple-50 rounded-full translate-x-1/2 translate-y-1/2 filter blur-3xl"></div>
             
+            <div class="text-center z-10">
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-28 h-28 mx-auto mb-4">
+                <h1 class="text-5xl font-bold tracking-tight text-gray-900">TESTIFY</h1>
+                <p class="mt-4 text-lg text-gray-600">The professional platform for secure online assessments.</p>
+                
+                <!-- Updated Flyer/Visual -->
+                <div class="mt-12 p-1 bg-gray-200/50 rounded-xl shadow-2xl">
+                     <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757066742/Gemini_Generated_Image_njiwz6njiwz6njiw_1_zziakv.png" alt="Platform Screenshot" class="w-full max-w-md rounded-lg mx-auto">
+                </div>
+                <p class="mt-6 p-3 bg-indigo-50 text-indigo-800 rounded-xl font-medium text-center text-sm sm:text-base border border-indigo-100">
+                    <strong>Code, Compile, Conquer:</strong> Your Interview Journey Starts Here.
+                </p>
+            </div>
         </div>
 
         <!-- Right Pane: Login Form -->
         <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
             <div class="w-full max-w-md">
+                <!-- Mobile Logo -->
                 <div class="lg:hidden text-center mb-8">
-                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-16 h-16 mx-auto mb-2 invert">
-                    <h1 class="text-3xl font-bold text-gray-800">TESTIFY</h1>
+                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-20 h-20 mx-auto mb-2">
+                    <h1 class="text-3xl font-bold text-gray-900">TESTIFY</h1>
                 </div>
 
-                <div class="bg-white p-8 rounded-2xl shadow-lg">
-                    <h2 class="text-2xl font-bold text-gray-900 text-center">Welcome Back!</h2>
-                    <p class="text-gray-600 text-center mt-2 mb-8">Log in to access your dashboard.</p>
+                <div class="bg-white p-8 rounded-2xl shadow-2xl border border-gray-200/80">
+                    <h2 class="text-3xl font-bold text-gray-900 text-center">Welcome Back!</h2>
+                    <p class="text-gray-500 text-center mt-2 mb-8">Log in to access your dashboard.</p>
 
                     <form id="login-form">
-                        <div class="mb-5">
-                            <label for="email" class="block mb-2 text-sm font-medium text-gray-700">Email Address</label>
-                            <input type="email" id="email" name="email" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
-                        </div>
-                        <div class="mb-6">
-                            <label for="password" class="block mb-2 text-sm font-medium text-gray-700">Password</label>
-                            <input type="password" id="password" name="password" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
-                        </div>
-                        <div class="text-right mt-2">
-                                <a href="/forgot-password.html" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Forgot Password?</a>
+                        <div class="mb-5 relative">
+                            <label for="email" class="block mb-2 text-sm font-medium text-gray-600">Email Address</label>
+                            <div class="absolute inset-y-0 left-0 top-7 flex items-center pl-3 pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                             </div>
-                        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300">Log In</button>
+                            <input type="email" id="email" name="email" required class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition placeholder-gray-400 text-gray-900">
+                        </div>
+                        <div class="mb-3 relative">
+                            <label for="password" class="block mb-2 text-sm font-medium text-gray-600">Password</label>
+                             <div class="absolute inset-y-0 left-0 top-7 flex items-center pl-3 pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                            </div>
+                            <input type="password" id="password" name="password" required class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition placeholder-gray-400 text-gray-900">
+                        </div>
+                        <div class="text-right mb-6">
+                            <a href="/forgot-password.html" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Forgot Password?</a>
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-indigo-500 transition duration-300 transform hover:scale-105">
+                            Log In
+                        </button>
                     </form>
 
                     <div id="message" class="hidden text-center mt-4 p-3 rounded-lg font-medium"></div>
 
-                    <p class="text-center text-sm text-gray-600 mt-8">
+                    <p class="text-center text-sm text-gray-500 mt-8">
                         Don't have an account? <a href="/signup.html" class="font-medium text-indigo-600 hover:text-indigo-500">Sign Up</a>
                     </p>
-                    <p class="text-center text-sm text-gray-600 mt-4">
-                        Back to Home <- <a href="/welcome.html" class="font-medium text-indigo-600 hover:text-indigo-500">Home</a>
+                    <p class="text-center text-sm text-gray-500 mt-4">
+                        Back to Home &larr; <a href="/welcome.html" class="font-medium text-indigo-600 hover:text-indigo-500">Home</a>
                     </p>
                 </div>
             </div>
@@ -72,3 +88,4 @@
     <script src="auth.js"></script>
 </body>
 </html>
+

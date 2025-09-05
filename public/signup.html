@@ -14,7 +14,7 @@
         /* Custom styles for spinner */
         .loader {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #4F46E5;
+            border-top: 4px solid #4338CA; /* indigo-700 */
             border-radius: 50%;
             width: 24px;
             height: 24px;
@@ -26,25 +26,26 @@
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 text-gray-800">
     <div class="flex min-h-screen">
-        <!-- Branding Section (Left side) -->
-        <div class="hidden lg:flex w-1/2 items-center justify-center bg-gradient-to-tr from-violet-800 to-indigo-600 text-white p-12 relative overflow-hidden">
-            <div class="absolute inset-0 z-0 opacity-10">
-                <!-- Decorative background elements -->
-                <svg class="absolute top-0 right-0 h-full w-auto text-white opacity-20" fill="currentColor" viewBox="0 0 100 100">
-                    <rect x="0" y="0" width="100" height="100" />
-                </svg>
-            </div>
+        <!-- Left Pane: Branding and Visuals -->
+        <div class="hidden lg:flex w-1/2 items-center justify-center bg-white p-12 relative overflow-hidden border-r border-gray-200">
+             <!-- Background decorative elements -->
+            <div class="absolute top-0 left-0 w-72 h-72 bg-indigo-50 rounded-full -translate-x-1/2 -translate-y-1/2 filter blur-3xl"></div>
+            <div class="absolute bottom-0 right-0 w-96 h-96 bg-purple-50 rounded-full translate-x-1/2 translate-y-1/2 filter blur-3xl"></div>
+            
             <div class="relative z-10 text-center">
-                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-28 h-28 mx-auto mb-6 rounded-full shadow-2xl">
-                <h1 class="text-5xl font-extrabold tracking-tight drop-shadow-lg">TESTIFY</h1>
-                <p class="mt-4 text-xl text-indigo-200 drop-shadow-md">The professional platform for secure online Training & assessments.</p>
-                <!-- Added Flyer Image with modern styling -->
-                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756491151/FREE_TESTS_jianct.png" alt="Free Tests Flyer" class="mt-12 w-full max-w-sm rounded-3xl shadow-2xl mx-auto transform hover:scale-105 transition-all duration-300">
-            <p class="mt-4 p-3 bg-violet-50 text-violet-800 rounded-xl font-semibold text-center text-sm sm:text-base">
-                Students who created an account before 31 August 2025 12:00 PM (IST) will only get the offer. Hurry UP!!! & test will be enabled aftet 5:00 PM(IST)
-            </p>
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-28 h-28 mx-auto mb-4">
+                <h1 class="text-5xl font-bold tracking-tight text-gray-900">TESTIFY</h1>
+                <p class="mt-4 text-lg text-gray-600">The professional platform for secure online assessments.</p>
+                
+                <!-- Updated Flyer/Visual -->
+                <div class="mt-12 p-1 bg-gray-200/50 rounded-xl shadow-2xl">
+                     <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757066742/Gemini_Generated_Image_njiwz6njiwz6njiw_1_zziakv.png" alt="Platform Screenshot" class="w-full max-w-md rounded-lg mx-auto">
+                </div>
+                 <p class="mt-6 p-3 bg-indigo-50 text-indigo-800 rounded-xl font-medium text-center text-sm sm:text-base border border-indigo-100">
+                    <strong>Code, Compile, Conquer:</strong> Your Interview Journey Starts Here.
+                </p>
             </div>
         </div>
 
@@ -53,34 +54,32 @@
             <div class="w-full max-w-md">
                 <!-- Mobile Branding -->
                 <div class="lg:hidden text-center mb-8">
-                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-20 h-20 mx-auto mb-4 rounded-full">
-                    <h1 class="text-3xl font-bold text-gray-800">TESTIFY</h1>
+                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-20 h-20 mx-auto mb-2">
+                    <h1 class="text-3xl font-bold text-gray-900">TESTIFY</h1>
                 </div>
                 
-                <div class="bg-white p-8 rounded-3xl shadow-xl transition-all duration-300 hover:shadow-2xl">
-                    <h2 class="text-3xl font-bold text-gray-900 text-center">Create Student Account</h2>
-                    <p class="text-gray-600 text-center mt-2 mb-8 text-sm">Join the platform to start your journey.</p>
+                <div class="bg-white p-8 rounded-2xl shadow-2xl border border-gray-200/80">
+                    <h2 class="text-3xl font-bold text-gray-900 text-center">Create an Account</h2>
+                    <p class="text-gray-500 text-center mt-2 mb-8">Join our platform to start your journey.</p>
                     
                     <!-- First Step: Email Input and OTP Request -->
                     <div id="otp-step" class="space-y-6">
-                        <div class="mb-5">
-                            <label for="email-otp" class="block mb-2 text-sm font-medium text-gray-700">Email Address</label>
-                            <input type="email" id="email-otp" name="email-otp" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-violet-500 focus:border-violet-500 transition-all duration-200">
+                        <div>
+                            <label for="email-otp" class="block mb-2 text-sm font-medium text-gray-600">Email Address</label>
+                            <input type="email" id="email-otp" name="email-otp" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition placeholder-gray-400 text-gray-900">
                         </div>
-                        <div class="mb-5">
-                            <label for="mobile-otp" class="block mb-2 text-sm font-medium text-gray-700">Mobile Number</label>
-                            <input type="tel" id="mobile-otp" name="mobile-otp" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-violet-500 focus:border-violet-500 transition-all duration-200">
+                        <div>
+                            <label for="mobile-otp" class="block mb-2 text-sm font-medium text-gray-600">Mobile Number</label>
+                            <input type="tel" id="mobile-otp" name="mobile-otp" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition placeholder-gray-400 text-gray-900">
                         </div>
                         <!-- Terms and Conditions Checkbox -->
-                        <div class="mb-6">
-                            <div class="flex items-center">
-                                <input id="terms" name="terms" type="checkbox" class="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 rounded">
-                                <label for="terms" class="ml-2 block text-sm text-gray-900">
-                                    I agree to the <a href="T&C.html" target="_blank" rel="noopener noreferrer" class="font-medium text-violet-600 hover:underline">Terms & Conditions</a>
-                                </label>
-                            </div>
+                        <div class="flex items-center">
+                            <input id="terms" name="terms" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <label for="terms" class="ml-2 block text-sm text-gray-900">
+                                I agree to the <a href="T&C.html" target="_blank" rel="noopener noreferrer" class="font-medium text-indigo-600 hover:underline">Terms & Conditions</a>
+                            </label>
                         </div>
-                        <button id="send-otp-btn" class="w-full bg-violet-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2">
+                        <button id="send-otp-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2">
                             <span id="send-otp-text">Send OTP</span>
                             <div id="send-otp-spinner" class="loader hidden"></div>
                         </button>
@@ -93,31 +92,31 @@
                         
                         <!-- OTP Input Field -->
                         <div class="mb-5">
-                            <label for="otp" class="block mb-2 text-sm font-medium text-gray-700">OTP</label>
-                            <input type="text" id="otp" name="otp" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-violet-500 focus:border-violet-500 transition-all duration-200">
-                            <a href="#" id="resend-otp" class="text-sm text-violet-600 hover:underline mt-2 inline-block">Resend OTP?</a>
+                            <label for="otp" class="block mb-2 text-sm font-medium text-gray-700">Enter OTP</label>
+                            <input type="text" id="otp" name="otp" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
+                            <a href="#" id="resend-otp" class="text-sm text-indigo-600 hover:underline mt-2 inline-block">Resend OTP?</a>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
                             <!-- Full Name -->
                             <div class="mb-5">
                                 <label for="fullName" class="block mb-2 text-sm font-medium text-gray-700">Full Name</label>
-                                <input type="text" id="fullName" name="fullName" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-violet-500 focus:border-violet-500 transition-all duration-200">
+                                <input type="text" id="fullName" name="fullName" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
                             </div>
-                            <!-- Mobile Number -->
+                            <!-- Mobile Number (Display Only) -->
                             <div class="mb-5">
                                 <label for="mobile" class="block mb-2 text-sm font-medium text-gray-700">Mobile Number</label>
-                                <input type="tel" id="mobile" name="mobile" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-violet-500 focus:border-violet-500 transition-all duration-200">
+                                <input type="tel" id="mobile" name="mobile" required readonly class="w-full px-4 py-3 bg-gray-200 border border-gray-300 rounded-lg cursor-not-allowed">
                             </div>
                         </div>
-                        <!-- Email Address -->
+                        <!-- Email Address (Display Only)-->
                         <div class="mb-5">
                             <label for="email" class="block mb-2 text-sm font-medium text-gray-700">Email Address</label>
-                            <input type="email" id="email" name="email" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-violet-500 focus:border-violet-500 transition-all duration-200">
+                            <input type="email" id="email" name="email" required readonly class="w-full px-4 py-3 bg-gray-200 border border-gray-300 rounded-lg cursor-not-allowed">
                         </div>
                         <!-- College Name -->
                         <div class="mb-5">
                             <label for="college" class="block mb-2 text-sm font-medium text-gray-700">College Name</label>
-                            <select id="college" name="college" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-violet-500 focus:border-violet-500 transition-all duration-200">
+                            <select id="college" name="college" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
                                 <option value="" disabled selected>Loading colleges...</option>
                             </select>
                         </div>
@@ -125,7 +124,7 @@
                             <!-- Year -->
                             <div class="mb-5">
                                 <label for="year" class="block mb-2 text-sm font-medium text-gray-700">Year</label>
-                                <select id="year" name="year" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-violet-500 focus:border-violet-500 transition-all duration-200">
+                                <select id="year" name="year" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
                                     <option value="" disabled selected>Select year</option>
                                     <option value="1">1</option>
                                     <option value="2">2</option>
@@ -137,7 +136,7 @@
                             <!-- Department -->
                             <div class="mb-5">
                                 <label for="department" class="block mb-2 text-sm font-medium text-gray-700">Department</label>
-                                <select id="department" name="department" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-violet-500 focus:border-violet-500 transition-all duration-200">
+                                <select id="department" name="department" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
                                     <option value="" disabled selected>Loading departments...</option>
                                 </select>
                             </div>
@@ -145,27 +144,27 @@
                         <!-- Roll Number -->
                         <div class="mb-5">
                             <label for="rollNumber" class="block mb-2 text-sm font-medium text-gray-700">Roll Number</label>
-                            <input type="text" id="rollNumber" name="rollNumber" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-violet-500 focus:border-violet-500 transition-all duration-200">
+                            <input type="text" id="rollNumber" name="rollNumber" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
                         </div>
                         <!-- Password -->
                         <div class="mb-6">
                             <label for="password" class="block mb-2 text-sm font-medium text-gray-700">Password</label>
-                            <input type="password" id="password" name="password" required minlength="6" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-violet-500 focus:border-violet-500 transition-all duration-200">
+                            <input type="password" id="password" name="password" required minlength="6" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
                         </div>
                         
                         <!-- Submit Button -->
-                        <button type="submit" class="w-full bg-violet-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-all duration-300 transform hover:scale-105">Create Account</button>
+                        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-105">Create Account</button>
                     </form>
 
                     <div id="message" class="hidden text-center mt-4 p-3 rounded-lg font-medium"></div>
                     
-                    <div class="mt-8 text-center space-y-4">
-                        <a href="/login.html" class="block w-full bg-gray-200 text-gray-800 font-bold py-3 px-4 rounded-lg hover:bg-gray-300 transition-all duration-300">Already have an account? Log In</a>
-                        <div class="flex justify-center items-center space-x-4">
-                            <a href="/moderator/login.html" class="text-sm font-medium text-violet-600 hover:text-violet-500">Moderator</a>
-                            <span class="text-gray-300">|</span>
-                            <a href="/welcome.html" class="text-sm font-medium text-gray-600 hover:text-gray-500">Home</a>
-                        </div>
+                    <div class="mt-8 text-center space-y-2">
+                         <p class="text-center text-sm text-gray-500">
+                            Already have an account? <a href="/login.html" class="font-medium text-indigo-600 hover:text-indigo-500">Log In</a>
+                        </p>
+                        <p class="text-center text-sm text-gray-500">
+                            Back to Home &larr; <a href="/welcome.html" class="font-medium text-indigo-600 hover:text-indigo-500">Home</a>
+                        </p>
                     </div>
                 </div>
             </div>
@@ -365,4 +364,3 @@
     </script>
 </body>
 </html>
-
