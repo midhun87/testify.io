@@ -84,7 +84,7 @@
                 <h3 id="modal-title" class="text-2xl font-bold text-gray-800 mb-6">Add New Problem</h3>
                 <input type="hidden" id="problem-id">
                 <div class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div>
                             <label for="problem-title" class="block text-sm font-medium text-gray-700">Problem Title</label>
                             <input type="text" id="problem-title" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required>
@@ -101,6 +101,10 @@
                                 <option>Hard</option>
                                 <option>CTS Specific</option>
                             </select>
+                        </div>
+                        <div>
+                            <label for="problem-score" class="block text-sm font-medium text-gray-700">Score</label>
+                            <input type="number" id="problem-score" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 25" required>
                         </div>
                     </div>
                     <div>
@@ -209,6 +213,7 @@
                 
                 document.getElementById('problem-title').value = problemData.title || '';
                 document.getElementById('problem-difficulty').value = problemData.difficulty || 'Easy';
+                document.getElementById('problem-score').value = problemData.score || '';
                 document.getElementById('problem-description').value = problemData.description || '';
                 document.getElementById('problem-input-format').value = problemData.inputFormat || '';
                 document.getElementById('problem-output-format').value = problemData.outputFormat || '';
@@ -303,7 +308,7 @@
                     <div class="border rounded-lg p-4 flex justify-between items-center">
                         <div>
                             <h3 class="font-bold text-lg text-gray-800">${p.title}</h3>
-                            <p class="text-sm text-gray-600">${sectionMap.get(p.sectionId) || 'Uncategorized'} - <span class="font-medium">${p.difficulty}</span></p>
+                            <p class="text-sm text-gray-600">${sectionMap.get(p.sectionId) || 'Uncategorized'} - <span class="font-medium">${p.difficulty}</span> - <span class="font-bold text-indigo-600">${p.score || 0} Points</span></p>
                         </div>
                         <div class="space-x-2">
                             <button class="edit-btn px-3 py-1 bg-gray-200 text-sm rounded hover:bg-gray-300" data-id="${p.id}">Edit</button>
@@ -330,6 +335,7 @@
                 document.getElementById('problem-title').value = problem.title;
                 document.getElementById('problem-section').value = problem.sectionId;
                 document.getElementById('problem-difficulty').value = problem.difficulty;
+                document.getElementById('problem-score').value = problem.score || '';
                 document.getElementById('problem-description').value = problem.description;
                 document.getElementById('problem-input-format').value = problem.inputFormat || '';
                 document.getElementById('problem-output-format').value = problem.outputFormat || '';
@@ -355,6 +361,7 @@
                     sectionId: document.getElementById('problem-section').value,
                     title: document.getElementById('problem-title').value,
                     difficulty: document.getElementById('problem-difficulty').value,
+                    score: parseInt(document.getElementById('problem-score').value, 10),
                     description: document.getElementById('problem-description').value,
                     inputFormat: document.getElementById('problem-input-format').value,
                     outputFormat: document.getElementById('problem-output-format').value,
