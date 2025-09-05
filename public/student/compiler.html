@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Space - TESTIFY</title>
-    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
+    <title>Testify CodeLab</title>
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757066128/Gemini_Generated_Image_9bakrh9bakrh9bak_wuhqq7.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -60,7 +60,6 @@
             font-size: 14px;
         }
         
-        /* This CSS ensures the gutter and line area have a distinct background and border */
         .CodeMirror-gutters {
             border-right: 1px solid #374151; 
             background-color: #1f2937;
@@ -73,7 +72,6 @@
 
         .problem-list-item { cursor: pointer; transition: background-color 0.2s, color 0.2s; }
         .problem-list-item.selected { background-color: #4F46E5; color: white; }
-        .problem-list-item.selected .difficulty-tag { background-color: white !important; color: #4F46E5 !important; }
 
         .problem-list-item.submitted { color: #6b7280; }
         .submitted-badge {
@@ -88,13 +86,21 @@
         .accordion-header:hover { background-color: #f3f4f6; }
         .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
 
-        .confetti {
-            width: 10px; height: 10px; position: absolute;
-            animation: confetti-fall 3s ease-out forwards; z-index: 1000;
+        .prose h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid #e5e7eb;
         }
-        @keyframes confetti-fall {
-            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        .prose pre {
+            background-color: #f3f4f6;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: monospace;
         }
         
         ::-webkit-scrollbar { width: 8px; }
@@ -108,11 +114,11 @@
         <!-- Main Sidebar -->
         <aside class="w-64 bg-white shadow-md hidden lg:flex flex-col">
             <div class="flex items-center justify-center p-4 border-b">
-                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757066128/Gemini_Generated_Image_9bakrh9bakrh9bak_wuhqq7.png" alt="TESTIFY Logo">
                 <span class="ml-3 text-2xl font-bold text-gray-800">TESTIFY</span>
             </div>
             <div class="flex flex-col flex-grow p-4">
-                <a href="/student/dashboard.html" class="sidebar-link">
+                 <a href="/student/dashboard.html" class="sidebar-link">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                     <span>Dashboard</span>
                 </a>
@@ -134,7 +140,7 @@
                 </a>
                 <a href="/compiler.html" class="sidebar-link active">
                      <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
-                    <span>Code Space</span>
+                    <span>CodeLab</span>
                 </a>
                  <div class="mt-auto">
                      <a href="/student/student-profile.html" class="sidebar-link">
@@ -154,7 +160,7 @@
                          <svg class="h-6 w-6 text-gray-700" id="menu-open-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                          <svg class="h-6 w-6 text-gray-700 hidden" id="menu-close-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                      </button>
-                     <span class="text-xl font-semibold text-gray-800">Compiler</span>
+                     <span class="text-xl font-semibold text-gray-800">Testify CodeLab</span>
                  </div>
                  
                 <div class="flex items-center space-x-6">
@@ -180,7 +186,7 @@
             <div class="flex-1 flex overflow-hidden p-4 lg:p-6 lg:gap-x-4">
                 <!-- Problems Sidebar -->
                 <aside id="problems-sidebar" class="w-64 bg-white p-4 shadow-lg rounded-lg flex flex-col flex-shrink-0 absolute lg:relative top-0 left-0 h-full z-10">
-                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">Problems</h2>
+                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">Problem Sections</h2>
                     <div id="problem-list" class="overflow-y-auto flex-grow pr-2">
                         <!-- Problems will be dynamically inserted here -->
                     </div>
@@ -194,7 +200,9 @@
                                 <h2 id="problem-title" class="text-2xl font-bold text-gray-800"></h2>
                                 <span id="problem-difficulty-tag" class="ml-4 text-sm font-semibold px-3 py-1 rounded-full"></span>
                             </div>
-                            <div id="problem-description-container" class="mt-4 text-gray-700 leading-relaxed prose"></div>
+                            <div id="problem-details-container" class="mt-4 text-gray-700 leading-relaxed prose">
+                                <!-- Structured problem details will be injected here -->
+                            </div>
                         
                             <div class="flex justify-between items-center my-6">
                                 <div class="flex items-center space-x-4">
@@ -267,72 +275,17 @@
                 window.location.href = '/login.html';
                 return;
             }
-            document.getElementById('logout-button').addEventListener('click', () => {
-                localStorage.clear();
-                window.location.href = '/login.html';
-            });
+            document.getElementById('logout-button').onclick = () => { localStorage.clear(); window.location.href = '/login.html'; };
             document.getElementById('user-menu-button').onclick = () => document.getElementById('user-menu').classList.toggle('hidden');
 
             // --- DATA ---
-             const problems = [
-                 // Easy
-                { id: 'two-sum', title: 'Two Sum', description: `### Problem Statement\nGiven an array of integers \`nums\` and an integer \`target\`, return the indices of the two numbers such that they add up to the \`target\`.\nYou may assume that each input would have **exactly one solution**, and you may not use the same element twice.\n\nYou can return the answer in any order.\n\n### Input Format\n- The first line contains the target integer.\n- The second line contains space-separated integers for the array \`nums\`.\n\n### Output Format\n- A single line with two space-separated integers representing the indices.\n\n### Constraints\n- \`2 <= nums.length <= 10^4\`\n- \`-10^9 <= nums[i] <= 10^9\`\n- \`-10^9 <= target <= 10^9\`\n\n### Example\n**Input:**\n\`9\`\n\`2 7 11 15\`\n\n**Output:**\n\`0 1\`\n\n**Explanation:**\nBecause nums[0] + nums[1] == 9, we return [0, 1].`, difficulty: 'Easy', testCases: [{ input: '9\n2 7 11 15', expected: '0 1' }, { input: '6\n3 2 4', expected: '1 2' }] },
-                { id: 'reverse-string', title: 'Reverse a String', description: `### Problem Statement\nWrite a function that reverses a string. The input string is given as an array of characters \`s\`.\nYou must do this by modifying the input array in-place with O(1) extra memory.\n\n### Input Format\n- A single line containing the string.\n\n### Output Format\n- A single line containing the reversed string.\n\n### Constraints\n- \`1 <= s.length <= 10^5\`\n- \`s[i]\` is a printable ascii character.\n\n### Example\n**Input:**\n\`hello\`\n\n**Output:**\n\`olleh\``, difficulty: 'Easy', testCases: [{ input: 'hello', expected: 'olleh' }, { input: 'world', expected: 'dlrow' }] },
-                { id: 'palindrome', title: 'Palindrome Check', description: `### Problem Statement\nA phrase is a palindrome if, after converting all uppercase letters into lowercase letters and removing all non-alphanumeric characters, it reads the same forward and backward. Alphanumeric characters include letters and numbers.\nGiven a string \`s\`, return \`true\` if it is a palindrome, or \`false\` otherwise.\n\n### Input Format\n- A single line containing the string.\n\n### Output Format\n- \`true\` or \`false\`.\n\n### Constraints\n- \`1 <= s.length <= 2 * 10^5\`\n- \`s\` consists only of printable ASCII characters.\n\n### Example\n**Input:**\n\`A man, a plan, a canal: Panama\`\n\n**Output:**\n\`true\`\n\n**Explanation:**\nAfter processing, the string becomes "amanaplanacanalpanama", which is a palindrome.`, difficulty: 'Easy', testCases: [{ input: 'racecar', expected: 'true' }, { input: 'hello', expected: 'false' }] },
-                { id: 'factorial', title: 'Factorial', description: `### Problem Statement\nGiven a non-negative integer \`n\`, your task is to compute its factorial. The factorial of a non-negative integer \`n\`, denoted by \`n!\`, is the product of all positive integers less than or equal to \`n\`. The factorial of 0 is defined to be 1.\n\n### Input Format\n- A single non-negative integer \`n\`.\n\n### Output Format\n- The factorial of \`n\`.\n\n### Constraints\n- \`0 <= n <= 20\`\n\n### Example\n**Input:**\n\`5\`\n\n**Output:**\n\`120\`\n\n**Explanation:**\n5! = 5 * 4 * 3 * 2 * 1 = 120.`, difficulty: 'Easy', testCases: [{ input: '5', expected: '120' }, { input: '0', expected: '1' }] },
-                { id: 'prime-check', title: 'Prime Number Check', description: `### Problem Statement\nGiven an integer \`n\`, determine if it is a prime number. A prime number is a natural number greater than 1 that has no positive divisors other than 1 and itself.\n\n### Input Format\n- A single integer \`n\`.\n\n### Output Format\n- \`true\` if \`n\` is a prime number, \`false\` otherwise.\n\n### Constraints\n- \`2 <= n <= 10^9\`\n\n### Example\n**Input:**\n\`7\`\n\n**Output:**\n\`true\``, difficulty: 'Easy', testCases: [{ input: '7', expected: 'true' }, { input: '10', expected: 'false' }] },
-                { id: 'max-array', title: 'Find Max in Array', description: `### Problem Statement\nGiven an array of integers, find the maximum element in the array.\n\n### Input Format\n- A single line of space-separated integers.\n\n### Output Format\n- The maximum integer in the array.\n\n### Constraints\n- \`1 <= array.length <= 1000\`\n- \`-10^9 <= array[i] <= 10^9\`\n\n### Example\n**Input:**\n\`1 5 2 9 3\`\n\n**Output:**\n\`9\``, difficulty: 'Easy', testCases: [{ input: '1 5 2 9 3', expected: '9' }, { input: '-1 -5 -2', expected: '-1' }] },
-                { id: 'sum-of-array', title: 'Sum of Array', description: `### Problem Statement\nGiven an array of integers, calculate the sum of all its elements.\n\n### Input Format\n- A single line of space-separated integers.\n\n### Output Format\n- The sum of all elements in the array.\n\n### Constraints\n- \`1 <= array.length <= 1000\`\n- \`-10^9 <= array[i] <= 10^9\`\n\n### Example\n**Input:**\n\`1 2 3 4 5\`\n\n**Output:**\n\`15\``, difficulty: 'Easy', testCases: [{ input: '1 2 3 4 5', expected: '15' }, { input: '10 20', expected: '30' }] },
-                { id: 'count-vowels', title: 'Count Vowels', description: `### Problem Statement\nGiven a string, count the number of vowels (a, e, i, o, u) in it. The check should be case-insensitive.\n\n### Input Format\n- A single line containing the string.\n\n### Output Format\n- An integer representing the total count of vowels.\n\n### Constraints\n- The string will only contain alphabetic characters and spaces.\n\n### Example\n**Input:**\n\`Hello World\`\n\n**Output:**\n\`3\``, difficulty: 'Easy', testCases: [{ input: 'hello world', expected: '3' }, { input: 'programming', expected: '3' }] },
-                { id: 'fizzbuzz', title: 'FizzBuzz', description: `### Problem Statement\nGiven an integer \`n\`, return a string array \`answer\` (1-indexed) where:\n- \`answer[i] == "FizzBuzz"\` if \`i\` is divisible by 3 and 5.\n- \`answer[i] == "Fizz"\` if \`i\` is divisible by 3.\n- \`answer[i] == "Buzz"\` if \`i\` is divisible by 5.\n- \`answer[i] == i\` (as a string) if none of the above conditions are true.\n\nFor this platform, please print each element on a new line.\n\n### Input Format\n- A single integer \`n\`.\n\n### Output Format\n- \`n\` lines of output corresponding to the rules.\n\n### Example\n**Input:**\n\`3\`\n\n**Output:**\n\`1\`\n\`2\`\n\`Fizz\``, difficulty: 'Easy', testCases: [{ input: '15', expected: '1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz' }] },
-                { id: 'anagram-check', title: 'Anagram Check', description: `### Problem Statement\nGiven two strings \`s\` and \`t\`, return \`true\` if \`t\` is an anagram of \`s\`, and \`false\` otherwise.\nAn Anagram is a word or phrase formed by rearranging the letters of a different word or phrase, typically using all the original letters exactly once.\n\n### Input Format\n- Two lines, each containing a string.\n\n### Output Format\n- \`true\` or \`false\`.\n\n### Example\n**Input:**\n\`anagram\`\n\`nagaram\`\n\n**Output:**\n\`true\``, difficulty: 'Easy', testCases: [{ input: 'listen\nsilent', expected: 'true' }, { input: 'hello\nworld', expected: 'false' }] },
-                
-                // Medium
-                { id: 'fibonacci', title: 'Fibonacci Number', description: `### Problem Statement\nThe Fibonacci numbers, commonly denoted \`F(n)\`, form a sequence, called the Fibonacci sequence, such that each number is the sum of the two preceding ones, starting from 0 and 1.\nThat is, \`F(0) = 0\`, \`F(1) = 1\`, and \`F(n) = F(n-1) + F(n-2)\` for \`n > 1\`.\nGiven \`n\`, calculate \`F(n)\`.\n\n### Input Format\n- A single integer \`n\`.\n\n### Output Format\n- The nth Fibonacci number.\n\n### Constraints\n- \`0 <= n <= 30\`\n\n### Example\n**Input:**\n\`4\`\n\n**Output:**\n\`3\`\n\n**Explanation:**\nF(2) = F(1) + F(0) = 1 + 0 = 1.\nF(3) = F(2) + F(1) = 1 + 1 = 2.\nF(4) = F(3) + F(2) = 2 + 1 = 3.`, difficulty: 'Medium', testCases: [{ input: '10', expected: '55' }, { input: '20', expected: '6765' }] },
-                { id: 'binary-search', title: 'Binary Search', description: `### Problem Statement\nGiven an array of integers \`nums\` which is sorted in ascending order, and an integer \`target\`, write a function to search \`target\` in \`nums\`. If \`target\` exists, then return its index. Otherwise, return -1. You must write an algorithm with O(log n) runtime complexity.\n\n### Input Format\n- First line: target integer.\n- Second line: space-separated sorted integers.\n\n### Output Format\n- Index of the target, or -1 if not found.\n\n### Example\n**Input:**\n\`9\`\n\`-1 0 3 5 9 12\`\n\n**Output:**\n\`4\``, difficulty: 'Medium', testCases: [{ input: '2\n1 2 3 4 5', expected: '1' }, { input: '6\n1 2 3 4 5', expected: '-1' }] },
-                { id: 'longest-substring', title: 'Longest Substring Without Repeating Characters', description: `### Problem Statement\nGiven a string \`s\`, find the length of the longest substring without repeating characters.\n\n### Input Format\n- A single line containing the string.\n\n### Output Format\n- The length of the longest substring.\n\n### Example\n**Input:**\n\`abcabcbb\`\n\n**Output:**\n\`3\`\n\n**Explanation:**\nThe answer is "abc", with the length of 3.`, difficulty: 'Medium', testCases: [{ input: 'abcabcbb', expected: '3' }, { input: 'bbbbb', expected: '1' }, { input: 'pwwkew', expected: '3' }] },
-                { id: 'rotate-array', title: 'Rotate Array', description: `### Problem Statement\nGiven an array, rotate the array to the right by \`k\` steps, where \`k\` is non-negative.\n\n### Input Format\n- First line: space-separated integers for the array.\n- Second line: an integer \`k\`.\n\n### Output Format\n- The rotated array as a single line of space-separated integers.\n\n### Example\n**Input:**\n\`1 2 3 4 5 6 7\`\n\`3\`\n\n**Output:**\n\`5 6 7 1 2 3 4\``, difficulty: 'Medium', testCases: [{ input: '1 2 3 4 5 6 7\n3', expected: '5 6 7 1 2 3 4' }] },
-                { id: 'group-anagrams', title: 'Group Anagrams', description: `### Problem Statement\nGiven an array of strings \`strs\`, group the anagrams together. You can return the answer in any order.\nAn Anagram is a word or phrase formed by rearranging the letters of a different word or phrase, typically using all the original letters exactly once.\n\n### Input Format\n- A single line of space-separated strings.\n\n### Output Format\n- Print each group of anagrams on a new line, with elements space-separated. The order of groups and elements within groups does not matter.\n\n### Example\n**Input:**\n\`eat tea tan ate nat bat\`\n\n**Output:**\n\`bat\`\n\`nat tan\`\n\`ate eat tea\``, difficulty: 'Medium', testCases: [{ input: 'eat tea tan ate nat bat', expected: 'bat\nnat tan\nate eat tea' }] },
-                { id: 'coin-change', title: 'Coin Change', description: `### Problem Statement\nYou are given an integer array \`coins\` representing coins of different denominations and an integer \`amount\` representing a total amount of money. Return the fewest number of coins that you need to make up that amount. If that amount of money cannot be made up by any combination of the coins, return -1.\n\n### Input Format\n- First line: space-separated coin denominations.\n- Second line: the total amount.\n\n### Output Format\n- The minimum number of coins, or -1.\n\n### Example\n**Input:**\n\`1 2 5\`\n\`11\`\n\n**Output:**\n\`3\`\n\n**Explanation:**\n11 = 5 + 5 + 1`, difficulty: 'Medium', testCases: [{ input: '1 2 5\n11', expected: '3' }, { input: '2\n3', expected: '-1' }] },
-                { id: 'product-except-self', title: 'Product of Array Except Self', description: `### Problem Statement\nGiven an integer array \`nums\`, return an array \`answer\` such that \`answer[i]\` is equal to the product of all the elements of \`nums\` except \`nums[i]\`.\nThe product of any prefix or suffix of \`nums\` is guaranteed to fit in a 32-bit integer. You must write an algorithm that runs in O(n) time and without using the division operation.\n\n### Input Format\n- A single line of space-separated integers.\n\n### Output Format\n- A single line of space-separated integers representing the result.\n\n### Example\n**Input:**\n\`1 2 3 4\`\n\n**Output:**\n\`24 12 8 6\``, difficulty: 'Medium', testCases: [{ input: '1 2 3 4', expected: '24 12 8 6' }] },
-                { id: 'container-most-water', title: 'Container With Most Water', description: `### Problem Statement\nYou are given an integer array \`height\` of length \`n\`. There are \`n\` vertical lines drawn such that the two endpoints of the \`ith\` line are \`(i, 0)\` and \`(i, height[i])\`.\nFind two lines that together with the x-axis form a container, such that the container contains the most water. Return the maximum amount of water a container can store.\n\n### Input Format\n- A single line of space-separated integers for \`height\`.\n\n### Output Format\n- The maximum area.\n\n### Example\n**Input:**\n\`1 8 6 2 5 4 8 3 7\`\n\n**Output:**\n\`49\``, difficulty: 'Medium', testCases: [{ input: '1 8 6 2 5 4 8 3 7', expected: '49' }] },
-                { id: '3sum', title: '3Sum', description: `### Problem Statement\nGiven an integer array \`nums\`, return all the triplets \`[nums[i], nums[j], nums[k]]\` such that \`i != j\`, \`i != k\`, and \`j != k\`, and \`nums[i] + nums[j] + nums[k] == 0\`.\nNotice that the solution set must not contain duplicate triplets.\n\n### Input Format\n- A single line of space-separated integers.\n\n### Output Format\n- Each unique triplet on a new line, with elements space-separated.\n\n### Example\n**Input:**\n\`-1 0 1 2 -1 -4\`\n\n**Output:**\n\`-1 -1 2\`\n\`-1 0 1\``, difficulty: 'Medium', testCases: [{ input: '-1 0 1 2 -1 -4', expected: '-1 -1 2\n-1 0 1' }] },
-                
-                // Hard
-                { id: 'median-sorted-arrays', title: 'Median of Two Sorted Arrays', description: `### Problem Statement\nGiven two sorted arrays \`nums1\` and \`nums2\` of size \`m\` and \`n\` respectively, return the median of the two sorted arrays.\nThe overall run time complexity should be O(log (m+n)).\n\n### Input Format\n- First line: space-separated integers for \`nums1\`.\n- Second line: space-separated integers for \`nums2\`.\n\n### Output Format\n- The median value.\n\n### Example\n**Input:**\n\`1 3\`\n\`2\`\n\n**Output:**\n\`2.0\``, difficulty: 'Hard', testCases: [{ input: '1 3\n2', expected: '2.0' }, { input: '1 2\n3 4', expected: '2.5' }] },
-                { id: 'merge-k-lists', title: 'Merge k Sorted Lists', description: `### Problem Statement\nYou are given an array of \`k\` linked-lists \`lists\`, where each linked-list is sorted in ascending order. Merge all the linked-lists into one sorted linked-list and return it.\n\n### Input Format\n- Multiple lines of space-separated integers. Each line represents a list.\n\n### Output Format\n- A single line of space-separated integers for the merged list.\n\n### Example\n**Input:**\n\`1 4 5\`\n\`1 3 4\`\n\`2 6\`\n\n**Output:**\n\`1 1 2 3 4 4 5 6\``, difficulty: 'Hard', testCases: [{ input: '1 4 5\n1 3 4\n2 6', expected: '1 1 2 3 4 4 5 6' }] },
-                { id: 'n-queens', title: 'N-Queens', description: `### Problem Statement\nThe n-queens puzzle is the problem of placing \`n\` queens on an \`n x n\` chessboard such that no two queens attack each other.\nGiven an integer \`n\`, return all distinct solutions to the n-queens puzzle. You may return the answer in any order.\n\n### Input Format\n- A single integer \`n\`.\n\n### Output Format\n- Each solution printed on a new line, with rows separated by a space.\n\n### Example\n**Input:**\n\`4\`\n\n**Output:**\n\`.Q.. ...Q Q... ..Q.\`\n\`..Q. Q... ...Q .Q..\``, difficulty: 'Hard', testCases: [{ input: '4', expected: '.Q.. ...Q Q... ..Q.\n..Q. Q... ...Q .Q..' }] },
-                { id: 'word-ladder', title: 'Word Ladder', description: `### Problem Statement\nA transformation sequence from word \`beginWord\` to \`endWord\` using a dictionary \`wordList\` is a sequence of words \`beginWord -> s1 -> s2 -> ... -> sk\` such that every adjacent pair of words differs by a single letter, and every \`si\` is in \`wordList\`.\nGiven two words, \`beginWord\` and \`endWord\`, and a dictionary \`wordList\`, return the number of words in the shortest transformation sequence from \`beginWord\` to \`endWord\`, or 0 if no such sequence exists.\n\n### Input Format\n- Line 1: \`beginWord\`\n- Line 2: \`endWord\`\n- Line 3: space-separated \`wordList\`\n\n### Output Format\n- The length of the shortest path.\n\n### Example\n**Input:**\n\`hit\`\n\`cog\`\n\`hot dot dog lot log cog\`\n\n**Output:**\n\`5\``, difficulty: 'Hard', testCases: [{ input: 'hit\ncog\nhot dot dog lot log cog', expected: '5' }] },
-                { id: 'largest-rectangle-histogram', title: 'Largest Rectangle in Histogram', description: `### Problem Statement\nGiven an array of integers \`heights\` representing the bar height of a histogram, return the area of the largest rectangle in the histogram.\n\n### Input Format\n- A single line of space-separated integers.\n\n### Output Format\n- The area of the largest rectangle.\n\n### Example\n**Input:**\n\`2 1 5 6 2 3\`\n\n**Output:**\n\`10\``, difficulty: 'Hard', testCases: [{ input: '2 1 5 6 2 3', expected: '10' }] },
-                { id: 'regex-matching', title: 'Regular Expression Matching', description: `### Problem Statement\nGiven an input string \`s\` and a pattern \`p\`, implement regular expression matching with support for \`'.'\` and \`'*'\` where:\n- \`'.'\` Matches any single character.\n- \`'*'\` Matches zero or more of the preceding element.\nThe matching should cover the entire input string (not partial).\n\n### Input Format\n- Line 1: string \`s\`\n- Line 2: pattern \`p\`\n\n### Output Format\n- \`true\` or \`false\`.\n\n### Example\n**Input:**\n\`aab\`\n\`c*a*b\`\n\n**Output:**\n\`true\``, difficulty: 'Hard', testCases: [{ input: 'aa\na', expected: 'false' }, { input: 'aa\na*', expected: 'true' }, { input: 'ab\n.*', expected: 'true' }] },
-                { id: 'longest-valid-parentheses', title: 'Longest Valid Parentheses', description: `### Problem Statement\nGiven a string containing just the characters \`'('\` and \`')'\`, find the length of the longest valid (well-formed) parentheses substring.\n\n### Input Format\n- A single string of parentheses.\n\n### Output Format\n- The length of the longest valid substring.\n\n### Example\n**Input:**\n\`)()())\`\n\n**Output:**\n\`4\``, difficulty: 'Hard', testCases: [{ input: '(()', expected: '2' }, { input: ')()())', expected: '4' }] },
-                { id: 'sliding-window-maximum', 'title': 'Sliding Window Maximum', 'description': `### Problem Statement\nYou are given an array of integers \`nums\`, there is a sliding window of size \`k\` which is moving from the very left of the array to the very right. You can only see the \`k\` numbers in the window. Each time the sliding window moves right by one position. Return the max sliding window.\n\n### Input Format\n- Line 1: space-separated integers for \`nums\`.\n- Line 2: integer \`k\`.\n\n### Output Format\n- Space-separated integers for the max in each window.\n\n### Example\n**Input:**\n\`1 3 -1 -3 5 3 6 7\`\n\`3\`\n\n**Output:**\n\`3 3 5 5 6 7\``, difficulty: 'Hard', testCases: [{ input: '1 3 -1 -3 5 3 6 7\n3', expected: '3 3 5 5 6 7' }] },
-                { id: 'min-window-substring', 'title': 'Minimum Window Substring', 'description': `### Problem Statement\nGiven two strings \`s\` and \`t\` of lengths \`m\` and \`n\` respectively, return the minimum window substring of \`s\` such that every character in \`t\` (including duplicates) is included in the window. If there is no such substring, return the empty string \`""\`.\n\n### Input Format\n- Line 1: string \`s\`\n- Line 2: string \`t\`\n\n### Output Format\n- The minimum window substring.\n\n### Example\n**Input:**\n\`ADOBECODEBANC\`\n\`ABC\`\n\n**Output:**\n\`BANC\``, difficulty: 'Hard', testCases: [{ input: 'ADOBECODEBANC\nABC', expected: 'BANC' }] },
-                
-                // CTS Specific
-                { id: 'cts-remove-duplicates', title: 'Remove Duplicates from String', description: `### Problem Statement\nYour task is to write a function that takes a string as input and removes any duplicate characters, maintaining the original order of the first occurrence of each character.\n\nFor example, if the input string is "programming", the character 'r', 'o', 'g', and 'm' appear twice. Your function should process the string and return "progamin", where each character from the original string appears exactly once.\n\n### Input Format\n- A single line containing the string.\n\n### Output Format\n- A single line containing the string with duplicates removed.\n\n### Constraints\n- The input string will only contain lowercase English letters (a-z).\n- The length of the string will be between 1 and 1000.`, difficulty: 'CTS Specific', testCases: [{ input: 'programming', expected: 'progamin' }, { input: 'hello', expected: 'helo' }] },
-                { id: 'cts-armstrong-number', title: 'Armstrong Number', description: `### Problem Statement\nAn Armstrong number (or narcissistic number) is a number that is the sum of its own digits each raised to the power of the number of digits.\nFor example, 153 is an Armstrong number because it has 3 digits, and 1^3 + 5^3 + 3^3 = 1 + 125 + 27 = 153.\n\nWrite a program that takes an integer as input and determines whether it is an Armstrong number.\n\n### Input Format\n- A single integer N.\n\n### Output Format\n- Print "true" if the number is an Armstrong number, and "false" otherwise.\n\n### Constraints\n- \`0 <= N <= 10^9\``, difficulty: 'CTS Specific', testCases: [{ input: '153', expected: 'true' }, { input: '123', expected: 'false' }, { input: '1634', expected: 'true'}] },
-                { id: 'cts-sort-012', title: 'Sort an array of 0s, 1s and 2s', description: `### Problem Statement\nYou are given an array of integers that contains only the numbers 0, 1, and 2. Your task is to sort this array in ascending order without using any standard sorting algorithms. The solution should be achieved in a single pass (O(n) time complexity) and without using extra space (O(1) space complexity). This is a classic problem often referred to as the Dutch National Flag problem.\n\n### Input Format\n- A single line of space-separated integers (0s, 1s, and 2s).\n\n### Output Format\n- A single line of space-separated integers, sorted in ascending order.\n\n### Constraints\n- The size of the array will be between 1 and 1,000,000.`, difficulty: 'CTS Specific', testCases: [{ input: '0 1 2 0 1 2', expected: '0 0 1 1 2 2' }, { input: '2 1 0 1 2 0 0', expected: '0 0 0 1 1 2 2' }] },
-                { id: 'cts-second-largest', title: 'Find Second Largest Number', description: `### Problem Statement\nWrite a program to find the second largest element in a given array of integers. You need to handle cases where the array might have duplicates and find the second unique largest value.\n\nFor instance, given the array [12, 35, 1, 10, 34, 1], the largest element is 35, and the second largest is 34.\nIf the array is [10, 5, 10], the largest is 10, and the second largest is 5.\n\n### Input Format\n- A single line of space-separated integers.\n\n### Output Format\n- An integer representing the second largest element in the array.\n\n### Constraints\n- The array will contain at least two unique elements.\n- Array elements will be between -1000 and 1000.`, difficulty: 'CTS Specific', testCases: [{ input: '12 35 1 10 34 1', expected: '34' }, { input: '10 5 10', expected: '5' }] },
-                { id: 'cts-stock-profit', title: 'Stock Buy Sell to Maximize Profit', description: `### Problem Statement\nYou are given an array of prices where \`prices[i]\` is the price of a given stock on the ith day. You want to maximize your profit by choosing a single day to buy one stock and choosing a different day in the future to sell that stock.\nReturn the maximum profit you can achieve from this transaction. If you cannot achieve any profit, return 0.\n\n### Input Format\n- A single line of space-separated integers representing the stock prices for each day.\n\n### Output Format\n- An integer representing the maximum profit.\n\n### Constraints\n- \`1 <= prices.length <= 10^5\`\n- \`0 <= prices[i] <= 10^4\``, difficulty: 'CTS Specific', testCases: [{ input: '7 1 5 3 6 4', expected: '5' }, { input: '7 6 4 3 1', expected: '0' }] },
-                { id: 'cts-max-subarray-sum', title: "Maximum Subarray Sum", description: "### Problem Statement\nGiven an integer array, find the contiguous subarray (containing at least one number) which has the largest sum and return its sum. This is a classic problem that can be solved efficiently using Kadane's Algorithm.\n\n### Input Format:\n- A single line of space-separated integers.\n\n### Output Format:\n- An integer representing the maximum subarray sum.", difficulty: 'CTS Specific', testCases: [{ input: '-2 1 -3 4 -1 2 1 -5 4', expected: '6' }, { input: '5 4 -1 7 8', expected: '23' }] },
-                { id: 'cts-missing-number', title: "Missing Number in Array", description: "### Problem Statement\nYou are given an array containing 'n' distinct numbers taken from the range 0, 1, 2, ..., n. Since the array has only 'n' numbers out of the 'n+1' possible numbers, exactly one number is missing. Your task is to find that missing number.\n\n### Input Format:\n- A single line of space-separated integers.\n\n### Output Format:\n- The single missing integer.", difficulty: 'CTS Specific', testCases: [{ input: '3 0 1', expected: '2' }, { input: '9 6 4 2 3 5 7 0 1', expected: '8' }] },
-                { id: 'cts-reverse-linked-list', title: "Reverse a Linked List", description: "### Problem Statement\nGiven the head of a singly linked list, reverse the list, and return the new head of the reversed list. For the purpose of this problem, you can represent a linked list as a space-separated list of numbers, and the output should be the reversed list.\n\n### Input Format:\n- A single line of space-separated integers representing the nodes of the linked list.\n\n### Output Format:\n- A single line of space-separated integers representing the reversed list.", difficulty: 'CTS Specific', testCases: [{ input: '1 2 3 4 5', expected: '5 4 3 2 1' }, { input: '1 2', expected: '2 1' }] },
-                { id: 'cts-lcp', title: "Longest Common Prefix", description: "### Problem Statement\nWrite a function to find the longest common prefix string amongst an array of strings. If there is no common prefix, return an empty string \"\".\n\n### Input Format:\n- A single line of space-separated strings.\n\n### Output Format:\n- The longest common prefix string.", difficulty: 'CTS Specific', testCases: [{ input: 'flower flow flight', expected: 'fl' }, { input: 'dog racecar car', expected: '' }] },
-                { id: 'cts-balanced-brackets', title: "Balanced Brackets", description: "### Problem Statement\nGiven a string containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid. An input string is valid if: Open brackets must be closed by the same type of brackets. Open brackets must be closed in the correct order.\n\n### Input Format:\n- A single string of brackets.\n\n### Output Format:\n- 'true' if balanced, 'false' otherwise.", difficulty: 'CTS Specific', testCases: [{ input: '()[]{}', expected: 'true' }, { input: '([)]', expected: 'false' }] },
-                { id: 'cts-kth-largest', title: "Kth Largest Element", description: "### Problem Statement\nFind the kth largest element in an unsorted array. Note that it is the kth largest element in the sorted order, not the kth distinct element.\n\n### Input Format:\n- The first line contains an integer k.\n- The second line contains space-separated integers for the array.\n\n### Output Format:\n- The kth largest element.", difficulty: 'CTS Specific', testCases: [{ input: '2\n3 2 1 5 6 4', expected: '5' }, { input: '4\n3 2 3 1 2 4 5 5 6', expected: '4' }] },
-                { id: 'cts-invert-binary-tree', title: "Invert Binary Tree", description: "### Problem Statement\nInvert a binary tree. This means that for each node in the tree, you swap its left and right children. Represent the tree as a level-order traversal array, and output the inverted tree in the same format.\n\n### Input Format:\n- Space-separated integers for a level-order binary tree (use 'null' for empty nodes).\n\n### Output Format:\n- Space-separated integers for the inverted level-order binary tree.", difficulty: 'CTS Specific', testCases: [{ input: '4 2 7 1 3 6 9', expected: '4 7 2 9 6 3 1' }] },
-                { id: 'cts-spiral-matrix', title: "Spiral Matrix", description: "### Problem Statement\nGiven a matrix of m x n elements (m rows, n columns), return all elements of the matrix in spiral order.\n\n### Input Format:\n- Multiple lines of space-separated integers, where each line is a row of the matrix. End input with an empty line.\n\n### Output Format:\n- Space-separated integers in spiral order.", difficulty: 'CTS Specific', testCases: [{ input: '1 2 3\n4 5 6\n7 8 9', expected: '1 2 3 6 9 8 7 4 5' }] },
-                { id: 'cts-word-break', title: "Word Break Problem", description: "### Problem Statement\nGiven a non-empty string and a dictionary containing a list of non-empty words, determine if the string can be segmented into a space-separated sequence of one or more dictionary words.\n\n### Input Format:\n- The first line is the string.\n- The second line is a space-separated list of dictionary words.\n\n### Output Format:\n- 'true' or 'false'.", difficulty: 'CTS Specific', testCases: [{ input: 'leetcode\nleet code', expected: 'true' }, { input: 'catsandog\ncats dog sand and cat', expected: 'false' }] },
-                { id: 'cts-majority-element', title: "Majority Element", description: "### Problem Statement\nGiven an array of size n, find the majority element. The majority element is the element that appears more than ⌊ n/2 ⌋ times. You may assume that the majority element always exists in the array.\n\n### Input Format:\n- A single line of space-separated integers.\n\n### Output Format:\n- The majority element.", difficulty: 'CTS Specific', testCases: [{ input: '3 2 3', expected: '3' }, { input: '2 2 1 1 1 2 2', expected: '2' }] }
-            ];
+            let problems = [];
             const starterTemplates = {
                 c: '#include <stdio.h>\n\nint main() {\n    // Your code here\n    return 0;\n}',
                 cpp: '#include <iostream>\n\nint main() {\n    // Your code here\n    return 0;\n}',
                 java: 'public class Main {\n    public static void main(String[] args) {\n        // Your code here\n    }\n}',
                 python: '# Your code here'
             };
-            problems.forEach(p => p.starterCode = starterTemplates);
 
             // --- UI & STATE ---
             const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
@@ -347,7 +300,7 @@
             const welcomeView = document.getElementById('welcome-view');
             const compilerView = document.getElementById('compiler-view');
             const problemTitle = document.getElementById('problem-title');
-            const problemDescriptionContainer = document.getElementById('problem-description-container');
+            const problemDetailsContainer = document.getElementById('problem-details-container');
             const problemDifficultyTag = document.getElementById('problem-difficulty-tag');
             const languageSelect = document.getElementById('language-select');
             const submitButton = document.getElementById('submit-button');
@@ -361,65 +314,71 @@
             const problemsSidebar = document.getElementById('problems-sidebar');
             
             // --- FUNCTIONS ---
-            async function fetchUserScore() {
+            const fetchUserScore = async () => {
                 try {
                     const response = await fetch('/api/compiler/my-score', { headers: { 'x-auth-token': token } });
-                    if (!response.ok) throw new Error('Failed to fetch score');
                     const data = await response.json();
                     document.getElementById('user-score').textContent = data.totalScore || 0;
-                } catch (error) {
-                    console.error('Error fetching user score:', error);
-                }
-            }
+                } catch (error) { console.error('Error fetching user score:', error); }
+            };
 
-            async function fetchSubmittedProblems() {
+            const fetchStudentProblems = async () => {
                 try {
-                    const response = await fetch('/api/compiler/submitted-problems', { headers: { 'x-auth-token': token } });
-                    if (!response.ok) throw new Error('Failed');
-                    submittedProblemIds = new Set(await response.json());
+                    const response = await fetch('/api/student/compiler/problems', { headers: { 'x-auth-token': token } });
+                    problems = await response.json();
+                    problems.forEach(p => p.starterCode = starterTemplates);
                 } catch (error) {
-                    console.error('Error fetching submitted problems:', error);
+                    problemListDiv.innerHTML = '<p class="text-red-500 p-2">Could not load problems.</p>';
                 }
-            }
+            };
+            
+            const fetchSubmittedProblems = async () => {
+                 try {
+                    const response = await fetch('/api/compiler/submitted-problems', { headers: { 'x-auth-token': token } });
+                    submittedProblemIds = new Set(await response.json());
+                } catch (error) { console.error('Error fetching submitted problems:', error); }
+            };
 
-            function displayProblems() {
+            const displayProblems = () => {
                 problemListDiv.innerHTML = '';
-                const grouped = problems.reduce((acc, p) => (acc[p.difficulty] = [...(acc[p.difficulty] || []), p], acc), {});
-                const order = ['Easy', 'Medium', 'Hard', 'CTS Specific'];
-                const colors = { 'Easy': 'bg-green-100 text-green-800', 'Medium': 'bg-yellow-100 text-yellow-800', 'Hard': 'bg-red-100 text-red-800', 'CTS Specific': 'bg-blue-100 text-blue-800' };
+                if(problems.length === 0) {
+                     problemListDiv.innerHTML = '<p class="text-gray-500 p-2 text-sm">No problems assigned to your college yet.</p>';
+                     return;
+                }
+                const groupedBySection = problems.reduce((acc, p) => {
+                    (acc[p.sectionName] = acc[p.sectionName] || []).push(p);
+                    return acc;
+                }, {});
 
-                order.forEach(difficulty => {
-                    if (!grouped[difficulty]) return;
+                for (const sectionName in groupedBySection) {
                     const accordion = document.createElement('div');
                     const header = document.createElement('div');
                     header.className = 'accordion-header flex justify-between items-center p-3 rounded-md font-semibold text-gray-700';
-                    header.innerHTML = `<span>${difficulty} (${grouped[difficulty].length})</span><svg class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
+                    header.innerHTML = `<span>${sectionName} (${groupedBySection[sectionName].length})</span><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
                     const content = document.createElement('div');
                     content.className = 'accordion-content pl-4';
                     
-                    grouped[difficulty].forEach(p => {
+                    groupedBySection[sectionName].forEach(p => {
                         const item = document.createElement('div');
-                        const isSubmitted = submittedProblemIds.has(p.id);
+                        const isSubmitted = submittedProblemIds.has(p.problemId);
                         item.className = `problem-list-item p-3 rounded-md flex justify-between items-center ${isSubmitted ? 'submitted' : ''}`;
-                        item.dataset.problemId = p.id;
-                        item.innerHTML = `
-                            <div><span>${p.title}</span>${isSubmitted ? '<span class="submitted-badge">Submitted</span>' : ''}</div>
-                            <span class="difficulty-tag text-xs font-semibold px-2 py-1 rounded-full ${colors[p.difficulty]}">${p.difficulty}</span>`;
-                        item.onclick = () => selectProblem(p.id);
+                        item.dataset.problemId = p.problemId;
+                        item.innerHTML = `<div><span>${p.title}</span>${isSubmitted ? '<span class="submitted-badge">Submitted</span>' : ''}</div>`;
+                        item.onclick = () => selectProblem(p.problemId);
                         content.appendChild(item);
                     });
                     
                     header.onclick = () => {
                         content.style.maxHeight = content.style.maxHeight ? null : content.scrollHeight + "px";
-                        header.querySelector('svg').style.transform = content.style.maxHeight ? 'rotate(180deg)' : 'rotate(0deg)';
+                        header.querySelector('svg').style.transform = content.style.maxHeight ? 'rotate(180deg)' : '';
                     };
                     accordion.append(header, content);
                     problemListDiv.appendChild(accordion);
-                });
-            }
+                }
+            };
 
-            async function selectProblem(problemId) {
-                currentProblem = problems.find(p => p.id === problemId);
+            const selectProblem = async (problemId) => {
+                currentProblem = problems.find(p => p.problemId === problemId);
                 if (!currentProblem) return;
 
                 document.querySelectorAll('.problem-list-item').forEach(el => el.classList.toggle('selected', el.dataset.problemId === problemId));
@@ -428,23 +387,26 @@
                 resultsView.classList.add('hidden');
 
                 problemTitle.textContent = currentProblem.title;
-                problemDescriptionContainer.innerHTML = currentProblem.description.replace(/### (.*)/g, '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>').replace(/`([^`]+)`/g, '<code class="bg-gray-200 px-1 rounded">$1</code>');
-                problemDifficultyTag.textContent = currentProblem.difficulty;
                 const colors = { 'Easy': 'bg-green-100 text-green-800', 'Medium': 'bg-yellow-100 text-yellow-800', 'Hard': 'bg-red-100 text-red-800', 'CTS Specific': 'bg-blue-100 text-blue-800' };
-                problemDifficultyTag.className = `ml-4 text-sm font-semibold px-3 py-1 rounded-full ${colors[currentProblem.difficulty]}`;
+                problemDifficultyTag.textContent = currentProblem.difficulty;
+                problemDifficultyTag.className = `ml-4 text-sm font-semibold px-3 py-1 rounded-full ${colors[currentProblem.difficulty] || 'bg-gray-100 text-gray-800'}`;
 
+                problemDetailsContainer.innerHTML = `
+                    <h3>Problem Statement</h3>
+                    <p>${currentProblem.description.replace(/\n/g, '<br>')}</p>
+                    ${currentProblem.inputFormat ? `<h3>Input Format</h3><p>${currentProblem.inputFormat.replace(/\n/g, '<br>')}</p>` : ''}
+                    ${currentProblem.outputFormat ? `<h3>Output Format</h3><p>${currentProblem.outputFormat.replace(/\n/g, '<br>')}</p>` : ''}
+                    ${currentProblem.constraints ? `<h3>Constraints</h3><pre>${currentProblem.constraints}</pre>` : ''}
+                    ${currentProblem.example ? `<h3>Example</h3><pre>${currentProblem.example}</pre>` : ''}
+                `;
+                
                 await fetchAndLoadPreviousSubmission(problemId);
                 if (window.innerWidth < 1024) toggleProblemsSidebar(true);
-
-                // *** THIS IS THE FIX ***
-                // Refresh the editor after its container becomes visible.
-                // A short timeout ensures the browser has rendered the layout change.
-                setTimeout(() => {
-                    editor.refresh();
-                }, 1);
-            }
+                
+                setTimeout(() => editor.refresh(), 1);
+            };
             
-            async function fetchAndLoadPreviousSubmission(problemId) {
+            const fetchAndLoadPreviousSubmission = async (problemId) => {
                 try {
                     const response = await fetch(`/api/compiler/my-submission/${problemId}`, { headers: { 'x-auth-token': token } });
                     if (response.ok) {
@@ -454,7 +416,6 @@
                         editor.setValue(submission.submittedCode);
                         languageSelect.value = submission.language;
                     } else {
-                        // No previous submission found
                         currentSubmission = null;
                         viewSubmissionButton.disabled = true;
                         editor.setValue(currentProblem.starterCode[languageSelect.value]);
@@ -465,13 +426,11 @@
                     viewSubmissionButton.disabled = true;
                     editor.setValue(currentProblem.starterCode[languageSelect.value]);
                 } finally {
-                    // Refresh the editor's mode based on the language
                     languageSelect.dispatchEvent(new Event('change'));
                 }
-            }
+            };
 
-
-            async function handleSubmit() {
+            const handleSubmit = async () => {
                 if (!currentProblem) return;
                 submitButton.disabled = true;
                 submitButton.textContent = 'Evaluating...';
@@ -491,13 +450,11 @@
                         const expected = tc.expected.trim().replace(/\s+/g, ' ');
                         const status = actual === expected ? 'Accepted' : 'Wrong Answer';
                         results.push({ actual, status });
-                        if (status !== 'Accepted') {
-                            allPassed = false;
-                        }
+                        if (status !== 'Accepted') allPassed = false;
                     } catch (e) {
                         allPassed = false;
                         results.push({ actual: 'Server Error', status: 'Error' });
-                        break; // Stop on server error
+                        break;
                     }
                 }
                 
@@ -518,9 +475,7 @@
                     const firstFailedIndex = results.findIndex(r => r.status !== 'Accepted');
                     const activeIndex = firstFailedIndex !== -1 ? firstFailedIndex : 0;
                     renderTestCaseDetail(activeIndex, results[activeIndex]);
-                    if(testCaseTabs.children[activeIndex]) {
-                         testCaseTabs.children[activeIndex].classList.add('active');
-                    }
+                    if(testCaseTabs.children[activeIndex]) testCaseTabs.children[activeIndex].classList.add('active');
                 }
 
                 if (allPassed) {
@@ -532,9 +487,9 @@
 
                 submitButton.disabled = false;
                 submitButton.textContent = 'Run & Submit';
-            }
+            };
             
-            function renderTestCaseDetail(index, result) {
+            const renderTestCaseDetail = (index, result) => {
                  testCaseDetails.innerHTML = `
                     <div class="p-4 border rounded-lg bg-gray-50">
                         <div class="font-semibold text-lg mb-2 ${result.status === 'Accepted' ? 'text-green-600' : 'text-red-600'}">Case ${index + 1}: ${result.status}</div>
@@ -545,16 +500,16 @@
                         </div>
                     </div>
                 `;
-            }
+            };
             
-            async function saveScore() {
+            const saveScore = async () => {
                 const scoreMap = { 'Easy': 10, 'Medium': 20, 'Hard': 30, 'CTS Specific': 15 };
                 try {
-                    const res = await fetch('/api/compiler/save-score', {
+                    await fetch('/api/compiler/save-score', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                         body: JSON.stringify({
-                            problemId: currentProblem.id,
+                            problemId: currentProblem.problemId,
                             problemTitle: currentProblem.title,
                             difficulty: currentProblem.difficulty,
                             score: scoreMap[currentProblem.difficulty] || 0,
@@ -562,26 +517,23 @@
                             language: languageSelect.value
                         })
                     });
-                    if (res.ok) {
-                        await fetchUserScore();
-                        if (!submittedProblemIds.has(currentProblem.id)) {
-                             submittedProblemIds.add(currentProblem.id);
-                             displayProblems();
-                        }
-                        await fetchAndLoadPreviousSubmission(currentProblem.id);
+                    await fetchUserScore();
+                    if (!submittedProblemIds.has(currentProblem.problemId)) {
+                         submittedProblemIds.add(currentProblem.problemId);
+                         displayProblems();
                     }
+                    await fetchAndLoadPreviousSubmission(currentProblem.problemId);
                 } catch (e) { console.error("Failed to save score", e); }
-            }
+            };
 
-
-            function toggleProblemsSidebar(forceClose = false) {
+            const toggleProblemsSidebar = (forceClose = false) => {
                 const closed = forceClose || !problemsSidebar.classList.contains('closed');
                 problemsSidebar.classList.toggle('closed', closed);
                 document.getElementById('menu-open-icon').classList.toggle('hidden', !closed);
                 document.getElementById('menu-close-icon').classList.toggle('hidden', closed);
-            }
+            };
 
-            function showCodeInModal(submission) {
+            const showCodeInModal = (submission) => {
                 document.getElementById('modal-problem-title').textContent = submission.problemTitle;
                 viewCodeModal.classList.remove('hidden');
                 if (!modalEditor) {
@@ -592,7 +544,7 @@
                 modalEditor.setOption('mode', modes[submission.language]);
                 modalEditor.setValue(submission.submittedCode);
                 setTimeout(() => modalEditor.refresh(), 1);
-            }
+            };
 
             // --- EVENT LISTENERS ---
             languageSelect.onchange = () => {
@@ -610,7 +562,6 @@
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
             };
-
             document.getElementById('close-code-modal-button').onclick = () => viewCodeModal.classList.add('hidden');
             menuToggle.onclick = () => toggleProblemsSidebar();
 
@@ -618,6 +569,7 @@
             async function initializeApp() {
                 await fetchUserScore();
                 await fetchSubmittedProblems();
+                await fetchStudentProblems();
                 displayProblems();
             }
             initializeApp();
