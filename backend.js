@@ -3263,7 +3263,11 @@ app.post('/api/compiler/save-score', authMiddleware, async (req, res) => {
 app.get('/api/admin/compiler-scores', authMiddleware, adminOrModeratorAuth, async (req, res) => {
     try {
         const { Items: scores } = await docClient.send(new ScanCommand({
-            TableName: "TestifyCompilerScores"
+            TableName: "TestifyCompilerScores",
+            // ADDED FILTER: Only get items that are actual compiler scores,
+            // not SQL sections or problems that pollute this table.
+            // We identify compiler scores by the absence of the 'recordType' attribute.
+            FilterExpression: "attribute_not_exists(recordType)"
         }));
 
         if (!scores || scores.length === 0) {
@@ -3928,10 +3932,463 @@ app.get('/api/compiler/my-submission/:problemId', authMiddleware, async (req, re
     }
 });
 
-// --- (Make sure this section is placed before your server starts listening) ---
+
+// =================================================================
+// --- SQL CODELAB ENDPOINTS (REFACTORED TO USE ONECOMPILER API) ---
+// =================================================================
+// Using the "TestifyCompilerScores" table as requested for testing purposes.
+const SQL_TABLE_NAME = "TestifyCompilerScores";
+
+// Helper function to run SQL queries using the OneCompiler API.
+// This replaces the local sqlite3 implementation.
+const runQueryWithOneCompiler = async (schema, query) => {
+    // It's recommended to store this API key in environment variables for security.
+    const ONECOMPILER_API_KEY = process.env.ONECOMPILER_API_KEY || '09ccf0b69bmsh066f3a3bc867b99p178664jsna5e9720da3f6';
+
+    // Combine schema (CREATE, INSERT statements) and the user's query into a single script.
+    const fullScript = `${schema || ''}\n\n${query || ''}`;
+
+    const payload = {
+        language: "mysql", // OneCompiler uses 'mysql' for standard SQL execution
+        stdin: "",
+        files: [{
+            name: "script.sql",
+            content: fullScript
+        }]
+    };
+
+    try {
+        const response = await fetch('https://onecompiler-apis.p.rapidapi.com/api/v1/run', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-RapidAPI-Key': '22be928fe3msh1ad95638f83d75cp18c454jsn9883d64a5a33',
+                'X-RapidAPI-Host': 'onecompiler-apis.p.rapidapi.com'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        // Check for compilation or runtime errors from the API response
+        if (!response.ok || result.stderr || result.exception) {
+            throw new Error(result.stderr || result.exception || result.message || 'An error occurred during SQL execution.');
+        }
+
+        // Parse the raw stdout from OneCompiler into the { columns, values } format
+        const output = (result.stdout || '').trim();
+        if (!output) {
+            // Query ran successfully but produced no rows
+            return { columns: [], values: [] };
+        }
+
+        const lines = output.split('\n');
+        const headerLine = lines.shift();
+        if (!headerLine) {
+            return { columns: [], values: [] };
+        }
+        
+        // OneCompiler's SQL output is typically tab-separated
+        const columns = headerLine.split('\t');
+        
+        const values = lines.map(line => {
+            const rowValues = line.split('\t');
+            const rowObject = {};
+            columns.forEach((col, index) => {
+                rowObject[col] = rowValues[index] !== undefined ? rowValues[index] : null;
+            });
+            return rowObject;
+        });
+
+        return { columns, values };
+
+    } catch (error) {
+        console.error("OneCompiler SQL Execution Error:", error.message);
+        // Re-throw the error so it's sent to the client
+        throw error;
+    }
+};
+
+
+// --- SQL SECTION MANAGEMENT (ADMIN ONLY) ---
+
+app.post('/api/sql/sections', authMiddleware, adminOnlyAuth, async (req, res) => {
+    const { sectionName, assignedColleges } = req.body;
+    const scoreId = `section_${uuidv4()}`;
+    const newSection = {
+        scoreId,
+        recordType: 'SECTION',
+        sectionName,
+        assignedColleges: assignedColleges || [],
+        createdAt: new Date().toISOString()
+    };
+    try {
+        await docClient.send(new PutCommand({ TableName: SQL_TABLE_NAME, Item: newSection }));
+        res.status(201).json(newSection);
+    } catch (error) {
+        console.error("Create SQL Section Error:", error);
+        res.status(500).json({ message: 'Server error creating section.' });
+    }
+});
+
+app.get('/api/sql/sections', authMiddleware, adminOnlyAuth, async (req, res) => {
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: SQL_TABLE_NAME,
+            FilterExpression: "recordType = :type",
+            ExpressionAttributeValues: { ":type": "SECTION" }
+        }));
+        res.json(Items.map(item => ({...item, id: item.scoreId})));
+    } catch (error) {
+        console.error("Get SQL Sections Error:", error);
+        res.status(500).json({ message: 'Server error fetching sections.' });
+    }
+});
+
+app.put('/api/sql/sections/:id', authMiddleware, adminOnlyAuth, async (req, res) => {
+    const { id } = req.params;
+    const { sectionName, assignedColleges } = req.body;
+    try {
+        await docClient.send(new UpdateCommand({
+            TableName: SQL_TABLE_NAME,
+            Key: { scoreId: id },
+            UpdateExpression: "set sectionName = :name, assignedColleges = :colleges",
+            ExpressionAttributeValues: { ":name": sectionName, ":colleges": assignedColleges || [] }
+        }));
+        res.status(200).json({ message: 'Section updated.' });
+    } catch (error) {
+        console.error("Update SQL Section Error:", error);
+        res.status(500).json({ message: 'Server error updating section.' });
+    }
+});
+
+app.delete('/api/sql/sections/:id', authMiddleware, adminOnlyAuth, async (req, res) => {
+    const { id } = req.params;
+    try {
+        await docClient.send(new DeleteCommand({ TableName: SQL_TABLE_NAME, Key: { scoreId: id } }));
+        res.status(200).json({ message: 'Section deleted.' });
+    } catch (error) {
+        console.error("Delete SQL Section Error:", error);
+        res.status(500).json({ message: 'Server error deleting section.' });
+    }
+});
+
+// --- SQL PROBLEM MANAGEMENT (ADMIN ONLY) ---
+
+app.post('/api/sql/problems', authMiddleware, adminOnlyAuth, async (req, res) => {
+    const { sectionId, title, description, difficulty, schema, constraints, correctQuery } = req.body;
+    const scoreId = `problem_${uuidv4()}`;
+    const newProblem = {
+        scoreId, recordType: 'PROBLEM', sectionId, title, description, difficulty, schema, constraints, correctQuery,
+        createdAt: new Date().toISOString()
+    };
+    try {
+        await docClient.send(new PutCommand({ TableName: SQL_TABLE_NAME, Item: newProblem }));
+        res.status(201).json(newProblem);
+    } catch (error) {
+        console.error("Create SQL Problem Error:", error);
+        res.status(500).json({ message: 'Server error creating problem.' });
+    }
+});
+
+app.get('/api/sql/problems', authMiddleware, adminOnlyAuth, async (req, res) => {
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: SQL_TABLE_NAME,
+            FilterExpression: "recordType = :type",
+            ExpressionAttributeValues: { ":type": "PROBLEM" }
+        }));
+        res.json(Items.map(item => ({...item, id: item.scoreId})));
+    } catch (error) {
+        console.error("Get SQL Problems Error:", error);
+        res.status(500).json({ message: 'Server error fetching problems.' });
+    }
+});
+
+app.put('/api/sql/problems/:id', authMiddleware, adminOnlyAuth, async (req, res) => {
+    const { id } = req.params;
+    const { sectionId, title, description, difficulty, schema, constraints, correctQuery } = req.body;
+    try {
+        await docClient.send(new UpdateCommand({
+            TableName: SQL_TABLE_NAME,
+            Key: { scoreId: id },
+            UpdateExpression: "set sectionId = :sid, title = :t, description = :d, difficulty = :diff, #s = :schema, #c = :constraints, correctQuery = :cq",
+            ExpressionAttributeNames: { "#s": "schema", "#c": "constraints" },
+            ExpressionAttributeValues: { ":sid": sectionId, ":t": title, ":d": description, ":diff": difficulty, ":schema": schema, ":constraints": constraints, ":cq": correctQuery }
+        }));
+        res.status(200).json({ message: 'Problem updated.' });
+    } catch (error) {
+        console.error("Update SQL Problem Error:", error);
+        res.status(500).json({ message: 'Server error updating problem.' });
+    }
+});
+
+app.delete('/api/sql/problems/:id', authMiddleware, adminOnlyAuth, async (req, res) => {
+     const { id } = req.params;
+    try {
+        await docClient.send(new DeleteCommand({ TableName: SQL_TABLE_NAME, Key: { scoreId: id } }));
+        res.status(200).json({ message: 'Problem deleted.' });
+    } catch (error) {
+        console.error("Delete SQL Problem Error:", error);
+        res.status(500).json({ message: 'Server error deleting problem.' });
+    }
+});
+
+// --- STUDENT-FACING SQL API ---
+
+app.get('/api/student/sql/problems', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+    const studentCollege = req.user.college;
+    
+    try {
+        const { Items } = await docClient.send(new ScanCommand({ TableName: SQL_TABLE_NAME }));
+        const sections = Items.filter(i => i.recordType === 'SECTION');
+        const problems = Items.filter(i => i.recordType === 'PROBLEM');
+
+        const allowedSections = sections.filter(s => !s.assignedColleges || s.assignedColleges.length === 0 || s.assignedColleges.includes(studentCollege));
+        const allowedSectionIds = new Set(allowedSections.map(s => s.scoreId));
+        const sectionMap = new Map(sections.map(s => [s.scoreId, s.sectionName]));
+
+        const studentProblems = problems
+            .filter(p => allowedSectionIds.has(p.sectionId))
+            .map(p => ({ ...p, problemId: p.scoreId, sectionName: sectionMap.get(p.sectionId) || 'Uncategorized' }));
+            
+        res.json(studentProblems);
+    } catch (error) {
+        console.error("Get Student SQL Problems Error:", error);
+        res.status(500).json({ message: 'Server error fetching problems.' });
+    }
+});
+
+// --- SQL EXECUTION AND SCORING APIS ---
+
+// MODIFIED: This endpoint now uses the OneCompiler API instead of local sqlite.
+app.post('/api/sql/run', authMiddleware, async (req, res) => {
+    const { schema, query } = req.body;
+    try {
+        const result = await runQueryWithOneCompiler(schema, query);
+        res.json(result);
+    } catch (error) {
+        res.status(400).json({ message: error.message, error: error.message });
+    }
+});
+
+// MODIFIED: This endpoint now uses the OneCompiler API for validation.
+app.post('/api/sql/save-score', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') {
+        return res.status(403).json({ message: 'Only students can submit solutions.' });
+    }
+
+    const { problemId, submittedCode } = req.body;
+    const studentEmail = req.user.email;
+
+    if (!problemId || !submittedCode) {
+        return res.status(400).json({ message: 'Problem ID and submitted code are required.' });
+    }
+
+    try {
+        const { Item: problem } = await docClient.send(new GetCommand({
+            TableName: SQL_TABLE_NAME,
+            Key: { scoreId: problemId }
+        }));
+        
+        if (!problem || problem.recordType !== 'PROBLEM') {
+            return res.status(404).json({ message: 'Problem not found.' });
+        }
+
+        let studentResult, correctResult, isCorrect = false;
+
+        try {
+            // Run both the student's query and the correct query via the API
+            [studentResult, correctResult] = await Promise.all([
+                runQueryWithOneCompiler(problem.schema, submittedCode),
+                runQueryWithOneCompiler(problem.schema, problem.correctQuery)
+            ]);
+            
+            // Helper to create a consistent, sorted string from a row for comparison
+            const canonicalRow = (row, columns) => {
+                return columns.map(col => `${col}:${row[col]}`).sort().join('|');
+            };
+            
+            // Sort the values arrays of both results to ensure order doesn't affect comparison
+            if (studentResult.values && studentResult.columns) {
+                studentResult.values.sort((a, b) => canonicalRow(a, studentResult.columns).localeCompare(canonicalRow(b, studentResult.columns)));
+            }
+            if (correctResult.values && correctResult.columns) {
+                correctResult.values.sort((a, b) => canonicalRow(a, correctResult.columns).localeCompare(canonicalRow(b, correctResult.columns)));
+            }
+            
+            // Compare the canonicalized results
+            isCorrect = JSON.stringify(studentResult) === JSON.stringify(correctResult);
+
+        } catch (error) {
+            // This will catch execution errors from the API call
+            studentResult = { error: error.message };
+        }
+        
+        const scoreMap = { 'Easy': 10, 'Medium': 20, 'Hard': 30, 'CTS Specific': 25 };
+        const score = isCorrect ? (scoreMap[problem.difficulty] || 10) : 0;
+
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: SQL_TABLE_NAME,
+            FilterExpression: "studentEmail = :email AND problemId = :pid AND recordType = :type",
+            ExpressionAttributeValues: { ":email": studentEmail, ":pid": problemId, ":type": "SCORE" }
+        }));
+
+        if (Items && Items.length > 0) {
+            const existingScoreId = Items[0].scoreId;
+            await docClient.send(new UpdateCommand({
+                TableName: SQL_TABLE_NAME,
+                Key: { scoreId: existingScoreId },
+                UpdateExpression: "set #s = :score, #sc = :code, #sa = :time",
+                ExpressionAttributeNames: { "#s": "score", "#sc": "submittedCode", "#sa": "submittedAt" },
+                ExpressionAttributeValues: { ":score": score, ":code": submittedCode, ":time": new Date().toISOString() }
+            }));
+        } else {
+            const newScoreId = `score_${uuidv4()}`;
+            const newScoreRecord = {
+                scoreId: newScoreId,
+                recordType: 'SCORE',
+                problemId, studentEmail,
+                problemTitle: problem.title,
+                difficulty: problem.difficulty,
+                score, submittedCode,
+                submittedAt: new Date().toISOString()
+            };
+            await docClient.send(new PutCommand({ TableName: SQL_TABLE_NAME, Item: newScoreRecord }));
+        }
+
+        res.status(200).json({
+            isCorrect: isCorrect,
+            message: isCorrect ? 'Correct!' : 'Incorrect.',
+            score: score,
+            result: studentResult
+        });
+
+    } catch (error) {
+        console.error("SQL Submit Error:", error);
+        res.status(500).json({ message: 'An error occurred on the server during submission.' });
+    }
+});
+
+
+// --- ADMIN & STUDENT SCORE/SUBMISSION RETRIEVAL ---
+
+app.get('/api/admin/sql-scores', authMiddleware, adminOnlyAuth, async (req, res) => {
+    try {
+        const { Items: scores } = await docClient.send(new ScanCommand({
+            TableName: SQL_TABLE_NAME,
+            FilterExpression: "recordType = :type",
+            ExpressionAttributeValues: { ":type": "SCORE" }
+        }));
+
+        if (!scores || scores.length === 0) return res.json([]);
+
+        const studentEmails = [...new Set(scores.map(s => s.studentEmail))];
+        const keys = studentEmails.map(email => ({ email }));
+        
+        const { Responses } = await docClient.send(new BatchGetCommand({
+            RequestItems: { "TestifyUsers": { Keys: keys, ProjectionExpression: "email, fullName, college" } }
+        }));
+        
+        const students = Responses.TestifyUsers || [];
+        const studentMap = new Map(students.map(s => [s.email, { fullName: s.fullName, college: s.college }]));
+
+        const enrichedScores = scores.map(score => {
+            const studentInfo = studentMap.get(score.studentEmail);
+            return {
+                ...score,
+                id: score.scoreId, // For frontend compatibility
+                studentName: studentInfo ? studentInfo.fullName : 'Unknown',
+                college: studentInfo ? studentInfo.college : 'Unknown'
+            };
+        });
+
+        res.json(enrichedScores);
+    } catch (error) {
+        console.error("Get Admin SQL Scores Error:", error);
+        res.status(500).json({ message: 'Server error fetching scores.' });
+    }
+});
+
+app.get('/api/sql/submission/:scoreId', authMiddleware, adminOnlyAuth, async (req, res) => {
+    const { scoreId } = req.params;
+    try {
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: SQL_TABLE_NAME,
+            Key: { scoreId: scoreId }
+        }));
+
+        if (!Item || Item.recordType !== 'SCORE') {
+            return res.status(404).json({ message: 'Submission not found.' });
+        }
+        res.json(Item);
+    } catch (error) {
+        console.error("Get SQL Submission Error:", error);
+        res.status(500).json({ message: 'Server error fetching submission.' });
+    }
+});
+
+app.get('/api/sql/my-score', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: SQL_TABLE_NAME,
+            FilterExpression: "recordType = :type AND studentEmail = :email",
+            ExpressionAttributeValues: { ":type": "SCORE", ":email": req.user.email }
+        }));
+        const totalScore = Items.reduce((sum, item) => sum + (item.score || 0), 0);
+        res.json({ totalScore });
+    } catch (error) {
+        console.error("Get My SQL Score Error:", error);
+        res.status(500).json({ message: 'Server error fetching score.' });
+    }
+});
+
+app.get('/api/sql/submitted-problems', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: SQL_TABLE_NAME,
+            FilterExpression: "recordType = :type AND studentEmail = :email AND score > :zero",
+            ExpressionAttributeValues: { 
+                ":type": "SCORE", 
+                ":email": req.user.email,
+                ":zero": 0 
+            }
+        }));
+        res.json(Items.map(item => item.problemId));
+    } catch (error) {
+        console.error("Get SQL Submitted Problems Error:", error);
+        res.status(500).json({ message: 'Server error fetching submitted problems.' });
+    }
+});
+
+app.get('/api/sql/my-submission/:problemId', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+    const { problemId } = req.params;
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: SQL_TABLE_NAME,
+            FilterExpression: "recordType = :type AND studentEmail = :email AND problemId = :pid",
+            ExpressionAttributeValues: { ":type": "SCORE", ":email": req.user.email, ":pid": problemId }
+        }));
+        if (Items && Items.length > 0) {
+            res.json(Items[0]);
+        } else {
+            res.status(404).json({ message: 'No submission found for this problem.' });
+        }
+    } catch (error) {
+        console.error("Get My SQL Submission Error:", error);
+        res.status(500).json({ message: 'Server error fetching submission.' });
+    }
+});
+
 
 
 // --- SERVER START ---
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+
