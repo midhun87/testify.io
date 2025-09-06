@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Manage SQL Problems</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700"><span class="text-2xl font-bold">SQL Admin</span></div>
+            <nav class="flex-grow p-4">
+                 <a href="sql-sections.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">Manage Sections</a>
+                 <a href="sql.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">Manage Problems</a>
+                 <a href="sql-scores.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">View Scores</a>
+            </nav>
+        </div>
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <header class="flex items-center justify-between h-20 bg-white border-b px-6">
+                <h1 class="text-2xl font-semibold text-gray-800">Manage SQL Problems</h1>
+                <button id="add-problem-btn" class="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700">
+                    + Add New Problem
+                </button>
+            </header>
+            <main class="p-6">
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <div id="problems-list" class="space-y-4"></div>
+                    <div id="loading-indicator" class="text-center py-12"><p>Loading Problems...</p></div>
+                    <div id="no-problems" class="hidden text-center py-12"><p>No problems found.</p></div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Problem Modal -->
+    <div id="problem-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white mb-10">
+            <form id="problem-form">
+                <h3 id="modal-title" class="text-2xl font-bold mb-6">Add New Problem</h3>
+                <input type="hidden" id="problem-id">
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label for="problem-title" class="block text-sm font-medium">Title</label>
+                            <input type="text" id="problem-title" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label for="problem-section" class="block text-sm font-medium">Section</label>
+                            <select id="problem-section" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required></select>
+                        </div>
+                        <div>
+                            <label for="problem-difficulty" class="block text-sm font-medium">Difficulty</label>
+                            <select id="problem-difficulty" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required>
+                                <option>Easy</option><option>Medium</option><option>Hard</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="problem-description" class="block text-sm font-medium">Problem Description</label>
+                        <textarea id="problem-description" rows="4" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" required></textarea>
+                    </div>
+                    <div>
+                        <label for="problem-schema" class="block text-sm font-medium">Database Schema (CREATE & INSERT statements)</label>
+                        <textarea id="problem-schema" rows="6" class="mt-1 block w-full border-gray-300 rounded-md font-mono text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="CREATE TABLE employees (id INT, name VARCHAR(50));\nINSERT INTO employees VALUES (1, 'Alice');" required></textarea>
+                    </div>
+                    <div>
+                        <label for="problem-constraints" class="block text-sm font-medium">Constraints</label>
+                        <textarea id="problem-constraints" rows="2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                    </div>
+                     <div>
+                        <label for="correct-query" class="block text-sm font-medium">Correct Query (for validation)</label>
+                        <textarea id="correct-query" rows="3" class="mt-1 block w-full border-gray-300 rounded-md font-mono text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="SELECT name FROM employees WHERE id = 1;" required></textarea>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end space-x-3">
+                    <button type="button" id="close-modal-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700">Save Problem</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            if (!token) window.location.href = '/login.html';
+
+            const problemsListDiv = document.getElementById('problems-list');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const noProblemsDiv = document.getElementById('no-problems');
+            const problemModal = document.getElementById('problem-modal');
+            const problemForm = document.getElementById('problem-form');
+            const sectionSelect = document.getElementById('problem-section');
+            let allProblems = [], allSections = [];
+            
+            const openProblemModal = () => problemModal.classList.remove('hidden');
+            const closeModal = () => problemModal.classList.add('hidden');
+            
+            const fetchSections = async () => {
+                 try {
+                    const res = await fetch('/api/sql/sections', { headers: { 'x-auth-token': token } });
+                    allSections = await res.json();
+                    sectionSelect.innerHTML = allSections.map(s => `<option value="${s.id}">${s.sectionName}</option>`).join('');
+                } catch (e) { console.error('Failed to fetch sections', e); }
+            };
+
+            const fetchProblems = async () => {
+                loadingIndicator.style.display = 'block';
+                try {
+                    const res = await fetch('/api/sql/problems', { headers: { 'x-auth-token': token } });
+                    allProblems = await res.json();
+                    renderProblems(allProblems);
+                } catch (e) {
+                    problemsListDiv.innerHTML = `<p class="text-red-500">Failed to load problems.</p>`;
+                } finally {
+                    loadingIndicator.style.display = 'none';
+                }
+            };
+            
+            const renderProblems = (problems) => {
+                 if (problems.length === 0) {
+                    noProblemsDiv.classList.remove('hidden');
+                    problemsListDiv.innerHTML = '';
+                    return;
+                }
+                noProblemsDiv.classList.add('hidden');
+                const sectionMap = new Map(allSections.map(s => [s.id, s.sectionName]));
+                problemsListDiv.innerHTML = problems.map(p => `
+                    <div class="border rounded-lg p-4 flex justify-between items-center transition hover:shadow-md">
+                        <div>
+                            <h3 class="font-bold text-lg text-gray-800">${p.title}</h3>
+                            <p class="text-sm text-gray-600">${sectionMap.get(p.sectionId) || 'Uncategorized'} - <span class="font-medium">${p.difficulty}</span></p>
+                        </div>
+                        <div class="space-x-2">
+                            <button class="edit-btn px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm font-medium" data-id="${p.id}">Edit</button>
+                            <button class="delete-btn px-3 py-1 bg-red-200 hover:bg-red-300 text-red-800 rounded text-sm font-medium" data-id="${p.id}">Delete</button>
+                        </div>
+                    </div>`).join('');
+            };
+            
+            document.getElementById('add-problem-btn').onclick = () => {
+                problemForm.reset();
+                document.getElementById('problem-id').value = '';
+                document.getElementById('modal-title').textContent = 'Add New SQL Problem';
+                openProblemModal();
+            };
+            
+            document.getElementById('close-modal-btn').onclick = closeModal;
+
+            problemsListDiv.addEventListener('click', (e) => {
+                if (e.target.classList.contains('edit-btn')) {
+                    const problem = allProblems.find(p => p.id === e.target.dataset.id);
+                    if (problem) {
+                        document.getElementById('problem-id').value = problem.id;
+                        document.getElementById('problem-title').value = problem.title;
+                        document.getElementById('problem-section').value = problem.sectionId;
+                        document.getElementById('problem-difficulty').value = problem.difficulty;
+                        document.getElementById('problem-description').value = problem.description;
+                        document.getElementById('problem-schema').value = problem.schema;
+                        document.getElementById('problem-constraints').value = problem.constraints;
+                        document.getElementById('correct-query').value = problem.correctQuery;
+                        document.getElementById('modal-title').textContent = 'Edit SQL Problem';
+                        openProblemModal();
+                    }
+                }
+                if (e.target.classList.contains('delete-btn')) {
+                     if (confirm('Are you sure you want to delete this problem?')) {
+                        deleteProblem(e.target.dataset.id);
+                    }
+                }
+            });
+
+            const deleteProblem = async (id) => {
+                await fetch(`/api/sql/problems/${id}`, { method: 'DELETE', headers: { 'x-auth-token': token } });
+                fetchProblems();
+            };
+
+            problemForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('problem-id').value;
+                const body = {
+                    sectionId: document.getElementById('problem-section').value,
+                    title: document.getElementById('problem-title').value,
+                    difficulty: document.getElementById('problem-difficulty').value,
+                    description: document.getElementById('problem-description').value,
+                    schema: document.getElementById('problem-schema').value,
+                    constraints: document.getElementById('problem-constraints').value,
+                    correctQuery: document.getElementById('correct-query').value
+                };
+                const url = id ? `/api/sql/problems/${id}` : '/api/sql/problems';
+                const method = id ? 'PUT' : 'POST';
+                await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'x-auth-token': token }, body: JSON.stringify(body) });
+                closeModal();
+                fetchProblems();
+            });
+
+            const init = async () => {
+                await fetchSections();
+                await fetchProblems();
+            };
+            init();
+        });
+    </script>
+</body>
+</html>

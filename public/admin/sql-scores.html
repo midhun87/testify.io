@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - SQL Compiler Scores</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material-darker.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        .CodeMirror { height: 50vh; border-radius: 0.5rem; }
+        .pagination-link.active {
+            background-color: #4F46E5;
+            color: white;
+            border-color: #4F46E5;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div id="sidebar" class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <span class="text-2xl font-bold">SQL Admin</span>
+            </div>
+            <nav class="flex-grow p-4">
+                 <a href="sql-sections.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">Manage Sections</a>
+                 <a href="sql.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">Manage Problems</a>
+                 <a href="sql-scores.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">View Scores</a>
+            </nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <header class="h-20 bg-white border-b px-6 flex items-center justify-between">
+                <button id="menu-button" class="md:hidden text-gray-600 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+                <h1 class="text-2xl font-semibold text-gray-800">SQL Compiler Scores</h1>
+                 <div class="flex items-center">
+                    <div class="relative">
+                        <button id="user-menu-button" class="flex items-center space-x-2">
+                            <span id="user-name" class="font-semibold text-gray-700">Admin User</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+            <main class="p-6">
+                 <div class="container mx-auto">
+                    <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                        <header id="main-header" class="mb-6">
+                            <h1 class="text-3xl font-extrabold text-gray-800">SQL Problem Scores</h1>
+                            <p class="text-gray-500 mt-2">Review scores and submitted queries for all SQL problems.</p>
+                        </header>
+
+                        <div id="student-report-header" class="hidden mb-6 p-4 bg-indigo-50 rounded-lg">
+                           <div class="flex flex-wrap justify-between items-center gap-4">
+                                <div>
+                                    <h2 class="text-xl font-bold text-indigo-800">Student Submission Report</h2>
+                                    <p id="student-report-name" class="text-indigo-600"></p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                     <button id="downloadReportBtn" class="flex items-center px-4 py-2 text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">Download Report</button>
+                                     <button id="clear-student-filter" class="px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-300 rounded-md hover:bg-indigo-100">Show All Scores</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filters -->
+                        <div id="filters-container" class="flex flex-col md:flex-row gap-4 mb-6 items-center">
+                            <input type="text" id="searchInput" class="pl-10 pr-4 py-2 border rounded-lg w-full md:flex-grow" placeholder="Search by name, email, college, or problem...">
+                            <select id="collegeFilter" class="w-full md:w-48 border-gray-300 rounded-lg">
+                                <option value="">All Colleges</option>
+                            </select>
+                            <select id="difficultyFilter" class="w-full md:w-48 border-gray-300 rounded-lg">
+                                <option value="">All Difficulties</option>
+                                <option value="Easy">Easy</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Hard">Hard</option>
+                            </select>
+                            <button id="printButton" class="w-full md:w-auto flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">Print Scores</button>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium uppercase">Student</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium uppercase">Problem</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium uppercase">Score</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium uppercase">Submitted At</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium uppercase">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="scores-table-body" class="bg-white divide-y divide-gray-200"></tbody>
+                            </table>
+                            <div id="loading-indicator" class="text-center py-12"><p>Loading Scores...</p></div>
+                            <div id="no-results" class="hidden text-center py-12"><p>No scores found.</p></div>
+                        </div>
+
+                         <div id="pagination-controls" class="px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-4"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Code View Modal -->
+    <div id="code-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center pb-3 border-b">
+                <h3 class="text-2xl font-bold">Submitted SQL Query</h3>
+                <button id="close-modal-btn" class="text-3xl font-bold">&times;</button>
+            </div>
+            <div class="mt-4"><textarea id="code-viewer"></textarea></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/sql/sql.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            if (!token) window.location.href = '/login.html';
+            
+            const tableBody = document.getElementById('scores-table-body');
+            const searchInput = document.getElementById('searchInput');
+            const collegeFilter = document.getElementById('collegeFilter');
+            const difficultyFilter = document.getElementById('difficultyFilter');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const noResultsDiv = document.getElementById('no-results');
+            const paginationControls = document.getElementById('pagination-controls');
+            const printButton = document.getElementById('printButton');
+            const mainHeader = document.getElementById('main-header');
+            const studentReportHeader = document.getElementById('student-report-header');
+            const studentReportName = document.getElementById('student-report-name');
+            const clearStudentFilterBtn = document.getElementById('clear-student-filter');
+            const filtersContainer = document.getElementById('filters-container');
+            const downloadReportBtn = document.getElementById('downloadReportBtn');
+            const menuButton = document.getElementById('menu-button');
+            const sidebar = document.getElementById('sidebar');
+            const codeModal = document.getElementById('code-modal');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            
+            let codeViewer = null;
+            let allScores = [];
+            let currentPage = 1;
+            const rowsPerPage = 10;
+            let activeStudentReport = null;
+
+            const difficultyColors = {
+                'Easy': 'bg-green-100 text-green-800',
+                'Medium': 'bg-yellow-100 text-yellow-800',
+                'Hard': 'bg-red-100 text-red-800',
+            };
+            
+            menuButton.addEventListener('click', () => sidebar.classList.toggle('hidden'));
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user && user.fullName) document.getElementById('user-name').textContent = user.fullName;
+
+            function populateCollegeFilter(scores) {
+                const colleges = [...new Set(scores.map(score => score.college))].filter(Boolean).sort();
+                collegeFilter.innerHTML = '<option value="">All Colleges</option>';
+                colleges.forEach(college => {
+                    collegeFilter.innerHTML += `<option value="${college}">${college}</option>`;
+                });
+            }
+
+            const fetchScores = async () => {
+                loadingIndicator.style.display = 'block';
+                noResultsDiv.classList.add('hidden');
+                try {
+                    const res = await fetch('/api/admin/sql-scores', { headers: { 'x-auth-token': token } });
+                    if (!res.ok) throw new Error('Failed to fetch scores');
+                    allScores = await res.json();
+                    populateCollegeFilter(allScores);
+                    applyFiltersAndRender();
+                } catch (e) {
+                    tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-red-500">Failed to load data.</td></tr>`;
+                } finally {
+                    loadingIndicator.style.display = 'none';
+                }
+            };
+            
+            function applyFiltersAndRender() {
+                const filteredScores = getFilteredData();
+                renderPage(filteredScores, currentPage);
+                renderPagination(filteredScores);
+                updateHeaders();
+            }
+
+            function updateHeaders() {
+                if (activeStudentReport) {
+                    mainHeader.classList.add('hidden');
+                    studentReportHeader.classList.remove('hidden');
+                    studentReportName.textContent = `${activeStudentReport.name} (${activeStudentReport.email})`;
+                    filtersContainer.classList.add('hidden');
+                } else {
+                    mainHeader.classList.remove('hidden');
+                    studentReportHeader.classList.add('hidden');
+                    filtersContainer.classList.remove('hidden');
+                }
+            }
+
+            function renderPage(scores, page) {
+                tableBody.innerHTML = '';
+                if (scores.length === 0) {
+                    noResultsDiv.classList.remove('hidden');
+                    paginationControls.innerHTML = '';
+                    return;
+                }
+                noResultsDiv.classList.add('hidden');
+                
+                const start = (page - 1) * rowsPerPage;
+                const paginatedScores = scores.slice(start, start + rowsPerPage);
+
+                tableBody.innerHTML = paginatedScores.map(score => {
+                    const difficultyColor = difficultyColors[score.difficulty] || 'bg-gray-100 text-gray-800';
+                    const submittedDate = new Date(score.submittedAt).toLocaleString();
+                    return `
+                        <tr>
+                            <td class="px-6 py-4">
+                                <a href="#" class="student-link text-sm font-medium text-indigo-600 hover:text-indigo-800" data-student-email="${score.studentEmail}" data-student-name="${score.studentName}">${score.studentName}</a>
+                                <div class="text-sm text-gray-500">${score.studentEmail}</div>
+                                <div class="text-sm text-gray-500 mt-1">${score.college || 'N/A'}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-800">${score.problemTitle}</div>
+                                <span class="mt-1 px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${difficultyColor}">${score.difficulty}</span>
+                            </td>
+                            <td class="px-6 py-4 font-bold text-indigo-600">${score.score}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">${submittedDate}</td>
+                            <td class="px-6 py-4"><button class="view-code-btn text-indigo-600 hover:underline" data-id="${score.id}">View Query</button></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            function renderPagination(scores) {
+                const pageCount = Math.ceil(scores.length / rowsPerPage);
+                paginationControls.innerHTML = '';
+                if(pageCount <= 1) return;
+
+                let paginationHTML = `<div class="flex justify-between w-full">
+                    <button id="prev-btn" class="px-4 py-2 border rounded-md" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+                    <span class="self-center">Page ${currentPage} of ${pageCount}</span>
+                    <button id="next-btn" class="px-4 py-2 border rounded-md" ${currentPage === pageCount ? 'disabled' : ''}>Next</button>
+                </div>`;
+                paginationControls.innerHTML = paginationHTML;
+                
+                document.getElementById('prev-btn').addEventListener('click', () => { if(currentPage > 1) { currentPage--; applyFiltersAndRender(); } });
+                document.getElementById('next-btn').addEventListener('click', () => { if(currentPage < pageCount) { currentPage++; applyFiltersAndRender(); } });
+            }
+
+            const openCodeModal = async (scoreId) => {
+                const res = await fetch(`/api/sql/submission/${scoreId}`, { headers: { 'x-auth-token': token } });
+                const submission = await res.json();
+                if (!codeViewer) {
+                    codeViewer = CodeMirror.fromTextArea(document.getElementById('code-viewer'), {
+                        lineNumbers: true, mode: 'text/sql', theme: 'material-darker', readOnly: true
+                    });
+                }
+                codeViewer.setValue(submission.submittedCode || '-- No code submitted --');
+                codeModal.classList.remove('hidden');
+                setTimeout(() => codeViewer.refresh(), 1);
+            };
+
+            function getFilteredData() {
+                if (activeStudentReport) {
+                    return allScores.filter(score => score.studentEmail === activeStudentReport.email);
+                }
+                const searchTerm = searchInput.value.toLowerCase();
+                const difficulty = difficultyFilter.value;
+                const college = collegeFilter.value;
+                return allScores.filter(score => 
+                    (searchTerm === '' || score.studentName.toLowerCase().includes(searchTerm) || score.studentEmail.toLowerCase().includes(searchTerm) || score.problemTitle.toLowerCase().includes(searchTerm) || (score.college && score.college.toLowerCase().includes(searchTerm))) &&
+                    (difficulty === '' || score.difficulty === difficulty) &&
+                    (college === '' || score.college === college)
+                );
+            }
+
+            function printTable() {
+                const data = getFilteredData();
+                let printWindow = window.open('', '_blank');
+                printWindow.document.write('<html><head><title>SQL Scores Report</title><style>body{font-family: Inter, sans-serif;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ddd;padding:8px;} th{background-color:#f2f2f2;}</style></head><body>');
+                const reportTitle = activeStudentReport ? `Submission Report for ${activeStudentReport.name}` : 'SQL Scores Report';
+                printWindow.document.write(`<h1>${reportTitle}</h1>`);
+                let table = '<table><thead><tr><th>Student</th><th>Problem</th><th>Score</th><th>Submitted At</th></tr></thead><tbody>';
+                data.forEach(s => {
+                    table += `<tr><td>${s.studentName}<br>${s.studentEmail}<br>${s.college||'N/A'}</td><td>${s.problemTitle}<br>${s.difficulty}</td><td>${s.score}</td><td>${new Date(s.submittedAt).toLocaleString()}</td></tr>`;
+                });
+                table += '</tbody></table>';
+                printWindow.document.write(table);
+                printWindow.document.write('</body></html>');
+                printWindow.document.close();
+                printWindow.print();
+            }
+
+            function downloadCSV() {
+                if (!activeStudentReport) return;
+                const data = getFilteredData();
+                if (data.length === 0) return;
+
+                const headers = ["Student Name", "Student Email", "College", "Problem Title", "Difficulty", "Score", "Submitted At"];
+                let csv = headers.join(",") + "\n";
+                data.forEach(s => {
+                    csv += [`"${s.studentName}"`, `"${s.studentEmail}"`, `"${s.college||'N/A'}"`, `"${s.problemTitle}"`, `"${s.difficulty}"`, s.score, `"${new Date(s.submittedAt).toLocaleString()}"`].join(",") + "\n";
+                });
+                
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", `${activeStudentReport.name}_SQL_Report.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+
+            // Event Listeners
+            [searchInput, difficultyFilter, collegeFilter].forEach(el => el.addEventListener('input', () => { currentPage = 1; applyFiltersAndRender(); }));
+            printButton.addEventListener('click', printTable);
+            downloadReportBtn.addEventListener('click', downloadCSV);
+
+            tableBody.addEventListener('click', e => {
+                if (e.target.classList.contains('view-code-btn')) {
+                    openCodeModal(e.target.dataset.id);
+                } else if (e.target.classList.contains('student-link')) {
+                    e.preventDefault();
+                    activeStudentReport = { name: e.target.dataset.studentName, email: e.target.dataset.studentEmail };
+                    currentPage = 1;
+                    applyFiltersAndRender();
+                }
+            });
+
+            clearStudentFilterBtn.addEventListener('click', () => {
+                activeStudentReport = null;
+                currentPage = 1;
+                applyFiltersAndRender();
+            });
+            
+            closeModalBtn.onclick = () => codeModal.classList.add('hidden');
+            
+            fetchScores();
+        });
+    </script>
+</body>
+</html>
