@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Fundamentals MCQs for Cognizant Preparation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .quiz-container {
+            max-width: 1200px;
+            margin: auto;
+        }
+        .option-btn {
+            transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
+        }
+        .option-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .palette-btn.current {
+            background-color: #1d4ed8; /* bg-blue-700 */
+            color: white;
+            font-weight: bold;
+            border-color: #1e40af;
+        }
+        .palette-btn.answered {
+            background-color: #60a5fa; /* bg-blue-400 */
+            color: white;
+        }
+        .result-correct {
+            border-left: 4px solid #22c55e; /* border-green-500 */
+        }
+        .result-incorrect {
+            border-left: 4px solid #ef4444; /* border-red-500 */
+        }
+        /* Styles for immediate feedback */
+        .options-answered .option-btn {
+            pointer-events: none; /* Disable clicks after an answer is chosen */
+        }
+        .option-btn.correct {
+            background-color: #dcfce7; /* green-100 */
+            border-color: #22c55e; /* green-500 */
+            color: #166534; /* green-800 */
+            font-weight: 600;
+        }
+        .option-btn.incorrect {
+            background-color: #fee2e2; /* red-100 */
+            border-color: #ef4444; /* red-500 */
+            color: #991b1b; /* red-800 */
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 flex items-center justify-center min-h-screen p-4">
+
+    <div id="quiz-app" class="quiz-container w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+        
+        <!-- Quiz Header -->
+        <header class="p-4 bg-slate-800 text-white flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo" class="h-12 w-12 rounded-full">
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold">Cloud Fundamentals Quiz</h1>
+                    <p class="text-slate-300 text-sm">Designed for Cognizant Preparation</p>
+                </div>
+            </div>
+            <div id="user-info" class="hidden text-right">
+                 <p class="text-sm">Welcome, <span id="user-name" class="font-semibold"></span></p>
+                 <button id="logout-btn" class="text-xs text-slate-300 hover:text-white underline">Logout</button>
+            </div>
+        </header>
+
+        <!-- Main Content: Quiz View & Results View -->
+        <main id="main-content" class="p-4 md:p-6">
+
+             <!-- Auth Gate -->
+            <div id="auth-gate" class="hidden text-center p-10">
+                <h2 class="text-2xl font-bold text-slate-700 mb-4">Access Denied</h2>
+                <p class="text-slate-600 mb-6">You must be logged into the main website to access this quiz.</p>
+                <a href="/login.html" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200">Go to Login</a>
+            </div>
+            
+            <!-- Quiz View -->
+            <div id="quiz-content" class="hidden">
+                <div id="quiz-view">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <!-- Left Panel: Question & Options -->
+                        <div class="md:col-span-3">
+                            <div id="question-header" class="flex justify-between items-center mb-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                 <span id="question-counter" class="text-lg font-semibold text-slate-700"></span>
+                                 <span id="score-display" class="text-lg font-semibold text-blue-600">Score: 0</span>
+                            </div>
+                            <div class="p-6 bg-white rounded-lg shadow-md border border-slate-200">
+                                <p id="question-text" class="text-lg md:text-xl font-medium mb-6"></p>
+                                <div id="options-container" class="space-y-3">
+                                    <!-- Options will be dynamically inserted here -->
+                                </div>
+                            </div>
+                            <div id="feedback-container" class="mt-4">
+                                <div id="explanation-container" class="hidden p-4 bg-slate-50 rounded-lg border-t-4 border-slate-200">
+                                    <p id="explanation-text" class="text-slate-700"></p>
+                                </div>
+                                <div class="mt-4 flex justify-end">
+                                    <button id="next-btn" class="hidden bg-blue-500 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-blue-600 transition-colors duration-200">Next Question</button>
+                                </div>
+                            </div>
+                             <div class="mt-6 text-center">
+                                <button id="submit-btn" class="hidden bg-green-500 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-green-600 transition-colors duration-200">Show Final Results</button>
+                            </div>
+                        </div>
+    
+                        <!-- Right Panel: Question Palette -->
+                        <div class="md:col-span-1">
+                            <div class="bg-slate-50 p-4 rounded-lg shadow-inner border border-slate-200 h-full">
+                                 <h3 class="text-lg font-semibold mb-4 text-center text-slate-700">Question Palette</h3>
+                                 <div id="question-palette" class="grid grid-cols-5 gap-2">
+                                    <!-- Palette buttons will be dynamically inserted here -->
+                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <!-- Results View -->
+                <div id="results-view" class="hidden text-center">
+                    <h2 class="text-3xl font-bold text-slate-800 mb-2">Quiz Completed!</h2>
+                    <p class="text-xl text-slate-600 mb-4">Your Final Score:</p>
+                    <p id="final-score" class="text-5xl font-extrabold text-blue-600 mb-8"></p>
+                    
+                    <div id="results-details" class="mt-8 text-left space-y-6">
+                        <!-- Detailed results will be dynamically inserted here -->
+                    </div>
+    
+                    <button id="restart-btn" class="mt-10 bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200">Try Again</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const quizData = [
+            // Section 1: Core Cloud Concepts
+            {
+                id: 1,
+                question: "What is the primary characteristic of cloud computing that describes the ability to automatically provision and de-provision resources as needed?",
+                options: ["High Availability", "Fault Tolerance", "On-Demand Self-Service", "Measured Service"],
+                answer: "On-Demand Self-Service",
+                explanation: "On-demand self-service is a key characteristic defined by NIST. It allows users to provision computing capabilities, such as server time and network storage, automatically without requiring human interaction with each service provider."
+            },
+            {
+                id: 2,
+                question: "The ability of a cloud system to handle a growing amount of work by adding resources is called ________.",
+                options: ["Elasticity", "Scalability", "Agility", "Durability"],
+                answer: "Scalability",
+                explanation: "Scalability is the concept of adding more resources to a system to handle increased load. This can be 'scaling up' (adding more power to an existing server) or 'scaling out' (adding more servers). Elasticity is the ability to automatically scale up or down, which is a form of scalability."
+            },
+            {
+                id: 3,
+                question: "Which term refers to the ability of a cloud service to automatically adjust its resources to meet fluctuating demand in real-time?",
+                options: ["Scalability", "Elasticity", "Fault Tolerance", "High Availability"],
+                answer: "Elasticity",
+                explanation: "Elasticity is a core advantage of the cloud. It is the ability to dynamically acquire and release resources as demand changes. For example, a retail website might automatically add more servers during a flash sale and remove them when the sale is over."
+            },
+            {
+                id: 4,
+                question: "What does the term 'multi-tenancy' mean in the context of cloud computing?",
+                options: ["A single customer using multiple cloud services.", "A single application instance serving multiple customers.", "Multiple cloud providers hosting a single application.", "Multiple applications from one customer running on a single server."],
+                answer: "A single application instance serving multiple customers.",
+                explanation: "Multi-tenancy is an architecture where a single instance of software and its supporting infrastructure serves multiple customers (tenants). Each tenant's data is isolated and remains invisible to other tenants."
+            },
+            // Section 2: Cloud Service Models (IaaS, PaaS, SaaS)
+            {
+                id: 5,
+                question: "Which cloud service model provides the user with the most control over the operating system and underlying infrastructure?",
+                options: ["SaaS (Software as a Service)", "PaaS (Platform as a Service)", "IaaS (Infrastructure as a Service)", "FaaS (Function as a Service)"],
+                answer: "IaaS (Infrastructure as a Service)",
+                explanation: "In the IaaS model, the cloud provider supplies the fundamental infrastructure (servers, storage, networking), but the user is responsible for managing the operating system, middleware, and applications."
+            },
+            {
+                id: 6,
+                question: "A company wants to build and deploy a web application without managing the underlying servers, operating systems, or databases. Which service model is the best fit?",
+                options: ["IaaS", "PaaS", "SaaS", "On-premises"],
+                answer: "PaaS",
+                explanation: "Platform as a Service (PaaS) provides a platform allowing customers to develop, run, and manage applications without the complexity of building and maintaining the infrastructure typically associated with developing an app."
+            },
+            {
+                id: 7,
+                question: "Microsoft Office 365 and Google Workspace are examples of which cloud service model?",
+                options: ["IaaS", "PaaS", "SaaS", "CaaS (Containers as a Service)"],
+                answer: "SaaS",
+                explanation: "Software as a Service (SaaS) is a software distribution model in which a third-party provider hosts applications and makes them available to customers over the Internet."
+            },
+            {
+                id: 8,
+                question: "In the 'Shared Responsibility Model,' what is the customer always responsible for, regardless of the service model (IaaS, PaaS, or SaaS)?",
+                options: ["The physical security of the data center", "The network infrastructure", "Their data and access management", "The operating system patches"],
+                answer: "Their data and access management",
+                explanation: "The Shared Responsibility Model defines security obligations. While the provider's responsibilities decrease from SaaS to IaaS, the customer is always responsible for their own data, user access, and identity management."
+            },
+            // Section 3: Cloud Deployment Models
+            {
+                id: 9,
+                question: "Which cloud deployment model is owned and operated by the organization that uses it, typically located on-premises?",
+                options: ["Public Cloud", "Private Cloud", "Hybrid Cloud", "Community Cloud"],
+                answer: "Private Cloud",
+                explanation: "A private cloud is a cloud computing environment dedicated to a single organization. It offers the highest level of security and control but requires significant capital expenditure and maintenance."
+            },
+            {
+                id: 10,
+                question: "A company needs to use a public cloud for cost-effective web hosting but must keep its sensitive customer database on-premises to meet regulatory requirements. Which deployment model should it use?",
+                options: ["Public Cloud only", "Private Cloud only", "Hybrid Cloud", "Multi-Cloud"],
+                answer: "Hybrid Cloud",
+                explanation: "A hybrid cloud integrates a private cloud with one or more public cloud services, allowing organizations to leverage the scalability of the public cloud while keeping critical data secure in their private environment."
+            },
+            {
+                id: 11,
+                question: "Which of the following is a primary advantage of a Public Cloud?",
+                options: ["Maximum control over hardware", "Compliance with all government regulations by default", "Massive economies of scale and lower upfront costs", "Dedicated physical servers for each customer"],
+                answer: "Massive economies of scale and lower upfront costs",
+                explanation: "Public clouds (like AWS, Azure, GCP) serve multiple organizations. Their massive scale allows them to offer services at a lower cost (pay-as-you-go) than an on-premises solution."
+            },
+            {
+                id: 12,
+                question: "A group of several universities decides to pool their resources to create a cloud environment for their shared research data. This is an example of a ________.",
+                options: ["Public Cloud", "Private Cloud", "Hybrid Cloud", "Community Cloud"],
+                answer: "Community Cloud",
+                explanation: "A community cloud is a collaborative effort where infrastructure is shared between several organizations from a specific community with common concerns."
+            },
+            // Section 4: Virtualization and Key Technologies
+            {
+                id: 13,
+                question: "What is the role of a hypervisor in cloud computing?",
+                options: ["To manage cloud billing and costs", "To provide a user interface for cloud services", "To create and manage virtual machines (VMs)", "To secure the physical data center"],
+                answer: "To create and manage virtual machines (VMs)",
+                explanation: "A hypervisor (or Virtual Machine Monitor, VMM) is software that creates and runs virtual machines. It allows one host computer to support multiple guest VMs by virtually sharing its resources."
+            },
+            {
+                id: 14,
+                question: "What is the main difference between a container and a virtual machine (VM)?",
+                options: ["Containers run on a physical server, while VMs run on a hypervisor.", "Containers virtualize the operating system, while VMs virtualize the hardware.", "VMs are more lightweight than containers.", "Containers include the entire operating system in their package."],
+                answer: "Containers virtualize the operating system, while VMs virtualize the hardware.",
+                explanation: "A VM includes a full copy of an OS. A container packages up code and dependencies but shares the host OS kernel, making them much more lightweight and portable."
+            },
+            {
+                id: 15,
+                question: "Docker is a popular platform for managing ________.",
+                options: ["Virtual Machines", "Physical Servers", "Containers", "Serverless Functions"],
+                answer: "Containers",
+                explanation: "Docker is an open-source platform for developing, shipping, and running applications inside containers. It has become the industry standard for containerization."
+            },
+            {
+                id: 16,
+                question: "Which of the following best describes 'Serverless Computing'?",
+                options: ["Running applications without any servers.", "The customer manages the server, but the provider manages the OS.", "The cloud provider fully manages the servers, and the user only provides the code (functions).", "A type of private cloud deployment."],
+                answer: "The cloud provider fully manages the servers, and the user only provides the code (functions).",
+                explanation: "Serverless Computing (or FaaS) is a model where the cloud provider runs the server and dynamically manages resource allocation. Pricing is based on actual consumption."
+            },
+            // Section 5: Major Cloud Providers & Services
+            {
+                id: 17,
+                question: "Which AWS service is used for providing scalable virtual servers (compute capacity) in the cloud?",
+                options: ["Amazon S3", "Amazon RDS", "Amazon EC2", "Amazon VPC"],
+                answer: "Amazon EC2",
+                explanation: "EC2 (Elastic Compute Cloud) is the core IaaS offering from AWS. It provides secure, resizable compute capacity in the cloud."
+            },
+            {
+                id: 18,
+                question: "What is the equivalent service to Amazon S3 in the Microsoft Azure ecosystem?",
+                options: ["Azure Virtual Machines", "Azure Blob Storage", "Azure SQL Database", "Azure Functions"],
+                answer: "Azure Blob Storage",
+                explanation: "Amazon S3 (Simple Storage Service) is an object storage service. The direct equivalent in Azure is Blob Storage, optimized for storing massive amounts of unstructured data."
+            },
+            {
+                id: 19,
+                question: "Which Google Cloud Platform (GCP) service is a fully-managed platform for running containerized applications?",
+                options: ["Google Compute Engine", "Google Cloud Storage", "Google Kubernetes Engine (GKE)", "Google BigQuery"],
+                answer: "Google Kubernetes Engine (GKE)",
+                explanation: "GKE is a managed environment for deploying, managing, and scaling containerized applications using Google infrastructure, built on the open-source Kubernetes system."
+            },
+            {
+                id: 20,
+                question: "In AWS, what is the purpose of an IAM (Identity and Access Management) service?",
+                options: ["To create virtual private networks", "To manage users, permissions, and roles securely", "To store and retrieve large amounts of data", "To deploy and scale web applications"],
+                answer: "To manage users, permissions, and roles securely",
+                explanation: "IAM is a central service in AWS that helps you securely control access to AWS resources by managing who is authenticated and authorized to use them."
+            },
+            // Section 6: Cloud Security and Networking
+            {
+                id: 21,
+                question: "What is a Virtual Private Cloud (VPC)?",
+                options: ["A public cloud service accessible only via a VPN.", "A logically isolated section of a public cloud where you can launch resources.", "A physical data center dedicated to a single customer.", "A community cloud for virtual reality applications."],
+                answer: "A logically isolated section of a public cloud where you can launch resources.",
+                explanation: "A VPC allows you to provision a logically isolated section of a public cloud. You have complete control over this virtual networking environment."
+            },
+            {
+                id: 22,
+                question: "What is the purpose of a 'Security Group' in the context of AWS?",
+                options: ["A group of security administrators.", "A physical cage in a data center for locking servers.", "A virtual firewall for an EC2 instance to control inbound and outbound traffic.", "A list of compliant security standards."],
+                answer: "A virtual firewall for an EC2 instance to control inbound and outbound traffic.",
+                explanation: "A security group acts as a virtual firewall that controls the traffic for one or more instances. You add rules to each security group that allow traffic to or from its associated instances."
+            },
+            {
+                id: 23,
+                question: "Which of the following is an example of a DDoS (Distributed Denial-of-Service) attack?",
+                options: ["An attacker guessing a user's password.", "An attacker tricking a user into revealing sensitive information.", "An attacker encrypting a user's files and demanding a ransom.", "An attacker overwhelming a web server with traffic from many different sources."],
+                answer: "An attacker overwhelming a web server with traffic from many different sources.",
+                explanation: "A DDoS attack is a malicious attempt to disrupt the normal traffic of a targeted server, service, or network by overwhelming it with a flood of Internet traffic."
+            },
+            {
+                id: 24,
+                question: "In the cloud, what does 'data encryption at rest' refer to?",
+                options: ["Encrypting data as it moves between a user and the cloud.", "Encrypting data while it is being processed by a CPU.", "Encrypting data that is stored on a disk or in a database.", "Encrypting data that is being backed up."],
+                answer: "Encrypting data that is stored on a disk or in a database.",
+                explanation: "'Data at rest' is data that is not actively moving. Encrypting this data protects it from unauthorized access if the physical storage medium is compromised."
+            },
+            // Section 7: More Scenario-Based & Mixed Questions
+            {
+                id: 25,
+                question: "A startup with a small budget and unpredictable traffic needs to launch a new application quickly. Which deployment model would be most suitable?",
+                options: ["Private Cloud", "Public Cloud", "On-premises data center", "Hybrid Cloud"],
+                answer: "Public Cloud",
+                explanation: "The public cloud is ideal for startups due to its pay-as-you-go pricing model, which eliminates upfront hardware costs, and its elasticity can handle unpredictable traffic."
+            },
+            {
+                id: 26,
+                question: "The principle of paying only for the computing resources that you actually use is known as:",
+                options: ["Capital Expenditure (CapEx)", "Operational Expenditure (OpEx)", "Pay-as-you-go", "Reserved Instances"],
+                answer: "Pay-as-you-go",
+                explanation: "Pay-as-you-go is a core financial benefit of cloud computing, contrasting with the traditional on-premises model which requires a large upfront capital expenditure (CapEx)."
+            },
+            {
+                id: 27,
+                question: "What is a 'Region' in the context of major cloud providers like AWS and Azure?",
+                options: ["A single, large data center.", "A logical collection of user accounts.", "A specific geographical area in the world where data centers are located.", "A content delivery network endpoint."],
+                answer: "A specific geographical area in the world where data centers are located.",
+                explanation: "A region is a physical location around the world where cloud providers cluster data centers. Each region consists of multiple, isolated Availability Zones."
+            },
+            {
+                id: 28,
+                question: "To ensure high availability and fault tolerance for an application, where should you deploy your resources?",
+                options: ["Across multiple services in the same data center.", "Across multiple Regions.", "Across multiple Availability Zones within a single Region.", "In a single, powerful server."],
+                answer: "Across multiple Availability Zones within a single Region.",
+                explanation: "Deploying an application across multiple AZs ensures that if one data center fails, the application remains available from another. Deploying across regions is a strategy for disaster recovery."
+            },
+            {
+                id: 29,
+                question: "Which technology allows you to define and provision your cloud infrastructure using code?",
+                options: ["Continuous Integration (CI)", "Infrastructure as Code (IaC)", "Software as a Service (SaaS)", "Virtual Private Network (VPN)"],
+                answer: "Infrastructure as Code (IaC)",
+                explanation: "IaC is the process of managing and provisioning computer data centers through machine-readable definition files, rather than physical hardware configuration. Tools like AWS CloudFormation and Terraform are used for IaC."
+            },
+            {
+                id: 30,
+                question: "A content delivery network (CDN) is used to:",
+                options: ["Secure the connection between a user and a server.", "Store user login credentials.", "Reduce latency by caching content closer to end-users.", "Manage DNS records for a domain."],
+                answer: "Reduce latency by caching content closer to end-users.",
+                explanation: "A CDN is a geographically distributed network of proxy servers. The goal is to provide high availability and performance by distributing the service spatially relative to end-users."
+            },
+            {
+                id: 31,
+                question: "Which of the following is NOT a characteristic of cloud computing as defined by NIST?",
+                options: ["Resource Pooling", "Rapid Elasticity", "Fixed Cost", "Measured Service"],
+                answer: "Fixed Cost",
+                explanation: "Cloud computing is characterized by a variable, pay-as-you-go cost model, not a fixed cost. The five essential characteristics defined by NIST are On-demand self-service, Broad network access, Resource pooling, Rapid elasticity, and Measured service."
+            },
+            {
+                id: 32,
+                question: "What does 'lifting and shifting' an application to the cloud mean?",
+                options: ["Rewriting the application to be cloud-native.", "Decommissioning the application.", "Migrating an existing application to a cloud environment with minimal or no changes.", "Splitting the application into microservices."],
+                answer: "Migrating an existing application to a cloud environment with minimal or no changes.",
+                explanation: "'Lift and shift' (rehosting) is a common migration strategy. It involves moving an application from on-premises to cloud infrastructure without redesigning it."
+            },
+            {
+                id: 33,
+                question: "An API Gateway in a cloud architecture primarily serves to:",
+                options: ["Act as a single entry point for all client requests to backend services.", "Store large binary objects.", "Run code in response to events.", "Authenticate database users."],
+                answer: "Act as a single entry point for all client requests to backend services.",
+                explanation: "An API Gateway is a management tool that sits between a client and a collection of backend services. It handles tasks like request routing, rate limiting, and security."
+            },
+            {
+                id: 34,
+                question: "You are responsible for managing an application running on AWS EC2 instances. According to the Shared Responsibility Model, what is AWS responsible for?",
+                options: ["Patching the guest operating system on the EC2 instances.", "Managing IAM user permissions.", "Securing the physical hardware and the global network.", "Encrypting client-side data."],
+                answer: "Securing the physical hardware and the global network.",
+                explanation: "In the IaaS model, AWS is responsible for the 'Security of the Cloud' (hardware, network, facilities). The customer is responsible for 'Security in the Cloud' (guest OS, apps, data)."
+            },
+            {
+                id: 35,
+                question: "What is the main purpose of Load Balancing?",
+                options: ["To increase the storage capacity of a single server.", "To distribute incoming network traffic across multiple servers.", "To encrypt network traffic.", "To back up data automatically."],
+                answer: "To distribute incoming network traffic across multiple servers.",
+                explanation: "A load balancer acts as a 'traffic cop,' distributing traffic across multiple backend servers to ensure no single server becomes overwhelmed, improving responsiveness and availability."
+            },
+            {
+                id: 36,
+                question: "The cloud architecture that allows applications to be built as a collection of small, independently deployable services is known as:",
+                options: ["Monolithic architecture", "Microservices architecture", "Three-tier architecture", "Serverless architecture"],
+                answer: "Microservices architecture",
+                explanation: "Microservices is an architectural style that structures an application as a collection of loosely coupled services, enabling continuous delivery and independent scaling."
+            },
+            {
+                id: 37,
+                question: "Which pricing model offers the largest discount for AWS EC2 instances but requires a long-term commitment?",
+                options: ["On-Demand", "Spot Instances", "Reserved Instances", "Pay-as-you-go"],
+                answer: "Reserved Instances",
+                explanation: "Reserved Instances (RIs) provide a significant discount compared to On-Demand pricing in exchange for a 1- or 3-year term commitment."
+            },
+            {
+                id: 38,
+                question: "The process of connecting an on-premises network to a cloud provider's network using a dedicated, private connection is often called:",
+                options: ["VPN (Virtual Private Network)", "Direct Connect / ExpressRoute", "Public Peering", "API Gateway"],
+                answer: "Direct Connect / ExpressRoute",
+                explanation: "AWS Direct Connect and Azure ExpressRoute are services that create a private, dedicated network connection between your on-premises data center and the cloud."
+            },
+            {
+                id: 39,
+                question: "In cloud terminology, what does 'fault tolerance' mean?",
+                options: ["The ability of a system to continue operating without interruption when one or more of its components fail.", "The ability to prevent any faults from ever occurring.", "The ability to scale resources automatically.", "The ability to recover data after a disaster."],
+                answer: "The ability of a system to continue operating without interruption when one or more of its components fail.",
+                explanation: "Fault tolerance is achieved through redundancy. For example, by running an application across multiple servers, the system can tolerate the failure of one server."
+            },
+            {
+                id: 40,
+                question: "What is a primary benefit of using managed database services like Amazon RDS or Azure SQL Database over installing a database on a virtual machine?",
+                options: ["It gives you root access to the underlying operating system.", "It's always cheaper for all workloads.", "The cloud provider handles administrative tasks like patching, backups, and failover.", "It provides unlimited storage capacity by default."],
+                answer: "The cloud provider handles administrative tasks like patching, backups, and failover.",
+                explanation: "Managed database services (PaaS) abstract away infrastructure and automate common administrative tasks, allowing developers to focus on application development."
+            }
+        ].map(q => ({...q, userAnswer: null})); // Add userAnswer property to each question
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        const questionCounterEl = document.getElementById('question-counter');
+        const scoreDisplayEl = document.getElementById('score-display');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainerEl = document.getElementById('options-container');
+        const questionPaletteEl = document.getElementById('question-palette');
+        const submitBtn = document.getElementById('submit-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const quizView = document.getElementById('quiz-view');
+        const resultsView = document.getElementById('results-view');
+        const finalScoreEl = document.getElementById('final-score');
+        const resultsDetailsEl = document.getElementById('results-details');
+        const restartBtn = document.getElementById('restart-btn');
+        const explanationContainer = document.getElementById('explanation-container');
+        const explanationText = document.getElementById('explanation-text');
+
+        const authGate = document.getElementById('auth-gate');
+        const quizContent = document.getElementById('quiz-content');
+        const userInfoEl = document.getElementById('user-info');
+        const userNameEl = document.getElementById('user-name');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        function checkAuth() {
+            // In a real app, the token would be set in localStorage upon login on the main site.
+            // For demonstration, you can manually set a dummy token in your browser's developer console:
+            // localStorage.setItem('token', 'header.' + btoa(JSON.stringify({ user: { fullName: 'Test User' } })) + '.signature');
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                quizContent.classList.add('hidden');
+                authGate.classList.remove('hidden');
+                return false;
+            }
+
+            try {
+                // Decode the JWT payload to get user info
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const user = payload.user;
+
+                if (user && user.fullName) {
+                    userNameEl.textContent = user.fullName;
+                    userInfoEl.classList.remove('hidden');
+                    quizContent.classList.remove('hidden');
+                    authGate.classList.add('hidden');
+                    return true;
+                } else {
+                    throw new Error('Invalid token payload');
+                }
+            } catch (error) {
+                console.error("Authentication Error:", error);
+                localStorage.removeItem('token');
+                quizContent.classList.add('hidden');
+                authGate.classList.remove('hidden');
+                return false;
+            }
+        }
+
+
+        function initializeQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            quizData.forEach(q => q.userAnswer = null);
+
+            quizView.classList.remove('hidden');
+            resultsView.classList.add('hidden');
+            submitBtn.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+            explanationContainer.classList.add('hidden');
+
+            renderPalette();
+            loadQuestion(0);
+            updateScoreDisplay();
+        }
+
+        function renderPalette() {
+            questionPaletteEl.innerHTML = '';
+            quizData.forEach((question, index) => {
+                const paletteBtn = document.createElement('button');
+                paletteBtn.textContent = index + 1;
+                paletteBtn.classList.add('palette-btn', 'w-10', 'h-10', 'rounded-md', 'bg-slate-200', 'text-slate-600', 'hover:bg-slate-300', 'transition-colors', 'border-2', 'border-transparent');
+                
+                if (quizData[index].userAnswer !== null) {
+                    paletteBtn.classList.add('answered');
+                }
+                if (index === currentQuestionIndex) {
+                    paletteBtn.classList.add('current');
+                }
+
+                paletteBtn.addEventListener('click', () => {
+                    // Only allow navigation via palette if the question has not been answered yet
+                    if(quizData[index].userAnswer === null) {
+                        loadQuestion(index)
+                    }
+                });
+                questionPaletteEl.appendChild(paletteBtn);
+            });
+        }
+
+        function loadQuestion(index) {
+            currentQuestionIndex = index;
+            const question = quizData[index];
+
+            questionCounterEl.textContent = `Question ${index + 1} of ${quizData.length}`;
+            questionTextEl.textContent = question.question;
+            optionsContainerEl.innerHTML = '';
+            optionsContainerEl.classList.remove('options-answered');
+
+            explanationContainer.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+            submitBtn.classList.add('hidden');
+
+            question.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('option-btn', 'w-full', 'text-left', 'p-4', 'border', 'border-slate-300', 'rounded-lg', 'bg-white', 'hover:bg-blue-50', 'hover:border-blue-400');
+                button.addEventListener('click', () => selectAnswer(option));
+                optionsContainerEl.appendChild(button);
+            });
+            
+            renderPalette();
+        }
+        
+        function selectAnswer(selectedOption) {
+            const question = quizData[currentQuestionIndex];
+            if (question.userAnswer !== null) return; // Prevent re-answering
+
+            question.userAnswer = selectedOption;
+            optionsContainerEl.classList.add('options-answered');
+            
+            updateScoreDisplay();
+
+            const isCorrect = selectedOption === question.answer;
+
+            const optionButtons = optionsContainerEl.querySelectorAll('.option-btn');
+            optionButtons.forEach(button => {
+                const optionText = button.textContent;
+                if (optionText === question.answer) {
+                    button.classList.add('correct');
+                }
+                if (optionText === selectedOption && !isCorrect) {
+                    button.classList.add('incorrect');
+                }
+            });
+
+            explanationText.innerHTML = `<span class="font-semibold text-slate-800">Explanation:</span> ${question.explanation}`;
+            explanationContainer.classList.remove('hidden');
+            renderPalette();
+
+            if (currentQuestionIndex < quizData.length - 1) {
+                nextBtn.classList.remove('hidden');
+            } else {
+                submitBtn.classList.remove('hidden');
+            }
+        }
+
+        function updateScoreDisplay() {
+             score = quizData.reduce((acc, question) => {
+                return question.userAnswer === question.answer ? acc + 1 : acc;
+            }, 0);
+            scoreDisplayEl.textContent = `Score: ${score}`;
+        }
+        
+        function showResults() {
+            quizView.classList.add('hidden');
+            resultsView.classList.remove('hidden');
+
+            finalScoreEl.textContent = `${score} / ${quizData.length}`;
+            resultsDetailsEl.innerHTML = '';
+
+            quizData.forEach((question, index) => {
+                const isCorrect = question.userAnswer === question.answer;
+                const resultCard = document.createElement('div');
+                resultCard.classList.add('p-4', 'rounded-lg', 'bg-slate-50', 'shadow-sm', isCorrect ? 'result-correct' : 'result-incorrect');
+                
+                resultCard.innerHTML = `
+                    <p class="font-bold text-lg mb-2">${index + 1}. ${question.question}</p>
+                    <p class="mb-1 ${isCorrect ? 'text-green-600' : 'text-red-600'}">
+                        Your answer: <span class="font-semibold">${question.userAnswer || 'Not Answered'}</span>
+                        ${!isCorrect && question.userAnswer ? `<span class="text-green-600 font-semibold ml-4">Correct answer: ${question.answer}</span>` : ''}
+                    </p>
+                    <p class="text-slate-600 mt-2 pt-2 border-t border-slate-200"><span class="font-semibold">Explanation:</span> ${question.explanation}</p>
+                `;
+                resultsDetailsEl.appendChild(resultCard);
+            });
+        }
+        
+        nextBtn.addEventListener('click', () => {
+            if (currentQuestionIndex < quizData.length - 1) {
+                loadQuestion(currentQuestionIndex + 1);
+            }
+        });
+        submitBtn.addEventListener('click', showResults);
+        restartBtn.addEventListener('click', initializeQuiz);
+
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('token');
+            window.location.reload();
+        });
+
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            if (checkAuth()) {
+                initializeQuiz();
+            }
+        });
+    </script>
+</body>
+</html>
+

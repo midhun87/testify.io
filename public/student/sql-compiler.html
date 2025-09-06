@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testify SQL CodeLab</title>
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757066128/Gemini_Generated_Image_9bakrh9bakrh9bak_wuhqq7.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material-darker.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; color: white; font-weight: 600; }
+        .CodeMirror { height: 35vh; border-radius: 0.5rem; font-size: 14px; }
+        .problem-list-item.selected { background-color: #4F46E5; color: white; }
+        .submitted-badge { background-color: #dcfce7; color: #166534; font-size: 0.7rem; font-weight: 600; padding: 2px 6px; border-radius: 9999px; margin-left: 8px; }
+        .pending-badge { background-color: #fef3c7; color: #92400e; font-size: 0.7rem; font-weight: 600; padding: 2px 6px; border-radius: 9999px; margin-left: 8px; }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .prose h3 { font-size: 1.125rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e5e7eb; }
+        .prose pre { background-color: #f3f4f6; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap; word-wrap: break-word; font-family: monospace; }
+        .prose ul, .prose ol { margin-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+        .prose ul { list-style-type: disc; }
+        .prose ol { list-style-type: decimal; }
+        .prose li { margin-bottom: 0.25rem; }
+        .result-table th, .result-table td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
+        .result-table th { background-color: #f9fafb; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen bg-gray-200 font-sans">
+        <!-- Main Sidebar -->
+        <aside class="w-64 bg-gray-800 text-gray-300 hidden lg:flex flex-col">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold text-white">TESTIFY</span>
+            </div>
+            <nav class="flex flex-col flex-grow p-4">
+                <a href="/student/dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <a href="/student/take-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    <span class="ml-3">Take Test</span>
+                </a>
+                <a href="/student/test-history.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="ml-3">Test History</span>
+                </a>
+                <a href="/student/my-certificates.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span class="ml-3">My Certificates</span>
+                </a>
+                <a href="/student/my-courses.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span class="ml-3">My Courses</span>
+                </a>
+                <a href="/student/student-profile.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"/></svg>
+                <span class="ml-3">My Profile</span>
+                </a>
+                <a href="compiler.html" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200 mt-2">
+                    <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
+                    <span>Code Space</span>
+                </a>
+                 <a href="sql-compiler.html" class="sidebar-link active flex items-center py-2.5 px-4 rounded transition duration-200 mt-2">
+                    <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9.75h7.5v7.5h-7.5v-7.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 3.375h17.25v17.25h-17.25v-17.25z" /></svg>
+                    <span>SQL CodeLab</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <header class="bg-white shadow-md p-4 flex justify-between items-center z-20">
+                <h1 class="text-xl font-semibold text-gray-800">Testify SQL CodeLab</h1>
+                <div class="flex items-center space-x-2 bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-full">
+                    <span class="font-semibold text-sm">Score:</span>
+                    <span id="user-score" class="font-bold text-sm">0</span>
+                </div>
+            </header>
+
+            <!-- Compiler Content -->
+            <div class="flex-1 flex overflow-hidden p-4 lg:p-6 lg:gap-x-4">
+                <!-- Problems Sidebar -->
+                <aside id="problems-sidebar" class="w-72 bg-white p-4 shadow-lg rounded-lg flex flex-col">
+                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">SQL Problem Sections</h2>
+                    <div id="problem-list" class="overflow-y-auto flex-grow pr-2">
+                        <!-- Problems will be dynamically inserted here -->
+                    </div>
+                </aside>
+
+                <!-- Main Content Area -->
+                <main class="flex-1 overflow-y-auto">
+                    <div id="compiler-view" class="bg-white rounded-lg shadow-md hidden flex flex-col h-full p-6">
+                        <div id="problem-view" class="flex-1">
+                            <h2 id="problem-title" class="text-3xl font-bold text-gray-800"></h2>
+                            <div id="problem-meta-container" class="flex items-center space-x-4 mt-2 text-sm"></div>
+                            <div id="problem-details-container" class="mt-4 text-gray-700 leading-relaxed prose max-w-none"></div>
+                        </div>
+                        
+                        <div id="editor-view" class="mt-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="text-xl font-semibold text-gray-800">Your Query</h3>
+                                <div>
+                                    <button id="run-button" class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg shadow-md hover:bg-gray-700 transition">Run Query</button>
+                                    <button id="submit-button" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition">Submit</button>
+                                </div>
+                            </div>
+                            <textarea id="code-editor"></textarea>
+                        </div>
+
+                        <div id="results-view" class="mt-6">
+                             <h3 class="text-xl font-semibold text-gray-800">Result</h3>
+                             <div id="result-output" class="mt-2 p-4 border rounded-lg bg-gray-50 overflow-auto">
+                                Select a problem and run your query to see results.
+                             </div>
+                        </div>
+                    </div>
+                     <div id="welcome-view" class="flex items-center justify-center bg-white p-6 rounded-lg shadow-md h-full">
+                        <p class="text-gray-500 text-lg text-center">Select a problem from the sidebar to begin.</p>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Celebration Modal -->
+    <div id="celebration-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-8 max-w-sm text-center">
+            <div class="text-9xl animate-bounce">🎉</div>
+            <h2 class="text-2xl font-bold text-gray-800 mt-4">Congratulations!</h2>
+            <p class="text-gray-600 mt-2">Your query produced the correct result!</p>
+            <button id="close-modal-button" class="mt-6 px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg">Continue</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/sql/sql.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            let currentProblem = null;
+            let problems = [];
+            let submittedProblemIds = new Set();
+            
+            const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+                lineNumbers: true,
+                mode: 'text/sql',
+                theme: 'material-darker'
+            });
+            
+            const problemListDiv = document.getElementById('problem-list');
+
+            const fetchUserScore = async () => {
+                try {
+                    const res = await fetch('/api/sql/my-score', { headers: { 'x-auth-token': token }});
+                    const data = await res.json();
+                    document.getElementById('user-score').textContent = data.totalScore || 0;
+                } catch (e) { console.error("Failed to fetch score", e); }
+            };
+
+            const fetchSubmittedProblems = async () => {
+                 try {
+                    const res = await fetch('/api/sql/submitted-problems', { headers: { 'x-auth-token': token }});
+                    submittedProblemIds = new Set(await res.json());
+                } catch (e) { console.error("Failed to fetch submitted problems", e); }
+            };
+            
+            const displayProblems = () => {
+                problemListDiv.innerHTML = '';
+                 const groupedBySection = problems.reduce((acc, p) => {
+                    (acc[p.sectionName] = acc[p.sectionName] || []).push(p);
+                    return acc;
+                }, {});
+
+                for (const sectionName in groupedBySection) {
+                    const accordion = document.createElement('div');
+                    const header = document.createElement('div');
+                    header.className = 'accordion-header flex justify-between items-center p-3 rounded-md font-semibold text-gray-700 cursor-pointer';
+                    header.innerHTML = `<span>${sectionName}</span><svg class="w-5 h-5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>`;
+                    const content = document.createElement('div');
+                    content.className = 'accordion-content pl-4';
+                    
+                    const sectionProblems = groupedBySection[sectionName];
+
+                    // Sort problems: unsolved first, then solved
+                    sectionProblems.sort((a, b) => {
+                        const aIsSubmitted = submittedProblemIds.has(a.problemId);
+                        const bIsSubmitted = submittedProblemIds.has(b.problemId);
+                        return aIsSubmitted - bIsSubmitted; // This will sort false (0) before true (1)
+                    });
+
+                    sectionProblems.forEach(p => {
+                        const item = document.createElement('div');
+                        const isSubmitted = submittedProblemIds.has(p.problemId);
+                        item.className = `problem-list-item p-3 rounded-md cursor-pointer ${isSubmitted ? 'text-gray-500' : ''}`;
+                        item.dataset.problemId = p.problemId;
+                        item.innerHTML = `<span>${p.title}</span>${isSubmitted ? '<span class="submitted-badge">Solved</span>' : '<span class="pending-badge">Pending</span>'}`;
+                        content.appendChild(item);
+                    });
+                    
+                    accordion.append(header, content);
+                    problemListDiv.appendChild(accordion);
+                }
+            };
+
+            const selectProblem = async (problemId) => {
+                currentProblem = problems.find(p => p.problemId === problemId);
+                if (!currentProblem) return;
+
+                document.getElementById('welcome-view').classList.add('hidden');
+                document.getElementById('compiler-view').classList.replace('hidden', 'flex');
+
+                document.querySelectorAll('.problem-list-item').forEach(el => el.classList.remove('selected'));
+                document.querySelector(`[data-problem-id="${problemId}"]`).classList.add('selected');
+
+                document.getElementById('problem-title').textContent = currentProblem.title;
+                const scoreMap = { 'Easy': 10, 'Medium': 20, 'Hard': 30 };
+                document.getElementById('problem-meta-container').innerHTML = `
+                    <span class="font-semibold">${currentProblem.difficulty}</span>
+                    <span class="font-semibold text-yellow-600">${scoreMap[currentProblem.difficulty] || 25} Points</span>
+                `;
+                
+                let schemaHTML = '';
+                if(currentProblem.schema) {
+                    schemaHTML = `<h3>Database Schema</h3><pre>${currentProblem.schema.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>`;
+                }
+                
+                const problemDetailsContainer = document.getElementById('problem-details-container');
+                problemDetailsContainer.innerHTML = `
+                    <h3>Problem Statement</h3>
+                    <div>${currentProblem.description}</div>
+                    ${schemaHTML}
+                    <h3>Constraints</h3>
+                    <p>${currentProblem.constraints || 'None'}</p>
+                `;
+                
+                try {
+                    const res = await fetch(`/api/sql/my-submission/${problemId}`, { headers: { 'x-auth-token': token }});
+                    if (res.ok) {
+                        const submission = await res.json();
+                        editor.setValue(submission.submittedCode);
+                    } else {
+                        editor.setValue(`-- Write your SQL query here\nSELECT * FROM table_name;`);
+                    }
+                } catch(e) {
+                    editor.setValue(`-- Write your SQL query here\nSELECT * FROM table_name;`);
+                }
+                document.getElementById('result-output').innerHTML = 'Run a query to see results.';
+                setTimeout(() => editor.refresh(), 1);
+            };
+
+            const renderResult = (resultData) => {
+                 const outputDiv = document.getElementById('result-output');
+                 outputDiv.innerHTML = '';
+                 
+                 if (resultData.error) {
+                     outputDiv.innerHTML = `<pre class="text-red-500">${resultData.error}</pre>`;
+                     return;
+                 }
+                 
+                 const { columns, values } = resultData;
+
+                 if (!values || values.length === 0) {
+                     outputDiv.innerHTML = `<p class="text-gray-500">Query executed successfully, but returned no data.</p>`;
+                     return;
+                 }
+
+                 const table = document.createElement('table');
+                 table.className = 'w-full text-sm result-table';
+                 const thead = document.createElement('thead');
+                 const tbody = document.createElement('tbody');
+                 
+                 const headerRow = document.createElement('tr');
+                 columns.forEach(col => {
+                     const th = document.createElement('th');
+                     th.textContent = col;
+                     headerRow.appendChild(th);
+                 });
+                 thead.appendChild(headerRow);
+
+                 values.forEach(rowObject => {
+                     const tr = document.createElement('tr');
+                     columns.forEach(colName => {
+                         const td = document.createElement('td');
+                         td.textContent = rowObject[colName];
+                         tr.appendChild(td);
+                     });
+                     tbody.appendChild(tr);
+                 });
+                 
+                 table.append(thead, tbody);
+                 outputDiv.appendChild(table);
+            };
+            
+            const handleRun = async () => {
+                if (!currentProblem) return;
+                
+                const runButton = document.getElementById('run-button');
+                runButton.disabled = true;
+                runButton.textContent = 'Running...';
+                
+                try {
+                    const res = await fetch('/api/sql/run', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify({
+                            schema: currentProblem.schema,
+                            query: editor.getValue()
+                        })
+                    });
+                    
+                    const resultData = await res.json();
+                    
+                    if (!res.ok) {
+                       renderResult({ error: resultData.error || 'An unknown error occurred.' });
+                    } else {
+                       renderResult(resultData);
+                    }
+                } catch(e) {
+                    renderResult({ error: "Failed to connect to the server." });
+                } finally {
+                    runButton.disabled = false;
+                    runButton.textContent = 'Run Query';
+                }
+            };
+
+            const handleSubmit = async () => {
+                if (!currentProblem) return;
+                
+                const submitButton = document.getElementById('submit-button');
+                submitButton.disabled = true;
+                submitButton.textContent = 'Submitting...';
+
+                try {
+                    const res = await fetch('/api/sql/save-score', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify({
+                            problemId: currentProblem.problemId,
+                            submittedCode: editor.getValue()
+                        })
+                    });
+                    
+                    const responseData = await res.json();
+                    renderResult(responseData.result);
+
+                    if (responseData.isCorrect) {
+                        document.getElementById('celebration-modal').classList.replace('hidden', 'flex');
+                        await fetchUserScore();
+                        submittedProblemIds.add(currentProblem.problemId);
+                        displayProblems();
+                    } else {
+                        alert("Incorrect. Your query result does not match the expected output.");
+                    }
+                } catch(e) {
+                    alert("Failed to submit solution.");
+                } finally {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Submit';
+                }
+            };
+            
+            document.getElementById('run-button').onclick = handleRun;
+            document.getElementById('submit-button').onclick = handleSubmit;
+            document.getElementById('close-modal-button').onclick = () => document.getElementById('celebration-modal').classList.replace('flex', 'hidden');
+
+            problemListDiv.addEventListener('click', e => {
+                const problemItem = e.target.closest('.problem-list-item');
+                const accordionHeader = e.target.closest('.accordion-header');
+                
+                if (problemItem) {
+                    selectProblem(problemItem.dataset.problemId);
+                } else if (accordionHeader) {
+                    const content = accordionHeader.nextElementSibling;
+                    const isOpen = content.style.maxHeight;
+                    content.style.maxHeight = isOpen ? null : content.scrollHeight + "px";
+                    accordionHeader.querySelector('svg').style.transform = isOpen ? '' : 'rotate(180deg)';
+                }
+            });
+
+            const initializeApp = async () => {
+                await fetchUserScore();
+                await fetchSubmittedProblems();
+                try {
+                    const response = await fetch('/api/student/sql/problems', { headers: { 'x-auth-token': token } });
+                    problems = await response.json();
+                    displayProblems();
+                } catch (e) {
+                    console.error("Failed to fetch SQL problems", e);
+                }
+            };
+            initializeApp();
+        });
+    </script>
+</body>
+</html>
+
