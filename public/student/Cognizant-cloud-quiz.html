@@ -14,10 +14,10 @@
             max-width: 1200px;
             margin: auto;
         }
-        .option-btn {
-            transition: background-color 0.2s, border-color 0.2s, transform 0.1s;
+        .option-btn, .quiz-card {
+            transition: background-color 0.2s, border-color 0.2s, transform 0.1s, box-shadow 0.2s;
         }
-        .option-btn:hover {
+        .option-btn:hover, .quiz-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
@@ -62,9 +62,14 @@
         <!-- Quiz Header -->
         <header class="p-4 bg-slate-800 text-white flex justify-between items-center">
             <div class="flex items-center gap-4">
+                 <button id="back-to-menu" class="hidden bg-slate-700 hover:bg-slate-600 p-2 rounded-full transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
                 <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo" class="h-12 w-12 rounded-full">
                 <div>
-                    <h1 class="text-xl md:text-2xl font-bold">Cloud Fundamentals Quiz</h1>
+                    <h1 id="main-title" class="text-xl md:text-2xl font-bold">Choose a Quiz</h1>
                     <p class="text-slate-300 text-sm">Designed for Cognizant Preparation</p>
                 </div>
             </div>
@@ -74,18 +79,39 @@
             </div>
         </header>
 
-        <!-- Main Content: Quiz View & Results View -->
+        <!-- Main Content -->
         <main id="main-content" class="p-4 md:p-6">
 
              <!-- Auth Gate -->
             <div id="auth-gate" class="hidden text-center p-10">
                 <h2 class="text-2xl font-bold text-slate-700 mb-4">Access Denied</h2>
                 <p class="text-slate-600 mb-6">You must be logged into the main website to access this quiz.</p>
-                <a href="/login.html" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200">Go to Login</a>
+                <a href="#" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200">Go to Login</a>
+            </div>
+
+            <!-- Menu View -->
+            <div id="menu-view" class="hidden">
+                 <h2 class="text-2xl font-bold text-center text-slate-800 mb-6">Available Quizzes</h2>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <!-- Quiz Card 1 -->
+                     <div class="quiz-card bg-white border border-slate-200 rounded-lg p-6 flex flex-col items-center text-center cursor-pointer" data-quiz-id="medium-hard">
+                         <h3 class="text-xl font-bold text-blue-600 mb-2">Cloud Fundamentals Quiz</h3>
+                         <span class="bg-yellow-100 text-yellow-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full mb-3">Medium - Hard</span>
+                         <p class="text-slate-600 mb-4">A comprehensive set of 40 questions covering core concepts, services, and security.</p>
+                         <button class="mt-auto bg-blue-500 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-blue-600 transition-colors duration-200">Start Quiz</button>
+                     </div>
+                     <!-- Quiz Card 2 -->
+                     <div class="quiz-card bg-white border border-slate-200 rounded-lg p-6 flex flex-col items-center text-center cursor-pointer" data-quiz-id="easy-medium">
+                         <h3 class="text-xl font-bold text-green-600 mb-2">Previously Asked MCQs</h3>
+                         <span class="bg-green-100 text-green-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded-full mb-3">Easy - Medium</span>
+                         <p class="text-slate-600 mb-4">A focused list of 40 high-frequency questions observed in past Cognizant recruitment drives.</p>
+                         <button class="mt-auto bg-green-500 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-green-600 transition-colors duration-200">Start Quiz</button>
+                     </div>
+                 </div>
             </div>
             
-            <!-- Quiz View -->
-            <div id="quiz-content" class="hidden">
+            <!-- Quiz Container View -->
+            <div id="quiz-container-view" class="hidden">
                 <div id="quiz-view">
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <!-- Left Panel: Question & Options -->
@@ -96,9 +122,7 @@
                             </div>
                             <div class="p-6 bg-white rounded-lg shadow-md border border-slate-200">
                                 <p id="question-text" class="text-lg md:text-xl font-medium mb-6"></p>
-                                <div id="options-container" class="space-y-3">
-                                    <!-- Options will be dynamically inserted here -->
-                                </div>
+                                <div id="options-container" class="space-y-3"></div>
                             </div>
                             <div id="feedback-container" class="mt-4">
                                 <div id="explanation-container" class="hidden p-4 bg-slate-50 rounded-lg border-t-4 border-slate-200">
@@ -117,9 +141,7 @@
                         <div class="md:col-span-1">
                             <div class="bg-slate-50 p-4 rounded-lg shadow-inner border border-slate-200 h-full">
                                  <h3 class="text-lg font-semibold mb-4 text-center text-slate-700">Question Palette</h3>
-                                 <div id="question-palette" class="grid grid-cols-5 gap-2">
-                                    <!-- Palette buttons will be dynamically inserted here -->
-                                 </div>
+                                 <div id="question-palette" class="grid grid-cols-5 gap-2"></div>
                             </div>
                         </div>
                     </div>
@@ -130,11 +152,7 @@
                     <h2 class="text-3xl font-bold text-slate-800 mb-2">Quiz Completed!</h2>
                     <p class="text-xl text-slate-600 mb-4">Your Final Score:</p>
                     <p id="final-score" class="text-5xl font-extrabold text-blue-600 mb-8"></p>
-                    
-                    <div id="results-details" class="mt-8 text-left space-y-6">
-                        <!-- Detailed results will be dynamically inserted here -->
-                    </div>
-    
+                    <div id="results-details" class="mt-8 text-left space-y-6"></div>
                     <button id="restart-btn" class="mt-10 bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200">Try Again</button>
                 </div>
             </div>
@@ -142,299 +160,108 @@
     </div>
 
     <script>
-        const quizData = [
-            // Section 1: Core Cloud Concepts
-            {
-                id: 1,
-                question: "What is the primary characteristic of cloud computing that describes the ability to automatically provision and de-provision resources as needed?",
-                options: ["High Availability", "Fault Tolerance", "On-Demand Self-Service", "Measured Service"],
-                answer: "On-Demand Self-Service",
-                explanation: "On-demand self-service is a key characteristic defined by NIST. It allows users to provision computing capabilities, such as server time and network storage, automatically without requiring human interaction with each service provider."
+        const quizzes = {
+            'medium-hard': {
+                title: "Cloud Fundamentals Quiz",
+                questions: [
+                    { id: 1, question: "What is the primary characteristic of cloud computing that describes the ability to automatically provision and de-provision resources as needed?", options: ["High Availability", "Fault Tolerance", "On-Demand Self-Service", "Measured Service"], answer: "On-Demand Self-Service", explanation: "On-demand self-service is a key characteristic defined by NIST. It allows users to provision computing capabilities, such as server time and network storage, automatically without requiring human interaction with each service provider." },
+                    { id: 2, question: "The ability of a cloud system to handle a growing amount of work by adding resources is called ________.", options: ["Elasticity", "Scalability", "Agility", "Durability"], answer: "Scalability", explanation: "Scalability is the concept of adding more resources to a system to handle increased load. This can be 'scaling up' (adding more power to an existing server) or 'scaling out' (adding more servers). Elasticity is the ability to automatically scale up or down, which is a form of scalability." },
+                    { id: 3, question: "Which term refers to the ability of a cloud service to automatically adjust its resources to meet fluctuating demand in real-time?", options: ["Scalability", "Elasticity", "Fault Tolerance", "High Availability"], answer: "Elasticity", explanation: "Elasticity is a core advantage of the cloud. It is the ability to dynamically acquire and release resources as demand changes. For example, a retail website might automatically add more servers during a flash sale and remove them when the sale is over." },
+                    { id: 4, question: "What does the term 'multi-tenancy' mean in the context of cloud computing?", options: ["A single customer using multiple cloud services.", "A single application instance serving multiple customers.", "Multiple cloud providers hosting a single application.", "Multiple applications from one customer running on a single server."], answer: "A single application instance serving multiple customers.", explanation: "Multi-tenancy is an architecture where a single instance of software and its supporting infrastructure serves multiple customers (tenants). Each tenant's data is isolated and remains invisible to other tenants." },
+                    { id: 5, question: "Which cloud service model provides the user with the most control over the operating system and underlying infrastructure?", options: ["SaaS (Software as a Service)", "PaaS (Platform as a Service)", "IaaS (Infrastructure as a Service)", "FaaS (Function as a Service)"], answer: "IaaS (Infrastructure as a Service)", explanation: "In the IaaS model, the cloud provider supplies the fundamental infrastructure (servers, storage, networking), but the user is responsible for managing the operating system, middleware, and applications." },
+                    { id: 6, question: "A company wants to build and deploy a web application without managing the underlying servers, operating systems, or databases. Which service model is the best fit?", options: ["IaaS", "PaaS", "SaaS", "On-premises"], answer: "PaaS", explanation: "Platform as a Service (PaaS) provides a platform allowing customers to develop, run, and manage applications without the complexity of building and maintaining the infrastructure typically associated with developing an app." },
+                    { id: 7, question: "Microsoft Office 365 and Google Workspace are examples of which cloud service model?", options: ["IaaS", "PaaS", "SaaS", "CaaS (Containers as a Service)"], answer: "SaaS", explanation: "Software as a Service (SaaS) is a software distribution model in which a third-party provider hosts applications and makes them available to customers over the Internet." },
+                    { id: 8, question: "In the 'Shared Responsibility Model,' what is the customer always responsible for, regardless of the service model (IaaS, PaaS, or SaaS)?", options: ["The physical security of the data center", "The network infrastructure", "Their data and access management", "The operating system patches"], answer: "Their data and access management", explanation: "The Shared Responsibility Model defines security obligations. While the provider's responsibilities decrease from SaaS to IaaS, the customer is always responsible for their own data, user access, and identity management." },
+                    { id: 9, question: "Which cloud deployment model is owned and operated by the organization that uses it, typically located on-premises?", options: ["Public Cloud", "Private Cloud", "Hybrid Cloud", "Community Cloud"], answer: "Private Cloud", explanation: "A private cloud is a cloud computing environment dedicated to a single organization. It offers the highest level of security and control but requires significant capital expenditure and maintenance." },
+                    { id: 10, question: "A company needs to use a public cloud for cost-effective web hosting but must keep its sensitive customer database on-premises to meet regulatory requirements. Which deployment model should it use?", options: ["Public Cloud only", "Private Cloud only", "Hybrid Cloud", "Multi-Cloud"], answer: "Hybrid Cloud", explanation: "A hybrid cloud integrates a private cloud with one or more public cloud services, allowing organizations to leverage the scalability of the public cloud while keeping critical data secure in their private environment." },
+                    { id: 11, question: "Which of the following is a primary advantage of a Public Cloud?", options: ["Maximum control over hardware", "Compliance with all government regulations by default", "Massive economies of scale and lower upfront costs", "Dedicated physical servers for each customer"], answer: "Massive economies of scale and lower upfront costs", explanation: "Public clouds (like AWS, Azure, GCP) serve multiple organizations. Their massive scale allows them to offer services at a lower cost (pay-as-you-go) than an on-premises solution." },
+                    { id: 12, question: "A group of several universities decides to pool their resources to create a cloud environment for their shared research data. This is an example of a ________.", options: ["Public Cloud", "Private Cloud", "Hybrid Cloud", "Community Cloud"], answer: "Community Cloud", explanation: "A community cloud is a collaborative effort where infrastructure is shared between several organizations from a specific community with common concerns." },
+                    { id: 13, question: "What is the role of a hypervisor in cloud computing?", options: ["To manage cloud billing and costs", "To provide a user interface for cloud services", "To create and manage virtual machines (VMs)", "To secure the physical data center"], answer: "To create and manage virtual machines (VMs)", explanation: "A hypervisor (or Virtual Machine Monitor, VMM) is software that creates and runs virtual machines. It allows one host computer to support multiple guest VMs by virtually sharing its resources." },
+                    { id: 14, question: "What is the main difference between a container and a virtual machine (VM)?", options: ["Containers run on a physical server, while VMs run on a hypervisor.", "Containers virtualize the operating system, while VMs virtualize the hardware.", "VMs are more lightweight than containers.", "Containers include the entire operating system in their package."], answer: "Containers virtualize the operating system, while VMs virtualize the hardware.", explanation: "A VM includes a full copy of an OS. A container packages up code and dependencies but shares the host OS kernel, making them much more lightweight and portable." },
+                    { id: 15, question: "Docker is a popular platform for managing ________.", options: ["Virtual Machines", "Physical Servers", "Containers", "Serverless Functions"], answer: "Containers", explanation: "Docker is an open-source platform for developing, shipping, and running applications inside containers. It has become the industry standard for containerization." },
+                    { id: 16, question: "Which of the following best describes 'Serverless Computing'?", options: ["Running applications without any servers.", "The customer manages the server, but the provider manages the OS.", "The cloud provider fully manages the servers, and the user only provides the code (functions).", "A type of private cloud deployment."], answer: "The cloud provider fully manages the servers, and the user only provides the code (functions).", explanation: "Serverless Computing (or FaaS) is a model where the cloud provider runs the server and dynamically manages resource allocation. Pricing is based on actual consumption." },
+                    { id: 17, question: "Which AWS service is used for providing scalable virtual servers (compute capacity) in the cloud?", options: ["Amazon S3", "Amazon RDS", "Amazon EC2", "Amazon VPC"], answer: "Amazon EC2", explanation: "EC2 (Elastic Compute Cloud) is the core IaaS offering from AWS. It provides secure, resizable compute capacity in the cloud." },
+                    { id: 18, question: "What is the equivalent service to Amazon S3 in the Microsoft Azure ecosystem?", options: ["Azure Virtual Machines", "Azure Blob Storage", "Azure SQL Database", "Azure Functions"], answer: "Azure Blob Storage", explanation: "Amazon S3 (Simple Storage Service) is an object storage service. The direct equivalent in Azure is Blob Storage, optimized for storing massive amounts of unstructured data." },
+                    { id: 19, question: "Which Google Cloud Platform (GCP) service is a fully-managed platform for running containerized applications?", options: ["Google Compute Engine", "Google Cloud Storage", "Google Kubernetes Engine (GKE)", "Google BigQuery"], answer: "Google Kubernetes Engine (GKE)", explanation: "GKE is a managed environment for deploying, managing, and scaling containerized applications using Google infrastructure, built on the open-source Kubernetes system." },
+                    { id: 20, question: "In AWS, what is the purpose of an IAM (Identity and Access Management) service?", options: ["To create virtual private networks", "To manage users, permissions, and roles securely", "To store and retrieve large amounts of data", "To deploy and scale web applications"], answer: "To manage users, permissions, and roles securely", explanation: "IAM is a central service in AWS that helps you securely control access to AWS resources by managing who is authenticated and authorized to use them." },
+                    { id: 21, question: "What is a Virtual Private Cloud (VPC)?", options: ["A public cloud service accessible only via a VPN.", "A logically isolated section of a public cloud where you can launch resources.", "A physical data center dedicated to a single customer.", "A community cloud for virtual reality applications."], answer: "A logically isolated section of a public cloud where you can launch resources.", explanation: "A VPC allows you to provision a logically isolated section of a public cloud. You have complete control over this virtual networking environment." },
+                    { id: 22, question: "What is the purpose of a 'Security Group' in the context of AWS?", options: ["A group of security administrators.", "A physical cage in a data center for locking servers.", "A virtual firewall for an EC2 instance to control inbound and outbound traffic.", "A list of compliant security standards."], answer: "A virtual firewall for an EC2 instance to control inbound and outbound traffic.", explanation: "A security group acts as a virtual firewall that controls the traffic for one or more instances. You add rules to each security group that allow traffic to or from its associated instances." },
+                    { id: 23, question: "Which of the following is an example of a DDoS (Distributed Denial-of-Service) attack?", options: ["An attacker guessing a user's password.", "An attacker tricking a user into revealing sensitive information.", "An attacker encrypting a user's files and demanding a ransom.", "An attacker overwhelming a web server with traffic from many different sources."], answer: "An attacker overwhelming a web server with traffic from many different sources.", explanation: "A DDoS attack is a malicious attempt to disrupt the normal traffic of a targeted server, service, or network by overwhelming it with a flood of Internet traffic." },
+                    { id: 24, question: "In the cloud, what does 'data encryption at rest' refer to?", options: ["Encrypting data as it moves between a user and the cloud.", "Encrypting data while it is being processed by a CPU.", "Encrypting data that is stored on a disk or in a database.", "Encrypting data that is being backed up."], answer: "Encrypting data that is stored on a disk or in a database.", explanation: "'Data at rest' is data that is not actively moving. Encrypting this data protects it from unauthorized access if the physical storage medium is compromised." },
+                    { id: 25, question: "A startup with a small budget and unpredictable traffic needs to launch a new application quickly. Which deployment model would be most suitable?", options: ["Private Cloud", "Public Cloud", "On-premises data center", "Hybrid Cloud"], answer: "Public Cloud", explanation: "The public cloud is ideal for startups due to its pay-as-you-go pricing model, which eliminates upfront hardware costs, and its elasticity can handle unpredictable traffic." },
+                    { id: 26, question: "The principle of paying only for the computing resources that you actually use is known as:", options: ["Capital Expenditure (CapEx)", "Operational Expenditure (OpEx)", "Pay-as-you-go", "Reserved Instances"], answer: "Pay-as-you-go", explanation: "Pay-as-you-go is a core financial benefit of cloud computing, contrasting with the traditional on-premises model which requires a large upfront capital expenditure (CapEx)." },
+                    { id: 27, question: "What is a 'Region' in the context of major cloud providers like AWS and Azure?", options: ["A single, large data center.", "A logical collection of user accounts.", "A specific geographical area in the world where data centers are located.", "A content delivery network endpoint."], answer: "A specific geographical area in the world where data centers are located.", explanation: "A region is a physical location around the world where cloud providers cluster data centers. Each region consists of multiple, isolated Availability Zones." },
+                    { id: 28, question: "To ensure high availability and fault tolerance for an application, where should you deploy your resources?", options: ["Across multiple services in the same data center.", "Across multiple Regions.", "Across multiple Availability Zones within a single Region.", "In a single, powerful server."], answer: "Across multiple Availability Zones within a single Region.", explanation: "Deploying an application across multiple AZs ensures that if one data center fails, the application remains available from another. Deploying across regions is a strategy for disaster recovery." },
+                    { id: 29, question: "Which technology allows you to define and provision your cloud infrastructure using code?", options: ["Continuous Integration (CI)", "Infrastructure as Code (IaC)", "Software as a Service (SaaS)", "Virtual Private Network (VPN)"], answer: "Infrastructure as Code (IaC)", explanation: "IaC is the process of managing and provisioning computer data centers through machine-readable definition files, rather than physical hardware configuration. Tools like AWS CloudFormation and Terraform are used for IaC." },
+                    { id: 30, question: "A content delivery network (CDN) is used to:", options: ["Secure the connection between a user and a server.", "Store user login credentials.", "Reduce latency by caching content closer to end-users.", "Manage DNS records for a domain."], answer: "Reduce latency by caching content closer to end-users.", explanation: "A CDN is a geographically distributed network of proxy servers. The goal is to provide high availability and performance by distributing the service spatially relative to end-users." },
+                    { id: 31, question: "Which of the following is NOT a characteristic of cloud computing as defined by NIST?", options: ["Resource Pooling", "Rapid Elasticity", "Fixed Cost", "Measured Service"], answer: "Fixed Cost", explanation: "Cloud computing is characterized by a variable, pay-as-you-go cost model, not a fixed cost. The five essential characteristics defined by NIST are On-demand self-service, Broad network access, Resource pooling, Rapid elasticity, and Measured service." },
+                    { id: 32, question: "What does 'lifting and shifting' an application to the cloud mean?", options: ["Rewriting the application to be cloud-native.", "Decommissioning the application.", "Migrating an existing application to a cloud environment with minimal or no changes.", "Splitting the application into microservices."], answer: "Migrating an existing application to a cloud environment with minimal or no changes.", explanation: "'Lift and shift' (rehosting) is a common migration strategy. It involves moving an application from on-premises to cloud infrastructure without redesigning it." },
+                    { id: 33, question: "An API Gateway in a cloud architecture primarily serves to:", options: ["Act as a single entry point for all client requests to backend services.", "Store large binary objects.", "Run code in response to events.", "Authenticate database users."], answer: "Act as a single entry point for all client requests to backend services.", explanation: "An API Gateway is a management tool that sits between a client and a collection of backend services. It handles tasks like request routing, rate limiting, and security." },
+                    { id: 34, question: "You are responsible for managing an application running on AWS EC2 instances. According to the Shared Responsibility Model, what is AWS responsible for?", options: ["Patching the guest operating system on the EC2 instances.", "Managing IAM user permissions.", "Securing the physical hardware and the global network.", "Encrypting client-side data."], answer: "Securing the physical hardware and the global network.", explanation: "In the IaaS model, AWS is responsible for the 'Security of the Cloud' (hardware, network, facilities). The customer is responsible for 'Security in the Cloud' (guest OS, apps, data)." },
+                    { id: 35, question: "What is the main purpose of Load Balancing?", options: ["To increase the storage capacity of a single server.", "To distribute incoming network traffic across multiple servers.", "To encrypt network traffic.", "To back up data automatically."], answer: "To distribute incoming network traffic across multiple servers.", explanation: "A load balancer acts as a 'traffic cop,' distributing traffic across multiple backend servers to ensure no single server becomes overwhelmed, improving responsiveness and availability." },
+                    { id: 36, question: "The cloud architecture that allows applications to be built as a collection of small, independently deployable services is known as:", options: ["Monolithic architecture", "Microservices architecture", "Three-tier architecture", "Serverless architecture"], answer: "Microservices architecture", explanation: "Microservices is an architectural style that structures an application as a collection of loosely coupled services, enabling continuous delivery and independent scaling." },
+                    { id: 37, question: "Which pricing model offers the largest discount for AWS EC2 instances but requires a long-term commitment?", options: ["On-Demand", "Spot Instances", "Reserved Instances", "Pay-as-you-go"], answer: "Reserved Instances", explanation: "Reserved Instances (RIs) provide a significant discount compared to On-Demand pricing in exchange for a 1- or 3-year term commitment." },
+                    { id: 38, question: "The process of connecting an on-premises network to a cloud provider's network using a dedicated, private connection is often called:", options: ["VPN (Virtual Private Network)", "Direct Connect / ExpressRoute", "Public Peering", "API Gateway"], answer: "Direct Connect / ExpressRoute", explanation: "AWS Direct Connect and Azure ExpressRoute are services that create a private, dedicated network connection between your on-premises data center and the cloud." },
+                    { id: 39, question: "In cloud terminology, what does 'fault tolerance' mean?", options: ["The ability of a system to continue operating without interruption when one or more of its components fail.", "The ability to prevent any faults from ever occurring.", "The ability to scale resources automatically.", "The ability to recover data after a disaster."], answer: "The ability of a system to continue operating without interruption when one or more of its components fail.", explanation: "Fault tolerance is achieved through redundancy. For example, by running an application across multiple servers, the system can tolerate the failure of one server." },
+                    { id: 40, question: "What is a primary benefit of using managed database services like Amazon RDS or Azure SQL Database over installing a database on a virtual machine?", options: ["It gives you root access to the underlying operating system.", "It's always cheaper for all workloads.", "The cloud provider handles administrative tasks like patching, backups, and failover.", "It provides unlimited storage capacity by default."], answer: "The cloud provider handles administrative tasks like patching, backups, and failover.", explanation: "Managed database services (PaaS) abstract away infrastructure and automate common administrative tasks, allowing developers to focus on application development." }
+                ].map(q => ({...q, userAnswer: null}))
             },
-            {
-                id: 2,
-                question: "The ability of a cloud system to handle a growing amount of work by adding resources is called ________.",
-                options: ["Elasticity", "Scalability", "Agility", "Durability"],
-                answer: "Scalability",
-                explanation: "Scalability is the concept of adding more resources to a system to handle increased load. This can be 'scaling up' (adding more power to an existing server) or 'scaling out' (adding more servers). Elasticity is the ability to automatically scale up or down, which is a form of scalability."
-            },
-            {
-                id: 3,
-                question: "Which term refers to the ability of a cloud service to automatically adjust its resources to meet fluctuating demand in real-time?",
-                options: ["Scalability", "Elasticity", "Fault Tolerance", "High Availability"],
-                answer: "Elasticity",
-                explanation: "Elasticity is a core advantage of the cloud. It is the ability to dynamically acquire and release resources as demand changes. For example, a retail website might automatically add more servers during a flash sale and remove them when the sale is over."
-            },
-            {
-                id: 4,
-                question: "What does the term 'multi-tenancy' mean in the context of cloud computing?",
-                options: ["A single customer using multiple cloud services.", "A single application instance serving multiple customers.", "Multiple cloud providers hosting a single application.", "Multiple applications from one customer running on a single server."],
-                answer: "A single application instance serving multiple customers.",
-                explanation: "Multi-tenancy is an architecture where a single instance of software and its supporting infrastructure serves multiple customers (tenants). Each tenant's data is isolated and remains invisible to other tenants."
-            },
-            // Section 2: Cloud Service Models (IaaS, PaaS, SaaS)
-            {
-                id: 5,
-                question: "Which cloud service model provides the user with the most control over the operating system and underlying infrastructure?",
-                options: ["SaaS (Software as a Service)", "PaaS (Platform as a Service)", "IaaS (Infrastructure as a Service)", "FaaS (Function as a Service)"],
-                answer: "IaaS (Infrastructure as a Service)",
-                explanation: "In the IaaS model, the cloud provider supplies the fundamental infrastructure (servers, storage, networking), but the user is responsible for managing the operating system, middleware, and applications."
-            },
-            {
-                id: 6,
-                question: "A company wants to build and deploy a web application without managing the underlying servers, operating systems, or databases. Which service model is the best fit?",
-                options: ["IaaS", "PaaS", "SaaS", "On-premises"],
-                answer: "PaaS",
-                explanation: "Platform as a Service (PaaS) provides a platform allowing customers to develop, run, and manage applications without the complexity of building and maintaining the infrastructure typically associated with developing an app."
-            },
-            {
-                id: 7,
-                question: "Microsoft Office 365 and Google Workspace are examples of which cloud service model?",
-                options: ["IaaS", "PaaS", "SaaS", "CaaS (Containers as a Service)"],
-                answer: "SaaS",
-                explanation: "Software as a Service (SaaS) is a software distribution model in which a third-party provider hosts applications and makes them available to customers over the Internet."
-            },
-            {
-                id: 8,
-                question: "In the 'Shared Responsibility Model,' what is the customer always responsible for, regardless of the service model (IaaS, PaaS, or SaaS)?",
-                options: ["The physical security of the data center", "The network infrastructure", "Their data and access management", "The operating system patches"],
-                answer: "Their data and access management",
-                explanation: "The Shared Responsibility Model defines security obligations. While the provider's responsibilities decrease from SaaS to IaaS, the customer is always responsible for their own data, user access, and identity management."
-            },
-            // Section 3: Cloud Deployment Models
-            {
-                id: 9,
-                question: "Which cloud deployment model is owned and operated by the organization that uses it, typically located on-premises?",
-                options: ["Public Cloud", "Private Cloud", "Hybrid Cloud", "Community Cloud"],
-                answer: "Private Cloud",
-                explanation: "A private cloud is a cloud computing environment dedicated to a single organization. It offers the highest level of security and control but requires significant capital expenditure and maintenance."
-            },
-            {
-                id: 10,
-                question: "A company needs to use a public cloud for cost-effective web hosting but must keep its sensitive customer database on-premises to meet regulatory requirements. Which deployment model should it use?",
-                options: ["Public Cloud only", "Private Cloud only", "Hybrid Cloud", "Multi-Cloud"],
-                answer: "Hybrid Cloud",
-                explanation: "A hybrid cloud integrates a private cloud with one or more public cloud services, allowing organizations to leverage the scalability of the public cloud while keeping critical data secure in their private environment."
-            },
-            {
-                id: 11,
-                question: "Which of the following is a primary advantage of a Public Cloud?",
-                options: ["Maximum control over hardware", "Compliance with all government regulations by default", "Massive economies of scale and lower upfront costs", "Dedicated physical servers for each customer"],
-                answer: "Massive economies of scale and lower upfront costs",
-                explanation: "Public clouds (like AWS, Azure, GCP) serve multiple organizations. Their massive scale allows them to offer services at a lower cost (pay-as-you-go) than an on-premises solution."
-            },
-            {
-                id: 12,
-                question: "A group of several universities decides to pool their resources to create a cloud environment for their shared research data. This is an example of a ________.",
-                options: ["Public Cloud", "Private Cloud", "Hybrid Cloud", "Community Cloud"],
-                answer: "Community Cloud",
-                explanation: "A community cloud is a collaborative effort where infrastructure is shared between several organizations from a specific community with common concerns."
-            },
-            // Section 4: Virtualization and Key Technologies
-            {
-                id: 13,
-                question: "What is the role of a hypervisor in cloud computing?",
-                options: ["To manage cloud billing and costs", "To provide a user interface for cloud services", "To create and manage virtual machines (VMs)", "To secure the physical data center"],
-                answer: "To create and manage virtual machines (VMs)",
-                explanation: "A hypervisor (or Virtual Machine Monitor, VMM) is software that creates and runs virtual machines. It allows one host computer to support multiple guest VMs by virtually sharing its resources."
-            },
-            {
-                id: 14,
-                question: "What is the main difference between a container and a virtual machine (VM)?",
-                options: ["Containers run on a physical server, while VMs run on a hypervisor.", "Containers virtualize the operating system, while VMs virtualize the hardware.", "VMs are more lightweight than containers.", "Containers include the entire operating system in their package."],
-                answer: "Containers virtualize the operating system, while VMs virtualize the hardware.",
-                explanation: "A VM includes a full copy of an OS. A container packages up code and dependencies but shares the host OS kernel, making them much more lightweight and portable."
-            },
-            {
-                id: 15,
-                question: "Docker is a popular platform for managing ________.",
-                options: ["Virtual Machines", "Physical Servers", "Containers", "Serverless Functions"],
-                answer: "Containers",
-                explanation: "Docker is an open-source platform for developing, shipping, and running applications inside containers. It has become the industry standard for containerization."
-            },
-            {
-                id: 16,
-                question: "Which of the following best describes 'Serverless Computing'?",
-                options: ["Running applications without any servers.", "The customer manages the server, but the provider manages the OS.", "The cloud provider fully manages the servers, and the user only provides the code (functions).", "A type of private cloud deployment."],
-                answer: "The cloud provider fully manages the servers, and the user only provides the code (functions).",
-                explanation: "Serverless Computing (or FaaS) is a model where the cloud provider runs the server and dynamically manages resource allocation. Pricing is based on actual consumption."
-            },
-            // Section 5: Major Cloud Providers & Services
-            {
-                id: 17,
-                question: "Which AWS service is used for providing scalable virtual servers (compute capacity) in the cloud?",
-                options: ["Amazon S3", "Amazon RDS", "Amazon EC2", "Amazon VPC"],
-                answer: "Amazon EC2",
-                explanation: "EC2 (Elastic Compute Cloud) is the core IaaS offering from AWS. It provides secure, resizable compute capacity in the cloud."
-            },
-            {
-                id: 18,
-                question: "What is the equivalent service to Amazon S3 in the Microsoft Azure ecosystem?",
-                options: ["Azure Virtual Machines", "Azure Blob Storage", "Azure SQL Database", "Azure Functions"],
-                answer: "Azure Blob Storage",
-                explanation: "Amazon S3 (Simple Storage Service) is an object storage service. The direct equivalent in Azure is Blob Storage, optimized for storing massive amounts of unstructured data."
-            },
-            {
-                id: 19,
-                question: "Which Google Cloud Platform (GCP) service is a fully-managed platform for running containerized applications?",
-                options: ["Google Compute Engine", "Google Cloud Storage", "Google Kubernetes Engine (GKE)", "Google BigQuery"],
-                answer: "Google Kubernetes Engine (GKE)",
-                explanation: "GKE is a managed environment for deploying, managing, and scaling containerized applications using Google infrastructure, built on the open-source Kubernetes system."
-            },
-            {
-                id: 20,
-                question: "In AWS, what is the purpose of an IAM (Identity and Access Management) service?",
-                options: ["To create virtual private networks", "To manage users, permissions, and roles securely", "To store and retrieve large amounts of data", "To deploy and scale web applications"],
-                answer: "To manage users, permissions, and roles securely",
-                explanation: "IAM is a central service in AWS that helps you securely control access to AWS resources by managing who is authenticated and authorized to use them."
-            },
-            // Section 6: Cloud Security and Networking
-            {
-                id: 21,
-                question: "What is a Virtual Private Cloud (VPC)?",
-                options: ["A public cloud service accessible only via a VPN.", "A logically isolated section of a public cloud where you can launch resources.", "A physical data center dedicated to a single customer.", "A community cloud for virtual reality applications."],
-                answer: "A logically isolated section of a public cloud where you can launch resources.",
-                explanation: "A VPC allows you to provision a logically isolated section of a public cloud. You have complete control over this virtual networking environment."
-            },
-            {
-                id: 22,
-                question: "What is the purpose of a 'Security Group' in the context of AWS?",
-                options: ["A group of security administrators.", "A physical cage in a data center for locking servers.", "A virtual firewall for an EC2 instance to control inbound and outbound traffic.", "A list of compliant security standards."],
-                answer: "A virtual firewall for an EC2 instance to control inbound and outbound traffic.",
-                explanation: "A security group acts as a virtual firewall that controls the traffic for one or more instances. You add rules to each security group that allow traffic to or from its associated instances."
-            },
-            {
-                id: 23,
-                question: "Which of the following is an example of a DDoS (Distributed Denial-of-Service) attack?",
-                options: ["An attacker guessing a user's password.", "An attacker tricking a user into revealing sensitive information.", "An attacker encrypting a user's files and demanding a ransom.", "An attacker overwhelming a web server with traffic from many different sources."],
-                answer: "An attacker overwhelming a web server with traffic from many different sources.",
-                explanation: "A DDoS attack is a malicious attempt to disrupt the normal traffic of a targeted server, service, or network by overwhelming it with a flood of Internet traffic."
-            },
-            {
-                id: 24,
-                question: "In the cloud, what does 'data encryption at rest' refer to?",
-                options: ["Encrypting data as it moves between a user and the cloud.", "Encrypting data while it is being processed by a CPU.", "Encrypting data that is stored on a disk or in a database.", "Encrypting data that is being backed up."],
-                answer: "Encrypting data that is stored on a disk or in a database.",
-                explanation: "'Data at rest' is data that is not actively moving. Encrypting this data protects it from unauthorized access if the physical storage medium is compromised."
-            },
-            // Section 7: More Scenario-Based & Mixed Questions
-            {
-                id: 25,
-                question: "A startup with a small budget and unpredictable traffic needs to launch a new application quickly. Which deployment model would be most suitable?",
-                options: ["Private Cloud", "Public Cloud", "On-premises data center", "Hybrid Cloud"],
-                answer: "Public Cloud",
-                explanation: "The public cloud is ideal for startups due to its pay-as-you-go pricing model, which eliminates upfront hardware costs, and its elasticity can handle unpredictable traffic."
-            },
-            {
-                id: 26,
-                question: "The principle of paying only for the computing resources that you actually use is known as:",
-                options: ["Capital Expenditure (CapEx)", "Operational Expenditure (OpEx)", "Pay-as-you-go", "Reserved Instances"],
-                answer: "Pay-as-you-go",
-                explanation: "Pay-as-you-go is a core financial benefit of cloud computing, contrasting with the traditional on-premises model which requires a large upfront capital expenditure (CapEx)."
-            },
-            {
-                id: 27,
-                question: "What is a 'Region' in the context of major cloud providers like AWS and Azure?",
-                options: ["A single, large data center.", "A logical collection of user accounts.", "A specific geographical area in the world where data centers are located.", "A content delivery network endpoint."],
-                answer: "A specific geographical area in the world where data centers are located.",
-                explanation: "A region is a physical location around the world where cloud providers cluster data centers. Each region consists of multiple, isolated Availability Zones."
-            },
-            {
-                id: 28,
-                question: "To ensure high availability and fault tolerance for an application, where should you deploy your resources?",
-                options: ["Across multiple services in the same data center.", "Across multiple Regions.", "Across multiple Availability Zones within a single Region.", "In a single, powerful server."],
-                answer: "Across multiple Availability Zones within a single Region.",
-                explanation: "Deploying an application across multiple AZs ensures that if one data center fails, the application remains available from another. Deploying across regions is a strategy for disaster recovery."
-            },
-            {
-                id: 29,
-                question: "Which technology allows you to define and provision your cloud infrastructure using code?",
-                options: ["Continuous Integration (CI)", "Infrastructure as Code (IaC)", "Software as a Service (SaaS)", "Virtual Private Network (VPN)"],
-                answer: "Infrastructure as Code (IaC)",
-                explanation: "IaC is the process of managing and provisioning computer data centers through machine-readable definition files, rather than physical hardware configuration. Tools like AWS CloudFormation and Terraform are used for IaC."
-            },
-            {
-                id: 30,
-                question: "A content delivery network (CDN) is used to:",
-                options: ["Secure the connection between a user and a server.", "Store user login credentials.", "Reduce latency by caching content closer to end-users.", "Manage DNS records for a domain."],
-                answer: "Reduce latency by caching content closer to end-users.",
-                explanation: "A CDN is a geographically distributed network of proxy servers. The goal is to provide high availability and performance by distributing the service spatially relative to end-users."
-            },
-            {
-                id: 31,
-                question: "Which of the following is NOT a characteristic of cloud computing as defined by NIST?",
-                options: ["Resource Pooling", "Rapid Elasticity", "Fixed Cost", "Measured Service"],
-                answer: "Fixed Cost",
-                explanation: "Cloud computing is characterized by a variable, pay-as-you-go cost model, not a fixed cost. The five essential characteristics defined by NIST are On-demand self-service, Broad network access, Resource pooling, Rapid elasticity, and Measured service."
-            },
-            {
-                id: 32,
-                question: "What does 'lifting and shifting' an application to the cloud mean?",
-                options: ["Rewriting the application to be cloud-native.", "Decommissioning the application.", "Migrating an existing application to a cloud environment with minimal or no changes.", "Splitting the application into microservices."],
-                answer: "Migrating an existing application to a cloud environment with minimal or no changes.",
-                explanation: "'Lift and shift' (rehosting) is a common migration strategy. It involves moving an application from on-premises to cloud infrastructure without redesigning it."
-            },
-            {
-                id: 33,
-                question: "An API Gateway in a cloud architecture primarily serves to:",
-                options: ["Act as a single entry point for all client requests to backend services.", "Store large binary objects.", "Run code in response to events.", "Authenticate database users."],
-                answer: "Act as a single entry point for all client requests to backend services.",
-                explanation: "An API Gateway is a management tool that sits between a client and a collection of backend services. It handles tasks like request routing, rate limiting, and security."
-            },
-            {
-                id: 34,
-                question: "You are responsible for managing an application running on AWS EC2 instances. According to the Shared Responsibility Model, what is AWS responsible for?",
-                options: ["Patching the guest operating system on the EC2 instances.", "Managing IAM user permissions.", "Securing the physical hardware and the global network.", "Encrypting client-side data."],
-                answer: "Securing the physical hardware and the global network.",
-                explanation: "In the IaaS model, AWS is responsible for the 'Security of the Cloud' (hardware, network, facilities). The customer is responsible for 'Security in the Cloud' (guest OS, apps, data)."
-            },
-            {
-                id: 35,
-                question: "What is the main purpose of Load Balancing?",
-                options: ["To increase the storage capacity of a single server.", "To distribute incoming network traffic across multiple servers.", "To encrypt network traffic.", "To back up data automatically."],
-                answer: "To distribute incoming network traffic across multiple servers.",
-                explanation: "A load balancer acts as a 'traffic cop,' distributing traffic across multiple backend servers to ensure no single server becomes overwhelmed, improving responsiveness and availability."
-            },
-            {
-                id: 36,
-                question: "The cloud architecture that allows applications to be built as a collection of small, independently deployable services is known as:",
-                options: ["Monolithic architecture", "Microservices architecture", "Three-tier architecture", "Serverless architecture"],
-                answer: "Microservices architecture",
-                explanation: "Microservices is an architectural style that structures an application as a collection of loosely coupled services, enabling continuous delivery and independent scaling."
-            },
-            {
-                id: 37,
-                question: "Which pricing model offers the largest discount for AWS EC2 instances but requires a long-term commitment?",
-                options: ["On-Demand", "Spot Instances", "Reserved Instances", "Pay-as-you-go"],
-                answer: "Reserved Instances",
-                explanation: "Reserved Instances (RIs) provide a significant discount compared to On-Demand pricing in exchange for a 1- or 3-year term commitment."
-            },
-            {
-                id: 38,
-                question: "The process of connecting an on-premises network to a cloud provider's network using a dedicated, private connection is often called:",
-                options: ["VPN (Virtual Private Network)", "Direct Connect / ExpressRoute", "Public Peering", "API Gateway"],
-                answer: "Direct Connect / ExpressRoute",
-                explanation: "AWS Direct Connect and Azure ExpressRoute are services that create a private, dedicated network connection between your on-premises data center and the cloud."
-            },
-            {
-                id: 39,
-                question: "In cloud terminology, what does 'fault tolerance' mean?",
-                options: ["The ability of a system to continue operating without interruption when one or more of its components fail.", "The ability to prevent any faults from ever occurring.", "The ability to scale resources automatically.", "The ability to recover data after a disaster."],
-                answer: "The ability of a system to continue operating without interruption when one or more of its components fail.",
-                explanation: "Fault tolerance is achieved through redundancy. For example, by running an application across multiple servers, the system can tolerate the failure of one server."
-            },
-            {
-                id: 40,
-                question: "What is a primary benefit of using managed database services like Amazon RDS or Azure SQL Database over installing a database on a virtual machine?",
-                options: ["It gives you root access to the underlying operating system.", "It's always cheaper for all workloads.", "The cloud provider handles administrative tasks like patching, backups, and failover.", "It provides unlimited storage capacity by default."],
-                answer: "The cloud provider handles administrative tasks like patching, backups, and failover.",
-                explanation: "Managed database services (PaaS) abstract away infrastructure and automate common administrative tasks, allowing developers to focus on application development."
+            'easy-medium': {
+                title: "Previously Asked MCQs",
+                questions: [
+                    { id: 1, question: "What is the primary characteristic of cloud computing that describes the ability to automatically provision and de-provision resources as needed?", options: ["High Availability", "Fault Tolerance", "On-Demand Self-Service", "Measured Service"], answer: "On-Demand Self-Service", explanation: "On-demand self-service is a key characteristic defined by NIST. It allows users to provision computing capabilities, such as server time and network storage, automatically without requiring human interaction with each service provider." },
+                    { id: 2, question: "Which term refers to the ability of a cloud service to automatically adjust its resources to meet fluctuating demand in real-time?", options: ["Scalability", "Elasticity", "Fault Tolerance", "High Availability"], answer: "Elasticity", explanation: "Elasticity is the ability to dynamically acquire and release resources as demand changes. For example, a retail website might automatically add more servers during a flash sale and remove them when the sale is over. Scalability is about handling a growing amount of work, while elasticity is about handling the fluctuations." },
+                    { id: 3, question: "Microsoft Office 365 and Google Workspace are examples of which cloud service model?", options: ["IaaS", "PaaS", "SaaS", "CaaS (Containers as a Service)"], answer: "SaaS", explanation: "Software as a Service (SaaS) is a software distribution model in which a third-party provider hosts applications and makes them available to customers over the Internet. The user simply accesses the software and does not manage any part of the underlying infrastructure." },
+                    { id: 4, question: "A company needs to use a public cloud for cost-effective web hosting but must keep its sensitive customer database on-premises to meet regulatory requirements. Which deployment model should it use?", options: ["Public Cloud only", "Private Cloud only", "Hybrid Cloud", "Multi-Cloud"], answer: "Hybrid Cloud", explanation: "A hybrid cloud integrates a private cloud with one or more public cloud services. This model allows organizations to leverage the scalability of the public cloud while keeping critical data secure in their private environment to meet compliance needs." },
+                    { id: 5, question: "Which AWS service is used for providing scalable virtual servers (compute capacity) in the cloud?", options: ["Amazon S3", "Amazon RDS", "Amazon EC2", "Amazon VPC"], answer: "Amazon EC2", explanation: "EC2 (Elastic Compute Cloud) is the core IaaS offering from AWS. It provides secure, resizable compute capacity in the cloud, designed to make web-scale computing easier for developers." },
+                    { id: 6, question: "The principle of paying only for the computing resources that you actually use is known as:", options: ["Capital Expenditure (CapEx)", "Operational Expenditure (OpEx)", "Pay-as-you-go", "Reserved Instances"], answer: "Pay-as-you-go", explanation: "Pay-as-you-go is a core financial benefit of cloud computing. It contrasts with the traditional on-premises model, which requires a large upfront capital expenditure (CapEx) for hardware. Cloud costs are treated as an operational expenditure (OpEx)." },
+                    { id: 7, question: "In the 'Shared Responsibility Model,' what is the customer always responsible for, regardless of the service model (IaaS, PaaS, or SaaS)?", options: ["The physical security of the data center", "The network infrastructure", "Their data and access management", "The operating system patches"], answer: "Their data and access management", explanation: "The Shared Responsibility Model defines security obligations for the cloud provider and the customer. While the provider's responsibilities decrease from SaaS to IaaS, the customer is always responsible for their own data, user access, and identity management." },
+                    { id: 8, question: "What is a Virtual Private Cloud (VPC)?", options: ["A public cloud service accessible only via a VPN.", "A logically isolated section of a public cloud where you can launch resources.", "A physical data center dedicated to a single customer.", "A community cloud for virtual reality applications."], answer: "A logically isolated section of a public cloud where you can launch resources.", explanation: "A VPC allows you to provision a logically isolated section of a public cloud. You have complete control over this virtual networking environment, including selection of your own IP address range, creation of subnets, and configuration of route tables and network gateways." },
+                    { id: 9, question: "What is the main purpose of Load Balancing?", options: ["To increase the storage capacity of a single server.", "To distribute incoming network traffic across multiple servers.", "To encrypt network traffic.", "To back up data automatically."], answer: "To distribute incoming network traffic across multiple servers.", explanation: "A load balancer acts as a 'traffic cop,' distributing traffic across multiple backend servers to ensure no single server becomes overwhelmed. This improves application responsiveness, availability, and scalability." },
+                    { id: 10, question: "What is the primary goal of a Disaster Recovery (DR) plan in the cloud?", options: ["To ensure 100% uptime with zero data loss.", "To restore data and application functionality after a catastrophic failure.", "To handle daily fluctuations in user traffic.", "To reduce the monthly cloud bill."], answer: "To restore data and application functionality after a catastrophic failure.", explanation: "Disaster Recovery is about having a plan to recover from major disasters, such as an entire region or data center going offline. It focuses on how quickly you can get your services back online (Recovery Time Objective - RTO) and how much data you can afford to lose (Recovery Point Objective - RPO)." },
+                    { id: 11, question: "Which of the following is an example of 'scaling up' or vertical scaling?", options: ["Adding more virtual machines to run an application.", "Increasing the RAM and CPU of an existing virtual machine.", "Deploying the application across multiple geographic regions.", "Using a load balancer to distribute traffic."], answer: "Increasing the RAM and CPU of an existing virtual machine.", explanation: "Vertical scaling (scaling up) means increasing the resources of a single server, such as its CPU, RAM, or storage. Horizontal scaling (scaling out) means adding more servers to the pool of resources." },
+                    { id: 12, question: "Amazon S3 and Azure Blob Storage are what type of storage service?", options: ["Block Storage", "File Storage", "Object Storage", "Temporary Storage"], answer: "Object Storage", explanation: "Object storage is used for storing large amounts of unstructured data, like images, videos, backups, and log files. Data is stored as objects in a flat structure, rather than in a file hierarchy." },
+                    { id: 13, question: "A developer wants a fully managed relational database service where the cloud provider handles backups, patching, and scaling. Which service should they choose?", options: ["Installing MySQL on an EC2 instance.", "Amazon RDS (Relational Database Service).", "Amazon DynamoDB.", "Amazon S3."], answer: "Amazon RDS (Relational Database Service).", explanation: "Amazon RDS is a managed service that makes it easy to set up, operate, and scale a relational database in the cloud. Installing a database on an EC2 instance (IaaS) would require the developer to manage it themselves. DynamoDB is a NoSQL database." },
+                    { id: 14, question: "Which statement best describes a Type 1 Hypervisor?", options: ["It runs on top of a host operating system.", "It is also known as a 'hosted' hypervisor.", "It runs directly on the physical hardware ('bare metal').", "It is primarily used for desktop virtualization."], answer: "It runs directly on the physical hardware ('bare metal').", explanation: "A Type 1 hypervisor runs directly on the host's hardware to control the hardware and to manage guest operating systems. This is what is used in enterprise data centers and by cloud providers for maximum performance. Examples include VMware ESXi and Xen." },
+                    { id: 15, question: "What is the primary function of Kubernetes?", options: ["To create virtual machines.", "To provide object storage.", "To automate the deployment, scaling, and management of containerized applications.", "To provide a serverless computing platform."], answer: "To automate the deployment, scaling, and management of containerized applications.", explanation: "Kubernetes is an open-source container orchestration platform. It helps manage the lifecycle of containerized applications across a cluster of servers, handling tasks like scaling, self-healing, and service discovery." },
+                    { id: 16, question: "What is the main advantage of a private cloud?", options: ["Lowest cost and no upfront investment.", "Unlimited scalability on demand.", "Enhanced security and control over resources.", "It is managed entirely by a third-party provider."], answer: "Enhanced security and control over resources.", explanation: "A private cloud is dedicated to a single organization. This provides the highest level of control and security, which is often a requirement for companies in highly regulated industries like finance and healthcare." },
+                    { id: 17, question: "What is the primary difference between Authentication and Authorization?", options: ["They are the same process.", "Authentication verifies identity, while Authorization determines access rights.", "Authorization verifies identity, while Authentication determines access rights.", "Authentication is for users, while Authorization is for services."], answer: "Authentication verifies identity, while Authorization determines access rights.", explanation: "Authentication is the process of proving you are who you say you are (e.g., with a password or MFA). Authorization is the process of granting permission to access a specific resource or perform an action after you have been successfully authenticated." },
+                    { id: 18, question: "In AWS, what is the purpose of an IAM Role?", options: ["To create a new user account with a password.", "To group multiple users together.", "To grant permissions to an entity, such as an EC2 instance, to access other AWS services.", "To set password policies for all users."], answer: "To grant permissions to an entity, such as an EC2 instance, to access other AWS services.", explanation: "An IAM Role is an identity with permission policies that determine what the identity can and cannot do in AWS. Unlike a user, a role does not have standard long-term credentials. Instead, it is assumed by a trusted entity, which can be a user or an AWS service like EC2." },
+                    { id: 19, question: "What does the term 'vendor lock-in' refer to in the context of cloud computing?", options: ["A security feature that locks an account after too many failed logins.", "A long-term contract with a cloud provider that offers a discount.", "The difficulty of moving applications and data from one cloud provider to another.", "A situation where a cloud provider runs out of physical capacity."], answer: "The difficulty of moving applications and data from one cloud provider to another.", explanation: "Vendor lock-in occurs when a customer using a product or service cannot easily transition to a competitor. In the cloud, this can be caused by proprietary APIs, services, or data formats that are not compatible with other providers." },
+                    { id: 20, question: "What is Microsoft Azure's primary IaaS service, equivalent to Amazon EC2?", options: ["Azure Blob Storage", "Azure Functions", "Azure SQL Database", "Azure Virtual Machines"], answer: "Azure Virtual Machines", explanation: "Azure Virtual Machines is the service used to create and manage virtual servers in Azure, providing Infrastructure as a Service (IaaS). It is the direct counterpart to Amazon EC2." },
+                    { id: 21, question: "What is the main benefit of serverless computing (like AWS Lambda or Azure Functions)?", options: ["It gives users full control over the underlying operating system.", "Users only pay for the compute time they consume, and not for idle servers.", "It is the best choice for long-running, stateful applications.", "It eliminates the need to write application code."], answer: "Users only pay for the compute time they consume, and not for idle servers.", explanation: "With serverless computing, you run your code in response to events and triggers. The cloud provider manages all the underlying infrastructure, and you are billed only for the milliseconds your code is actually running, which can be extremely cost-effective for event-driven or sporadic workloads." },
+                    { id: 22, question: "A company is using services from both AWS and Google Cloud Platform. This is an example of what kind of strategy?", options: ["Hybrid Cloud", "Private Cloud", "Multi-Cloud", "Community Cloud"], answer: "Multi-Cloud", explanation: "A multi-cloud strategy involves using cloud services from more than one public cloud provider. This can be done to leverage the best services from each provider, improve redundancy, or avoid vendor lock-in. A hybrid cloud involves a mix of public and private cloud environments." },
+                    { id: 23, question: "Tools like AWS CloudFormation and Terraform are used for:", options: ["Monitoring application performance.", "Writing application code.", "Managing infrastructure as code (IaC).", "Securing user identities."], answer: "Managing infrastructure as code (IaC).", explanation: "Infrastructure as Code (IaC) is the practice of managing and provisioning your cloud resources using code or definition files. This allows you to create, update, and delete your entire infrastructure in an automated and repeatable way." },
+                    { id: 24, question: "Which of the following is NOT a benefit of cloud computing?", options: ["Reduced Capital Expenditure (CapEx).", "Increased agility and speed of deployment.", "Complete control over the physical hardware.", "Ability to scale globally in minutes."], answer: "Complete control over the physical hardware.", explanation: "In cloud computing, the physical hardware is owned and managed by the cloud provider. The customer gains access to the computing resources but gives up direct control over the physical servers and data center infrastructure." },
+                    { id: 25, question: "A Network Access Control List (NACL) in a VPC operates at the ________ level.", options: ["EC2 instance", "Subnet", "Availability Zone", "Region"], answer: "Subnet", explanation: "NACLs act as a firewall for controlling traffic in and out of one or more subnets. They are stateless, meaning return traffic must be explicitly allowed. This is different from Security Groups, which operate at the instance level and are stateful." },
+                    { id: 26, question: "What does TCO (Total Cost of Ownership) help you evaluate when considering a move to the cloud?", options: ["Only the monthly cost of virtual servers.", "The full financial impact of a technology decision, including direct and indirect costs.", "The time it will take to migrate an application.", "The number of users an application can support."], answer: "The full financial impact of a technology decision, including direct and indirect costs.", explanation: "TCO analysis helps compare the costs of running an infrastructure on-premises versus in the cloud. It includes not just the server costs (direct), but also related costs like power, cooling, data center space, and IT labor (indirect)." },
+                    { id: 27, question: "The NIST characteristic that describes how multiple customers share the same physical infrastructure is called:", options: ["On-Demand Self-Service", "Measured Service", "Resource Pooling", "Rapid Elasticity"], answer: "Resource Pooling", explanation: "Resource pooling means the provider's computing resources are pooled to serve multiple consumers using a multi-tenant model, with different physical and virtual resources dynamically assigned and reassigned according to consumer demand." },
+                    { id: 28, question: "Which of the following best describes File Storage?", options: ["Data is stored in a flat structure with no hierarchy.", "Data is stored in blocks and is ideal for database volumes.", "Data is stored in a hierarchical structure of files and folders.", "Data is stored temporarily in memory."], answer: "Data is stored in a hierarchical structure of files and folders.", explanation: "File storage (like Amazon EFS or a network attached storage - NAS) presents data in a file and folder hierarchy. It's often used for shared file systems where multiple clients need to access the same files." },
+                    { id: 29, question: "Which cloud service model offers a middle ground, providing the operating system and development tools but not the application itself?", options: ["IaaS", "SaaS", "FaaS (Function as a Service)", "PaaS"], answer: "PaaS", explanation: "Platform as a Service (PaaS) provides the platform—including operating systems, middleware, and runtime environments—for customers to develop, run, and manage their own applications without the complexity of building and maintaining the underlying infrastructure." },
+                    { id: 30, question: "What is a 'Spot Instance' in AWS?", options: ["A virtual machine that is reserved for a 1- or 3-year term.", "An instance that can be purchased for a very low price but can be terminated by AWS at any time.", "A standard pay-as-you-go virtual machine.", "A dedicated physical server."], answer: "An instance that can be purchased for a very low price but can be terminated by AWS at any time.", explanation: "Spot Instances leverage unused EC2 capacity and are available at a steep discount compared to On-Demand prices. They are ideal for fault-tolerant, flexible workloads like big data analysis, batch jobs, or testing, but not for critical applications that cannot be interrupted." },
+                    { id: 31, question: "What is the primary role of a service like Amazon Route 53 or Azure DNS?", options: ["To distribute traffic across multiple servers.", "To provide a secure, private network connection.", "To translate human-readable domain names (e.g., www.example.com) into machine-readable IP addresses.", "To store application data."], answer: "To translate human-readable domain names (e.g., www.example.com) into machine-readable IP addresses.", explanation: "These are managed Domain Name System (DNS) services. DNS is the phonebook of the internet; it resolves friendly domain names to the numeric IP addresses that computers use to connect to each other." },
+                    { id: 32, question: "The ability of a system to remain operational even if some of its components fail is known as:", options: ["Scalability", "Elasticity", "Agility", "Fault Tolerance"], answer: "Fault Tolerance", explanation: "Fault tolerance is the property that enables a system to continue operating properly in the event of the failure of some of its components. This is often achieved through redundancy, like running multiple web servers behind a load balancer." },
+                    { id: 33, question: "In which cloud service model is the customer responsible for the least amount of management?", options: ["IaaS", "PaaS", "SaaS", "On-premises"], answer: "SaaS", explanation: "In the SaaS model, the cloud provider manages everything: the applications, data, runtime, middleware, OS, virtualization, servers, storage, and networking. The customer simply uses the software." },
+                    { id: 34, question: "What is a Content Delivery Network (CDN) used for?", options: ["To manage user identities and permissions.", "To run custom code in response to events.", "To improve website performance by caching content closer to users.", "To create isolated network environments."], answer: "To improve website performance by caching content closer to users.", explanation: "A CDN is a distributed network of servers that caches content like images, videos, and webpages at locations (Points of Presence) around the world. When a user requests content, it is served from the nearest location, reducing latency and improving load times." },
+                    { id: 35, question: "A financial services company wants to use the cloud but must use servers that are not shared with any other customer. What AWS EC2 purchasing option should they choose?", options: ["Spot Instances", "On-Demand Instances", "Dedicated Hosts", "Reserved Instances"], answer: "Dedicated Hosts", explanation: "A Dedicated Host is a physical EC2 server dedicated for your use. Dedicated Hosts can help you address compliance requirements and reduce costs by allowing you to use your existing server-bound software licenses." },
+                    { id: 36, question: "Which of the following is a NoSQL database?", options: ["MySQL", "PostgreSQL", "Amazon DynamoDB", "Microsoft SQL Server"], answer: "Amazon DynamoDB", explanation: "DynamoDB is a fully managed, serverless, key-value NoSQL database. MySQL, PostgreSQL, and MS SQL Server are all examples of relational (SQL) databases." },
+                    { id: 37, question: "Which of the following is a primary benefit of using a public cloud?", options: ["It gives you full physical control over your servers.", "It converts capital expenditure (CapEx) into operational expenditure (OpEx).", "It guarantees compliance with all industry regulations by default.", "It is always more secure than an on-premises data center."], answer: "It converts capital expenditure (CapEx) into operational expenditure (OpEx).", explanation: "One of the key financial benefits of the cloud is shifting from CapEx (buying physical hardware upfront) to OpEx (paying a monthly subscription or pay-as-you-go). This lowers the barrier to entry for new businesses." },
+                    { id: 38, question: "The part of the cloud infrastructure that consists of the actual physical servers, storage, and networking is called the:", options: ["Control Plane", "Data Plane", "Management Plane", "User Plane"], answer: "Data Plane", explanation: "The Data Plane (or infrastructure plane) is where the end-user's resources (like VMs and databases) run and where their data is processed. The Control Plane is the part that users interact with to manage and provision those resources (e.g., the AWS Management Console or APIs)." },
+                    { id: 39, question: "To serve users in both North America and Europe with the lowest possible latency, you should deploy your application in:", options: ["A single Availability Zone.", "Multiple Availability Zones in one Region.", "Multiple Regions.", "A private data center."], answer: "Multiple Regions.", explanation: "Regions are large, geographically distinct areas (e.g., US-East, EU-West). To provide low latency to a global user base, you should deploy your application and data in regions that are physically closer to those users." },
+                    { id: 40, question: "What is the concept of 'High Availability'?", options: ["The ability to recover from a major disaster.", "The ability of a system to remain accessible and operational with minimal downtime.", "The ability to add or remove resources automatically.", "The ability to run an application on multiple cloud providers."], answer: "The ability of a system to remain accessible and operational with minimal downtime.", explanation: "High Availability (HA) refers to systems that are durable and likely to operate continuously without failure for a long time. It is typically achieved by eliminating single points of failure, often by deploying resources across multiple Availability Zones." }
+                ].map(q => ({...q, userAnswer: null}))
             }
-        ].map(q => ({...q, userAnswer: null})); // Add userAnswer property to each question
+        };
 
+        let currentQuizData = [];
         let currentQuestionIndex = 0;
         let score = 0;
 
+        const mainTitleEl = document.getElementById('main-title');
+        const backToMenuBtn = document.getElementById('back-to-menu');
+        const menuView = document.getElementById('menu-view');
+        const quizContainerView = document.getElementById('quiz-container-view');
+        
         const questionCounterEl = document.getElementById('question-counter');
         const scoreDisplayEl = document.getElementById('score-display');
         const questionTextEl = document.getElementById('question-text');
@@ -451,33 +278,26 @@
         const explanationText = document.getElementById('explanation-text');
 
         const authGate = document.getElementById('auth-gate');
-        const quizContent = document.getElementById('quiz-content');
         const userInfoEl = document.getElementById('user-info');
         const userNameEl = document.getElementById('user-name');
         const logoutBtn = document.getElementById('logout-btn');
 
         function checkAuth() {
-            // In a real app, the token would be set in localStorage upon login on the main site.
-            // For demonstration, you can manually set a dummy token in your browser's developer console:
-            // localStorage.setItem('token', 'header.' + btoa(JSON.stringify({ user: { fullName: 'Test User' } })) + '.signature');
             const token = localStorage.getItem('token');
-            
             if (!token) {
-                quizContent.classList.add('hidden');
                 authGate.classList.remove('hidden');
+                menuView.classList.add('hidden');
+                quizContainerView.classList.add('hidden');
                 return false;
             }
-
             try {
-                // Decode the JWT payload to get user info
                 const payload = JSON.parse(atob(token.split('.')[1]));
                 const user = payload.user;
-
                 if (user && user.fullName) {
                     userNameEl.textContent = user.fullName;
                     userInfoEl.classList.remove('hidden');
-                    quizContent.classList.remove('hidden');
                     authGate.classList.add('hidden');
+                    showMenu();
                     return true;
                 } else {
                     throw new Error('Invalid token payload');
@@ -485,17 +305,34 @@
             } catch (error) {
                 console.error("Authentication Error:", error);
                 localStorage.removeItem('token');
-                quizContent.classList.add('hidden');
                 authGate.classList.remove('hidden');
+                menuView.classList.add('hidden');
+                quizContainerView.classList.add('hidden');
                 return false;
             }
         }
+        
+        function showMenu() {
+            mainTitleEl.textContent = 'Choose a Quiz';
+            menuView.classList.remove('hidden');
+            quizContainerView.classList.add('hidden');
+            backToMenuBtn.classList.add('hidden');
+        }
 
+        function startQuiz(quizId) {
+            const quiz = quizzes[quizId];
+            currentQuizData = quiz.questions;
+            mainTitleEl.textContent = quiz.title;
+            menuView.classList.add('hidden');
+            quizContainerView.classList.remove('hidden');
+            backToMenuBtn.classList.remove('hidden');
+            initializeQuiz();
+        }
 
         function initializeQuiz() {
             currentQuestionIndex = 0;
             score = 0;
-            quizData.forEach(q => q.userAnswer = null);
+            currentQuizData.forEach(q => q.userAnswer = null);
 
             quizView.classList.remove('hidden');
             resultsView.classList.add('hidden');
@@ -510,12 +347,12 @@
 
         function renderPalette() {
             questionPaletteEl.innerHTML = '';
-            quizData.forEach((question, index) => {
+            currentQuizData.forEach((question, index) => {
                 const paletteBtn = document.createElement('button');
                 paletteBtn.textContent = index + 1;
                 paletteBtn.classList.add('palette-btn', 'w-10', 'h-10', 'rounded-md', 'bg-slate-200', 'text-slate-600', 'hover:bg-slate-300', 'transition-colors', 'border-2', 'border-transparent');
                 
-                if (quizData[index].userAnswer !== null) {
+                if (currentQuizData[index].userAnswer !== null) {
                     paletteBtn.classList.add('answered');
                 }
                 if (index === currentQuestionIndex) {
@@ -523,8 +360,7 @@
                 }
 
                 paletteBtn.addEventListener('click', () => {
-                    // Only allow navigation via palette if the question has not been answered yet
-                    if(quizData[index].userAnswer === null) {
+                    if(currentQuizData[index].userAnswer === null) {
                         loadQuestion(index)
                     }
                 });
@@ -534,9 +370,9 @@
 
         function loadQuestion(index) {
             currentQuestionIndex = index;
-            const question = quizData[index];
+            const question = currentQuizData[index];
 
-            questionCounterEl.textContent = `Question ${index + 1} of ${quizData.length}`;
+            questionCounterEl.textContent = `Question ${index + 1} of ${currentQuizData.length}`;
             questionTextEl.textContent = question.question;
             optionsContainerEl.innerHTML = '';
             optionsContainerEl.classList.remove('options-answered');
@@ -557,8 +393,8 @@
         }
         
         function selectAnswer(selectedOption) {
-            const question = quizData[currentQuestionIndex];
-            if (question.userAnswer !== null) return; // Prevent re-answering
+            const question = currentQuizData[currentQuestionIndex];
+            if (question.userAnswer !== null) return;
 
             question.userAnswer = selectedOption;
             optionsContainerEl.classList.add('options-answered');
@@ -582,7 +418,7 @@
             explanationContainer.classList.remove('hidden');
             renderPalette();
 
-            if (currentQuestionIndex < quizData.length - 1) {
+            if (currentQuestionIndex < currentQuizData.length - 1) {
                 nextBtn.classList.remove('hidden');
             } else {
                 submitBtn.classList.remove('hidden');
@@ -590,7 +426,7 @@
         }
 
         function updateScoreDisplay() {
-             score = quizData.reduce((acc, question) => {
+             score = currentQuizData.reduce((acc, question) => {
                 return question.userAnswer === question.answer ? acc + 1 : acc;
             }, 0);
             scoreDisplayEl.textContent = `Score: ${score}`;
@@ -600,10 +436,10 @@
             quizView.classList.add('hidden');
             resultsView.classList.remove('hidden');
 
-            finalScoreEl.textContent = `${score} / ${quizData.length}`;
+            finalScoreEl.textContent = `${score} / ${currentQuizData.length}`;
             resultsDetailsEl.innerHTML = '';
 
-            quizData.forEach((question, index) => {
+            currentQuizData.forEach((question, index) => {
                 const isCorrect = question.userAnswer === question.answer;
                 const resultCard = document.createElement('div');
                 resultCard.classList.add('p-4', 'rounded-lg', 'bg-slate-50', 'shadow-sm', isCorrect ? 'result-correct' : 'result-incorrect');
@@ -621,25 +457,27 @@
         }
         
         nextBtn.addEventListener('click', () => {
-            if (currentQuestionIndex < quizData.length - 1) {
+            if (currentQuestionIndex < currentQuizData.length - 1) {
                 loadQuestion(currentQuestionIndex + 1);
             }
         });
+
         submitBtn.addEventListener('click', showResults);
         restartBtn.addEventListener('click', initializeQuiz);
-
+        backToMenuBtn.addEventListener('click', showMenu);
         logoutBtn.addEventListener('click', () => {
             localStorage.removeItem('token');
             window.location.reload();
         });
 
+        document.querySelectorAll('.quiz-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                startQuiz(e.currentTarget.dataset.quizId);
+            });
+        });
 
         // Initial load
-        document.addEventListener('DOMContentLoaded', () => {
-            if (checkAuth()) {
-                initializeQuiz();
-            }
-        });
+        document.addEventListener('DOMContentLoaded', checkAuth);
     </script>
 </body>
 </html>
