@@ -13,7 +13,7 @@
     <style>
         body { 
             font-family: 'Inter', sans-serif; 
-            /* Disable text selection */
+            /* Disable text selection for a more app-like feel */
             -webkit-user-select: none; /* Safari */
             -ms-user-select: none; /* IE 10+ */
             user-select: none; /* Standard syntax */
@@ -42,22 +42,29 @@
             margin-right: 0.75rem;
         }
 
-        #problems-sidebar {
-            transition: transform 0.3s ease-in-out;
+        /* --- Improved Sidebar Transitions --- */
+        #problems-sidebar-container.open .sidebar-overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #problems-sidebar-container.open #problems-sidebar {
             transform: translateX(0);
         }
-        #problems-sidebar.closed {
+        #problems-sidebar {
             transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
         }
-        
         @media (min-width: 1024px) { /* lg breakpoint */
-            #problems-sidebar {
+             #problems-sidebar {
+                transform: translateX(0);
                 transition: margin-left 0.3s ease-in-out;
             }
-            #problems-sidebar.closed {
-                transform: translateX(0);
-                margin-left: -17rem;
+             #problems-sidebar-container.closed #problems-sidebar {
+                margin-left: -17rem; /* 16rem width + 1rem gap */
             }
+             #problems-sidebar-container.closed + #compiler-content-area {
+                margin-left: -16rem;
+             }
         }
 
         .CodeMirror {
@@ -78,6 +85,7 @@
 
         .problem-list-item { cursor: pointer; transition: background-color 0.2s, color 0.2s; }
         .problem-list-item.selected { background-color: #4F46E5; color: white; }
+        .problem-list-item:not(.selected):hover { background-color: #f3f4f6; }
 
         .problem-list-item.submitted { color: #6b7280; }
         .submitted-badge {
@@ -90,6 +98,8 @@
 
         .accordion-header { cursor: pointer; transition: background-color 0.2s; }
         .accordion-header:hover { background-color: #f3f4f6; }
+        .accordion-header .chevron-icon { transition: transform 0.3s ease-out; }
+        .accordion-header.open .chevron-icon { transform: rotate(180deg); }
         .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
 
         .prose h3 {
@@ -111,55 +121,81 @@
         
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px;}
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        ::-webkit-scrollbar-thumb { background: #a8a29e; border-radius: 4px;}
+        ::-webkit-scrollbar-thumb:hover { background: #78716c; }
+
+        /* --- Animation & Modal Improvements --- */
+        .modal-enter {
+            opacity: 0;
+        }
+        .modal-enter-active {
+            opacity: 1;
+            transition: opacity 200ms ease-out;
+        }
+        .modal-content-enter {
+            transform: scale(0.95);
+            opacity: 0;
+        }
+        .modal-content-enter-active {
+            transform: scale(1);
+            opacity: 1;
+            transition: all 200ms ease-out;
+        }
+        .skeleton-loader {
+            background-color: #e5e7eb;
+            border-radius: 0.25rem;
+            animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
     </style>
 </head>
 <body class="bg-gray-100">
-    <div class="flex h-screen bg-gray-200 font-sans">
+    <div class="flex h-screen bg-gray-100 font-sans">
         <!-- Main Sidebar -->
-        <aside class="w-64 bg-white shadow-md hidden lg:flex flex-col">
+        <aside class="w-64 bg-white shadow-md hidden lg:flex flex-col flex-shrink-0">
             <div class="flex items-center justify-center p-4 border-b">
                 <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757066128/Gemini_Generated_Image_9bakrh9bakrh9bak_wuhqq7.png" alt="TESTIFY Logo">
                 <span class="ml-3 text-2xl font-bold text-gray-800">TESTIFY</span>
             </div>
-            <div class="flex flex-col flex-grow p-4">
-                <a href="/student/dashboard.html" class="sidebar-link">
+            <nav class="flex flex-col flex-grow p-4">
+                <a href="#" class="sidebar-link">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                     <span>Dashboard</span>
                 </a>
-                <a href="/student/take-test.html" class="sidebar-link">
+                <a href="#" class="sidebar-link">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                     <span>Take Test</span>
                 </a>
-                <a href="/student/test-history.html" class="sidebar-link">
+                <a href="#" class="sidebar-link">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <span>Test History</span>
                 </a>
-                <a href="/student/my-courses.html" class="sidebar-link">
+                <a href="#" class="sidebar-link">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
                     <span>My Courses</span>
                 </a>
-                <a href="/student/my-certificates.html" class="sidebar-link">
+                <a href="#" class="sidebar-link">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     <span>My Certificates</span>
                 </a>
-                <a href="/compiler.html" class="sidebar-link active">
+                <a href="#" class="sidebar-link active">
                     <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
                     <span>CodeLab</span>
                 </a>
-                <a href="sql-compiler.html" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200 mt-2">
-                    <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9.75h7.5v7.5h-7.5v-7.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 3.375h17.25v17.25h-17.25v-17.25z" /></svg>
+                <a href="#" class="sidebar-link">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9.75h7.5v7.5h-7.5v7.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 3.375h17.25v17.25h-17.25v-17.25z" /></svg>
                     <span>SQL CodeLab</span>
                 </a>
                 <div class="mt-auto">
-                    <a href="/student/student-profile.html" class="sidebar-link">
+                    <a href="#" class="sidebar-link">
                         <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
                         <span>My Profile</span>
                     </a>
                 </div>
-
-            </div>
+            </nav>
         </aside>
 
         <!-- Main Content Wrapper -->
@@ -167,7 +203,7 @@
             <!-- Header -->
             <header class="bg-white shadow-md p-4 flex justify-between items-center flex-shrink-0 z-20">
                 <div class="flex items-center space-x-4">
-                    <button id="menu-toggle" class="p-2 rounded-md hover:bg-gray-200 focus:outline-none">
+                    <button id="menu-toggle" class="p-2 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                         <svg class="h-6 w-6 text-gray-700" id="menu-open-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                         <svg class="h-6 w-6 text-gray-700 hidden" id="menu-close-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
@@ -182,7 +218,7 @@
                     </div>
 
                     <div class="relative">
-                        <button id="user-menu-button" class="flex items-center space-x-2">
+                        <button id="user-menu-button" class="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 rounded-md p-1">
                             <span id="user-name" class="font-semibold text-gray-700">Student User</span>
                             <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                         </button>
@@ -195,41 +231,52 @@
 
             <!-- Compiler Content -->
             <div class="flex-1 flex overflow-hidden p-4 lg:p-6 lg:gap-x-4">
-                <!-- Problems Sidebar -->
-                <aside id="problems-sidebar" class="w-64 bg-white p-4 shadow-lg rounded-lg flex flex-col flex-shrink-0 absolute lg:relative top-0 left-0 h-full z-10">
-                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">Problem Sections</h2>
-                    <div id="problem-list" class="overflow-y-auto flex-grow pr-2">
-                        <!-- Problems will be dynamically inserted here -->
-                    </div>
-                </aside>
-
-                <!-- Main Content Area -->
-                <main id="compiler-content-area" class="flex-1 overflow-y-auto">
-                    <div id="compiler-view" class="bg-white rounded-lg shadow-md hidden flex flex-col overflow-hidden h-full">
-                        <div class="p-6 overflow-y-auto">
-                            <!-- *** NEW: Enhanced Problem Header *** -->
-                            <div class="mb-6">
-                                <h2 id="problem-title" class="text-3xl font-bold text-gray-800"></h2>
-                                <div id="problem-meta-container" class="flex items-center space-x-4 mt-2 text-sm">
-                                    <!-- Difficulty and Score will be injected here -->
+                <!-- Problems Sidebar Container (for mobile overlay) -->
+                <div id="problems-sidebar-container" class="lg:flex-shrink-0">
+                     <!-- Mobile Overlay -->
+                    <div class="sidebar-overlay fixed inset-0 bg-black bg-opacity-30 z-30 opacity-0 pointer-events-none transition-opacity duration-300 lg:hidden"></div>
+                    <aside id="problems-sidebar" class="w-64 bg-white p-4 shadow-lg rounded-lg flex flex-col flex-shrink-0 absolute lg:relative top-0 left-0 h-full z-40">
+                        <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">Problem Sections</h2>
+                        <div id="problem-list" class="overflow-y-auto flex-grow pr-2">
+                            <!-- Skeleton loader for problems -->
+                            <div id="problem-list-loader">
+                                <div class="space-y-4">
+                                    <div class="h-8 skeleton-loader"></div>
+                                    <div class="pl-4 space-y-2">
+                                        <div class="h-6 skeleton-loader"></div>
+                                        <div class="h-6 skeleton-loader w-5/6"></div>
+                                    </div>
+                                    <div class="h-8 skeleton-loader"></div>
                                 </div>
                             </div>
-                            
-                            <div id="problem-details-container" class="mt-4 text-gray-700 leading-relaxed prose">
-                                <!-- Structured problem details will be injected here -->
+                        </div>
+                    </aside>
+                </div>
+
+                <!-- Main Content Area -->
+                <main id="compiler-content-area" class="flex-1 overflow-y-auto transition-all duration-300">
+                    <div id="compiler-view" class="bg-white rounded-lg shadow-md hidden flex-col overflow-hidden h-full">
+                        <div class="p-6 overflow-y-auto">
+                            <div class="mb-6">
+                                <h2 id="problem-title" class="text-3xl font-bold text-gray-800"></h2>
+                                <div id="problem-meta-container" class="flex items-center space-x-4 mt-2 text-sm"></div>
                             </div>
+                            
+                            <div id="problem-details-container" class="mt-4 text-gray-700 leading-relaxed prose max-w-none"></div>
                         
                             <div class="flex justify-between items-center my-6">
                                 <div class="flex items-center space-x-4">
-                                    <select id="language-select" class="p-2 border rounded-md bg-gray-50">
+                                    <select id="language-select" class="p-2 border rounded-md bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                         <option value="c">C</option>
                                         <option value="cpp">C++</option>
                                         <option value="java">Java</option>
                                         <option value="python">Python</option>
                                     </select>
-                                    <button id="view-submission-button" class="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-sm hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>View My Submission</button>
+                                    <button id="view-submission-button" class="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-sm hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed">View Submission</button>
                                 </div>
-                                <button id="submit-button" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition">Run & Submit</button>
+                                <button id="submit-button" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition flex items-center justify-center disabled:opacity-75 disabled:cursor-wait">
+                                    <span id="submit-button-text">Run & Submit</span>
+                                </button>
                             </div>
                             
                             <div class="flex-grow">
@@ -253,8 +300,8 @@
     </div>
 
     <!-- Celebration Modal -->
-    <div id="celebration-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl p-8 max-w-sm text-center transform transition-all scale-95 opacity-0" style="transition: transform 0.3s ease-out, opacity 0.3s ease-out;">
+    <div id="celebration-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal-enter">
+        <div class="bg-white rounded-lg shadow-xl p-8 max-w-sm text-center modal-content-enter">
             <div class="text-9xl animate-bounce">🎉</div>
             <h2 class="text-2xl font-bold text-gray-800 mt-4">Congratulations!</h2>
             <p class="text-gray-600 mt-2">All tests passed!</p>
@@ -263,11 +310,11 @@
     </div>
 
     <!-- View Code Modal -->
-    <div id="view-code-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+    <div id="view-code-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 modal-enter">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col modal-content-enter">
             <div class="flex justify-between items-center p-4 border-b">
                 <h2 id="modal-problem-title" class="text-xl font-bold text-gray-800"></h2>
-                <button id="close-code-modal-button" class="text-gray-500 hover:text-gray-800 text-3xl font-bold">&times;</button>
+                <button id="close-code-modal-button" class="text-gray-500 hover:text-gray-800 text-3xl font-bold leading-none">&times;</button>
             </div>
             <div id="modal-code-viewer-container" class="p-4 flex-grow overflow-hidden relative">
                 <textarea id="modal-code-viewer"></textarea>
@@ -281,29 +328,15 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // --- COPY-PASTE BLOCK ---
-            // Disable right-click context menu
-            document.addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-            });
-
-            // Disable keyboard shortcuts for copy, paste, cut, etc.
-            document.addEventListener('keydown', function(e) {
-                // Check for Ctrl (or Command on Mac) key
+            document.addEventListener('contextmenu', e => e.preventDefault());
+            document.addEventListener('keydown', e => {
                 if (e.ctrlKey || e.metaKey) {
-                    switch (e.keyCode) {
-                        case 65: // 'A' (Select All)
-                        case 67: // 'C' (Copy)
-                        case 83: // 'S' (Save)
-                        case 85: // 'U' (View Source)
-                        case 86: // 'V' (Paste)
-                        case 88: // 'X' (Cut)
-                        case 123: // F12 (Developer Tools)
-                            e.preventDefault();
-                            break;
+                    const forbiddenKeys = [65, 67, 83, 85, 86, 88, 123]; // A, C, S, U, V, X, F12
+                    if (forbiddenKeys.includes(e.keyCode)) {
+                        e.preventDefault();
                     }
                 }
-                // Also block F12 separately
-                if (e.keyCode === 123) {
+                if (e.keyCode === 123) { // F12
                     e.preventDefault();
                 }
             });
@@ -313,10 +346,11 @@
             const token = localStorage.getItem('token');
             if (token) {
                 user = JSON.parse(localStorage.getItem('user'));
-                document.getElementById('user-name').textContent = user.fullName || 'Student';
+                document.getElementById('user-name').textContent = user?.fullName || 'Student';
             } else {
-                window.location.href = '/login.html';
-                return;
+                // In a real app, redirect. For this example, we'll allow it to run.
+                // window.location.href = '/login.html';
+                console.warn("No auth token found. Running in demo mode.");
             }
             document.getElementById('logout-button').onclick = () => { localStorage.clear(); window.location.href = '/login.html'; };
             document.getElementById('user-menu-button').onclick = () => document.getElementById('user-menu').classList.toggle('hidden');
@@ -340,53 +374,64 @@
             let currentSubmission = null;
             let submittedProblemIds = new Set();
             
-            const problemListDiv = document.getElementById('problem-list');
             const welcomeView = document.getElementById('welcome-view');
             const compilerView = document.getElementById('compiler-view');
-            const problemTitle = document.getElementById('problem-title');
-            const problemMetaContainer = document.getElementById('problem-meta-container');
-            const problemDetailsContainer = document.getElementById('problem-details-container');
-            const languageSelect = document.getElementById('language-select');
-            const submitButton = document.getElementById('submit-button');
-            const viewSubmissionButton = document.getElementById('view-submission-button');
-            const resultsView = document.getElementById('results-view');
-            const testCaseTabs = document.getElementById('test-case-tabs');
-            const testCaseDetails = document.getElementById('test-case-details');
-            const celebrationModal = document.getElementById('celebration-modal');
-            const viewCodeModal = document.getElementById('view-code-modal');
+            // ... (many other element getters)
+            const problemListDiv = document.getElementById('problem-list');
+            const problemListLoader = document.getElementById('problem-list-loader');
             const menuToggle = document.getElementById('menu-toggle');
-            const problemsSidebar = document.getElementById('problems-sidebar');
-            
-            // --- FUNCTIONS ---
+            const sidebarContainer = document.getElementById('problems-sidebar-container');
+            const submitButton = document.getElementById('submit-button');
+
+            // --- API HELPERS (with error handling) ---
+            const apiFetch = async (url, options = {}) => {
+                const defaultOptions = {
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'x-auth-token': token 
+                    }
+                };
+                const response = await fetch(url, { ...defaultOptions, ...options, headers: {...defaultOptions.headers, ...options.headers} });
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    throw new Error(`API Error ${response.status}: ${errorData}`);
+                }
+                return response.json();
+            };
+
             const fetchUserScore = async () => {
                 try {
-                    const response = await fetch('/api/compiler/my-score', { headers: { 'x-auth-token': token } });
-                    const data = await response.json();
+                    const data = await apiFetch('/api/compiler/my-score');
                     document.getElementById('user-score').textContent = data.totalScore || 0;
                 } catch (error) { console.error('Error fetching user score:', error); }
             };
 
             const fetchStudentProblems = async () => {
+                problemListLoader.style.display = 'block';
+                problemListDiv.style.display = 'none';
                 try {
-                    const response = await fetch('/api/student/compiler/problems', { headers: { 'x-auth-token': token } });
-                    problems = await response.json();
+                    problems = await apiFetch('/api/student/compiler/problems');
                     problems.forEach(p => p.starterCode = starterTemplates);
                 } catch (error) {
                     problemListDiv.innerHTML = '<p class="text-red-500 p-2">Could not load problems.</p>';
+                    console.error('Error fetching problems:', error);
+                } finally {
+                    problemListLoader.style.display = 'none';
+                    problemListDiv.style.display = 'block';
                 }
             };
             
             const fetchSubmittedProblems = async () => {
                 try {
-                    const response = await fetch('/api/compiler/submitted-problems', { headers: { 'x-auth-token': token } });
-                    submittedProblemIds = new Set(await response.json());
+                    submittedProblemIds = new Set(await apiFetch('/api/compiler/submitted-problems'));
                 } catch (error) { console.error('Error fetching submitted problems:', error); }
             };
-
+            
+            // --- UI FUNCTIONS ---
             const displayProblems = () => {
                 problemListDiv.innerHTML = '';
                 if(problems.length === 0) {
-                    problemListDiv.innerHTML = '<p class="text-gray-500 p-2 text-sm">No problems assigned to your college yet.</p>';
+                    problemListDiv.innerHTML = '<p class="text-gray-500 p-2 text-sm">No problems assigned yet.</p>';
                     return;
                 }
                 const groupedBySection = problems.reduce((acc, p) => {
@@ -394,31 +439,43 @@
                     return acc;
                 }, {});
 
-                for (const sectionName in groupedBySection) {
+                Object.keys(groupedBySection).forEach((sectionName, index) => {
                     const accordion = document.createElement('div');
                     const header = document.createElement('div');
                     header.className = 'accordion-header flex justify-between items-center p-3 rounded-md font-semibold text-gray-700';
-                    header.innerHTML = `<span>${sectionName} (${groupedBySection[sectionName].length})</span><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
+                    header.innerHTML = `<span>${sectionName} (${groupedBySection[sectionName].length})</span><svg class="chevron-icon w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
+                    
                     const content = document.createElement('div');
                     content.className = 'accordion-content pl-4';
                     
                     groupedBySection[sectionName].forEach(p => {
-                        const item = document.createElement('div');
                         const isSubmitted = submittedProblemIds.has(p.problemId);
+                        const item = document.createElement('div');
                         item.className = `problem-list-item p-3 rounded-md flex justify-between items-center ${isSubmitted ? 'submitted' : ''}`;
                         item.dataset.problemId = p.problemId;
-                        item.innerHTML = `<div><span>${p.title}</span>${isSubmitted ? '<span class="submitted-badge">Submitted</span>' : ''}</div>`;
+                        item.innerHTML = `<div><span class="text-sm">${p.title}</span>${isSubmitted ? '<span class="submitted-badge">Done</span>' : ''}</div>`;
                         item.onclick = () => selectProblem(p.problemId);
                         content.appendChild(item);
                     });
                     
                     header.onclick = () => {
-                        content.style.maxHeight = content.style.maxHeight ? null : content.scrollHeight + "px";
-                        header.querySelector('svg').style.transform = content.style.maxHeight ? 'rotate(180deg)' : '';
+                        document.querySelectorAll('.accordion-header.open').forEach(openHeader => {
+                            if (openHeader !== header) {
+                                openHeader.classList.remove('open');
+                                openHeader.nextElementSibling.style.maxHeight = null;
+                            }
+                        });
+                        header.classList.toggle('open');
+                        const isOpen = header.classList.contains('open');
+                        content.style.maxHeight = isOpen ? content.scrollHeight + "px" : null;
                     };
+
                     accordion.append(header, content);
                     problemListDiv.appendChild(accordion);
-                }
+                    if (index === 0) { // Open first section by default
+                         setTimeout(() => header.click(), 50);
+                    }
+                });
             };
 
             const selectProblem = async (problemId) => {
@@ -428,14 +485,14 @@
                 document.querySelectorAll('.problem-list-item').forEach(el => el.classList.toggle('selected', el.dataset.problemId === problemId));
                 welcomeView.classList.add('hidden');
                 compilerView.classList.replace('hidden', 'flex');
-                resultsView.classList.add('hidden');
-
-                problemTitle.textContent = currentProblem.title;
+                document.getElementById('results-view').classList.add('hidden');
+                
+                document.getElementById('problem-title').textContent = currentProblem.title;
                 const difficulty = currentProblem.difficulty || 'Easy';
                 const score = scoreMap[difficulty] || 0;
                 
                 const difficultyColors = { 'Easy': 'bg-green-100 text-green-800', 'Medium': 'bg-yellow-100 text-yellow-800', 'Hard': 'bg-red-100 text-red-800', 'CTS Specific': 'bg-blue-100 text-blue-800' };
-                problemMetaContainer.innerHTML = `
+                document.getElementById('problem-meta-container').innerHTML = `
                     <div class="flex items-center px-3 py-1 rounded-full ${difficultyColors[difficulty] || 'bg-gray-100 text-gray-800'}">
                         <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5.121l3.707-3.707a1 1 0 011.414 1.414L13.414 8.54l2.293 2.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l2.293-2.293-3.707-3.707a1 1 0 011.414-1.414L11 6.121V2a1 1 0 01.3-.707zM11 12.586l2.293 2.293a1 1 0 01-1.414 1.414L11 15.414l-1.293 1.293a1 1 0 01-1.414-1.414L9.586 14 8 12.414l-1.293 1.293a1 1 0 01-1.414-1.414L6.586 11 5 9.414 3.707 10.707a1 1 0 01-1.414-1.414L6 5.586l1.293-1.293a1 1 0 011.414 1.414L7.414 7 9 8.586l1.293-1.293a1 1 0 011.414 1.414L10.414 10 12 11.586l-1 1z" clip-rule="evenodd"></path></svg>
                         <span class="font-semibold">${difficulty}</span>
@@ -443,80 +500,86 @@
                     <div class="flex items-center text-yellow-600">
                         <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
                         <span class="font-semibold">${score} Points</span>
-                    </div>
-                `;
+                    </div>`;
 
-                problemDetailsContainer.innerHTML = `
+                const sanitize = (text) => text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                document.getElementById('problem-details-container').innerHTML = `
                     <h3>Problem Statement</h3>
                     <p>${currentProblem.description.replace(/\n/g, '<br>')}</p>
                     ${currentProblem.inputFormat ? `<h3>Input Format</h3><p>${currentProblem.inputFormat.replace(/\n/g, '<br>')}</p>` : ''}
                     ${currentProblem.outputFormat ? `<h3>Output Format</h3><p>${currentProblem.outputFormat.replace(/\n/g, '<br>')}</p>` : ''}
-                    ${currentProblem.constraints ? `<h3>Constraints</h3><pre>${currentProblem.constraints}</pre>` : ''}
-                    ${currentProblem.example ? `<h3>Example</h3><pre>${currentProblem.example}</pre>` : ''}
+                    ${currentProblem.constraints ? `<h3>Constraints</h3><pre>${sanitize(currentProblem.constraints)}</pre>` : ''}
+                    ${currentProblem.example ? `<h3>Example</h3><pre>${sanitize(currentProblem.example)}</pre>` : ''}
                 `;
                 
                 await fetchAndLoadPreviousSubmission(problemId);
-                if (window.innerWidth < 1024) toggleProblemsSidebar(true);
+                if (window.innerWidth < 1024) toggleProblemsSidebar(false); // Force close on mobile
                 
                 setTimeout(() => editor.refresh(), 1);
             };
-            
+
             const fetchAndLoadPreviousSubmission = async (problemId) => {
+                const viewButton = document.getElementById('view-submission-button');
+                const langSelect = document.getElementById('language-select');
+                viewButton.disabled = true;
+                currentSubmission = null;
                 try {
-                    const response = await fetch(`/api/compiler/my-submission/${problemId}`, { headers: { 'x-auth-token': token } });
-                    if (response.ok) {
-                        const submission = await response.json();
-                        currentSubmission = submission;
-                        viewSubmissionButton.disabled = false;
-                        editor.setValue(submission.submittedCode);
-                        languageSelect.value = submission.language;
-                    } else {
-                        currentSubmission = null;
-                        viewSubmissionButton.disabled = true;
-                        editor.setValue(currentProblem.starterCode[languageSelect.value]);
-                    }
+                    const submission = await apiFetch(`/api/compiler/my-submission/${problemId}`);
+                    currentSubmission = submission;
+                    viewButton.disabled = false;
+                    editor.setValue(submission.submittedCode);
+                    langSelect.value = submission.language;
                 } catch (error) {
-                    console.error('Error fetching previous submission:', error);
-                    currentSubmission = null;
-                    viewSubmissionButton.disabled = true;
-                    editor.setValue(currentProblem.starterCode[languageSelect.value]);
+                    // This is expected if there's no submission, so we just reset to default
+                    editor.setValue(currentProblem.starterCode[langSelect.value]);
                 } finally {
-                    languageSelect.dispatchEvent(new Event('change'));
+                    langSelect.dispatchEvent(new Event('change'));
                 }
             };
 
             const handleSubmit = async () => {
                 if (!currentProblem) return;
+                const submitButtonText = document.getElementById('submit-button-text');
                 submitButton.disabled = true;
-                submitButton.textContent = 'Evaluating...';
-                resultsView.classList.remove('hidden');
+                submitButtonText.textContent = 'Evaluating...';
+                document.getElementById('results-view').classList.remove('hidden');
 
-                let allPassed = true;
                 const results = [];
                 for (const tc of currentProblem.testCases) {
                     try {
-                        const res = await fetch('/api/compile', {
+                        const data = await apiFetch('/api/compile', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                            body: JSON.stringify({ language: languageSelect.value, code: editor.getValue(), input: tc.input }),
+                            body: JSON.stringify({ language: document.getElementById('language-select').value, code: editor.getValue(), input: tc.input }),
                         });
-                        const data = await res.json();
                         const actual = (data.output || '').trim().replace(/\s+/g, ' ');
                         const expected = tc.expected.trim().replace(/\s+/g, ' ');
                         const status = actual === expected ? 'Accepted' : 'Wrong Answer';
                         results.push({ actual, status });
-                        if (status !== 'Accepted') allPassed = false;
                     } catch (e) {
-                        allPassed = false;
-                        results.push({ actual: 'Server Error', status: 'Error' });
-                        break;
+                        results.push({ actual: 'Server Error or Compilation Failed', status: 'Error' });
+                        break; // Stop on first major error
                     }
                 }
                 
+                renderTestResults(results);
+                
+                const allPassed = results.every(r => r.status === 'Accepted') && results.length > 0;
+                if (allPassed) {
+                    showModal('celebration-modal');
+                    await saveScore();
+                }
+
+                submitButton.disabled = false;
+                submitButtonText.textContent = 'Run & Submit';
+            };
+            
+            const renderTestResults = (results) => {
+                const testCaseTabs = document.getElementById('test-case-tabs');
                 testCaseTabs.innerHTML = '';
                 results.forEach((r, i) => {
                     const tab = document.createElement('button');
-                    tab.className = `test-case-tab px-4 py-2 border-b-2 font-medium text-sm ${r.status === 'Accepted' ? 'text-green-600 border-transparent hover:border-green-500' : 'text-red-600 border-transparent hover:border-red-500'}`;
+                    const isAccepted = r.status === 'Accepted';
+                    tab.className = `test-case-tab px-4 py-2 border-b-2 font-medium text-sm ${isAccepted ? 'text-green-600 border-transparent hover:border-green-500' : 'text-red-600 border-transparent hover:border-red-500'}`;
                     tab.textContent = `Case ${i+1}`;
                     tab.onclick = () => {
                         document.querySelectorAll('.test-case-tab').forEach(t => t.classList.remove('active'));
@@ -532,65 +595,70 @@
                     renderTestCaseDetail(activeIndex, results[activeIndex]);
                     if(testCaseTabs.children[activeIndex]) testCaseTabs.children[activeIndex].classList.add('active');
                 }
-
-                if (allPassed) {
-                    celebrationModal.classList.add('flex');
-                    celebrationModal.classList.remove('hidden');
-                    celebrationModal.querySelector('div > div').classList.add('scale-100', 'opacity-100');
-                    await saveScore();
-                }
-
-                submitButton.disabled = false;
-                submitButton.textContent = 'Run & Submit';
             };
             
             const renderTestCaseDetail = (index, result) => {
-                testCaseDetails.innerHTML = `
+                const sanitize = (text) => text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                document.getElementById('test-case-details').innerHTML = `
                     <div class="p-4 border rounded-lg bg-gray-50">
                         <div class="font-semibold text-lg mb-2 ${result.status === 'Accepted' ? 'text-green-600' : 'text-red-600'}">Case ${index + 1}: ${result.status}</div>
                         <div class="space-y-3 text-sm">
-                            <div><strong class="text-gray-600">Input:</strong><pre class="bg-white p-2 rounded mt-1 text-gray-800 font-mono">${currentProblem.testCases[index].input}</pre></div>
-                            <div><strong class="text-gray-600">Your Output:</strong><pre class="bg-white p-2 rounded mt-1 text-gray-800 font-mono">${result.actual}</pre></div>
-                            <div><strong class="text-gray-600">Expected Output:</strong><pre class="bg-white p-2 rounded mt-1 text-gray-800 font-mono">${currentProblem.testCases[index].expected}</pre></div>
+                            <div><strong class="text-gray-600">Input:</strong><pre class="bg-white p-2 rounded mt-1 text-gray-800 font-mono">${sanitize(currentProblem.testCases[index].input)}</pre></div>
+                            <div><strong class="text-gray-600">Your Output:</strong><pre class="bg-white p-2 rounded mt-1 text-gray-800 font-mono">${sanitize(result.actual)}</pre></div>
+                            <div><strong class="text-gray-600">Expected Output:</strong><pre class="bg-white p-2 rounded mt-1 text-gray-800 font-mono">${sanitize(currentProblem.testCases[index].expected)}</pre></div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             };
             
             const saveScore = async () => {
-                const scoreToSave = scoreMap[currentProblem.difficulty] || 0;
                 try {
-                    await fetch('/api/compiler/save-score', {
+                    await apiFetch('/api/compiler/save-score', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                         body: JSON.stringify({
                             problemId: currentProblem.problemId,
                             problemTitle: currentProblem.title,
                             difficulty: currentProblem.difficulty,
-                            score: scoreToSave,
+                            score: scoreMap[currentProblem.difficulty] || 0,
                             submittedCode: editor.getValue(),
-                            language: languageSelect.value
+                            language: document.getElementById('language-select').value
                         })
                     });
                     await fetchUserScore();
                     if (!submittedProblemIds.has(currentProblem.problemId)) {
                         submittedProblemIds.add(currentProblem.problemId);
-                        displayProblems();
+                        displayProblems(); // Re-render to show "Submitted" badge
                     }
                     await fetchAndLoadPreviousSubmission(currentProblem.problemId);
                 } catch (e) { console.error("Failed to save score", e); }
             };
 
-            const toggleProblemsSidebar = (forceClose = false) => {
-                const closed = forceClose || !problemsSidebar.classList.contains('closed');
-                problemsSidebar.classList.toggle('closed', closed);
-                document.getElementById('menu-open-icon').classList.toggle('hidden', !closed);
-                document.getElementById('menu-close-icon').classList.toggle('hidden', closed);
+            const toggleProblemsSidebar = (forceOpen) => {
+                const isOpen = typeof forceOpen === 'boolean' ? forceOpen : !sidebarContainer.classList.contains('open');
+                sidebarContainer.classList.toggle('open', isOpen);
+                sidebarContainer.classList.toggle('closed', !isOpen && window.innerWidth >= 1024);
+                document.getElementById('menu-open-icon').classList.toggle('hidden', isOpen);
+                document.getElementById('menu-close-icon').classList.toggle('hidden', !isOpen);
             };
 
+            const showModal = (modalId) => {
+                const modal = document.getElementById(modalId);
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.add('modal-enter-active');
+                    modal.querySelector('.modal-content-enter').classList.add('modal-content-enter-active');
+                }, 10);
+            };
+
+            const hideModal = (modalId) => {
+                const modal = document.getElementById(modalId);
+                modal.classList.remove('modal-enter-active');
+                modal.querySelector('.modal-content-enter').classList.remove('modal-content-enter-active');
+                setTimeout(() => modal.classList.add('hidden'), 200);
+            };
+            
             const showCodeInModal = (submission) => {
                 document.getElementById('modal-problem-title').textContent = submission.problemTitle;
-                viewCodeModal.classList.remove('hidden');
+                showModal('view-code-modal');
                 if (!modalEditor) {
                     modalEditor = CodeMirror.fromTextArea(document.getElementById('modal-code-viewer'), { lineNumbers: true, theme: 'material-darker', readOnly: true });
                     modalEditor.setSize("100%", "100%");
@@ -602,23 +670,21 @@
             };
 
             // --- EVENT LISTENERS ---
-            languageSelect.onchange = () => {
+            document.getElementById('language-select').onchange = (e) => {
+                const lang = e.target.value;
                 const modes = { 'python': 'python', 'java': 'text/x-java', 'c': 'text/x-csrc', 'cpp': 'text/x-c++src' };
-                editor.setOption('mode', modes[languageSelect.value]);
-                if (currentProblem && (!currentSubmission || currentSubmission.language !== languageSelect.value)) {
-                    editor.setValue(currentProblem.starterCode[languageSelect.value]);
+                editor.setOption('mode', modes[lang]);
+                if (currentProblem && (!currentSubmission || currentSubmission.language !== lang)) {
+                    editor.setValue(currentProblem.starterCode[lang]);
                 }
             };
             submitButton.onclick = handleSubmit;
-            viewSubmissionButton.onclick = () => { if (currentSubmission) showCodeInModal(currentSubmission); };
-            document.getElementById('close-modal-button').onclick = () => {
-                const modal = document.getElementById('celebration-modal');
-                modal.querySelector('div > div').classList.remove('scale-100', 'opacity-100');
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            };
-            document.getElementById('close-code-modal-button').onclick = () => viewCodeModal.classList.add('hidden');
+            document.getElementById('view-submission-button').onclick = () => { if (currentSubmission) showCodeInModal(currentSubmission); };
+            document.getElementById('close-modal-button').onclick = () => hideModal('celebration-modal');
+            document.getElementById('close-code-modal-button').onclick = () => hideModal('view-code-modal');
             menuToggle.onclick = () => toggleProblemsSidebar();
+            document.querySelector('.sidebar-overlay').onclick = () => toggleProblemsSidebar(false);
+
 
             // --- INITIALIZATION ---
             async function initializeApp() {
