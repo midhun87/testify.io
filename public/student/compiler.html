@@ -13,10 +13,6 @@
     <style>
         body { 
             font-family: 'Inter', sans-serif; 
-            /* Disable text selection for a more app-like feel */
-            -webkit-user-select: none; /* Safari */
-            -ms-user-select: none; /* IE 10+ */
-            user-select: none; /* Standard syntax */
         }
         
         .sidebar-link {
@@ -327,20 +323,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // --- COPY-PASTE BLOCK ---
-            document.addEventListener('contextmenu', e => e.preventDefault());
-            document.addEventListener('keydown', e => {
-                if (e.ctrlKey || e.metaKey) {
-                    const forbiddenKeys = [65, 67, 83, 85, 86, 88, 123]; // A, C, S, U, V, X, F12
-                    if (forbiddenKeys.includes(e.keyCode)) {
-                        e.preventDefault();
-                    }
-                }
-                if (e.keyCode === 123) { // F12
-                    e.preventDefault();
-                }
-            });
-
             // --- AUTH & USER ---
             let user = null;
             const token = localStorage.getItem('token');
@@ -698,3 +680,4 @@
     </script>
 </body>
 </html>
+
