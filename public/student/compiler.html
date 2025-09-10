@@ -13,6 +13,10 @@
     <style>
         body { 
             font-family: 'Inter', sans-serif; 
+            /* Disable text selection for a more app-like feel */
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ */
+            user-select: none; /* Standard syntax */
         }
         
         .sidebar-link {
@@ -151,7 +155,12 @@
 <body class="bg-gray-100">
     <div class="flex h-screen bg-gray-100 font-sans">
         <!-- Main Sidebar -->
-        <nav class="flex flex-col flex-grow p-4">
+        <aside class="w-64 bg-white shadow-md hidden lg:flex flex-col flex-shrink-0">
+            <div class="flex items-center justify-center p-4 border-b">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757066128/Gemini_Generated_Image_9bakrh9bakrh9bak_wuhqq7.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold text-gray-800">TESTIFY</span>
+            </div>
+            <nav class="flex flex-col flex-grow p-4">
                 <a href="#" class="sidebar-link">
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                     <span>Dashboard</span>
@@ -318,6 +327,20 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // --- COPY-PASTE BLOCK ---
+            document.addEventListener('contextmenu', e => e.preventDefault());
+            document.addEventListener('keydown', e => {
+                if (e.ctrlKey || e.metaKey) {
+                    const forbiddenKeys = [65, 67, 83, 85, 86, 88, 123]; // A, C, S, U, V, X, F12
+                    if (forbiddenKeys.includes(e.keyCode)) {
+                        e.preventDefault();
+                    }
+                }
+                if (e.keyCode === 123) { // F12
+                    e.preventDefault();
+                }
+            });
+
             // --- AUTH & USER ---
             let user = null;
             const token = localStorage.getItem('token');
@@ -675,5 +698,3 @@
     </script>
 </body>
 </html>
-
-
