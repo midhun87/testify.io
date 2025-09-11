@@ -47,6 +47,26 @@
         #verification-status {
             min-height: 24px;
         }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        .modal-container {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 15px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            width: 400px;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -83,14 +103,14 @@
                 <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"/></svg>
                 <span class="ml-3">My Profile</span>
                 </a>
-                 <a href="compiler.html" class="sidebar-link  flex items-center py-2.5 px-4 rounded transition duration-200">
-                      <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
-                      <span>Code Space</span>
-                 </a>
-                 <a href="sql-compiler.html" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200 mt-2">
-                     <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9.75h7.5v7.5h-7.5v-7.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 3.375h17.25v17.25h-17.25v-17.25z" /></svg>
-                     <span>SQL CodeLab</span>
-                 </a>
+                   <a href="compiler.html" class="sidebar-link  flex items-center py-2.5 px-4 rounded transition duration-200">
+                     <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
+                     <span>Code Space</span>
+                   </a>
+                   <a href="sql-compiler.html" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200 mt-2">
+                      <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9.75h7.5v7.5h-7.5v-7.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 3.375h17.25v17.25h-17.25v-17.25z" /></svg>
+                      <span>SQL CodeLab</span>
+                   </a>
             </div>
         </div>
 
@@ -98,8 +118,8 @@
         <div id="main-content" class="flex flex-col flex-1 overflow-y-auto">
             <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
                 <h1 class="text-2xl font-bold text-gray-800">Available Tests</h1>
-                 <div class="flex items-center">
-                       <div class="relative">
+                <div class="flex items-center">
+                        <div class="relative">
                             <button id="user-menu-button" class="flex items-center space-x-2">
                                 <span id="user-name" class="font-semibold text-gray-700">Student Name</span>
                                 <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
@@ -107,8 +127,8 @@
                             <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
                                 <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
                             </div>
-                       </div>
-                 </div>
+                        </div>
+                </div>
             </div>
 
             <div class="p-6">
@@ -217,13 +237,13 @@
                                 <video id="verification-webcam" class="w-32 h-32 rounded-full object-cover border-4 border-gray-200" autoplay muted playsinline></video>
                             </div>
                         </div>
-                         <div id="verification-status" class="mt-4 text-sm font-medium"></div>
+                           <div id="verification-status" class="mt-4 text-sm font-medium"></div>
                     </div>
                     <div class="items-center px-4 py-3">
                         <button id="verify-identity-btn" class="px-4 py-2 bg-green-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-green-600 disabled:bg-gray-400">
                             Verify My Identity
                         </button>
-                         <button id="cancel-verification-btn" class="mt-2 px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400">
+                           <button id="cancel-verification-btn" class="mt-2 px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400">
                             Cancel
                         </button>
                     </div>
@@ -268,14 +288,14 @@
                     
                     <!-- Timer -->
                     <div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm">
-                         <h3 class="font-semibold text-gray-700">Time Left:</h3>
-                         <div class="text-2xl font-bold text-red-600" id="timer">00:00</div>
+                           <h3 class="font-semibold text-gray-700">Time Left:</h3>
+                           <div class="text-2xl font-bold text-red-600" id="timer">00:00</div>
                     </div>
 
                     <!-- Question Palette -->
                     <div class="flex-grow overflow-y-auto bg-white p-3 rounded-lg shadow-sm">
-                          <h3 class="font-bold text-gray-800 mb-2 text-center">Question Palette</h3>
-                          <div id="question-palette" class="grid grid-cols-5 gap-2"></div>
+                           <h3 class="font-bold text-gray-800 mb-2 text-center">Question Palette</h3>
+                           <div id="question-palette" class="grid grid-cols-5 gap-2"></div>
                     </div>
                 </div>
             </div>
@@ -292,6 +312,17 @@
             <p class="text-gray-600 mt-2">Please maintain silence. Further noise will be flagged as a violation.</p>
             <p id="warning-count" class="text-lg font-bold text-yellow-600 mt-4"></p>
             <button id="close-warning-btn" class="mt-6 w-full bg-yellow-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-yellow-600">I Understand</button>
+        </div>
+    </div>
+
+    <!-- NEW: General Modal for Alerts/Confirms -->
+    <div id="general-modal" class="modal-overlay hidden">
+        <div class="modal-container">
+            <p id="modal-message" class="text-gray-700 text-lg text-center font-medium"></p>
+            <div id="modal-buttons" class="mt-6 flex justify-center space-x-4">
+                <button id="modal-cancel-btn" class="px-6 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300">Cancel</button>
+                <button id="modal-confirm-btn" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700">OK</button>
+            </div>
         </div>
     </div>
 
@@ -331,6 +362,11 @@
             const closeWarningBtn = document.getElementById('close-warning-btn');
             const faqToggleBtn = document.getElementById('faq-toggle');
             const faqSection = document.getElementById('faq-section');
+            const generalModal = document.getElementById('general-modal');
+            const modalMessage = document.getElementById('modal-message');
+            const modalButtons = document.getElementById('modal-buttons');
+            const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+            const modalCancelBtn = document.getElementById('modal-cancel-btn');
             
             // --- TEST STATE ---
             let testInProgress = false;
@@ -369,6 +405,42 @@
             const LOOKING_AWAY_FRAME_LIMIT = 120;
             const AUDIO_VIOLATION_LIMIT = 5; 
             const AUDIO_LEVEL_THRESHOLD = 0.20; 
+
+            // --- CUSTOM MODAL FUNCTIONS ---
+            function showModal(message, type = 'confirm') {
+                return new Promise(resolve => {
+                    modalMessage.textContent = message;
+                    if (type === 'alert') {
+                        modalCancelBtn.classList.add('hidden');
+                        modalConfirmBtn.textContent = 'OK';
+                    } else {
+                        modalCancelBtn.classList.remove('hidden');
+                        modalConfirmBtn.textContent = 'Yes';
+                    }
+                    generalModal.classList.remove('hidden');
+
+                    const handleConfirm = () => {
+                        generalModal.classList.add('hidden');
+                        resolve(true);
+                        modalConfirmBtn.removeEventListener('click', handleConfirm);
+                        modalCancelBtn.removeEventListener('click', handleCancel);
+                    };
+
+                    const handleCancel = () => {
+                        generalModal.classList.add('hidden');
+                        resolve(false);
+                        modalConfirmBtn.removeEventListener('click', handleConfirm);
+                        modalCancelBtn.removeEventListener('click', handleCancel);
+                    };
+                    
+                    modalConfirmBtn.addEventListener('click', handleConfirm);
+                    modalCancelBtn.addEventListener('click', handleCancel);
+                });
+            }
+
+            function showAlert(message) {
+                return showModal(message, 'alert');
+            }
 
             // --- FETCH AND DISPLAY AVAILABLE TESTS ---
             async function fetchAndDisplayTests() {
@@ -422,7 +494,11 @@
             // --- EVENT LISTENERS ---
             userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
             logoutButton.addEventListener('click', logout);
-            submitTestBtn.addEventListener('click', () => submitTest('Are you sure you want to submit the test?'));
+            submitTestBtn.addEventListener('click', () => showModal('Are you sure you want to submit the test?')
+                .then(result => {
+                    if (result) performSubmission();
+                })
+            );
             
             testListDiv.addEventListener('click', async (e) => {
                 if (e.target.classList.contains('start-test-btn')) {
@@ -475,7 +551,7 @@
             // --- FACE VERIFICATION ---
             async function openFaceVerification() {
                 if (!profileImageUrl) {
-                    alert('You must have a profile picture to take a proctored test. Please upload one on your profile page.');
+                    showAlert('You must have a profile picture to take a proctored test. Please upload one on your profile page.');
                     return;
                 }
                 document.getElementById('profile-image-verification').src = profileImageUrl;
@@ -484,7 +560,7 @@
                     verificationStream = await navigator.mediaDevices.getUserMedia({ video: true });
                     document.getElementById('verification-webcam').srcObject = verificationStream;
                 } catch (err) {
-                    alert('Could not access webcam. Please allow camera access to continue.');
+                    showAlert('Could not access webcam. Please allow camera access to continue.');
                     closeFaceVerification();
                 }
             }
@@ -545,16 +621,18 @@
 
             // --- TEST LOGIC ---
             async function startTest(testData) {
-                const proctoringConsent = confirm(
-                     'This test requires AI proctoring.\n\n' +
-                     'Your webcam and microphone will be activated to monitor for violations. Any violation will result in automatic test submission.\n\n' +
-                     'This test will also start in fullscreen mode. Exiting fullscreen will submit the test.\n\n' +
-                     'By proceeding, you agree to the terms outlined in our T&C:\n' +
-                     'https://testify-io-ai.onrender.com/T&C.html\n\n' +
-                     'Are you ready to begin?'
-                );
+                const consentMessage = 'This test requires AI proctoring.\n\n' +
+                    'Your webcam and microphone will be activated to monitor for violations. Any violation will result in automatic test submission.\n\n' +
+                    'This test will also start in fullscreen mode. Exiting fullscreen will submit the test.\n\n' +
+                    'By proceeding, you agree to the terms outlined in our T&C:\n' +
+                    'https://testify-io-ai.onrender.com/T&C.html\n\n' +
+                    'Are you ready to begin?';
+
+                const proctoringConsent = await showModal(consentMessage);
                 
-                if (!proctoringConsent) return;
+                if (!proctoringConsent) {
+                    return;
+                }
                 
                 try {
                     await enterFullScreen(); 
@@ -581,15 +659,15 @@
                     document.addEventListener('visibilitychange', handleVisibilityChange);
                 } catch (error) {
                     await exitFullScreen();
-                    alert(`Failed to start the test.\nError: ${error.message}`);
+                    showAlert(`Failed to start the test.\nError: ${error.message}`);
                     mainContent.classList.remove('hidden');
                     testEnvironment.classList.add('hidden');
                 }
             }
 
-            async function submitTest(message) {
+            async function submitTest() {
                 if (window.isSubmitting) return;
-                const shouldSubmit = confirm(message);
+                const shouldSubmit = await showModal('Are you sure you want to submit the test?');
                 if (shouldSubmit) {
                     window.isSubmitting = true;
                     await performSubmission();
@@ -599,7 +677,7 @@
             async function forceSubmitTest(message) {
                 if (window.isSubmitting) return;
                 window.isSubmitting = true;
-                alert(message);
+                await showAlert(message);
                 await performSubmission();
             }
 
@@ -632,10 +710,10 @@
                         body: JSON.stringify(payload)
                     });
                     if (!response.ok) throw new Error('Submission failed');
-                    alert('Test submitted successfully!');
+                    await showAlert('Test submitted successfully!');
                     window.location.href = '/student/dashboard.html';
                 } catch (error) {
-                    alert('An error occurred during submission. Please contact your administrator.');
+                    await showAlert('An error occurred during submission. Please contact your administrator.');
                     console.error('Submission Error:', error);
                 }
             }
@@ -673,12 +751,12 @@
                         </label>
                     `).join('');
                 } else if (question.type === 'mcq-multiple') {
-                     optionsHtml = question.options.map((opt, i) => `
-                        <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                            <input type="checkbox" name="q${currentQuestionIndex}" value="${i}" class="h-4 w-4 text-indigo-600 border-gray-300 rounded" ${(savedAnswer && savedAnswer.includes(String(i))) ? 'checked' : ''}>
-                            <span class="ml-3 text-gray-700">${opt}</span>
-                        </label>
-                    `).join('');
+                        optionsHtml = question.options.map((opt, i) => `
+                            <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" name="q${currentQuestionIndex}" value="${i}" class="h-4 w-4 text-indigo-600 border-gray-300 rounded" ${(savedAnswer && savedAnswer.includes(String(i))) ? 'checked' : ''}>
+                                <span class="ml-3 text-gray-700">${opt}</span>
+                            </label>
+                        `).join('');
                 } else { // fill-blank
                     optionsHtml = `<input type="text" name="q${currentQuestionIndex}" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg" value="${savedAnswer || ''}">`;
                 }
@@ -813,7 +891,7 @@
 
                 if (volume > AUDIO_LEVEL_THRESHOLD) {
                     if (!audioWarningModal.classList.contains('hidden')) {
-                          // If modal is already open, don't do anything until it's closed
+                             // If modal is already open, don't do anything until it's closed
                     } else {
                         audioViolationCount++;
                         if (audioViolationCount >= AUDIO_VIOLATION_LIMIT) {
@@ -838,7 +916,7 @@
                     if (isLookingAway(facePredictions[0])) {
                         lookingAwayCounter++;
                         if (lookingAwayCounter > LOOKING_AWAY_FRAME_LIMIT) {
-                           return handleViolation('Looking Away From Screen');
+                            return handleViolation('Looking Away From Screen');
                         }
                     } else {
                         lookingAwayCounter = 0;
@@ -949,4 +1027,3 @@
     </script>
 </body>
 </html>
-
