@@ -1798,11 +1798,14 @@ app.get('/api/verify-certificate/:id', async (req, res) => {
             Key: { email: certificate.studentEmail }
         }));
 
-        res.json({
+       res.json({
             certificateId: certificate.certificateId,
             studentName: student ? student.fullName : 'Unknown Student',
             testTitle: certificate.testTitle,
-            issuedAt: certificate.issuedAt
+            issuedAt: certificate.issuedAt,
+            studentEmail: certificate.studentEmail,
+            college: student ? student.college : 'N/A',
+            rollNumber: student ? student.rollNumber : 'N/A'
         });
 
     } catch (error) {
@@ -4384,6 +4387,403 @@ app.get('/api/sql/my-submission/:problemId', authMiddleware, async (req, res) =>
     }
 });
 
+////////////////////////////////////////////
+// --- REQUIRED IMPORTS (add these to your main backend.js) ---
+// const { v4: uuidv4 } = require('uuid');
+// const { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, UpdateCommand, DeleteCommand } = require("@aws-sdk/lib-dynamodb");
+
+// --- TABLE NAME CONSTANT ---
+// Per user request, using TestifyCompilerScores for all contest data.
+const CONTEST_TABLE = "TestifyCompilerScores"; 
+
+// =================================================================
+// --- ADMIN: CODING CONTEST MANAGEMENT ENDPOINTS ---
+// =================================================================
+
+// POST a new coding contest
+app.post('/api/admin/contests', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    const { title, startTime, duration, isProctored, problems, totalMarks, assignedColleges } = req.body;
+    if (!title || !startTime || !duration || !problems || problems.length === 0) {
+        return res.status(400).json({ message: 'Missing required contest fields.' });
+    }
+
+    const contestId = `contest_${uuidv4()}`;
+    const newContest = {
+        // FIXED: Changed 'id' to 'scoreId' to match the table's primary key.
+        scoreId: contestId,
+        recordType: 'CONTEST',
+        title,
+        startTime,
+        duration,
+        isProctored,
+        problems, // Array of { problemId, title, difficulty, score }
+        totalMarks,
+        assignedColleges: assignedColleges || [],
+        createdAt: new Date().toISOString()
+    };
+
+    try {
+        await docClient.send(new PutCommand({ TableName: CONTEST_TABLE, Item: newContest }));
+        
+        // Send email notification to students in assigned colleges
+        if (assignedColleges && assignedColleges.length > 0) {
+            const filterExpression = assignedColleges.map((_, index) => `college = :c${index}`).join(' OR ');
+            const expressionAttributeValues = {};
+            assignedColleges.forEach((college, index) => {
+                expressionAttributeValues[`:c${index}`] = college;
+            });
+            const { Items: students } = await docClient.send(new ScanCommand({
+                TableName: "TestifyUsers",
+                FilterExpression: filterExpression,
+                // FIXED: Added the missing ExpressionAttributeValues parameter to the ScanCommand
+                ExpressionAttributeValues: expressionAttributeValues,
+                ProjectionExpression: "email"
+            }));
+            
+            const studentEmails = students.map(s => s.email);
+            if (studentEmails.length > 0) {
+                const mailOptions = {
+                    from: '"TESTIFY" <testifylearning.help@gmail.com>',
+                    to: studentEmails.join(','),
+                    subject: `New Coding Contest Assigned: ${title}`,
+                    html: `<p>Hello,</p><p>A new coding contest, "<b>${title}</b>", has been assigned to you. Please log in to your TESTIFY dashboard to participate.</p><p>Best regards,<br/>The TESTIFY Team</p>`
+                };
+                await transporter.sendMail(mailOptions);
+            }
+        }
+        
+        res.status(201).json({ message: 'Contest created successfully!', contest: newContest });
+
+    } catch (error) {
+        console.error("Create Contest Error:", error);
+        res.status(500).json({ message: 'Server error creating contest.' });
+    }
+});
+
+// GET all coding contests (for Admin view)
+app.get('/api/admin/contests', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: CONTEST_TABLE,
+            FilterExpression: "recordType = :type",
+            ExpressionAttributeValues: { ":type": "CONTEST" }
+        }));
+        Items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        // MODIFIED: Map scoreId to id for frontend compatibility
+        res.json(Items.map(item => ({ ...item, id: item.scoreId })));
+    } catch (error) {
+        console.error("Get Contests Error:", error);
+        res.status(500).json({ message: 'Server error fetching contests.' });
+    }
+});
+
+// NEW: DELETE a contest
+app.delete('/api/admin/contests/:id', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        // FIXED: Use 'scoreId' as the key for deletion.
+        await docClient.send(new DeleteCommand({ 
+            TableName: CONTEST_TABLE, 
+            Key: { scoreId: req.params.id } 
+        }));
+        res.status(200).json({ message: 'Contest deleted successfully.' });
+    } catch (error) {
+        console.error("Delete Contest Error:", error);
+        res.status(500).json({ message: 'Server error deleting contest.' });
+    }
+});
+
+// NEW: GET all submissions for a specific contest
+app.get('/api/admin/contests/:id/submissions', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: CONTEST_TABLE,
+            FilterExpression: "recordType = :type AND contestId = :cid",
+            ExpressionAttributeValues: { 
+                ":type": "CONTEST_SUBMISSION",
+                ":cid": req.params.id
+            }
+        }));
+        Items.sort((a, b) => b.totalScore - a.totalScore); // Sort by score descending
+        res.json(Items);
+    } catch (error) {
+        console.error("Get Contest Submissions Error:", error);
+        res.status(500).json({ message: 'Server error fetching submissions.' });
+    }
+});
+
+
+// =================================================================
+// --- STUDENT: CODING CONTEST ENDPOINTS ---
+// =================================================================
+// const CONTEST_TABLE = "TestifyCompilerScores";
+
+// [No Change Needed] ADMIN: GET all contests (for the management list)
+app.post('/api/admin/contests', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    const { title, startTime, duration, isProctored, problems, totalMarks, assignedColleges } = req.body;
+    if (!title || !startTime || !duration || !problems || problems.length === 0) {
+        return res.status(400).json({ message: 'Missing required contest fields.' });
+    }
+
+    const contestId = `contest_${uuidv4()}`;
+    const newContest = {
+        scoreId: contestId, // Primary Key for TestifyCompilerScores table
+        recordType: 'CONTEST',
+        id: contestId, // Keep a consistent 'id' field for frontend simplicity
+        title,
+        startTime,
+        duration,
+        isProctored,
+        problems, // This now contains the full problem objects
+        totalMarks,
+        assignedColleges: assignedColleges || [],
+        createdAt: new Date().toISOString()
+    };
+
+    try {
+        await docClient.send(new PutCommand({ TableName: "TestifyCompilerScores", Item: newContest }));
+
+        // Send email notification if colleges are assigned
+        if (assignedColleges && assignedColleges.length > 0) {
+            const filterExpression = assignedColleges.map((_, index) => `college = :c${index}`).join(' OR ');
+            const expressionAttributeValues = {};
+            assignedColleges.forEach((college, index) => {
+                expressionAttributeValues[`:c${index}`] = college;
+            });
+
+            const { Items: students } = await docClient.send(new ScanCommand({
+                TableName: "TestifyUsers",
+                FilterExpression: filterExpression,
+                ExpressionAttributeValues: expressionAttributeValues,
+                ProjectionExpression: "email"
+            }));
+
+            const studentEmails = students.map(s => s.email);
+            if (studentEmails.length > 0) {
+                const mailOptions = {
+                    from: '"TESTIFY" <testifylearning.help@gmail.com>',
+                    to: studentEmails.join(','),
+                    subject: `New Coding Contest Assigned: ${title}`,
+                    html: `<p>Hello,</p><p>A new coding contest, "<b>${title}</b>", has been assigned to you. Please log in to your TESTIFY dashboard to participate.</p><p>Best regards,<br/>The TESTIFY Team</p>`
+                };
+                await transporter.sendMail(mailOptions);
+            }
+        }
+
+        res.status(201).json({ message: 'Contest created and notifications sent successfully!', contest: newContest });
+
+    } catch (error) {
+        console.error("Create Contest Error:", error);
+        res.status(500).json({ message: 'Server error creating contest.' });
+    }
+});
+
+// [No Change Needed] ADMIN: Create a new contest
+app.post('/api/admin/contests', authMiddleware, async (req, res) => {
+    // This endpoint should now receive the full problem details from the updated create-contest.html
+    if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Access denied.' });
+    const { title, startTime, duration, isProctored, problems, totalMarks, assignedColleges } = req.body;
+    if (!title || !startTime || !duration || !problems || problems.length === 0) {
+        return res.status(400).json({ message: 'Missing required contest fields.' });
+    }
+    const contestId = `contest_${uuidv4()}`;
+    const newContest = {
+        scoreId: contestId,
+        recordType: 'CONTEST',
+        title, startTime, duration, isProctored, problems, totalMarks,
+        assignedColleges: assignedColleges || [],
+        createdAt: new Date().toISOString()
+    };
+    try {
+        await docClient.send(new PutCommand({ TableName: CONTEST_TABLE, Item: newContest }));
+        res.status(201).json({ message: 'Contest created successfully!', contest: newContest });
+    } catch (error) {
+        console.error("Create Contest Error:", error);
+        res.status(500).json({ message: 'Server error creating contest.' });
+    }
+});
+
+// [No Change Needed] STUDENT: Get list of assigned contests
+app.get('/api/student/contests', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+    const studentCollege = req.user.college;
+    if (!studentCollege) return res.json([]);
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: CONTEST_TABLE,
+            FilterExpression: "recordType = :type AND (contains(assignedColleges, :college) OR size(assignedColleges) = :zero)",
+            ExpressionAttributeValues: { ":type": "CONTEST", ":college": studentCollege, ":zero": 0 }
+        }));
+        res.json(Items.map(item => ({ ...item, id: item.scoreId })));
+    } catch (error) {
+        console.error("Get Student Contests Error:", error);
+        res.status(500).json({ message: 'Server error fetching contests.' });
+    }
+});
+
+// [CORRECTED] STUDENT: Get full details for a single contest
+app.get('/api/student/contests/:id', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+    try {
+        const { Item: contest } = await docClient.send(new GetCommand({
+            TableName: CONTEST_TABLE,
+            Key: { scoreId: req.params.id }
+        }));
+        if (!contest || contest.recordType !== 'CONTEST') {
+            return res.status(404).json({ message: 'Contest not found.' });
+        }
+        res.json({ ...contest, id: contest.scoreId });
+    } catch (error) {
+        console.error("Get Single Contest Error:", error);
+        res.status(500).json({ message: 'Server error fetching contest details.' });
+    }
+});
+
+// [NEW & SECURE] STUDENT: Submit contest for scoring
+app.post('/api/student/contests/submit', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+
+    const { contestId, submissions, violationReason } = req.body;
+    const studentEmail = req.user.email;
+
+    try {
+        const { Item: contest } = await docClient.send(new GetCommand({
+            TableName: "TestifyCompilerScores",
+            Key: { scoreId: contestId }
+        }));
+
+        if (!contest || contest.recordType !== 'CONTEST') {
+            return res.status(404).json({ message: "Contest not found." });
+        }
+
+        let totalScore = 0;
+        const detailedSubmissions = [];
+
+        // Loop through each submitted problem to evaluate it
+        for (const sub of submissions) {
+            const problem = contest.problems.find(p => p.id === sub.problemId);
+            if (!problem || !problem.testCases || problem.testCases.length === 0) continue;
+
+            let passedCases = 0;
+            // Evaluate against each test case
+            for (const tc of problem.testCases) {
+                // IMPORTANT: This re-uses your existing /api/compile endpoint logic
+                const compileResponse = await fetch('http://localhost:3000/api/compile', { // Ensure this URL is correct for your setup
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': req.header('x-auth-token') },
+                    body: JSON.stringify({ language: sub.language, code: sub.code, input: tc.input }),
+                });
+
+                if (compileResponse.ok) {
+                    const compileResult = await compileResponse.json();
+                    const actual = (compileResult.output || '').trim().replace(/\s+/g, ' ');
+                    const expected = (tc.expected || '').trim().replace(/\s+/g, ' ');
+                    if (actual === expected) {
+                        passedCases++;
+                    }
+                }
+            }
+
+            // Calculate score for this specific problem
+            const problemScore = Math.round((passedCases / problem.testCases.length) * problem.score);
+            totalScore += problemScore;
+
+            detailedSubmissions.push({
+                ...sub, // Includes problemId, code, language
+                problemTitle: problem.title,
+                score: problemScore,
+                passedCases: passedCases,
+                totalCases: problem.testCases.length
+            });
+        }
+
+        const submissionId = `contestsub_${uuidv4()}`;
+        const newSubmission = {
+            scoreId: submissionId,
+            recordType: 'CONTEST_SUBMISSION',
+            contestId,
+            studentEmail,
+            studentName: req.user.fullName,
+            college: req.user.college,
+            submissions: detailedSubmissions,
+            totalScore,
+            maxScore: contest.totalMarks,
+            contestTitle: contest.title,
+            violationReason: violationReason || null,
+            submittedAt: new Date().toISOString()
+        };
+
+        await docClient.send(new PutCommand({ TableName: "TestifyCompilerScores", Item: newSubmission }));
+        res.status(201).json({ message: 'Contest submitted successfully!' });
+
+    } catch (error) {
+        console.error("Submit Contest Error:", error);
+        res.status(500).json({ message: 'Server error submitting contest.' });
+    }
+});
+
+
+// [NEW] STUDENT: Get history of contest submissions
+app.get('/api/student/contest-history', authMiddleware, async(req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: CONTEST_TABLE,
+            FilterExpression: "recordType = :type AND studentEmail = :email",
+            ExpressionAttributeValues: {
+                ":type": "CONTEST_SUBMISSION",
+                ":email": req.user.email
+            }
+        }));
+        Items.sort((a,b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+        res.json(Items);
+    } catch (error) {
+        console.error("Get Contest History Error:", error);
+        res.status(500).json({ message: 'Server error fetching history.' });
+    }
+});
+
+// [NEW] STUDENT: Get the detailed result for a single submission
+app.get('/api/student/contest-result/:id', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+    try {
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: CONTEST_TABLE,
+            Key: { scoreId: req.params.id }
+        }));
+        if (!Item || Item.studentEmail !== req.user.email) {
+            return res.status(404).json({ message: 'Result not found.' });
+        }
+        res.json(Item);
+    } catch (error) {
+        console.error("Get Contest Result Error:", error);
+        res.status(500).json({ message: 'Server error fetching result.' });
+    }
+});
+
+// ... existing backend code ...
+
+app.get('/cognizant-cloud', authMiddleware, (req, res) => {
+    // This route is now protected by your authMiddleware.
+    // It will only execute if the user provides a valid token.
+    res.sendFile(path.join(__dirname, 'protected_pages', 'cognizant-cloud.html'));
+});
 
 
 // --- SERVER START ---
