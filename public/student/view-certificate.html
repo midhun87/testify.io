@@ -8,131 +8,184 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font for body and headings -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Font for main certificate title -->
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&display=swap" rel="stylesheet">
-    <!-- Elegant script font for the student's name -->
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- A classic, formal serif font for titles and the student's name -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet">
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f4f8; /* A softer background color */
+            background-color: #eef2f7; /* A cooler, lighter background */
         }
-        .certificate-title {
-            font-family: 'Merriweather', serif;
+        .certificate-title, .student-name {
+            font-family: 'Cormorant Garamond', serif;
         }
-        .student-name {
-            font-family: 'Dancing Script', cursive;
+        
+        .certificate-container {
+            width: 100%;
+            max-width: 1100px;
+            margin: auto;
+            position: relative;
         }
+
         /* Styles for printing */
         @media print {
+            /* Force landscape orientation and remove margins for the printed page */
+            @page {
+                size: A4 landscape;
+                margin: 0;
+            }
+
             body {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
                 background-color: #ffffff;
+                margin: 0;
+                padding: 0;
             }
             .no-print {
                 display: none !important;
             }
             .printable-area {
+                width: 29.7cm; /* A4 landscape width */
+                height: 21cm; /* A4 landscape height */
                 box-shadow: none !important;
-                margin: 0;
-                padding: 0;
+                margin: 0 !important;
+                padding: 0 !important;
                 border-radius: 0;
-                border: 10px solid #1e3a8a; /* Ensure border prints */
+                border: none;
+                max-width: none;
+                overflow: hidden;
+                /* Center the content vertically and horizontally on the A4 page */
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
             }
-            .page-break {
-                page-break-after: always;
+            .certificate-container {
+                width: 95%; /* Use a percentage to give a slight margin */
+                height: 95%; /* Use a percentage to give a slight margin */
+                max-width: none;
+                padding: 2cm !important; /* Add padding to prevent content from touching the edges */
+                box-sizing: border-box;
             }
-        }
-        /* A subtle background pattern for the certificate */
-        .guilloche-bg {
-            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PGcgZmlsbC1ydWxlPSJldmVub2RkIj48ZyBmaWxsPSIjM2I4MmY2IiBmaWxsLW9wYWNpdHk9IjAuMDUiPjxwYXRoIG9wYWNpdHk9Ii4zIiBkPSJNMCAxMDBhNTAgNTAtMCAwIDAgMTAwIDBMMTAwIDUwQTUwIDUwLTAgMCAxIDUwIDB2NTB6Ii8+PHBhdGggZD0iTTAgMEE1MCA1MC0wIDAgMSA1MCA1MFYwSDB6Ii8+PC9nPjwvZz48L3N2Zz4=');
+            /* Explicitly define the flex layout for printing to ensure it doesn't break */
+            .print-flex-col {
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                height: 100% !important;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-slate-100">
 
-    <div class="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+    <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         <!-- Action buttons, hidden when printing -->
-        <div class="flex justify-between items-center mb-6 no-print">
-            <a href="#" class="text-indigo-600 hover:text-indigo-800 transition-colors duration-300">&larr; Back to My Certificates</a>
-            <button onclick="window.print()" class="px-6 py-3 bg-indigo-700 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-105">
+        <div class="flex flex-wrap justify-between items-center mb-6 no-print">
+            <a href="#" class="text-blue-700 hover:text-blue-900 font-semibold transition-colors duration-300 mb-4 sm:mb-0">&larr; Back to My Certificates</a>
+            <button onclick="window.print()" class="px-6 py-3 bg-blue-800 text-white font-semibold rounded-lg shadow-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105">
                 Print or Save as PDF
             </button>
         </div>
 
-        <!-- Certificate container -->
-        <div class="printable-area bg-white rounded-xl shadow-2xl relative overflow-hidden border-t-4 border-amber-400">
-            <!-- Background pattern -->
-            <div class="absolute inset-0 guilloche-bg"></div>
-            
-            <!-- Ornate border created with nested divs -->
-            <div class="absolute inset-0 p-2">
-                <div class="w-full h-full border-8 border-indigo-900 rounded-lg"></div>
-            </div>
-            <div class="absolute inset-0 p-4">
-                <div class="w-full h-full border-2 border-amber-300 rounded-md"></div>
-            </div>
+        <!-- Certificate Wrapper -->
+        <div class="printable-area bg-white rounded-lg shadow-2xl overflow-hidden">
+            <div class="certificate-container p-8 md:p-12 lg:p-16">
+                <!-- Intricate SVG Border -->
+                <svg class="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" width="1123" height="794" viewBox="0 0 1123 794" preserveAspectRatio="xMidYMid meet">
+                    <defs>
+                        <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#d4af37;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#b38728;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <g fill="none" stroke-width="2" stroke="#1e3a8a">
+                        <rect x="2" y="2" width="1119" height="790" rx="10" ry="10" vector-effect="non-scaling-stroke"/>
+                        <rect x="12" y="12" width="1099" height="770" stroke-width="1" stroke="url(#gold-gradient)" vector-effect="non-scaling-stroke"/>
+                        <rect x="16" y="16" width="1091" height="762" stroke-width="3" vector-effect="non-scaling-stroke"/>
+                        <rect x="24" y="24" width="1075" height="746" stroke-width="1" vector-effect="non-scaling-stroke"/>
+                    </g>
+                    <!-- Corner flourishes -->
+                    <g fill="#1e3a8a">
+                        <path d="M 30 50 L 50 30 L 60 30 L 30 60 Z"/>
+                        <path d="M 30 70 L 70 30 L 80 30 L 30 80 Z"/>
+                        <path d="M 1093 50 L 1073 30 L 1063 30 L 1093 60 Z" />
+                        <path d="M 1093 70 L 1053 30 L 1043 30 L 1093 80 Z" />
+                        <path d="M 30 744 L 50 764 L 60 764 L 30 734 Z"/>
+                        <path d="M 30 724 L 70 764 L 80 764 L 30 714 Z"/>
+                        <path d="M 1093 744 L 1073 764 L 1063 764 L 1093 734 Z" />
+                        <path d="M 1093 724 L 1053 764 L 1043 764 L 1093 714 Z" />
+                    </g>
+                </svg>
 
-            <div class="relative z-10 p-8 sm:p-12 lg:p-16 text-center">
-                <!-- Header section with logo -->
-                <div class="flex justify-center items-center mb-4">
-                    <img class="h-24 w-24" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
-                </div>
-
-                <!-- Certificate main text -->
-                <p class="text-xl text-gray-600 uppercase tracking-widest">Certificate of Achievement</p>
-                <h1 class="certificate-title text-5xl sm:text-6xl font-bold text-indigo-900 mt-2">Completion</h1>
-                
-                <!-- Student Photo (this will be printed if a photo exists) -->
-                <div class="flex justify-center my-6">
-                    <img id="student-photo" src="https://via.placeholder.com/150" alt="Student Photo" class="w-32 h-32 rounded-full object-cover border-4 border-indigo-200 shadow-md hidden">
-                </div>
-                
-                <p class="text-lg text-gray-700">This certificate is proudly presented to</p>
-                
-                <h2 id="student-name" class="student-name text-5xl sm:text-6xl font-semibold text-gray-900 my-4 px-4 border-b-2 border-gray-300 inline-block">
-                    Loading...
-                </h2>
-                
-                <p class="text-lg text-gray-700">for successfully completing the test</p>
-                
-                <h3 id="test-title" class="text-3xl sm:text-4xl font-bold text-indigo-800 my-4">
-                    Loading...
-                </h3>
-
-                <!-- Footer section with seal and signatures -->
-                <div class="mt-12 flex flex-col sm:flex-row justify-between items-center text-gray-600 w-full max-w-3xl mx-auto">
-                    <!-- Signature of Instructor -->
-                    <div class="w-full sm:w-1/3 text-center mb-8 sm:mb-0">
-                        <div class="border-b-2 border-gray-400 pb-1 px-8 h-16 flex justify-center items-end">
-                             <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756444154/output-onlinepngtools_ji1fuz.png" alt="Signature" class="h-12 mx-auto">
+                <!-- Certificate Content -->
+                <div class="relative z-10 text-center flex flex-col justify-between h-full min-h-[600px] print-flex-col">
+                    
+                    <!-- Header Section -->
+                    <div class="flex-shrink-0">
+                        <div class="flex justify-center items-center gap-4">
+                            <img class="h-16 w-16" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                            <h1 class="text-3xl font-bold tracking-widest text-blue-900 uppercase">TESTIFY</h1>
                         </div>
-                        <p class="text-sm mt-2 font-semibold">LEAD INSTRUCTOR</p>
+                        <p class="certificate-title text-5xl font-bold text-blue-900 mt-4">Certificate of Completion</p>
+                        <p class="text-base text-gray-600 mt-3">This certificate is proudly presented to</p>
                     </div>
 
-                    <!-- Official Seal -->
-                    <div class="w-full sm:w-1/3 flex justify-center order-first sm:order-none mb-8 sm:mb-0">
-                        <div class="w-36 h-36 rounded-full bg-indigo-900 flex items-center justify-center text-white font-bold text-center p-2 shadow-lg border-4 border-white">
-                            <div class="w-full h-full rounded-full border-4 border-amber-400 flex items-center justify-center flex-col leading-tight">
-                                <span class="text-amber-400 text-2xl">&#9733;</span>
-                                <span>TESTIFY</span>
-                                <span class="text-xs font-normal mt-1">OFFICIAL SEAL</span>
-                                <span class="text-amber-400 text-2xl">&#9733;</span>
+                    <!-- Student Name & Course -->
+                    <div class="flex-grow flex flex-col items-center justify-center py-2">
+                        <img id="student-photo" src="https://placehold.co/150x150/EBF4FF/1E3A8A?text=Photo" alt="Student Photo" class="w-28 h-28 rounded-full object-cover border-4 border-blue-200 shadow-md hidden">
+                        <h2 id="student-name" class="student-name text-5xl font-bold text-gray-800 my-2 leading-tight break-words">
+                            Jane Doe
+                        </h2>
+                        <p class="text-base text-gray-600 max-w-2xl mx-auto mt-3">
+                            for demonstrating outstanding performance and successfully completing the requirements of the
+                        </p>
+                        <h3 id="test-title" class="text-3xl font-bold text-blue-800 my-2 certificate-title leading-tight">
+                            Advanced Web Development Program
+                        </h3>
+                         <p class="text-base text-gray-600 mt-2">
+                            on <span id="issue-date" class="font-semibold"></span>
+                        </p>
+                    </div>
+
+                    <!-- Footer Section -->
+                    <div class="flex-shrink-0">
+                        <div class="mt-6 flex flex-col sm:flex-row justify-between items-center text-gray-700 w-full max-w-4xl mx-auto">
+                            <!-- Signature of Instructor -->
+                            <div class="w-full sm:w-1/3 text-center mb-6 sm:mb-0">
+                                <div class="border-b-2 border-gray-400 pb-1 h-14 flex justify-center items-end">
+                                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757580572/AUTHROISED_SIGN_t1m3f9.jpg" alt="Signature" class="h-20 mx-auto">
+                                </div>
+                                <p class="text-xs mt-2 font-bold uppercase tracking-wider">Lead Instructor</p>
+                            </div>
+
+                            <!-- Official Seal -->
+                            <div class="w-full sm:w-1/3 flex justify-center order-first sm:order-none mb-6 sm:mb-0">
+                                <div class="w-28 h-28 rounded-full flex items-center justify-center p-1" style="background: radial-gradient(circle, #d4af37, #b38728);">
+                                    <div class="w-full h-full rounded-full bg-white flex items-center justify-center text-blue-900 font-bold text-center p-1">
+                                        <div class="w-full h-full rounded-full border-2 border-blue-900 flex items-center justify-center flex-col leading-tight">
+                                            <span class="text-amber-500 text-lg">&#9733;</span>
+                                            <span class="text-sm">TESTIFY</span>
+                                            <span class="text-xs font-normal">VERIFIED</span>
+                                            <span class="text-amber-500 text-lg">&#9733;</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Examining Partner -->
+                            <div class="w-full sm:w-1/3 text-center">
+                                <div class="border-b-2 border-gray-400 pb-1 h-20 flex justify-center items-end">
+                                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_3wfuty3wfuty3wfu_iqsg1x.png" alt="Examining Partner Logo" class="h-16 mx-auto">
+                                </div>
+                                <p class="text-xs mt-2 font-bold uppercase tracking-wider">Examining Partner</p>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Date of Issue -->
-                    <div class="w-full sm:w-1/3 text-center">
-                        <p id="issue-date" class="border-b-2 border-gray-400 pb-1 px-8 h-16 flex justify-center items-end">Loading...</p>
-                        <p class="text-sm mt-2 font-semibold">DATE OF ISSUE</p>
+                        <p class="text-xs text-gray-500 mt-6">Certificate ID: <span id="cert-id">Loading...</span></p>
                     </div>
                 </div>
-
-                <!-- Certificate ID -->
-                <p class="text-xs text-gray-400 mt-12">Certificate ID: <span id="cert-id">Loading...</span></p>
             </div>
         </div>
     </div>
@@ -146,45 +199,48 @@
         document.addEventListener('DOMContentLoaded', async () => {
             // This function takes the certificate data and populates the HTML elements.
             const populateCertificate = (data) => {
-                document.getElementById('student-name').textContent = data.studentName;
-                document.getElementById('test-title').textContent = data.testTitle;
-                document.getElementById('issue-date').textContent = new Date(data.issuedAt).toLocaleDateString('en-US', {
+                document.getElementById('student-name').textContent = data.studentName || 'NULL NAME';
+                document.getElementById('test-title').textContent = data.testTitle || 'NULL CERTIFICATE ';
+                document.getElementById('issue-date').textContent = new Date(data.issuedAt || Date.now()).toLocaleDateString('en-US', {
                     year: 'numeric', month: 'long', day: 'numeric'
                 });
-                document.getElementById('cert-id').textContent = data.certificateId;
+                document.getElementById('cert-id').textContent = data.certificateId || 'CERT-ID-NOT-FOUND';
 
                 // Logic to display the student's photo
                 const studentPhoto = document.getElementById('student-photo');
                 if (data.profileImageUrl) {
                     studentPhoto.src = data.profileImageUrl;
-                    // By removing the 'hidden' class, the image becomes visible on the screen
-                    // and will be included when the page is printed.
                     studentPhoto.classList.remove('hidden');
                 }
             };
 
             // --- Dynamic Data Fetching Logic ---
             const token = localStorage.getItem('token');
-            if (!token) {
-                document.body.innerHTML = '<div class="text-center p-8"><h1>Access Denied</h1><p>You must be logged in to view a certificate. Redirecting...</p></div>';
-                // setTimeout(() => window.location.href = '/login.html', 3000);
-                return;
-            }
-
+            // This is a view page, so we will attempt to load even without a token
+            // The API will be the source of truth for auth.
+            
             const urlParams = new URLSearchParams(window.location.search);
             const certificateId = urlParams.get('id');
             if (!certificateId) {
-                document.body.innerHTML = '<div class="text-center p-8"><h1>Error</h1><p>No certificate ID was specified in the URL.</p></div>';
+                // If no ID, we just show the placeholder certificate.
+                console.warn("No certificate ID in URL. Displaying placeholder data.");
+                populateCertificate({}); // Populate with defaults
+                document.getElementById('cert-id').textContent = "EXAMPLE-CERT-ID-12345";
                 return;
             }
 
             try {
-                const response = await fetch(`/api/student/certificate/${certificateId}`, {
-                    headers: { 'x-auth-token': token }
-                });
+                const headers = {};
+                if (token) {
+                    headers['x-auth-token'] = token;
+                }
+                
+                // Note: The API endpoint is a placeholder. Replace with your actual endpoint.
+                const response = await fetch(`/api/student/certificate/${certificateId}`, { headers });
 
                 if (!response.ok) {
-                    throw new Error(`Failed to fetch certificate data. Server responded with status: ${response.status}`);
+                    const errorText = await response.text();
+                    throw new Error(`Failed to fetch certificate. Status: ${response.status}. Message: ${errorText}`);
                 }
                 
                 const data = await response.json();
@@ -192,7 +248,10 @@
 
             } catch (error) {
                 console.error('Error loading certificate:', error);
-                document.body.innerHTML = `<div class="text-center p-8"><h1>Error</h1><p>Could not load the certificate data. Please check the console for details.</p><p class="text-red-500 mt-2">${error.message}</p></div>`;
+                const certContainer = document.querySelector('.printable-area');
+                if (certContainer) {
+                    certContainer.innerHTML = `<div class="text-center p-8"><h1>Error Loading Certificate</h1><p class="text-red-500 mt-2">${error.message}</p></div>`;
+                }
             }
         });
     </script>
