@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coding Contests - TESTIFY</title>
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        .contest-card { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        .contest-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold">TESTIFY</span>
+            </div>
+            <div class="flex flex-col flex-grow p-4">
+                 <a href="/student/dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">Dashboard</a>
+                 <a href="/student/contests.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">Contests</a>
+                 <!-- FIXED: Added /student/ prefix for consistency -->
+                 <a href="/student/compiler.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">CodeLab</a>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <header class="flex items-center justify-between h-20 bg-white border-b px-6">
+                <h1 class="text-2xl font-semibold text-gray-800">Coding Contests</h1>
+                 <div class="flex items-center space-x-4">
+                    <a href="/student/contest-history.html" class="px-4 py-2 bg-gray-200 text-gray-800 text-sm font-semibold rounded-lg shadow-sm hover:bg-gray-300">
+                        View History
+                    </a>
+                    <div class="relative">
+                        <button id="user-menu-button" class="flex items-center space-x-2">
+                            <span id="user-name" class="font-semibold text-gray-700">Student</span>
+                            <svg class="h-5 w-5 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </button>
+                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                            <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            
+            <main class="p-6">
+                <div class="container mx-auto">
+                    <!-- Live Contests -->
+                    <section id="live-contests-section" class="mb-12">
+                         <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b-2 border-indigo-500 pb-2">Live Contests</h2>
+                         <div id="live-contests-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Live contests will be loaded here -->
+                         </div>
+                    </section>
+
+                    <!-- Upcoming Contests -->
+                    <section id="upcoming-contests-section" class="mb-12">
+                         <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b-2 border-gray-300 pb-2">Upcoming Contests</h2>
+                         <div id="upcoming-contests-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Upcoming contests will be loaded here -->
+                         </div>
+                    </section>
+                     <!-- Past Contests -->
+                    <section id="past-contests-section">
+                         <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b-2 border-gray-300 pb-2">Past Contests</h2>
+                         <div id="past-contests-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Past contests will be loaded here -->
+                         </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user'));
+
+        if (!token || !user) {
+            window.location.href = '/login.html';
+            return;
+        }
+        document.getElementById('user-name').textContent = user.fullName;
+        
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userMenu = document.getElementById('user-menu');
+        const logoutButton = document.getElementById('logout-button');
+
+        userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
+        logoutButton.addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = '/login.html';
+        });
+
+        const liveContestsList = document.getElementById('live-contests-list');
+        const upcomingContestsList = document.getElementById('upcoming-contests-list');
+        const pastContestsList = document.getElementById('past-contests-list');
+
+        function renderContestCard(contest, status) {
+            const startTime = new Date(contest.startTime);
+            const endTime = new Date(startTime.getTime() + contest.duration * 60000);
+
+            const card = document.createElement('div');
+            card.className = 'contest-card bg-white rounded-lg shadow-md p-6 flex flex-col';
+            
+            let statusBadge, button;
+            switch(status) {
+                case 'live':
+                    statusBadge = `<span class="px-3 py-1 text-xs font-semibold text-white bg-red-500 rounded-full animate-pulse">LIVE</span>`;
+                    // FIXED: Changed href to include the correct /student/ path
+                    button = `<a href="/student/take-coding-contest.html?id=${contest.id}" class="mt-auto w-full text-center px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700">Enter Contest</a>`;
+                    break;
+                case 'upcoming':
+                    statusBadge = `<span class="px-3 py-1 text-xs font-semibold text-gray-700 bg-gray-200 rounded-full">UPCOMING</span>`;
+                    button = `<button class="mt-auto w-full text-center px-4 py-2 bg-gray-400 text-white font-semibold rounded-lg cursor-not-allowed" disabled>Starts Soon</button>`;
+                    break;
+                case 'past':
+                    statusBadge = `<span class="px-3 py-1 text-xs font-semibold text-gray-700 bg-gray-200 rounded-full">FINISHED</span>`;
+                    button = `<a href="/student/contest-history.html" class="mt-auto w-full text-center px-4 py-2 bg-gray-600 text-white font-semibold rounded-lg shadow-md hover:bg-gray-700">View Results</a>`;
+                    break;
+            }
+
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-xl font-bold text-gray-800">${contest.title}</h3>
+                    ${statusBadge}
+                </div>
+                <div class="text-sm text-gray-600 space-y-2 mb-4 flex-grow">
+                    <p><strong>Starts:</strong> ${startTime.toLocaleString()}</p>
+                    <p><strong>Duration:</strong> ${contest.duration} minutes</p>
+                    <p><strong>Total Marks:</strong> ${contest.totalMarks}</p>
+                </div>
+                ${button}
+            `;
+            return card;
+        }
+
+        async function fetchAndCategorizeContests() {
+            liveContestsList.innerHTML = '<p class="text-gray-500">Loading...</p>';
+            upcomingContestsList.innerHTML = '<p class="text-gray-500">Loading...</p>';
+            pastContestsList.innerHTML = '<p class="text-gray-500">Loading...</p>';
+
+            try {
+                const response = await fetch('/api/student/contests', { headers: { 'x-auth-token': token } });
+                if (!response.ok) throw new Error('Failed to fetch contests');
+                
+                const allContests = await response.json();
+
+                liveContestsList.innerHTML = '';
+                upcomingContestsList.innerHTML = '';
+                pastContestsList.innerHTML = '';
+                
+                let liveCount = 0, upcomingCount = 0, pastCount = 0;
+                const now = new Date();
+
+                allContests.forEach(contest => {
+                    const startTime = new Date(contest.startTime);
+                    const endTime = new Date(startTime.getTime() + contest.duration * 60000);
+
+                    if (now >= startTime && now < endTime) {
+                        liveContestsList.appendChild(renderContestCard(contest, 'live'));
+                        liveCount++;
+                    } else if (now < startTime) {
+                        upcomingContestsList.appendChild(renderContestCard(contest, 'upcoming'));
+                        upcomingCount++;
+                    } else {
+                        pastContestsList.appendChild(renderContestCard(contest, 'past'));
+                        pastCount++;
+                    }
+                });
+
+                if(liveCount === 0) liveContestsList.innerHTML = '<p class="text-gray-500 col-span-3">No contests are live right now.</p>';
+                if(upcomingCount === 0) upcomingContestsList.innerHTML = '<p class="text-gray-500 col-span-3">No upcoming contests scheduled.</p>';
+                if(pastCount === 0) pastContestsList.innerHTML = '<p class="text-gray-500 col-span-3">No past contests found.</p>';
+
+            } catch(error) {
+                liveContestsList.innerHTML = '<p class="text-red-500 col-span-3">Could not load contests.</p>';
+                upcomingContestsList.innerHTML = '';
+                pastContestsList.innerHTML = '';
+                console.error(error);
+            }
+        }
+
+        fetchAndCategorizeContests();
+    });
+    </script>
+</body>
+</html>
+

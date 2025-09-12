@@ -131,11 +131,13 @@
                         certElement.className = 'flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200';
                         const issuedDate = new Date(cert.issuedAt).toLocaleDateString();
                         
-                        // THIS IS THE FIX: Added the certificateId to the href
+                        const title = cert.courseTitle || cert.testTitle;
+                        const type = cert.certificateType === 'Course' ? 'Course' : 'Test';
+
                         certElement.innerHTML = `
                             <div>
-                                <p class="font-semibold text-gray-800">${cert.testTitle}</p>
-                                <p class="text-sm text-gray-600">Issued on: ${issuedDate}</p>
+                                <p class="font-semibold text-gray-800">${title}</p>
+                                 <p class="text-sm text-gray-600">Type: ${type} | Issued on: ${issuedDate}</p>
                             </div>
                             <a href="/student/view-certificate.html?id=${cert.certificateId}" class="font-medium text-indigo-600 hover:text-indigo-800">View</a>
                         `;
@@ -151,3 +153,4 @@
     </script>
 </body>
 </html>
+

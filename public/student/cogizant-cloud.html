@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognizant Cloud Fundamentals Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .gradient-text {
+            background: linear-gradient(to right, #4F46E5, #EC4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .section-icon {
+            background-color: #EEF2FF;
+            color: #4338CA;
+        }
+        details > summary {
+            list-style: none;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+        details[open] summary .arrow-down {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold text-slate-900">
+                <span class="gradient-text">Cloud Fundamentals</span>
+            </div>
+            <div class="hidden lg:flex flex-wrap items-center text-xs font-medium">
+                <a href="#concepts" class="text-slate-600 hover:text-indigo-600 transition-colors px-2 py-1">Concepts</a>
+                <a href="#models" class="text-slate-600 hover:text-indigo-600 transition-colors px-2 py-1">Models</a>
+                <a href="#providers" class="text-slate-600 hover:text-indigo-600 transition-colors px-2 py-1">Providers</a>
+                <a href="#architecture" class="text-slate-600 hover:text-indigo-600 transition-colors px-2 py-1">Architecture</a>
+                <a href="#serverless" class="text-slate-600 hover:text-indigo-600 transition-colors px-2 py-1">Serverless/Containers</a>
+                <a href="#security" class="text-slate-600 hover:text-indigo-600 transition-colors px-2 py-1">Security</a>
+                <a href="#devops" class="text-slate-600 hover:text-indigo-600 transition-colors px-2 py-1">DevOps</a>
+                <a href="#cost" class="text-slate-600 hover:text-indigo-600 transition-colors px-2 py-1">Cost</a>
+                <a href="#qa" class="text-slate-600 hover:text-indigo-600 transition-colors px-2 py-1">Q&A</a>
+                <a href="#trends" class="text-slate-600 hover:text-indigo-600 transition-colors px-2 py-1">Trends</a>
+            </div>
+            <div class="lg:hidden">
+                <!-- Mobile menu button can be added here -->
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <!-- Hero Section -->
+        <section class="text-center mb-24">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 mb-4">The Ultimate Cloud Interview Guide</h1>
+            <p class="text-lg text-slate-600 max-w-3xl mx-auto">
+                A comprehensive resource covering every core concept, model, best practice, and scenario from the Cognizant Cloud Fundamentals documents.
+            </p>
+        </section>
+
+        <!-- Core Concepts Section -->
+        <section id="concepts" class="mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-900 mb-12 text-center">Core Cloud Concepts</h2>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Cloud Computing</h3>
+                    <p class="text-slate-600">On-demand delivery of IT resources over the Internet with pay-as-you-go pricing. It's a shift from Capital Expenditure (CapEx) to Operational Expenditure (OpEx).</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Scalability vs. Elasticity</h3>
+                    <p class="text-slate-600"><strong class="text-slate-800">Scalability:</strong> Handling growing workloads. Vertical (scaling up) increases a single server's resources. Horizontal (scaling out) adds more servers.</p>
+                    <p class="text-slate-600 mt-2"><strong class="text-slate-800">Elasticity:</strong> Automatically scaling resources in response to fluctuating demand.</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Availability & Resilience</h3>
+                    <p class="text-slate-600"><strong class="text-slate-800">High Availability (HA):</strong> Minimizes downtime. <br><strong class="text-slate-800">Fault Tolerance (FT):</strong> Continues operating even if components fail. <br><strong class="text-slate-800">Disaster Recovery (DR):</strong> Restoring operations after a catastrophic event.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Virtualization & Hypervisor</h3>
+                    <p class="text-slate-600">The abstraction of physical hardware, allowing multiple Virtual Machines (VMs) to run on a single physical host, enabled by a hypervisor (Type 1 or Type 2).</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Multi-Tenancy</h3>
+                    <p class="text-slate-600">Multiple customers share the same infrastructure resources, but their data and workloads are logically isolated from each other for security.</p>
+                </div>
+
+                 <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">CAP Theorem</h3>
+                    <p class="text-slate-600">For any distributed data store, you can only have two of three guarantees: <strong>C</strong>onsistency, <strong>A</strong>vailability, and <strong>P</strong>artition tolerance.</p>
+                </div>
+
+                 <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Performance Metrics</h3>
+                    <p class="text-slate-600"><strong class="text-slate-800">Latency:</strong> Time delay in data transfer.<br><strong class="text-slate-800">Throughput:</strong> Rate of data transfer.<br><strong class="text-slate-800">Consistency:</strong> Ensuring all reads receive the most recent write.<br><strong class="text-slate-800">Durability:</strong> Ensuring data survives once stored.</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Cloud Economics</h3>
+                     <p class="text-slate-600">Cloud converts <strong>CapEx</strong> (upfront hardware costs) to <strong>OpEx</strong> (pay-as-you-go). <strong>TCO</strong> (Total Cost of Ownership) includes all direct and indirect costs.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Service & Deployment Models Section -->
+        <section id="models" class="mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-900 mb-12 text-center">Service & Deployment Models</h2>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 text-center flex flex-col">
+                    <h3 class="text-2xl font-bold text-indigo-700">IaaS (Infrastructure)</h3>
+                    <p class="text-slate-600 mb-4 flex-grow">Provider rents you IT infrastructure like servers and storage.</p>
+                    <p class="text-xs text-slate-500 bg-indigo-50 p-2 rounded">YOU MANAGE: Apps, Data, Runtime, OS</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 text-center flex flex-col">
+                    <h3 class="text-2xl font-bold text-purple-700">PaaS (Platform)</h3>
+                    <p class="text-slate-600 mb-4 flex-grow">Provides an on-demand environment for developing and deploying apps.</p>
+                    <p class="text-xs text-slate-500 bg-purple-50 p-2 rounded">YOU MANAGE: Applications, Data</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 text-center flex flex-col">
+                    <h3 class="text-2xl font-bold text-pink-700">SaaS (Software)</h3>
+                    <p class="text-slate-600 mb-4 flex-grow">Provides ready-to-use software over the internet on a subscription basis.</p>
+                    <p class="text-xs text-slate-500 bg-pink-50 p-2 rounded">YOU MANAGE: Your data within the app</p>
+                </div>
+                 <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 text-center flex flex-col">
+                    <h3 class="text-xl font-bold text-sky-700">FaaS / Serverless</h3>
+                    <p class="text-slate-600 mb-4 flex-grow">Run event-driven code without provisioning servers.</p>
+                     <p class="text-xs text-slate-500 bg-sky-50 p-2 rounded">YOU MANAGE: Code, Logic, Event Triggers</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 text-center flex flex-col">
+                    <h3 class="text-xl font-bold text-emerald-700">CaaS (Containers)</h3>
+                    <p class="text-slate-600 mb-4 flex-grow">Managed container orchestration platform (e.g., Kubernetes).</p>
+                    <p class="text-xs text-slate-500 bg-emerald-50 p-2 rounded">YOU MANAGE: Container Images, Configuration</p>
+                </div>
+                 <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200 text-center flex flex-col">
+                    <h3 class="text-xl font-bold text-amber-700">DBaaS (Database)</h3>
+                    <p class="text-slate-600 mb-4 flex-grow">Managed database with automated patching, backups, and replication.</p>
+                    <p class="text-xs text-slate-500 bg-amber-50 p-2 rounded">YOU MANAGE: Schema, Queries, Data</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h4 class="font-bold text-lg">Public Cloud</h4>
+                    <p class="text-sm text-slate-500 mb-2">Shared resources. Ex: AWS, Azure, GCP.</p>
+                    <p class="text-xs text-slate-500 mt-2"><strong class="font-semibold text-slate-700">Use Case:</strong> Startups, global web apps.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h4 class="font-bold text-lg">Private Cloud</h4>
+                    <p class="text-sm text-slate-500 mb-2">Used exclusively by one organization.</p>
+                     <p class="text-xs text-slate-500 mt-2"><strong class="font-semibold text-slate-700">Use Case:</strong> Banks, healthcare, government.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h4 class="font-bold text-lg">Hybrid Cloud</h4>
+                    <p class="text-sm text-slate-500 mb-2">Combines public and private clouds.</p>
+                    <p class="text-xs text-slate-500 mt-2"><strong class="font-semibold text-slate-700">Use Case:</strong> Legacy app migration, bursting.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h4 class="font-bold text-lg">Multi-Cloud</h4>
+                    <p class="text-sm text-slate-500 mb-2">Using services from more than one public cloud.</p>
+                    <p class="text-xs text-slate-500 mt-2"><strong class="font-semibold text-slate-700">Use Case:</strong> Leveraging best services, avoiding vendor lock-in.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cloud Providers Comparison -->
+        <section id="providers" class="mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-900 mb-12 text-center">Cloud Providers: AWS vs Azure vs GCP</h2>
+            <div class="overflow-x-auto bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                <table class="w-full text-left table-auto">
+                    <thead>
+                        <tr class="border-b border-slate-200">
+                            <th class="p-4 font-semibold text-slate-800">Category</th>
+                            <th class="p-4 font-semibold text-slate-800">AWS</th>
+                            <th class="p-4 font-semibold text-slate-800">Azure</th>
+                            <th class="p-4 font-semibold text-slate-800">GCP</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm text-slate-600">
+                        <tr class="border-b border-slate-100"><td class="p-4 font-medium text-slate-700">Compute (VMs)</td><td class="p-4">EC2</td><td class="p-4">Virtual Machines</td><td class="p-4">Compute Engine</td></tr>
+                        <tr class="bg-slate-50 border-b border-slate-100"><td class="p-4 font-medium text-slate-700">Object Storage</td><td class="p-4">S3</td><td class="p-4">Blob Storage</td><td class="p-4">Cloud Storage</td></tr>
+                        <tr class="border-b border-slate-100"><td class="p-4 font-medium text-slate-700">Block Storage</td><td class="p-4">EBS</td><td class="p-4">Managed Disks</td><td class="p-4">Persistent Disk</td></tr>
+                        <tr class="bg-slate-50 border-b border-slate-100"><td class="p-4 font-medium text-slate-700">File Storage</td><td class="p-4">EFS</td><td class="p-4">Azure Files</td><td class="p-4">Filestore</td></tr>
+                        <tr class="border-b border-slate-100"><td class="p-4 font-medium text-slate-700">Archive Storage</td><td class="p-4">S3 Glacier</td><td class="p-4">Archive/Cool Tier</td><td class="p-4">Coldline/Archive</td></tr>
+                        <tr class="bg-slate-50 border-b border-slate-100"><td class="p-4 font-medium text-slate-700">Relational DB</td><td class="p-4">RDS / Aurora</td><td class="p-4">Azure SQL</td><td class="p-4">Cloud SQL / Spanner</td></tr>
+                        <tr class="border-b border-slate-100"><td class="p-4 font-medium text-slate-700">NoSQL DB</td><td class="p-4">DynamoDB</td><td class="p-4">Cosmos DB</td><td class="p-4">Firestore / Bigtable</td></tr>
+                        <tr class="bg-slate-50 border-b border-slate-100"><td class="p-4 font-medium text-slate-700">Data Warehouse</td><td class="p-4">Redshift</td><td class="p-4">Synapse Analytics</td><td class="p-4">BigQuery</td></tr>
+                        <tr class="border-b border-slate-100"><td class="p-4 font-medium text-slate-700">Serverless</td><td class="p-4">Lambda</td><td class="p-4">Functions</td><td class="p-4">Cloud Functions / Run</td></tr>
+                        <tr class="bg-slate-50 border-b border-slate-100"><td class="p-4 font-medium text-slate-700">Containers</td><td class="p-4">EKS / ECS</td><td class="p-4">AKS</td><td class="p-4">GKE</td></tr>
+                        <tr class="border-b border-slate-100"><td class="p-4 font-medium text-slate-700">Networking (VPC)</td><td class="p-4">VPC</td><td class="p-4">VNet</td><td class="p-4">VPC Network</td></tr>
+                        <tr class="bg-slate-50"><td class="p-4 font-medium text-slate-700">Infra as Code</td><td class="p-4">CloudFormation</td><td class="p-4">ARM Templates</td><td class="p-4">Deployment Manager</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Architecture & Networking -->
+        <section id="architecture" class="mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-900 mb-12 text-center">Cloud Architecture & Networking</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                 <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Global Infrastructure</h3>
+                    <p class="text-slate-600"><strong class="text-slate-800">Region:</strong> Geographic location. <br><strong class="text-slate-800">AZ:</strong> Isolated data center in a region. Deploy across multiple AZs for HA.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">VPC / VNet</h3>
+                    <p class="text-slate-600">A logically isolated virtual network. Contains subnets, route tables, and NAT gateways to manage traffic flow.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Load Balancers</h3>
+                    <p class="text-slate-600">Distributes traffic across targets. <strong class="text-slate-800">Layer 4</strong> (Network) for TCP/UDP traffic. <strong class="text-slate-800">Layer 7</strong> (Application) for HTTP/HTTPS.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Connectivity</h3>
+                    <p class="text-slate-600"><strong class="text-slate-800">VPN/Direct Connect/ExpressRoute:</strong> Securely connect on-premises data centers to the cloud for hybrid architectures.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">CDN & Edge Computing</h3>
+                    <p class="text-slate-600">A Content Delivery Network caches static content at edge locations closer to users, reducing latency for global applications.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Well-Architected Framework</h3>
+                    <p class="text-slate-600">Pillars: Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimization. Principles include designing for failure and loose coupling.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Serverless & Containers -->
+        <section id="serverless" class="mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-900 mb-12 text-center">Serverless & Containers</h2>
+             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Serverless (FaaS)</h3>
+                    <p class="text-slate-600"><strong class="text-slate-800">Pros:</strong> No server management, pay-per-execution model. <br><strong class="text-slate-800">Cons:</strong> Cold starts, statelessness, vendor limitations.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Containers & Microservices</h3>
+                    <p class="text-slate-600">Containers package code and dependencies into immutable images. This enables a microservices architecture with separation of concerns.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Kubernetes Orchestration</h3>
+                    <p class="text-slate-600">Manages container lifecycles. Key concepts: Clusters, Control Plane vs Data Plane, Pods, Services, Ingress Controllers, and Service Meshes (e.g., Istio).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Security & Compliance -->
+        <section id="security" class="mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-900 mb-12 text-center">Security & Compliance</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Shared Responsibility Model</h3>
+                    <p class="text-slate-600"><strong class="text-slate-800">Provider:</strong> Security OF the Cloud (hardware).<br><strong class="text-slate-800">Customer:</strong> Security IN the Cloud (data, access, configs).</p>
+                </div>
+                 <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Identity & Access (IAM)</h3>
+                    <p class="text-slate-600">Manages user identities and permissions (who can do what). Follow the principle of least privilege using Roles, Policies, and RBAC.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Encryption & Secrets</h3>
+                    <p class="text-slate-600">Protecting data at rest and in transit. Use Key Management Services (KMS) and secrets management tools (e.g., Vault, Key Vault).</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Network Security</h3>
+                    <p class="text-slate-600">Use Firewalls, WAFs, Security Groups (stateful), and Network ACLs (stateless) to control traffic flow and secure endpoints.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Zero Trust Architecture</h3>
+                    <p class="text-slate-600">A security model that never trusts by default. Always verify identity, enforce least privilege, and continuously monitor every access request.</p>
+                </div>
+                 <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Threat Detection</h3>
+                    <p class="text-slate-600">Utilize services like AWS GuardDuty, Azure Sentinel, or GCP Security Command Center for intelligent threat monitoring and alerts.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- DevOps & Automation -->
+        <section id="devops" class="mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-900 mb-12 text-center">DevOps & Automation</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                 <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Infrastructure as Code (IaC)</h3>
+                    <p class="text-slate-600">Managing infrastructure with code (e.g., Terraform, CloudFormation), enabling version control, repeatability, and automation.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">CI/CD Pipelines</h3>
+                    <p class="text-slate-600">Automating build, test, and deploy stages. Use strategies like Blue/Green deployments or Canary releases to minimize risk.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <h3 class="text-xl font-semibold mb-2">Monitoring & Observability</h3>
+                    <p class="text-slate-600">Collecting metrics, logs, and traces to understand system health. Key for debugging distributed systems (e.g., with AWS X-Ray).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cost Optimization -->
+        <section id="cost" class="mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-900 mb-12 text-center">Cost Optimization & FinOps</h2>
+             <div class="bg-white p-8 rounded-xl shadow-lg border border-slate-200">
+                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <div class="p-3"><p class="font-semibold text-slate-700">Right-Sizing</p><p class="text-sm text-slate-500">Choose correct VM sizes and storage types.</p></div>
+                     <div class="p-3"><p class="font-semibold text-slate-700">Reserved/Savings Plans</p><p class="text-sm text-slate-500">Commit to usage for a large discount.</p></div>
+                     <div class="p-3"><p class="font-semibold text-slate-700">Spot/Preemptible Instances</p><p class="text-sm text-slate-500">Use spare capacity for non-critical workloads.</p></div>
+                     <div class="p-3"><p class="font-semibold text-slate-700">Storage Tiering</p><p class="text-sm text-slate-500">Move data to cheaper, colder storage tiers.</p></div>
+                     <div class="p-3"><p class="font-semibold text-slate-700">Shut Down Idle Resources</p><p class="text-sm text-slate-500">Automate shutdown of non-prod environments.</p></div>
+                     <div class="p-3"><p class="font-semibold text-slate-700">Data Transfer Costs</p><p class="text-sm text-slate-500">Be mindful of cross-AZ/region and outbound traffic.</p></div>
+                     <div class="p-3"><p class="font-semibold text-slate-700">Monitoring & Alerts</p><p class="text-sm text-slate-500">Use budgets and tagging to track spending.</p></div>
+                     <div class="p-3"><p class="font-semibold text-slate-700">FinOps</p><p class="text-sm text-slate-500">Cultural practice of financial accountability for cloud spend.</p></div>
+                 </div>
+            </div>
+        </section>
+
+        <!-- Q&A Section -->
+        <section id="qa" class="mb-24 scroll-mt-20">
+             <h2 class="text-3xl font-bold text-slate-900 mb-12 text-center">Comprehensive Interview Q&A</h2>
+             <div class="max-w-4xl mx-auto space-y-4">
+                <details class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 group"><summary class="flex justify-between items-center font-semibold cursor-pointer"><span>Trade-offs between vertical and horizontal scaling?</span><svg class="w-5 h-5 text-slate-500 transform transition-transform duration-200 arrow-down" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></summary><div class="mt-4 text-slate-600"><p><strong>Vertical (scaling up):</strong> Easier, but has a physical limit and creates a single point of failure. Can require downtime.</p><p class="mt-2"><strong>Horizontal (scaling out):</strong> Better fault tolerance and scalability, but introduces complexity (load balancing, data consistency).</p></div></details>
+                <details class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 group"><summary class="flex justify-between items-center font-semibold cursor-pointer"><span>How does Shared Responsibility Model vary for IaaS, PaaS, SaaS?</span><svg class="w-5 h-5 text-slate-500 transform transition-transform duration-200 arrow-down" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></summary><div class="mt-4 text-slate-600"><p><strong>IaaS:</strong> Customer manages OS, middleware, runtime, data, app code. <br><strong>PaaS:</strong> Customer manages only the app code and data. <br><strong>SaaS:</strong> Customer manages only their data within the app and user access.</p></div></details>
+                <details class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 group"><summary class="flex justify-between items-center font-semibold cursor-pointer"><span>What is a CDN and how does it improve performance?</span><svg class="w-5 h-5 text-slate-500 transform transition-transform duration-200 arrow-down" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></summary><div class="mt-4 text-slate-600"><p>A CDN caches static content at edge locations close to users. This reduces latency by serving content from a nearby server instead of the origin, improving performance for global users.</p></div></details>
+                <details class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 group"><summary class="flex justify-between items-center font-semibold cursor-pointer"><span>Explain "serverless cold start" and how to mitigate it.</span><svg class="w-5 h-5 text-slate-500 transform transition-transform duration-200 arrow-down" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></summary><div class="mt-4 text-slate-600"><p>A "cold start" is the latency when a serverless function is invoked after being idle. Mitigations include Provisioned Concurrency (keeping instances warm), periodic "pinging", and optimizing code size.</p></div></details>
+                <details class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 group"><summary class="flex justify-between items-center font-semibold cursor-pointer"><span>Difference between eventual and strong consistency?</span><svg class="w-5 h-5 text-slate-500 transform transition-transform duration-200 arrow-down" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></summary><div class="mt-4 text-slate-600"><p><strong>Strong Consistency:</strong> Every read receives the most recent write. Essential for financial transactions or inventory systems. <br><strong>Eventual Consistency:</strong> After a write, reads will "eventually" see the update. Acceptable for social media feeds, likes, where a small delay is not critical.</p></div></details>
+                <details class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 group"><summary class="flex justify-between items-center font-semibold cursor-pointer"><span>What is Infrastructure as Code (IaC) and why is it important?</span><svg class="w-5 h-5 text-slate-500 transform transition-transform duration-200 arrow-down" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg></summary><div class="mt-4 text-slate-600"><p>IaC is managing infrastructure with code (e.g., Terraform, ARM). It's important because it enables version control, repeatable deployments, automation, and prevents "infrastructure drift" where configurations become inconsistent over time.</p></div></details>
+             </div>
+        </section>
+        
+        <!-- Trends Section -->
+        <section id="trends" class="mb-24 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-900 mb-12 text-center">Current Trends in Cloud Computing</h2>
+             <div class="bg-white p-8 rounded-xl shadow-lg border border-slate-200">
+                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 text-center">
+                    <div class="p-3"><p class="font-semibold text-slate-700">Multi-Cloud & Hybrid</p><p class="text-sm text-slate-500">Strategies for resilience and data sovereignty.</p></div>
+                     <div class="p-3"><p class="font-semibold text-slate-700">FinOps</p><p class="text-sm text-slate-500">Financial accountability for cloud spend.</p></div>
+                     <div class="p-3"><p class="font-semibold text-slate-700">Cloud Security (CSPM)</p><p class="text-sm text-slate-500">Managing security posture and zero trust.</p></div>
+                     <div class="p-3"><p class="font-semibold text-slate-700">Serverless & Edge</p><p class="text-sm text-slate-500">Pushing compute closer to the user.</p></div>
+                     <div class="p-3"><p class="font-semibold text-slate-700">AI/ML Services</p><p class="text-sm text-slate-500">Leveraging managed AI/ML tools.</p></div>
+                     <div class="p-3"><p class="font-semibold text-slate-700">Chaos Engineering</p><p class="text-sm text-slate-500">Proactively testing system resilience.</p></div>
+                     <div class="p-3"><p class="font-semibold text-slate-700">Observability</p><p class="text-sm text-slate-500">Deep insights via logs, metrics, and traces.</p></div>
+                     <div class="p-3"><p class="font-semibold text-slate-700">Green Cloud</p><p class="text-sm text-slate-500">Focus on energy efficiency and sustainability.</p></div>
+                 </div>
+            </div>
+        </section>
+
+        <!-- Real-World Scenarios -->
+        <section id="scenarios" class="scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-900 mb-12 text-center">Real-World Scenarios</h2>
+            <div class="space-y-8">
+                 <div class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden">
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2">Scenario: Rapid-Growth Social Media App</h3>
+                        <ul class="list-disc list-inside text-slate-600 space-y-1 text-sm">
+                            <li><strong>Deployment:</strong> Public Cloud across multiple regions.</li>
+                            <li><strong>Compute:</strong> Horizontal scaling with Auto Scaling Groups and Load Balancers.</li>
+                            <li><strong>Database:</strong> NoSQL (e.g., DynamoDB) for flexible schema, possibly with a relational DB for transactions.</li>
+                            <li><strong>Content:</strong> CDN (e.g., CloudFront) for low latency media delivery.</li>
+                            <li><strong>Event-driven tasks:</strong> Serverless (e.g., Lambda) for image processing.</li>
+                        </ul>
+                    </div>
+                </div>
+                 <div class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden">
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2">Scenario: Bank Modernization with Regulations</h3>
+                        <ul class="list-disc list-inside text-slate-600 space-y-1 text-sm">
+                            <li><strong>Model:</strong> Hybrid Cloud.</li>
+                             <li><strong>Data:</strong> Sensitive data remains in a private, on-premises data center.</li>
+                            <li><strong>Applications:</strong> New customer-facing apps are built on the Public Cloud.</li>
+                            <li><strong>Connectivity:</strong> Secure, private connection (e.g., AWS Direct Connect, Azure ExpressRoute).</li>
+                             <li><strong>Security:</strong> Strong IAM, encryption everywhere, and robust audit trails.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-slate-400 mt-24">
+        <div class="container mx-auto px-6 py-8 text-center">
+            <p>This page was generated based on the "Cognizant Cloud Fundamentals" documents.</p>
+            <p class="text-sm mt-2">A comprehensive guide for cloud professionals.</p>
+        </div>
+    </footer>
+
+</body>
+</html>
+

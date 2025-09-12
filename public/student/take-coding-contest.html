@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Testify Coding Contest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material-darker.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .CodeMirror { height: 100%; border-radius: 0.5rem; font-size: 14px; }
+        .problem-tab { transition: all 0.2s ease-in-out; }
+        .problem-tab.active { border-color: #4F46E5; background-color: #eef2ff; color: #4F46E5; }
+        .prose h3 { font-size: 1.125rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e5e7eb; }
+        .prose pre { background-color: #f3f4f6; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap; word-wrap: break-word; font-family: monospace; cursor: pointer; }
+        .resizable-panel { resize: vertical; overflow: auto; min-height: 150px; }
+        .test-case-tab { transition: all 0.2s; }
+        .test-case-tab.active { border-color: #4F46E5; color: #4F46E5; background-color: #EEF2FF; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px;}
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="contest-environment" class="flex flex-col h-screen">
+        <!-- Header -->
+        <header class="flex-shrink-0 flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6 z-10">
+            <div class="flex items-center">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757066128/Gemini_Generated_Image_9bakrh9bakrh9bak_wuhqq7.png" alt="Logo">
+                <div class="ml-4">
+                    <h1 id="contest-title" class="text-xl font-bold text-gray-800">Loading Contest...</h1>
+                    <p id="user-name" class="text-sm text-gray-600 font-medium"></p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-6">
+                <div id="proctor-container" class="hidden relative w-32 h-20 bg-black rounded-lg border-2 border-gray-300">
+                    <video id="webcam" class="w-full h-full rounded-lg object-cover" autoplay muted playsinline></video>
+                    <div id="proctor-status" class="absolute bottom-0 left-0 w-full bg-black bg-opacity-60 text-white text-xs text-center py-0.5 font-semibold"></div>
+                </div>
+                <div class="text-center">
+                    <div class="text-sm font-semibold text-gray-700">Time Left</div>
+                    <div class="text-2xl font-bold text-red-600" id="timer">00:00:00</div>
+                </div>
+                <button id="submit-contest-btn" class="px-5 py-2.5 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700">Finish Contest</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex overflow-hidden">
+            <!-- Left: Problem Statement -->
+            <div class="w-2/5 flex flex-col bg-white border-r">
+                <div id="problem-tabs" class="flex-shrink-0 flex border-b p-2 space-x-2 overflow-x-auto"></div>
+                <div id="problem-details" class="flex-1 overflow-y-auto p-6 prose max-w-none">
+                    <p class="text-gray-500">Select a problem to begin.</p>
+                </div>
+            </div>
+
+            <!-- Right: Code Editor & Results -->
+            <div class="w-3/5 flex flex-col bg-gray-50">
+                <div class="flex-1 flex flex-col p-4 overflow-hidden">
+                    <div class="flex-shrink-0 flex justify-between items-center mb-2">
+                        <select id="language-select" class="p-2 border rounded-md bg-white">
+                            <option value="c">C</option>
+                            <option value="cpp">C++</option>
+                            <option value="java">Java</option>
+                            <option value="python">Python</option>
+                        </select>
+                        <button id="run-code-btn" class="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-sm hover:bg-green-700 transition">Run & Test</button>
+                    </div>
+                    <div class="flex-1 relative">
+                        <textarea id="code-editor"></textarea>
+                    </div>
+                </div>
+                
+                <!-- Results Panel -->
+                <div id="results-view" class="flex-shrink-0 h-1/3 flex flex-col border-t bg-white p-4 resizable-panel hidden">
+                     <h3 class="text-lg font-semibold text-gray-800 mb-2 flex-shrink-0">Test Case Results</h3>
+                     <div id="test-case-tabs" class="flex border-b mb-2 flex-shrink-0"></div>
+                     <div id="test-case-details" class="flex-1 p-2 overflow-y-auto"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user'));
+
+        if (!token || !user) {
+            window.location.href = '/login.html';
+            return;
+        }
+        document.getElementById('user-name').textContent = user.fullName;
+
+        let currentContest = null;
+        let currentProblem = null;
+        let contestSubmissions = {};
+        let timerInterval;
+
+        const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+            lineNumbers: true, mode: 'text/x-csrc', theme: 'material-darker'
+        });
+        editor.setSize("100%", "100%");
+
+        const languageSelect = document.getElementById('language-select');
+        const problemTabsContainer = document.getElementById('problem-tabs');
+        const problemDetailsContainer = document.getElementById('problem-details');
+        const timerDisplay = document.getElementById('timer');
+        const runCodeBtn = document.getElementById('run-code-btn');
+        const submitContestBtn = document.getElementById('submit-contest-btn');
+        const proctorContainer = document.getElementById('proctor-container');
+        const resultsView = document.getElementById('results-view');
+        const testCaseTabs = document.getElementById('test-case-tabs');
+        const testCaseDetails = document.getElementById('test-case-details');
+        
+        const starterTemplates = {
+            c: '#include <stdio.h>\n\nint main() {\n    /* your code here */\n    return 0;\n}',
+            cpp: '#include <iostream>\n\nint main() {\n    /* your code here */\n    return 0;\n}',
+            java: 'public class Main {\n    public static void main(String[] args) {\n        /* your code here */\n    }\n}',
+            python: '# your code here'
+        };
+
+        function selectProblem(problemId) {
+            if (currentProblem) {
+                contestSubmissions[currentProblem.id] = {
+                    problemId: currentProblem.id,
+                    code: editor.getValue(),
+                    language: languageSelect.value
+                };
+            }
+            
+            const problem = currentContest.problems.find(p => p.id === problemId);
+            if (!problem) return;
+            currentProblem = problem;
+            
+            document.querySelectorAll('.problem-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelector(`.problem-tab[data-id='${problemId}']`).classList.add('active');
+            
+            resultsView.classList.add('hidden'); // Hide results when switching problems
+
+            problemDetailsContainer.innerHTML = `
+                <h2 class="text-2xl font-bold text-gray-800">${problem.title}</h2>
+                <p class="text-sm text-gray-500 mb-4">${problem.difficulty} - ${problem.score} Points</p>
+                <h3>Problem Statement</h3>
+                <p>${problem.description.replace(/\n/g, '<br>')}</p>
+                ${problem.inputFormat ? `<h3>Input Format</h3><p>${problem.inputFormat.replace(/\n/g, '<br>')}</p>` : ''}
+                ${problem.outputFormat ? `<h3>Output Format</h3><p>${problem.outputFormat.replace(/\n/g, '<br>')}</p>` : ''}
+                ${problem.constraints ? `<h3>Constraints</h3><pre>${problem.constraints}</pre>` : ''}
+                ${problem.example ? `<h3>Example</h3><pre>${problem.example}</pre>` : ''}
+            `;
+
+            const savedSubmission = contestSubmissions[problem.id];
+            editor.setValue(savedSubmission ? savedSubmission.code : (starterTemplates[languageSelect.value] || ''));
+            if (savedSubmission) languageSelect.value = savedSubmission.language;
+            
+            updateEditorLanguage();
+            setTimeout(() => editor.refresh(), 1);
+        }
+        
+        function updateEditorLanguage() {
+             const modes = { 'python': 'python', 'java': 'text/x-java', 'c': 'text/x-csrc', 'cpp': 'text/x-c++src' };
+             editor.setOption('mode', modes[languageSelect.value]);
+        }
+
+        async function runAndTestCode() {
+            if (!currentProblem) return;
+            runCodeBtn.disabled = true;
+            runCodeBtn.textContent = 'Running...';
+            resultsView.classList.remove('hidden');
+            testCaseTabs.innerHTML = '';
+            testCaseDetails.innerHTML = '<p class="text-gray-500 p-4">Running against test cases...</p>';
+
+            const results = [];
+            for (const tc of currentProblem.testCases) {
+                try {
+                    const res = await fetch('/api/compile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify({ language: languageSelect.value, code: editor.getValue(), input: tc.input }),
+                    });
+                    const data = await res.json();
+                    const actual = (data.output || '').trim().replace(/\s+/g, ' ');
+                    const expected = tc.expected.trim().replace(/\s+/g, ' ');
+                    const status = actual === expected ? 'Accepted' : 'Wrong Answer';
+                    results.push({ actual, status });
+                } catch (e) {
+                    results.push({ actual: 'Server Error', status: 'Error' });
+                }
+            }
+
+            results.forEach((r, i) => {
+                const tab = document.createElement('button');
+                tab.className = `test-case-tab px-4 py-2 border-b-2 font-medium text-sm ${r.status === 'Accepted' ? 'text-green-600 border-transparent hover:border-green-500' : 'text-red-600 border-transparent hover:border-red-500'}`;
+                tab.textContent = `Case ${i + 1}`;
+                tab.onclick = () => {
+                    document.querySelectorAll('.test-case-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    renderTestCaseDetail(i, r);
+                };
+                testCaseTabs.appendChild(tab);
+            });
+
+            if (results.length > 0) {
+                const firstFailedIndex = results.findIndex(r => r.status !== 'Accepted');
+                const activeIndex = firstFailedIndex !== -1 ? firstFailedIndex : 0;
+                renderTestCaseDetail(activeIndex, results[activeIndex]);
+                if(testCaseTabs.children[activeIndex]) testCaseTabs.children[activeIndex].classList.add('active');
+            }
+
+            runCodeBtn.disabled = false;
+            runCodeBtn.textContent = 'Run & Test';
+        }
+
+        function renderTestCaseDetail(index, result) {
+            testCaseDetails.innerHTML = `
+                <div class="p-4 border rounded-lg bg-gray-50">
+                    <div class="font-semibold text-lg mb-2 ${result.status === 'Accepted' ? 'text-green-600' : 'text-red-600'}">Case ${index + 1}: ${result.status}</div>
+                    <div class="space-y-3 text-sm">
+                        <div><strong class="text-gray-600">Input:</strong><pre class="bg-white p-2 rounded mt-1 text-gray-800 font-mono">${currentProblem.testCases[index].input}</pre></div>
+                        <div><strong class="text-gray-600">Your Output:</strong><pre class="bg-white p-2 rounded mt-1 text-gray-800 font-mono">${result.actual}</pre></div>
+                        <div><strong class="text-gray-600">Expected Output:</strong><pre class="bg-white p-2 rounded mt-1 text-gray-800 font-mono">${currentProblem.testCases[index].expected}</pre></div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        async function startContest() {
+            const contestId = new URLSearchParams(window.location.search).get('id');
+            if (!contestId) {
+                 document.getElementById('contest-title').textContent = "Contest not found!";
+                 return;
+            }
+
+            try {
+                const response = await fetch(`/api/student/contests/${contestId}`, { headers: { 'x-auth-token': token } });
+                if (!response.ok) throw new Error('Could not load contest.');
+                
+                currentContest = await response.json();
+                document.getElementById('contest-title').textContent = currentContest.title;
+
+                if (currentContest.isProctored) await setupProctoring();
+                else await enterFullScreen();
+                
+                problemTabsContainer.innerHTML = currentContest.problems.map(p => 
+                    `<button class="problem-tab flex-shrink-0 px-4 py-2 text-sm font-semibold rounded-md border-b-2 border-transparent" data-id="${p.id}">${p.title}</button>`
+                ).join('');
+
+                document.querySelectorAll('.problem-tab').forEach(tab => {
+                    tab.addEventListener('click', () => selectProblem(tab.dataset.id));
+                });
+
+                if(currentContest.problems.length > 0) {
+                    selectProblem(currentContest.problems[0].id);
+                }
+                
+                const contestEndTime = new Date(currentContest.startTime).getTime() + currentContest.duration * 60000;
+                startTimer(contestEndTime);
+
+            } catch (error) {
+                document.getElementById('contest-title').textContent = "Error loading contest.";
+                console.error(error);
+                setTimeout(() => window.location.href = '/student/contests.html', 2000);
+            }
+        }
+        
+        function startTimer(endTime) {
+            timerInterval = setInterval(() => {
+                const distance = endTime - new Date().getTime();
+                if (distance < 0) {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = "00:00:00";
+                    submitContest("Time's Up");
+                    return;
+                }
+                let h = Math.floor(distance / (1000 * 60 * 60));
+                let m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                let s = Math.floor((distance % (1000 * 60)) / 1000);
+                timerDisplay.textContent = `${h<10?'0'+h:h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+            }, 1000);
+        }
+        
+        async function enterFullScreen() {
+            try {
+                if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+            } catch(err) { console.warn("Fullscreen failed."); }
+        }
+
+        function handleFullScreenChange() {
+            if (!document.fullscreenElement) submitContest('Exited fullscreen mode.');
+        }
+        
+        async function setupProctoring() {
+            await enterFullScreen();
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                document.getElementById('webcam').srcObject = stream;
+                proctorContainer.classList.remove('hidden');
+                document.getElementById('proctor-status').textContent = 'Proctoring Active';
+            } catch (err) {
+                alert('Camera access is required for proctored exams. Please allow access and refresh.');
+                throw new Error("Permissions denied");
+            }
+        }
+
+        async function submitContest(violationReason = null) {
+            if (window.isSubmitting) return;
+            window.isSubmitting = true;
+            submitContestBtn.disabled = true;
+            submitContestBtn.textContent = "Submitting...";
+
+            const finalConfirmation = violationReason ? true : confirm('Are you sure you want to finish and submit the contest?');
+            if (!finalConfirmation) {
+                 window.isSubmitting = false;
+                 submitContestBtn.disabled = false;
+                 submitContestBtn.textContent = "Finish Contest";
+                 return;
+            }
+            if(violationReason) alert(`Violation detected: ${violationReason}. Submitting contest automatically.`);
+
+            clearInterval(timerInterval);
+            
+            if (currentProblem) {
+                contestSubmissions[currentProblem.id] = {
+                    problemId: currentProblem.id,
+                    code: editor.getValue(),
+                    language: languageSelect.value
+                };
+            }
+            
+            const submissionsPayload = Object.values(contestSubmissions);
+
+            try {
+                 const response = await fetch('/api/student/contests/submit', {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                     body: JSON.stringify({ contestId: currentContest.id, submissions: submissionsPayload, violationReason })
+                 });
+                 if (!response.ok) throw new Error('Submission failed on the server.');
+
+                 alert('Contest submitted successfully!');
+                 if (document.fullscreenElement) await document.exitFullscreen();
+                 window.location.href = '/student/contests.html';
+
+            } catch (error) {
+                 alert('There was an error submitting your contest.');
+                 console.error(error);
+                 window.isSubmitting = false;
+                 submitContestBtn.disabled = false;
+                 submitContestBtn.textContent = "Finish Contest";
+            }
+        }
+        
+        languageSelect.addEventListener('change', updateEditorLanguage);
+        runCodeBtn.addEventListener('click', runAndTestCode);
+        submitContestBtn.addEventListener('click', () => submitContest());
+        document.addEventListener('fullscreenchange', handleFullScreenChange);
+
+        startContest();
+    });
+    </script>
+</body>
+</html>
+
