@@ -1798,7 +1798,8 @@ app.get('/api/verify-certificate/:id', async (req, res) => {
             issuedAt: certificate.issuedAt,
             studentEmail: certificate.studentEmail,
             college: student ? student.college : 'N/A',
-            rollNumber: student ? student.rollNumber : 'N/A'
+            rollNumber: student ? student.rollNumber : 'N/A',
+            profileImageUrl: student ? student.profileImageUrl : null // Added this line
         });
 
     } catch (error) {
@@ -4953,6 +4954,87 @@ app.post('/api/admin/issue-course-certificates', authMiddleware, async (req, res
         res.status(500).json({ message: 'Server error.' });
     }
 });
+
+
+// --- NEW ENDPOINT: Get all certificates for Admin view ---
+app.get('/api/admin/all-certificates', authMiddleware, adminOrModeratorAuth, async (req, res) => {
+    try {
+        const { Items: certificates } = await docClient.send(new ScanCommand({
+            TableName: "TestifyCertificates"
+        }));
+
+        if (!certificates || certificates.length === 0) {
+            return res.json([]);
+        }
+
+        // Get unique student emails from the certificates
+        const studentEmails = [...new Set(certificates.map(c => c.studentEmail))];
+
+        // Fetch student details in batches
+        const keys = studentEmails.map(email => ({ email }));
+        const { Responses } = await docClient.send(new BatchGetCommand({
+            RequestItems: {
+                "TestifyUsers": {
+                    Keys: keys,
+                    ProjectionExpression: "email, fullName, college"
+                }
+            }
+        }));
+
+        const students = Responses.TestifyUsers || [];
+        const studentMap = new Map(students.map(s => [s.email, s]));
+
+        // Enrich certificate data with student details
+        const enrichedCertificates = certificates.map(cert => {
+            const studentInfo = studentMap.get(cert.studentEmail) || { fullName: 'N/A', college: 'N/A' };
+            return {
+                ...cert,
+                studentName: studentInfo.fullName,
+                college: studentInfo.college
+            };
+        });
+
+        // Sort by most recently issued
+        enrichedCertificates.sort((a, b) => new Date(b.issuedAt) - new Date(a.issuedAt));
+
+        res.json(enrichedCertificates);
+
+    } catch (error) {
+        console.error("Get All Certificates Error:", error);
+        res.status(500).json({ message: 'Server error fetching all certificates.' });
+    }
+});
+
+app.get('/api/certificate/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { Item: certificate } = await docClient.send(new GetCommand({
+            TableName: "TestifyCertificates",
+            Key: { certificateId: id }
+        }));
+
+        if (!certificate) {
+            return res.status(404).json({ message: "Certificate not found." });
+        }
+
+        const { Item: student } = await docClient.send(new GetCommand({
+            TableName: "TestifyUsers",
+            Key: { email: certificate.studentEmail }
+        }));
+
+        res.json({
+            ...certificate,
+            studentName: student ? student.fullName : 'Student',
+            profileImageUrl: student ? student.profileImageUrl : null
+        });
+
+    } catch (error) {
+        console.error("Get Single Certificate Error:", error);
+        res.status(500).json({ message: 'Server error fetching certificate.' });
+    }
+});
+
+
 
 
 
