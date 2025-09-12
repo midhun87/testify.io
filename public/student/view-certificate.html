@@ -137,13 +137,13 @@
                     <div class="flex-grow flex flex-col items-center justify-center py-2">
                         <img id="student-photo" src="https://placehold.co/150x150/EBF4FF/1E3A8A?text=Photo" alt="Student Photo" class="w-28 h-28 rounded-full object-cover border-4 border-blue-200 shadow-md hidden">
                         <h2 id="student-name" class="student-name text-5xl font-bold text-gray-800 my-2 leading-tight break-words">
-                            LOADING...
+                            Jane Doe
                         </h2>
                         <p class="text-base text-gray-600 max-w-2xl mx-auto mt-3">
                             for demonstrating outstanding performance and successfully completing the requirements of the
                         </p>
-                        <h3 id="test-title" class="text-3xl font-bold text-blue-800 my-2 certificate-title leading-tight">
-                           Loading...
+                        <h3 id="completion-title" class="text-3xl font-bold text-blue-800 my-2 certificate-title leading-tight">
+                            Advanced Web Development Program
                         </h3>
                          <p class="text-base text-gray-600 mt-2">
                             on <span id="issue-date" class="font-semibold"></span>
@@ -152,11 +152,11 @@
 
                     <!-- Footer Section -->
                     <div class="flex-shrink-0">
-                        <div class="mt-6 flex flex-col sm:flex-row justify-between items-center text-gray-700 w-full max-w-4xl mx-auto">
+                        <div id="certificate-footer-layout" class="mt-6 flex flex-col sm:flex-row justify-between items-center text-gray-700 w-full max-w-4xl mx-auto">
                             <!-- Signature of Instructor -->
                             <div class="w-full sm:w-1/3 text-center mb-6 sm:mb-0">
-                                <div class="border-b-2 border-gray-400 pb-1 h-14 flex justify-center items-end">
-                                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757651069/Instructor_sign_Testify_hoxpuc.png" alt="Signature" class="h-20 mx-auto">
+                                <div class="border-b-2 border-gray-400 pb-1 h-20 flex justify-center items-end">
+                                    <img id="instructor-signature" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757580572/AUTHROISED_SIGN_t1m3f9.jpg" alt="Signature" class="h-20 mx-auto">
                                 </div>
                                 <p class="text-xs mt-2 font-bold uppercase tracking-wider">Lead Instructor</p>
                             </div>
@@ -176,7 +176,7 @@
                             </div>
                             
                             <!-- Examining Partner -->
-                            <div class="w-full sm:w-1/3 text-center">
+                            <div id="examining-partner-section" class="w-full sm:w-1/3 text-center">
                                 <div class="border-b-2 border-gray-400 pb-1 h-20 flex justify-center items-end">
                                     <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_3wfuty3wfuty3wfu_iqsg1x.png" alt="Examining Partner Logo" class="h-16 mx-auto">
                                 </div>
@@ -199,8 +199,12 @@
         document.addEventListener('DOMContentLoaded', async () => {
             // This function takes the certificate data and populates the HTML elements.
             const populateCertificate = (data) => {
-                document.getElementById('student-name').textContent = data.studentName || 'NULL NAME';
-                document.getElementById('test-title').textContent = data.testTitle || 'NULL CERTIFICATE ';
+                document.getElementById('student-name').textContent = data.studentName || 'Student Name';
+                
+                // Use courseTitle if available, otherwise fall back to testTitle
+                const title = data.courseTitle || data.testTitle || 'Achievement';
+                document.getElementById('completion-title').textContent = title;
+
                 document.getElementById('issue-date').textContent = new Date(data.issuedAt || Date.now()).toLocaleDateString('en-US', {
                     year: 'numeric', month: 'long', day: 'numeric'
                 });
@@ -212,20 +216,38 @@
                     studentPhoto.src = data.profileImageUrl;
                     studentPhoto.classList.remove('hidden');
                 }
+
+                // *** DYNAMIC SIGNATURE & LAYOUT LOGIC ***
+                const signatureImg = document.getElementById('instructor-signature');
+                const examiningPartnerSection = document.getElementById('examining-partner-section');
+                const footerLayout = document.getElementById('certificate-footer-layout');
+                
+                if (data.certificateType === 'Course') {
+                    // Use course signature
+                    signatureImg.src = 'https://res.cloudinary.com/dpz44zf0z/image/upload/v1757651069/Instructor_sign_Testify_hoxpuc.png';
+                    // Hide examining partner
+                    examiningPartnerSection.classList.add('hidden');
+                    // Adjust layout for two items
+                    footerLayout.classList.remove('sm:justify-between');
+                    footerLayout.classList.add('sm:justify-around');
+                } else {
+                    // Default to the test signature
+                    signatureImg.src = 'https://res.cloudinary.com/dpz44zf0z/image/upload/v1757580572/AUTHROISED_SIGN_t1m3f9.jpg';
+                    // Ensure examining partner is visible
+                    examiningPartnerSection.classList.remove('hidden');
+                    // Ensure layout is correct for three items
+                    footerLayout.classList.add('sm:justify-between');
+                    footerLayout.classList.remove('sm:justify-around');
+                }
             };
 
             // --- Dynamic Data Fetching Logic ---
             const token = localStorage.getItem('token');
-            // This is a view page, so we will attempt to load even without a token
-            // The API will be the source of truth for auth.
-            
             const urlParams = new URLSearchParams(window.location.search);
             const certificateId = urlParams.get('id');
             if (!certificateId) {
-                // If no ID, we just show the placeholder certificate.
                 console.warn("No certificate ID in URL. Displaying placeholder data.");
                 populateCertificate({}); // Populate with defaults
-                document.getElementById('cert-id').textContent = "EXAMPLE-CERT-ID-12345";
                 return;
             }
 
@@ -235,7 +257,6 @@
                     headers['x-auth-token'] = token;
                 }
                 
-                // Note: The API endpoint is a placeholder. Replace with your actual endpoint.
                 const response = await fetch(`/api/student/certificate/${certificateId}`, { headers });
 
                 if (!response.ok) {
@@ -257,5 +278,4 @@
     </script>
 </body>
 </html>
-
 
