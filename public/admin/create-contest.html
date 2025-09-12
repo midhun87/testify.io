@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Manage Coding Contests</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        .modal-container { transition: transform 0.3s ease, opacity 0.3s ease; max-height: 90vh; }
+        select[multiple] { height: 150px; }
+        .problem-card { transition: all 0.2s ease-in-out; }
+        .problem-card.selected {
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 2px #4F46E5;
+            background-color: #eef2ff;
+        }
+        .difficulty-badge {
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+             <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold">TESTIFY</span>
+            </div>
+           <nav class="flex-grow p-4">
+                 <a href="compiler-scores.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">Scores</a>
+                 <a href="add-problems.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">Add Problems</a>
+                 <a href="create-contest.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">Manage Contests</a>
+            </nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <header class="flex items-center justify-between h-20 bg-white border-b px-6">
+                <h1 class="text-2xl font-semibold text-gray-800">Manage Coding Contests</h1>
+                <button id="add-contest-btn" class="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition">
+                    + Create New Contest
+                </button>
+            </header>
+            
+            <main class="p-6">
+                <div class="container mx-auto">
+                    <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                        <div id="contests-list" class="space-y-4">
+                            <!-- Contests will be loaded here -->
+                        </div>
+                        <div id="loading-indicator" class="text-center py-12"><p>Loading Contests...</p></div>
+                        <div id="no-contests" class="hidden text-center py-12"><p>No contests found. Click 'Create New Contest' to get started.</p></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Add/Edit Contest Modal -->
+    <div id="contest-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white modal-container mb-10">
+            <form id="contest-form">
+                <h3 id="modal-title" class="text-2xl font-bold text-gray-800 mb-6">Create New Contest</h3>
+                <input type="hidden" id="contest-id">
+                <div class="overflow-y-auto" style="max-height: 75vh;">
+                    <div class="space-y-6 p-2">
+                        <!-- Basic Details -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="md:col-span-3">
+                                <label for="contest-name" class="block text-sm font-medium text-gray-700">Contest Name</label>
+                                <input type="text" id="contest-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required>
+                            </div>
+                            <div>
+                                <label for="contest-start-time" class="block text-sm font-medium text-gray-700">Live Start Time</label>
+                                <input type="datetime-local" id="contest-start-time" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required>
+                            </div>
+                            <div>
+                                <label for="contest-duration" class="block text-sm font-medium text-gray-700">Duration (in minutes)</label>
+                                <input type="number" id="contest-duration" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="e.g., 120" required>
+                            </div>
+                             <div>
+                                <label for="proctoring-mode" class="block text-sm font-medium text-gray-700">Proctoring Mode</label>
+                                <select id="proctoring-mode" class="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="false">Camera Off (Standard)</option>
+                                    <option value="true">Camera On (AI Proctored)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Add Problems Section -->
+                        <div>
+                             <h4 class="font-semibold text-gray-700 border-b pb-2 mb-4">Select Problems for the Contest</h4>
+                             <div class="flex items-center space-x-4 mb-4">
+                                <p class="text-sm font-medium text-gray-700">Total Marks: <span id="total-marks" class="font-bold text-indigo-600">0</span></p>
+                             </div>
+                             <div id="problems-selection-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto p-4 bg-gray-50 rounded-lg border">
+                                <!-- Problem cards will be loaded here -->
+                             </div>
+                        </div>
+                        
+                        <!-- Assign to Colleges -->
+                        <div>
+                             <h4 class="font-semibold text-gray-700 border-b pb-2 mb-4">Assign Contest to Colleges</h4>
+                             <p class="text-xs text-gray-500 mb-2">If no colleges are selected, the contest will be visible to everyone. Hold Ctrl/Cmd to select multiple.</p>
+                             <select id="assigned-colleges" multiple class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></select>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end space-x-3 border-t pt-5">
+                    <button type="button" id="close-modal-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
+                    <button type="submit" id="save-contest-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Save Contest</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const contestsListDiv = document.getElementById('contests-list');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const noContestsDiv = document.getElementById('no-contests');
+            const modal = document.getElementById('contest-modal');
+            const form = document.getElementById('contest-form');
+            const problemsSelectionContainer = document.getElementById('problems-selection-container');
+            const collegeSelect = document.getElementById('assigned-colleges');
+            const totalMarksSpan = document.getElementById('total-marks');
+
+            let allContests = [];
+            let allProblems = [];
+            
+            const difficultyColors = {
+                'Easy': 'bg-green-100 text-green-800',
+                'Medium': 'bg-yellow-100 text-yellow-800',
+                'Hard': 'bg-red-100 text-red-800',
+                'CTS Specific': 'bg-blue-100 text-blue-800'
+            };
+
+            const openModal = () => modal.classList.remove('hidden');
+            const closeModal = () => modal.classList.add('hidden');
+
+            const fetchColleges = async () => {
+                try {
+                    const response = await fetch('/api/colleges', { headers: { 'x-auth-token': token } });
+                    const allColleges = await response.json();
+                    collegeSelect.innerHTML = allColleges.map(c => `<option value="${c.collegeName}">${c.collegeName}</option>`).join('');
+                } catch (error) {
+                    console.error('Failed to fetch colleges', error);
+                }
+            };
+            
+            const fetchProblemsForSelection = async () => {
+                 try {
+                    // This should point to the endpoint that returns all created coding problems
+                    const response = await fetch('/api/compiler/problems', { headers: { 'x-auth-token': token } });
+                    allProblems = await response.json();
+                    renderProblemSelection(allProblems);
+                } catch (error) {
+                     problemsSelectionContainer.innerHTML = `<p class="text-red-500">Failed to load problems.</p>`;
+                }
+            };
+
+            const renderProblemSelection = (problems) => {
+                problemsSelectionContainer.innerHTML = '';
+                if (problems.length === 0) {
+                     problemsSelectionContainer.innerHTML = '<p class="text-gray-500">No problems have been created yet. Please add problems first.</p>';
+                     return;
+                }
+                
+                // Group problems by difficulty
+                const groupedProblems = problems.reduce((acc, p) => {
+                    (acc[p.difficulty] = acc[p.difficulty] || []).push(p);
+                    return acc;
+                }, {});
+
+                const difficultyOrder = ['Easy', 'Medium', 'Hard', 'CTS Specific'];
+
+                difficultyOrder.forEach(difficulty => {
+                    if (groupedProblems[difficulty]) {
+                         const groupWrapper = document.createElement('div');
+                         groupWrapper.className = "md:col-span-3 lg:col-span-3 mb-3";
+                         groupWrapper.innerHTML = `<h5 class="font-bold text-md text-gray-600 mb-2">${difficulty} Problems</h5>`;
+                         
+                         groupedProblems[difficulty].forEach(p => {
+                            const card = document.createElement('div');
+                            card.className = 'problem-card border rounded-lg p-3 cursor-pointer bg-white';
+                            card.dataset.problemId = p.id;
+                            card.dataset.score = p.score || 0;
+                            card.innerHTML = `
+                                <div class="flex justify-between items-center">
+                                    <h5 class="font-bold text-sm text-gray-800">${p.title}</h5>
+                                    <span class="difficulty-badge ${difficultyColors[p.difficulty] || 'bg-gray-100 text-gray-800'}">${p.difficulty}</span>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1"><span class="font-semibold text-indigo-600">${p.score || 0} Points</span></p>
+                            `;
+                            card.addEventListener('click', () => {
+                                card.classList.toggle('selected');
+                                updateTotalMarks();
+                            });
+                            groupWrapper.appendChild(card);
+                        });
+                        problemsSelectionContainer.appendChild(groupWrapper);
+                    }
+                });
+            };
+
+            const updateTotalMarks = () => {
+                const selectedProblems = problemsSelectionContainer.querySelectorAll('.problem-card.selected');
+                let total = 0;
+                selectedProblems.forEach(card => {
+                    total += parseInt(card.dataset.score, 10);
+                });
+                totalMarksSpan.textContent = total;
+            };
+
+            const fetchContests = async () => {
+                loadingIndicator.style.display = 'block';
+                noContestsDiv.style.display = 'none';
+                contestsListDiv.innerHTML = '';
+                try {
+                    const response = await fetch('/api/admin/contests', { headers: { 'x-auth-token': token } });
+                    allContests = await response.json();
+                    renderContests(allContests);
+                } catch (error) {
+                    contestsListDiv.innerHTML = `<p class="text-red-500">Failed to load contests.</p>`;
+                } finally {
+                    loadingIndicator.style.display = 'none';
+                }
+            };
+            
+            const renderContests = (contests) => {
+                contestsListDiv.innerHTML = '';
+                if (contests.length === 0) {
+                    noContestsDiv.style.display = 'block';
+                    return;
+                }
+                 contestsListDiv.innerHTML = contests.map(c => `
+                    <div class="border rounded-lg p-4 flex justify-between items-center bg-white shadow-sm">
+                        <div>
+                            <h3 class="font-bold text-lg text-gray-800">${c.title}</h3>
+                            <p class="text-sm text-gray-600">Starts: ${new Date(c.startTime).toLocaleString()} | Duration: ${c.duration} mins | Marks: ${c.totalMarks}</p>
+                            <p class="text-xs text-gray-500 mt-1">${c.isProctored ? 'AI Proctored' : 'Standard'}</p>
+                        </div>
+                        <div class="space-x-2">
+                            <button class="view-submissions-btn px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded hover:bg-blue-200" data-id="${c.id}" data-title="${c.title}">Submissions</button>
+                            <button class="delete-btn px-3 py-1 bg-red-100 text-red-700 text-sm rounded hover:bg-red-200" data-id="${c.id}">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            };
+
+            const deleteContest = async (contestId) => {
+                if (!confirm('Are you sure you want to delete this contest? This action cannot be undone.')) return;
+                try {
+                    const response = await fetch(`/api/admin/contests/${contestId}`, {
+                        method: 'DELETE',
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!response.ok) throw new Error('Failed to delete');
+                    fetchContests(); // Refresh the list
+                } catch (error) {
+                    alert('Error deleting contest.');
+                    console.error(error);
+                }
+            };
+            
+            const resetAndOpenModalForCreate = async () => {
+                form.reset();
+                document.getElementById('contest-id').value = '';
+                document.getElementById('modal-title').textContent = 'Create New Contest';
+                await fetchProblemsForSelection();
+                updateTotalMarks();
+                Array.from(collegeSelect.options).forEach(opt => opt.selected = false);
+                openModal();
+            };
+            
+            form.addEventListener('submit', async (e) => {
+                 e.preventDefault();
+                 const contestId = document.getElementById('contest-id').value;
+                 
+                 // IMPORTANT: Fetch the full problem object for selected problems.
+                 // This ensures the take-contest page has all necessary data (description, test cases, etc.).
+                 const selectedProblemIds = new Set(Array.from(problemsSelectionContainer.querySelectorAll('.problem-card.selected'))
+                    .map(card => card.dataset.problemId));
+
+                if (selectedProblemIds.size === 0) {
+                    alert('Please select at least one problem for the contest.');
+                    return;
+                }
+
+                const selectedProblems = allProblems.filter(p => selectedProblemIds.has(p.id));
+
+                 const assignedColleges = Array.from(collegeSelect.selectedOptions).map(opt => opt.value);
+                 
+                 const body = JSON.stringify({
+                    title: document.getElementById('contest-name').value,
+                    startTime: document.getElementById('contest-start-time').value,
+                    duration: parseInt(document.getElementById('contest-duration').value, 10),
+                    isProctored: document.getElementById('proctoring-mode').value === 'true',
+                    problems: selectedProblems, // Send the full problem objects
+                    totalMarks: parseInt(totalMarksSpan.textContent, 10),
+                    assignedColleges
+                 });
+
+                 try {
+                     const response = await fetch('/api/admin/contests', {
+                         method: 'POST',
+                         headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                         body
+                     });
+                     if (!response.ok) throw new Error('Failed to create contest.');
+                     
+                     closeModal();
+                     fetchContests(); // Refresh the list
+                 } catch (error) {
+                     alert('Error creating contest.');
+                     console.error(error);
+                 }
+            });
+            
+            contestsListDiv.addEventListener('click', (e) => {
+                if (e.target.matches('.delete-btn')) {
+                    deleteContest(e.target.dataset.id);
+                }
+                if (e.target.matches('.view-submissions-btn')) {
+                    // Navigate to a page to view submissions for this contest
+                    const contestId = e.target.dataset.id;
+                    const contestTitle = e.target.dataset.title;
+                    window.location.href = `contest-submissions.html?contestId=${contestId}&title=${encodeURIComponent(contestTitle)}`;
+                }
+            });
+
+            document.getElementById('add-contest-btn').onclick = resetAndOpenModalForCreate;
+            document.getElementById('close-modal-btn').onclick = closeModal;
+            
+            const init = async () => {
+                await fetchColleges();
+                await fetchContests();
+            };
+            init();
+        });
+    </script>
+</body>
+</html>

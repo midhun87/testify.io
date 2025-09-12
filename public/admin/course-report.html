@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Report - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F9FAFB; }
+        .filter-btn.active {
+            background-color: #4F46E5;
+            color: white;
+            font-weight: 600;
+        }
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                background-color: #ffffff;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .printable-area {
+                box-shadow: none !important;
+                border: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="flex flex-col min-h-screen">
+         <header class="flex items-center justify-between h-20 bg-white border-b px-6 no-print">
+            <a href="/admin/course-progress.html" class="text-indigo-600 hover:text-indigo-800 font-semibold flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                Back to Progress Overview
+            </a>
+            <button onclick="window.print()" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 flex items-center">
+                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm7-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Print Report
+            </button>
+        </header>
+
+        <main class="flex-grow p-6 printable-area">
+            <!-- Header for printing -->
+            <div class="print-only hidden mb-8 border-b pb-4">
+                 <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                        <span class="ml-3 text-2xl font-bold text-gray-800">TESTIFY</span>
+                    </div>
+                    <div class="text-right">
+                        <h1 class="text-xl font-semibold">Course Progress Report</h1>
+                        <p class="text-sm text-gray-600">Generated on: <span id="print-date"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <h1 id="course-title" class="text-3xl font-bold text-gray-800 mb-6 text-center md:text-left">Loading Report...</h1>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-500">Total Assigned</h3>
+                    <p id="total-assigned" class="mt-1 text-3xl font-semibold text-gray-900">0</p>
+                </div>
+                <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-500">Completed</h3>
+                    <p id="total-completed" class="mt-1 text-3xl font-semibold text-green-600">0</p>
+                </div>
+                <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-500">In Progress</h3>
+                    <p id="total-in-progress" class="mt-1 text-3xl font-semibold text-blue-600">0</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-sm">
+                 <div class="flex items-center justify-between mb-4 no-print">
+                    <h2 class="text-lg font-semibold text-gray-800">Student Details</h2>
+                    <div id="filter-buttons" class="flex space-x-2">
+                        <button class="filter-btn active px-3 py-1 text-sm rounded-md bg-gray-200 text-gray-700" data-filter="all">All</button>
+                        <button class="filter-btn px-3 py-1 text-sm rounded-md bg-gray-200 text-gray-700" data-filter="completed">Completed</button>
+                        <button class="filter-btn px-3 py-1 text-sm rounded-md bg-gray-200 text-gray-700" data-filter="in-progress">In Progress</button>
+                        <button class="filter-btn px-3 py-1 text-sm rounded-md bg-gray-200 text-gray-700" data-filter="not-started">Not Started</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-600">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Student Name</th>
+                                <th scope="col" class="px-6 py-3">Email</th>
+                                <th scope="col" class="px-6 py-3">College</th>
+                                <th scope="col" class="px-6 py-3">Status</th>
+                                <th scope="col" class="px-6 py-3" style="min-width: 150px;">Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-table-body">
+                            <!-- Report rows will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) { window.location.href = '/login.html'; return; }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseId = urlParams.get('id');
+            if (!courseId) {
+                document.body.innerHTML = '<p class="p-8 text-center text-red-500">No course ID specified.</p>';
+                return;
+            }
+
+            const courseTitleEl = document.getElementById('course-title');
+            const reportTableBody = document.getElementById('report-table-body');
+            const totalAssignedEl = document.getElementById('total-assigned');
+            const totalCompletedEl = document.getElementById('total-completed');
+            const totalInProgressEl = document.getElementById('total-in-progress');
+            const filterButtonsContainer = document.getElementById('filter-buttons');
+            document.getElementById('print-date').textContent = new Date().toLocaleDateString();
+
+            let allStudents = [];
+
+            function renderTable(studentsToRender) {
+                reportTableBody.innerHTML = '';
+                 if (studentsToRender.length === 0) {
+                    reportTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No students match the current filter.</td></tr>';
+                    return;
+                }
+                studentsToRender.forEach(student => {
+                    let statusText, statusColor;
+                    if(student.completionPercentage === 100) {
+                        statusText = "Completed";
+                        statusColor = "text-green-600 bg-green-100";
+                    } else if (student.completionPercentage > 0) {
+                        statusText = "In Progress";
+                        statusColor = "text-blue-600 bg-blue-100";
+                    } else {
+                        statusText = "Not Started";
+                        statusColor = "text-gray-600 bg-gray-100";
+                    }
+
+                    const row = `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-800">${student.studentName}</td>
+                            <td class="px-6 py-4">${student.studentEmail}</td>
+                            <td class="px-6 py-4">${student.college}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full ${statusColor}">${statusText}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="w-full bg-gray-200 rounded-full h-4">
+                                    <div class="bg-indigo-600 h-4 rounded-full text-white text-xs flex items-center justify-center" style="width: ${student.completionPercentage}%">
+                                        ${student.completionPercentage > 10 ? student.completionPercentage + '%' : ''}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>`;
+                    reportTableBody.innerHTML += row;
+                });
+            }
+
+            filterButtonsContainer.addEventListener('click', (e) => {
+                if(e.target.classList.contains('filter-btn')) {
+                    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                    e.target.classList.add('active');
+                    const filter = e.target.dataset.filter;
+                    let filteredStudents = [];
+
+                    if(filter === 'all') {
+                        filteredStudents = allStudents;
+                    } else if (filter === 'completed') {
+                        filteredStudents = allStudents.filter(s => s.completionPercentage === 100);
+                    } else if (filter === 'in-progress') {
+                        filteredStudents = allStudents.filter(s => s.completionPercentage > 0 && s.completionPercentage < 100);
+                    } else if (filter === 'not-started') {
+                        filteredStudents = allStudents.filter(s => s.completionPercentage === 0);
+                    }
+                    renderTable(filteredStudents);
+                }
+            });
+
+            try {
+                const response = await fetch(`/api/admin/course-report/${courseId}`, {
+                    headers: { 'x-auth-token': token }
+                });
+                if (!response.ok) throw new Error('Failed to fetch course report.');
+
+                const reportData = await response.json();
+                courseTitleEl.textContent = `Report for: ${reportData.courseTitle}`;
+                allStudents = reportData.results;
+
+                if (allStudents.length === 0) {
+                    reportTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No students are assigned to this course yet.</td></tr>';
+                    return;
+                }
+                
+                // Calculate and display stats
+                totalAssignedEl.textContent = allStudents.length;
+                totalCompletedEl.textContent = allStudents.filter(s => s.completionPercentage === 100).length;
+                totalInProgressEl.textContent = allStudents.filter(s => s.completionPercentage > 0 && s.completionPercentage < 100).length;
+                
+                renderTable(allStudents);
+
+            } catch (error) {
+                console.error('Error:', error);
+                reportTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-red-500">Could not load report data.</td></tr>';
+            }
+        });
+    </script>
+</body>
+</html>
+
