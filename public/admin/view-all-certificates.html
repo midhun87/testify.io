@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View All Certificates - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F9FAFB; }
+        .sidebar { background-color: #111827; }
+        .sidebar-link:hover { background-color: #374151; color: #FFFFFF; }
+        .sidebar-link.active { background-color: #4F46E5; color: #FFFFFF; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 sidebar text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold">TESTIFY</span>
+            </div>
+            <nav class="flex-grow p-4 overflow-y-auto">
+                 <a href="/admin/dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                 <a href="/admin/addl-features.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.242 1.451l-1.043.862c-.29.24-.435.636-.435 1.028v.018c0 .392.145.787.435 1.028l1.043.862a1.125 1.125 0 01.242 1.451l-1.296 2.247a1.125 1.125 0 01-1.37.49l-1.217-.456c-.355-.133-.75-.072-1.075.124a6.57 6.57 0 01-.22.127c-.331.183-.581.495-.645.87l-.213 1.281c-.09.543-.56.94-1.11.94h-2.593c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.063-.374-.313-.686-.645-.87a6.52 6.52 0 01-.22-.127c-.324-.196-.72-.257-1.075-.124l-1.217.456a1.125 1.125 0 01-1.37-.49l-1.296-2.247a1.125 1.125 0 01.242-1.451l1.043-.862c.29-.24.435-.636-.435-1.028v-.018c0-.392-.145-.787-.435-1.028l-1.043-.862a1.125 1.125 0 01-.242-1.451l1.296-2.247a1.125 1.125 0 011.37-.49l1.217.456c.355.133.75.072 1.075-.124.073-.044.146-.087.22-.127.332-.183.582-.495.645-.87l.213-1.281z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    <span class="ml-3">Additional Features</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <header class="flex items-center justify-between h-20 bg-white border-b px-6">
+                <h1 class="text-2xl font-semibold text-gray-800">Issued Certificates</h1>
+                <div class="relative">
+                    <button id="user-menu-button" class="flex items-center space-x-2">
+                        <span id="user-name" class="font-semibold text-gray-700">Admin User</span>
+                        <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                        <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                    </div>
+                </div>
+            </header>
+
+            <main class="p-6">
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <div class="flex flex-col md:flex-row items-center justify-between mb-4 gap-4">
+                        <div class="w-full md:w-1/2 lg:w-1/3">
+                            <input type="text" id="search-input" placeholder="Search by name or email..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <label class="text-sm font-medium text-gray-700">Filter by type:</label>
+                            <select id="type-filter" class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="all">All</option>
+                                <option value="Course">Course</option>
+                                <option value="Test">Test</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-600">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Student Name</th>
+                                    <th scope="col" class="px-6 py-3">Email</th>
+                                    <th scope="col" class="px-6 py-3">Certificate Title</th>
+                                    <th scope="col" class="px-6 py-3">Type</th>
+                                    <th scope="col" class="px-6 py-3">Issued On</th>
+                                    <th scope="col" class="px-6 py-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="certificates-table-body">
+                                <!-- Data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!token || !user || (user.role !== 'Admin' && user.role !== 'Moderator')) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // User menu logic
+            document.getElementById('user-name').textContent = user.fullName;
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userMenu = document.getElementById('user-menu');
+            const logoutButton = document.getElementById('logout-button');
+            userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
+            logoutButton.addEventListener('click', () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login.html';
+            });
+
+            const tableBody = document.getElementById('certificates-table-body');
+            const searchInput = document.getElementById('search-input');
+            const typeFilter = document.getElementById('type-filter');
+            let allCertificates = [];
+
+            function renderTable(certificates) {
+                tableBody.innerHTML = '';
+                if (certificates.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">No certificates found.</td></tr>';
+                    return;
+                }
+                certificates.forEach(cert => {
+                    const title = cert.courseTitle || cert.testTitle;
+                    const type = cert.certificateType;
+                    const row = `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="px-6 py-4 font-medium text-gray-800">${cert.studentName}</td>
+                            <td class="px-6 py-4">${cert.studentEmail}</td>
+                            <td class="px-6 py-4">${title}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full ${type === 'Course' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}">
+                                    ${type}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">${new Date(cert.issuedAt).toLocaleDateString()}</td>
+                            <td class="px-6 py-4 text-right">
+                                <a href="/admin/view-certificate.html?id=${cert.certificateId}" target="_blank" class="font-medium text-indigo-600 hover:text-indigo-800">View</a>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+            }
+
+            function applyFilters() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const selectedType = typeFilter.value;
+
+                let filtered = allCertificates.filter(cert => {
+                    const nameMatch = cert.studentName.toLowerCase().includes(searchTerm);
+                    const emailMatch = cert.studentEmail.toLowerCase().includes(searchTerm);
+                    const typeMatch = selectedType === 'all' || cert.certificateType === selectedType;
+                    return (nameMatch || emailMatch) && typeMatch;
+                });
+                renderTable(filtered);
+            }
+            
+            searchInput.addEventListener('input', applyFilters);
+            typeFilter.addEventListener('change', applyFilters);
+
+            try {
+                const response = await fetch('/api/admin/all-certificates', {
+                    headers: { 'x-auth-token': token }
+                });
+                if (!response.ok) throw new Error('Failed to fetch certificates.');
+                allCertificates = await response.json();
+                renderTable(allCertificates);
+            } catch (error) {
+                console.error('Error fetching certificates:', error);
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-500">Could not load certificates.</td></tr>';
+            }
+        });
+    </script>
+</body>
+</html>
+
