@@ -1749,31 +1749,24 @@ app.get('/api/student/certificates', authMiddleware, async (req, res) => {
 
 app.get('/api/student/certificate/:id', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
-    
     const { id } = req.params;
     const studentEmail = req.user.email;
-
     try {
         const { Item: certificate } = await docClient.send(new GetCommand({
-            TableName: "TestifyCertificates",
-            Key: { certificateId: id }
+            TableName: "TestifyCertificates", Key: { certificateId: id }
         }));
-
         if (!certificate || certificate.studentEmail !== studentEmail) {
             return res.status(404).json({ message: "Certificate not found or access denied." });
         }
-
         const { Item: student } = await docClient.send(new GetCommand({
-            TableName: "TestifyUsers",
-            Key: { email: studentEmail }
+            TableName: "TestifyUsers", Key: { email: studentEmail }
         }));
-
         res.json({
             ...certificate,
+            testTitle: certificate.courseTitle || certificate.testTitle,
             studentName: student ? student.fullName : 'Student',
             profileImageUrl: student ? student.profileImageUrl : null
         });
-
     } catch (error) {
         console.error("Get Single Certificate Error:", error);
         res.status(500).json({ message: 'Server error fetching certificate.' });
@@ -4784,6 +4777,183 @@ app.get('/cognizant-cloud', authMiddleware, (req, res) => {
     // It will only execute if the user provides a valid token.
     res.sendFile(path.join(__dirname, 'protected_pages', 'cognizant-cloud.html'));
 });
+
+app.get('/api/admin/course-progress', authMiddleware, adminOrModeratorAuth, async (req, res) => {
+    try {
+        const { Items: courses } = await docClient.send(new ScanCommand({ TableName: "TestifyCourses" }));
+        const { Items: progressRecords } = await docClient.send(new ScanCommand({ TableName: "TestifyCourseProgress" }));
+
+        let relevantProgress = progressRecords;
+
+        if (req.user.role === 'Moderator') {
+            const { assignedColleges } = req.user;
+            if (!assignedColleges || assignedColleges.length === 0) return res.json([]);
+            
+            const studentEmailsInColleges = new Set();
+            const filterExpression = assignedColleges.map((_, i) => `college = :c${i}`).join(' OR ');
+            const expressionAttributeValues = assignedColleges.reduce((acc, val, i) => ({ ...acc, [`:c${i}`]: val }), {});
+            
+            const { Items: students } = await docClient.send(new ScanCommand({
+                TableName: "TestifyUsers",
+                FilterExpression: filterExpression,
+                ExpressionAttributeValues: expressionAttributeValues,
+                ProjectionExpression: "email"
+            }));
+
+            students.forEach(s => studentEmailsInColleges.add(s.email));
+            relevantProgress = progressRecords.filter(p => studentEmailsInColleges.has(p.studentEmail));
+        }
+
+        const progressMap = new Map();
+        relevantProgress.forEach(p => {
+            if (!progressMap.has(p.courseId)) progressMap.set(p.courseId, []);
+            progressMap.get(p.courseId).push(p);
+        });
+
+        const overview = courses.map(course => {
+            const courseProgress = progressMap.get(course.courseId) || [];
+            const totalSubModules = course.modules.reduce((acc, module) => acc + module.subModules.length, 0);
+            
+            let completedCount = 0;
+            let inProgressCount = 0;
+
+            courseProgress.forEach(p => {
+                const completionPercentage = totalSubModules > 0 ? Math.round((p.completedSubModules.length / totalSubModules) * 100) : 0;
+                if (completionPercentage === 100) completedCount++;
+                else if (completionPercentage > 0) inProgressCount++;
+            });
+
+            return {
+                courseId: course.courseId,
+                title: course.title,
+                assignedCount: courseProgress.length,
+                inProgressCount,
+                completedCount
+            };
+        });
+
+        res.json(overview);
+    } catch (error) {
+        console.error("Get Course Progress Overview Error:", error);
+        res.status(500).json({ message: 'Server error fetching course progress.' });
+    }
+});
+
+app.get('/api/admin/course-report/:courseId', authMiddleware, adminOrModeratorAuth, async (req, res) => {
+    const { courseId } = req.params;
+    try {
+        const { Item: course } = await docClient.send(new GetCommand({ TableName: "TestifyCourses", Key: { courseId } }));
+        if (!course) return res.status(404).json({ message: "Course not found." });
+
+        const { Items: progressRecords } = await docClient.send(new ScanCommand({
+            TableName: "TestifyCourseProgress",
+            FilterExpression: "courseId = :cid",
+            ExpressionAttributeValues: { ":cid": courseId }
+        }));
+        if (progressRecords.length === 0) return res.json({ courseTitle: course.title, results: [] });
+
+        const studentEmails = [...new Set(progressRecords.map(p => p.studentEmail))];
+        const keys = studentEmails.map(email => ({ email }));
+
+        const { Responses } = await docClient.send(new BatchGetCommand({
+            RequestItems: { "TestifyUsers": { Keys: keys, ProjectionExpression: "email, fullName, college" } }
+        }));
+        let students = Responses.TestifyUsers || [];
+        
+        if (req.user.role === 'Moderator') {
+            const allowedColleges = new Set(req.user.assignedColleges);
+            students = students.filter(student => allowedColleges.has(student.college));
+        }
+        
+        const studentMap = new Map(students.map(s => [s.email, { fullName: s.fullName, college: s.college }]));
+        const totalSubModules = course.modules.reduce((acc, mod) => acc + mod.subModules.length, 0);
+
+        const results = progressRecords.map(p => {
+            const studentInfo = studentMap.get(p.studentEmail);
+            if (!studentInfo) return null;
+            const completionPercentage = totalSubModules > 0 ? Math.round((p.completedSubModules.length / totalSubModules) * 100) : 0;
+            return {
+                studentEmail: p.studentEmail,
+                studentName: studentInfo.fullName,
+                college: studentInfo.college,
+                status: p.status,
+                completionPercentage
+            };
+        }).filter(Boolean);
+
+        res.json({ courseTitle: course.title, results });
+    } catch (error) {
+        console.error("Get Course Report Error:", error);
+        res.status(500).json({ message: 'Server error fetching course report.' });
+    }
+});
+
+// GET students who completed a course but don't have a certificate (Admin)
+app.get('/api/admin/course-completed-students/:courseId', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Access denied.' });
+    const { courseId } = req.params;
+    try {
+        const { Item: course } = await docClient.send(new GetCommand({ TableName: "TestifyCourses", Key: { courseId } }));
+        if (!course) return res.status(404).json({ message: 'Course not found.' });
+
+        const totalSubModules = course.modules.reduce((acc, module) => acc + module.subModules.length, 0);
+        const { Items: allProgress } = await docClient.send(new ScanCommand({
+            TableName: "TestifyCourseProgress",
+            FilterExpression: "courseId = :cid",
+            ExpressionAttributeValues: { ":cid": courseId }
+        }));
+        
+        const completedStudents = allProgress.filter(p => totalSubModules > 0 && (p.completedSubModules.length / totalSubModules) * 100 >= 100);
+        if (completedStudents.length === 0) return res.json([]);
+
+        const { Items: issuedCerts } = await docClient.send(new ScanCommand({
+            TableName: "TestifyCertificates",
+            FilterExpression: "courseId = :cid",
+            ExpressionAttributeValues: { ":cid": courseId }
+        }));
+        const issuedEmails = new Set(issuedCerts.map(cert => cert.studentEmail));
+
+        const eligibleStudents = completedStudents.filter(p => !issuedEmails.has(p.studentEmail));
+        res.json(eligibleStudents.map(p => ({ studentEmail: p.studentEmail })));
+    } catch (error) {
+        console.error("Get Course Completed Students Error:", error);
+        res.status(500).json({ message: 'Server error.' });
+    }
+});
+
+// POST to issue course certificates (Admin)
+app.post('/api/admin/issue-course-certificates', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Access denied.' });
+    const { courseId, courseTitle, studentEmails } = req.body;
+    try {
+        if (!studentEmails || studentEmails.length === 0) return res.status(400).json({ message: "No students selected." });
+        
+        const keys = studentEmails.map(email => ({ email }));
+        const { Responses } = await docClient.send(new BatchGetCommand({ RequestItems: { "TestifyUsers": { Keys: keys } } }));
+        const students = Responses.TestifyUsers || [];
+        const studentMap = new Map(students.map(s => [s.email, s.fullName]));
+
+        for (const email of studentEmails) {
+            const studentName = studentMap.get(email) || 'Student';
+            const certificateId = uuidv4();
+            await docClient.send(new PutCommand({
+                TableName: "TestifyCertificates",
+                Item: { certificateId, studentEmail: email, courseId, courseTitle, certificateType: 'Course', issuedAt: new Date().toISOString() }
+            }));
+            await transporter.sendMail({
+                from: '"TESTIFY" <testifylearning.help@gmail.com>',
+                to: email,
+                subject: `Congratulations! You've earned a certificate for ${courseTitle}`,
+                html: `<p>Congratulations ${studentName},</p><p>You have successfully completed the course "<b>${courseTitle}</b>" and earned a certificate. You can view it in your dashboard.</p>`
+            });
+        }
+        res.status(200).json({ message: `Successfully issued ${studentEmails.length} certificates.` });
+    } catch (error) {
+        console.error("Issue Course Certificates Error:", error);
+        res.status(500).json({ message: 'Server error.' });
+    }
+});
+
 
 
 // --- SERVER START ---
