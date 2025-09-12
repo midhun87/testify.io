@@ -6,50 +6,72 @@
     <title>Verify Certificate - TESTIFY</title>
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            background-color: #f0f2f5;
+        }
+        .heading-font {
+            font-family: 'Playfair Display', serif;
+        }
+        .brand-color { color: #003366; }
+        .accent-color { color: #d4af37; }
+        .brand-bg { background-color: #003366; }
+        .accent-bg { background-color: #d4af37; }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
 
     <!-- Header -->
-    <header class="bg-white shadow-md">
+    <header class="bg-white shadow-sm">
         <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-            <div class="flex items-center">
+            <div class="flex items-center gap-3">
                 <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
-                <span class="ml-3 text-2xl font-bold text-gray-800">TESTIFY</span>
+                <span class="text-2xl font-extrabold tracking-wider uppercase brand-color">TESTIFY</span>
             </div>
-            <a href="/login.html" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800">Student/Admin Login &rarr;</a>
+            <a href="/login.html" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">Student/Admin Login &rarr;</a>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="flex-grow container mx-auto px-4 py-8">
-        <div class="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg">
-            <div class="text-center">
-                <h1 class="text-3xl font-bold text-gray-900">Verify Certificate Authenticity</h1>
-                <p class="mt-2 text-gray-600">Enter the unique Certificate ID to verify its details.</p>
+    <main class="flex-grow container mx-auto px-4 py-8 sm:py-12">
+        <div class="max-w-3xl mx-auto">
+            <div class="text-center mb-10">
+                <h1 class="text-4xl sm:text-5xl font-bold brand-color heading-font">Verify Certificate Authenticity</h1>
+                <p class="mt-3 text-gray-600 max-w-xl mx-auto">Enter the unique Certificate ID found on the certificate to confirm its validity and view the official details.</p>
             </div>
 
-            <div class="mt-8">
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <input type="text" id="certificate-id-input" placeholder="Enter Certificate ID" class="flex-grow w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <button id="verify-btn" class="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-300">
-                        Verify
+            <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl">
+                <div class="flex flex-col sm:flex-row items-center gap-4">
+                    <div class="relative flex-grow w-full">
+                        <svg class="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                        </svg>
+                        <input type="text" id="certificate-id-input" placeholder="Enter Certificate ID" class="w-full pl-11 pr-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+                    </div>
+                    <button id="verify-btn" class="w-full sm:w-auto flex items-center justify-center px-6 py-3 brand-bg text-white font-semibold rounded-lg shadow-md hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-105">
+                        <span id="btn-text">Verify</span>
+                        <div id="btn-loader" class="hidden">
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </div>
                     </button>
                 </div>
             </div>
 
             <!-- Verification Result Area -->
-            <div id="result-container" class="mt-8 hidden">
+            <div id="result-container" class="mt-8">
                 <!-- This will be populated dynamically -->
             </div>
         </div>
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 p-4">
+    <footer class="bg-white border-t border-gray-200 p-4 mt-auto">
         <div class="text-center text-sm text-gray-500">
             &copy; 2025 TESTIFY. All Rights Reserved.
         </div>
@@ -58,77 +80,113 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const verifyBtn = document.getElementById('verify-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnLoader = document.getElementById('btn-loader');
             const certificateIdInput = document.getElementById('certificate-id-input');
             const resultContainer = document.getElementById('result-container');
+
+            const setLoadingState = (isLoading) => {
+                if (isLoading) {
+                    verifyBtn.disabled = true;
+                    btnText.textContent = 'Verifying...';
+                    btnLoader.classList.remove('hidden');
+                } else {
+                    verifyBtn.disabled = false;
+                    btnText.textContent = 'Verify';
+                    btnLoader.classList.add('hidden');
+                }
+            };
 
             const handleVerification = async () => {
                 const certificateId = certificateIdInput.value.trim();
                 if (!certificateId) {
                     resultContainer.innerHTML = `
-                        <div class="p-4 rounded-lg bg-yellow-50 border border-yellow-300 text-yellow-800">
-                            <p class="font-semibold">Please enter a Certificate ID.</p>
+                        <div class="flex items-start gap-4 p-4 rounded-lg bg-yellow-50 border border-yellow-300 text-yellow-800 animate-fade-in">
+                            <div class="flex-shrink-0 h-5 w-5 mt-0.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
+                            </div>
+                            <div>
+                                <p class="font-semibold">Input Required</p>
+                                <p class="text-sm">Please enter a Certificate ID to begin verification.</p>
+                            </div>
                         </div>
                     `;
-                    resultContainer.classList.remove('hidden');
                     return;
                 }
 
-                verifyBtn.disabled = true;
-                verifyBtn.textContent = 'Verifying...';
-                resultContainer.classList.add('hidden');
+                setLoadingState(true);
+                resultContainer.innerHTML = '';
 
                 try {
                     const response = await fetch(`/api/verify-certificate/${certificateId}`);
                     const data = await response.json();
 
-                    resultContainer.classList.remove('hidden');
-
                     if (response.ok) {
                         const issuedDate = new Date(data.issuedAt).toLocaleDateString('en-US', {
                             year: 'numeric', month: 'long', day: 'numeric'
                         });
+
+                        const profileImageHtml = data.profileImageUrl
+                            ? `<img src="${data.profileImageUrl}" alt="Student Photo" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-lg">`
+                            : `<div class="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center border-4 border-white shadow-lg text-gray-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                                    </svg>
+                               </div>`;
+
                         resultContainer.innerHTML = `
-                            <div class="p-6 rounded-lg bg-green-50 border-2 border-dashed border-green-400">
-                                <div class="flex items-center gap-4">
-                                    <div class="flex-shrink-0 h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-                                        <svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <div class="p-6 rounded-xl bg-white shadow-xl border border-gray-200">
+                                <div class="flex flex-col sm:flex-row items-center gap-5">
+                                    <div class="flex-shrink-0 h-16 w-16 rounded-full bg-green-100 flex items-center justify-center border-4 border-white ring-2 ring-green-200">
+                                        <svg class="h-8 w-8 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                     </div>
-                                    <div>
-                                        <h3 class="text-lg font-bold text-green-800">Certificate Verified!</h3>
-                                        <p class="text-sm text-green-700">This is a valid certificate issued by TESTIFY.</p>
+                                    <div class="text-center sm:text-left flex-grow">
+                                        <h3 class="text-2xl font-bold text-green-800 heading-font">Certificate Verified</h3>
+                                        <p class="text-md text-gray-600">This is a valid certificate issued by TESTIFY.</p>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        ${profileImageHtml}
                                     </div>
                                 </div>
-                                <div class="mt-4 border-t border-green-200 pt-4 space-y-2 text-gray-700">
-                                    <p><strong class="font-semibold">Student Name:</strong> ${data.studentName}</p>
-                                    <p><strong class="font-semibold">Email ID:</strong> ${data.studentEmail}</p>
-                                    <p><strong class="font-semibold">College Name:</strong> ${data.college}</p>
-                                    <p><strong class="font-semibold">Roll Number:</strong> ${data.rollNumber}</p>
-                                    <p><strong class="font-semibold">Course/Test:</strong> ${data.testTitle}</p>
-                                    <p><strong class="font-semibold">Date of Issue:</strong> ${issuedDate}</p>
-                                    <p><strong class="font-semibold">Certificate ID:</strong> ${data.certificateId}</p>
+                                <div class="mt-6 border-t border-gray-200 pt-6 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-gray-700">
+                                    <div><strong class="font-semibold block text-sm brand-color">Student Name:</strong> <span class="text-gray-800">${data.studentName}</span></div>
+                                    <div><strong class="font-semibold block text-sm brand-color">Email ID:</strong> <span class="text-gray-800">${data.studentEmail}</span></div>
+                                    <div><strong class="font-semibold block text-sm brand-color">College Name:</strong> <span class="text-gray-800">${data.college}</span></div>
+                                    <div><strong class="font-semibold block text-sm brand-color">Roll Number:</strong> <span class="text-gray-800">${data.rollNumber}</span></div>
+                                    <div><strong class="font-semibold block text-sm brand-color">Achievement:</strong> <span class="text-gray-800">${data.testTitle}</span></div>
+                                    <div><strong class="font-semibold block text-sm brand-color">Date of Issue:</strong> <span class="text-gray-800">${issuedDate}</span></div>
+                                    <div class="sm:col-span-2"><strong class="font-semibold block text-sm brand-color">Certificate ID:</strong> <span class="text-gray-800 font-mono text-sm">${data.certificateId}</span></div>
                                 </div>
                             </div>
                         `;
                     } else {
                          resultContainer.innerHTML = `
-                            <div class="p-4 rounded-lg bg-red-50 border border-red-300 text-red-800">
-                                <h3 class="font-bold">Verification Failed</h3>
-                                <p>${data.message || 'The Certificate ID is invalid or could not be found.'}</p>
+                            <div class="flex items-start gap-4 p-4 rounded-lg bg-red-50 border border-red-300 text-red-800">
+                                <div class="flex-shrink-0 h-5 w-5 mt-0.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold">Verification Failed</h3>
+                                    <p class="text-sm">${data.message || 'The Certificate ID is invalid or could not be found.'}</p>
+                                </div>
                             </div>
                         `;
                     }
                 } catch (error) {
                     console.error('Verification Error:', error);
-                    resultContainer.classList.remove('hidden');
                     resultContainer.innerHTML = `
-                        <div class="p-4 rounded-lg bg-red-50 border border-red-300 text-red-800">
-                             <h3 class="font-bold">Error</h3>
-                             <p>An error occurred while trying to verify the certificate. Please try again later.</p>
+                       <div class="flex items-start gap-4 p-4 rounded-lg bg-red-50 border border-red-300 text-red-800">
+                            <div class="flex-shrink-0 h-5 w-5 mt-0.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold">Error</h3>
+                                <p class="text-sm">An error occurred while trying to verify the certificate. Please try again later.</p>
+                            </div>
                         </div>
                     `;
                 } finally {
-                    verifyBtn.disabled = false;
-                    verifyBtn.textContent = 'Verify';
+                    setLoadingState(false);
                 }
             };
 
