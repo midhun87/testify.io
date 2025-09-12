@@ -69,12 +69,34 @@
                 padding: 2cm !important; /* Add padding to prevent content from touching the edges */
                 box-sizing: border-box;
             }
+            
             /* Explicitly define the flex layout for printing to ensure it doesn't break */
             .print-flex-col {
                 display: flex !important;
                 flex-direction: column !important;
                 justify-content: space-between !important;
                 height: 100% !important;
+                min-height: 0 !important; /* ADDED: Prevents fixed min-height from breaking layout */
+            }
+
+            /* ADDED: Styles for the footer layout during printing */
+            #certificate-footer-layout {
+                display: flex !important;
+                flex-direction: row !important;
+                justify-content: space-between !important; /* Default for 3 items */
+                align-items: center !important; /* Center items vertically */
+                width: 100% !important;
+            }
+
+            #certificate-footer-layout > div {
+                flex: 1 1 0px;
+                padding: 0 1rem; /* Add some spacing */
+                margin-bottom: 0 !important;
+            }
+            
+            /* ADDED: When JS hides the partner section, adjust the layout for the remaining two items */
+            #certificate-footer-layout:has(#examining-partner-section.hidden) {
+                justify-content: space-around !important;
             }
         }
     </style>
@@ -278,4 +300,3 @@
     </script>
 </body>
 </html>
-
