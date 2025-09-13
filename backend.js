@@ -18,6 +18,8 @@ const { BatchWriteCommand } = require("@aws-sdk/lib-dynamodb");
 const { RekognitionClient, CompareFacesCommand } = require("@aws-sdk/client-rekognition");
 
 
+
+
 // --- INITIALIZATION ---
 const app = express();
 const PORT = 3000;
@@ -755,16 +757,53 @@ app.post('/api/assign-test', authMiddleware, adminOrModeratorAuth, async (req, r
     try {
         let studentsToNotify = [];
 
+        // --- FIX APPLIED HERE ---
+        // Logic for assigning to specific students, which now allows for retakes.
         if (studentEmails && studentEmails.length > 0) {
             for (const email of studentEmails) {
-                const assignmentId = uuidv4();
-                await docClient.send(new PutCommand({
-                    TableName: "TestifyAssignments",
-                    Item: { assignmentId, testId, studentEmail: email, assignedAt: new Date().toISOString() }
+                // 1. Find and delete any existing result for this student and test. This is the key to allowing a retake.
+                const { Items: existingResults } = await docClient.send(new ScanCommand({
+                    TableName: "TestifyResults",
+                    FilterExpression: "studentEmail = :email AND testId = :tid",
+                    ExpressionAttributeValues: { ":email": email, ":tid": testId }
                 }));
+
+                if (existingResults && existingResults.length > 0) {
+                    const deleteRequests = existingResults.map(result => ({
+                        DeleteRequest: { Key: { resultId: result.resultId } }
+                    }));
+                    
+                    // Batch delete for efficiency
+                    const batches = [];
+                    for (let i = 0; i < deleteRequests.length; i += 25) {
+                        batches.push(deleteRequests.slice(i, i + 25));
+                    }
+                    for (const batch of batches) {
+                        await docClient.send(new BatchWriteCommand({
+                            RequestItems: { "TestifyResults": batch }
+                        }));
+                    }
+                }
+
+                // 2. Ensure an assignment record exists. If the student was never assigned, create one.
+                const { Items: existingAssignments } = await docClient.send(new ScanCommand({
+                    TableName: "TestifyAssignments",
+                    FilterExpression: "studentEmail = :email AND testId = :tid",
+                    ExpressionAttributeValues: { ":email": email, ":tid": testId }
+                }));
+                
+                if (!existingAssignments || existingAssignments.length === 0) {
+                    const assignmentId = uuidv4();
+                    await docClient.send(new PutCommand({
+                        TableName: "TestifyAssignments",
+                        Item: { assignmentId, testId, studentEmail: email, assignedAt: new Date().toISOString() }
+                    }));
+                }
             }
             studentsToNotify = studentEmails;
         } 
+        // --- SECONDARY FIX APPLIED HERE ---
+        // Logic for assigning to entire colleges. This now correctly creates assignment records.
         else if (colleges && colleges.length > 0) {
             if (req.user.role === 'Moderator') {
                 const isAllowed = colleges.every(college => req.user.assignedColleges.includes(college));
@@ -772,19 +811,44 @@ app.post('/api/assign-test', authMiddleware, adminOrModeratorAuth, async (req, r
                     return res.status(403).json({ message: 'You can only assign tests to your assigned colleges.' });
                 }
             }
+            
             const filterExpression = colleges.map((_, index) => `college = :c${index}`).join(' OR ');
             const expressionAttributeValues = {};
             colleges.forEach((college, index) => {
                 expressionAttributeValues[`:c${index}`] = college;
             });
-            const { Items } = await docClient.send(new ScanCommand({
+            const { Items: studentsInColleges } = await docClient.send(new ScanCommand({
                 TableName: "TestifyUsers",
                 FilterExpression: filterExpression,
                 ExpressionAttributeValues: expressionAttributeValues
             }));
-            studentsToNotify = Items.map(s => s.email);
+
+            if (studentsInColleges.length > 0) {
+                const assignmentWrites = studentsInColleges.map(student => ({
+                    PutRequest: {
+                        Item: {
+                            assignmentId: uuidv4(),
+                            testId: testId,
+                            studentEmail: student.email,
+                            assignedAt: new Date().toISOString()
+                        }
+                    }
+                }));
+
+                const batches = [];
+                for (let i = 0; i < assignmentWrites.length; i += 25) {
+                    batches.push(assignmentWrites.slice(i, i + 25));
+                }
+                for (const batch of batches) {
+                    await docClient.send(new BatchWriteCommand({
+                        RequestItems: { "TestifyAssignments": batch }
+                    }));
+                }
+            }
+            studentsToNotify = studentsInColleges.map(s => s.email);
         }
 
+        // Update the overall status of the test
         if (req.user.role === 'Admin') {
             await docClient.send(new UpdateCommand({
                 TableName: "TestifyTests",
@@ -795,6 +859,7 @@ app.post('/api/assign-test', authMiddleware, adminOrModeratorAuth, async (req, r
             }));
         }
 
+        // Send email notifications
         if (sendEmail && studentsToNotify.length > 0) {
             const mailOptions = {
                 from: '"TESTIFY" <testifylearning.help@gmail.com>',
@@ -5036,132 +5101,6 @@ app.get('/api/certificate/:id', async (req, res) => {
 
 
 
-app.post('/api/certificates-by-email', async (req, res) => {
-    const { email } = req.body;
-    if (!email) {
-        return res.status(400).json({ message: "Email is required." });
-    }
-
-    try {
-        // Find all certificates for the given email using the GSI
-        const { Items: certificates } = await docClient.send(new QueryCommand({
-            TableName: "TestifyCertificates",
-            IndexName: "StudentEmailIndex",
-            KeyConditionExpression: "studentEmail = :email",
-            ExpressionAttributeValues: { ":email": email.toLowerCase() }
-        }));
-
-        if (!certificates || certificates.length === 0) {
-            return res.status(404).json({ message: "No certificates found for this email address." });
-        }
-
-        // Get student details (we only need to do this once)
-        const { Item: student } = await docClient.send(new GetCommand({
-            TableName: "TestifyUsers",
-            Key: { email: email.toLowerCase() }
-        }));
-
-        // Enrich each certificate with student details
-        const enrichedCertificates = certificates.map(cert => {
-            return {
-                certificateId: cert.certificateId,
-                studentName: student ? student.fullName : 'Unknown Student',
-                testTitle: cert.testTitle || cert.courseTitle,
-                issuedAt: cert.issuedAt,
-                studentEmail: cert.studentEmail,
-                college: student ? student.college : 'N/A',
-                rollNumber: student ? student.rollNumber : 'N/A',
-                profileImageUrl: student ? student.profileImageUrl : null
-            };
-        });
-        
-        // Sort by most recent first
-        enrichedCertificates.sort((a, b) => new Date(b.issuedAt) - new Date(a.issuedAt));
-
-        res.json(enrichedCertificates);
-
-    } catch (error) {
-        console.error("Verify Certificate by Email Error:", error);
-        res.status(500).json({ message: 'Server error verifying certificates.' });
-    }
-});
-
-
-app.post('/api/google-signup', async (req, res) => {
-    const { credential } = req.body; // We receive the token from the frontend
-
-    if (!credential) {
-        return res.status(400).json({ message: 'Google credential token is required.' });
-    }
-
-    try {
-        // Verify the token with Google's servers
-        const ticket = await googleClient.verifyIdToken({
-            idToken: credential,
-            audience: '440805375438-75q1gb5qiu2v5rh233u1bvgd4nulq90c.apps.googleusercontent.com',
-        });
-        const payload = ticket.getPayload();
-
-        // Extract user info from the verified token payload
-        const email = payload.email;
-        const fullName = payload.name;
-        const profileImageUrl = payload.picture;
-        
-        const emailLower = email.toLowerCase();
-        // Check if user already exists
-        const { Item } = await docClient.send(new GetCommand({ 
-            TableName: "TestifyUsers", 
-            Key: { email: emailLower } 
-        }));
-
-        let userToSign;
-
-        if (Item) {
-            // User exists, log them in
-            if (Item.isBlocked) {
-                return res.status(403).json({ message: 'Your account has been blocked.' });
-            }
-            userToSign = Item;
-        } else {
-            // User does not exist, create a new one
-            const newUser = {
-                email: emailLower,
-                fullName,
-                profileImageUrl: profileImageUrl || null,
-                role: "Student", // Default role
-                isBlocked: false,
-                mobile: null,
-                college: null,
-                year: null,
-                department: null,
-                rollNumber: null,
-                password: null // No password for Google sign-in
-            };
-            await docClient.send(new PutCommand({ TableName: "TestifyUsers", Item: newUser }));
-            userToSign = newUser;
-        }
-
-        // Create a JWT for the user session
-        const jwtPayload = {
-            user: {
-                email: userToSign.email,
-                fullName: userToSign.fullName,
-                role: userToSign.role,
-                college: userToSign.college,
-                profileImageUrl: userToSign.profileImageUrl || null
-            }
-        };
-
-        jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: '1d' }, (err, token) => {
-            if (err) throw err;
-            res.json({ message: 'Authentication successful!', token, user: jwtPayload.user });
-        });
-
-    } catch (error) {
-        console.error("Google Auth Error:", error);
-        res.status(401).json({ message: 'Invalid Google token. Please try again.' });
-    }
-});
 
 
 // --- SERVER START ---
