@@ -5036,6 +5036,55 @@ app.get('/api/certificate/:id', async (req, res) => {
 
 
 
+app.post('/api/certificates-by-email', async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ message: "Email is required." });
+    }
+
+    try {
+        // Find all certificates for the given email using the GSI
+        const { Items: certificates } = await docClient.send(new QueryCommand({
+            TableName: "TestifyCertificates",
+            IndexName: "StudentEmailIndex",
+            KeyConditionExpression: "studentEmail = :email",
+            ExpressionAttributeValues: { ":email": email.toLowerCase() }
+        }));
+
+        if (!certificates || certificates.length === 0) {
+            return res.status(404).json({ message: "No certificates found for this email address." });
+        }
+
+        // Get student details (we only need to do this once)
+        const { Item: student } = await docClient.send(new GetCommand({
+            TableName: "TestifyUsers",
+            Key: { email: email.toLowerCase() }
+        }));
+
+        // Enrich each certificate with student details
+        const enrichedCertificates = certificates.map(cert => {
+            return {
+                certificateId: cert.certificateId,
+                studentName: student ? student.fullName : 'Unknown Student',
+                testTitle: cert.testTitle || cert.courseTitle,
+                issuedAt: cert.issuedAt,
+                studentEmail: cert.studentEmail,
+                college: student ? student.college : 'N/A',
+                rollNumber: student ? student.rollNumber : 'N/A',
+                profileImageUrl: student ? student.profileImageUrl : null
+            };
+        });
+        
+        // Sort by most recent first
+        enrichedCertificates.sort((a, b) => new Date(b.issuedAt) - new Date(a.issuedAt));
+
+        res.json(enrichedCertificates);
+
+    } catch (error) {
+        console.error("Verify Certificate by Email Error:", error);
+        res.status(500).json({ message: 'Server error verifying certificates.' });
+    }
+});
 
 
 // --- SERVER START ---
