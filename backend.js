@@ -5087,6 +5087,83 @@ app.post('/api/certificates-by-email', async (req, res) => {
 });
 
 
+app.post('/api/google-signup', async (req, res) => {
+    const { credential } = req.body; // We receive the token from the frontend
+
+    if (!credential) {
+        return res.status(400).json({ message: 'Google credential token is required.' });
+    }
+
+    try {
+        // Verify the token with Google's servers
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: '440805375438-75q1gb5qiu2v5rh233u1bvgd4nulq90c.apps.googleusercontent.com',
+        });
+        const payload = ticket.getPayload();
+
+        // Extract user info from the verified token payload
+        const email = payload.email;
+        const fullName = payload.name;
+        const profileImageUrl = payload.picture;
+        
+        const emailLower = email.toLowerCase();
+        // Check if user already exists
+        const { Item } = await docClient.send(new GetCommand({ 
+            TableName: "TestifyUsers", 
+            Key: { email: emailLower } 
+        }));
+
+        let userToSign;
+
+        if (Item) {
+            // User exists, log them in
+            if (Item.isBlocked) {
+                return res.status(403).json({ message: 'Your account has been blocked.' });
+            }
+            userToSign = Item;
+        } else {
+            // User does not exist, create a new one
+            const newUser = {
+                email: emailLower,
+                fullName,
+                profileImageUrl: profileImageUrl || null,
+                role: "Student", // Default role
+                isBlocked: false,
+                mobile: null,
+                college: null,
+                year: null,
+                department: null,
+                rollNumber: null,
+                password: null // No password for Google sign-in
+            };
+            await docClient.send(new PutCommand({ TableName: "TestifyUsers", Item: newUser }));
+            userToSign = newUser;
+        }
+
+        // Create a JWT for the user session
+        const jwtPayload = {
+            user: {
+                email: userToSign.email,
+                fullName: userToSign.fullName,
+                role: userToSign.role,
+                college: userToSign.college,
+                profileImageUrl: userToSign.profileImageUrl || null
+            }
+        };
+
+        jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: '1d' }, (err, token) => {
+            if (err) throw err;
+            res.json({ message: 'Authentication successful!', token, user: jwtPayload.user });
+        });
+
+    } catch (error) {
+        console.error("Google Auth Error:", error);
+        res.status(401).json({ message: 'Invalid Google token. Please try again.' });
+    }
+});
+
+
 // --- SERVER START ---
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
