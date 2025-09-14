@@ -130,12 +130,82 @@ app.post('/api/send-otp', async (req, res) => {
         console.log(`Generated OTP for ${email}: ${otp}`);
 
         const mailOptions = {
-            from: '"TESTIFY" <testifylearning.help@gmail.com>',
-            to: email,
-            subject: 'TESTIFY Account Verification',
-            html: `<p>Your OTP for TESTIFY account creation is: <strong>${otp}</strong></p>
-                   <p>This OTP is valid for 5 minutes. Do not share it with anyone.</p>`
-        };
+    from: '"TESTIFY" <testifylearning.help@gmail.com>',
+    to: email,
+    subject: 'TESTIFY Account Verification',
+    html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Account Verification</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; }
+        @media screen and (max-width: 600px) {
+            .content-width {
+                width: 90% !important;
+            }
+        }
+    </style>
+</head>
+<body style="background-color: #f3f4f6; margin: 0; padding: 0;">
+    <!-- Preheader text for inbox preview -->
+    <span style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        Your verification code is here.
+    </span>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <!-- Main Card -->
+                <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
+                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" 
+                                 alt="Testify Logo" style="height: 50px; width: auto;">
+                        </td>
+                    </tr>
+                    
+                    <!-- Content Body -->
+                    <tr>
+                        <td align="center" style="padding: 40px; text-align: center;">
+                             <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">Verify Your Account</h1>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 30px; line-height: 1.7;">
+                                 Here is your One-Time Password (OTP) to complete your account creation.
+                             </p>
+                             <div style="background-color: #f3f4f6; border-radius: 8px; padding: 20px 25px; display: inline-block;">
+                                 <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 32px; font-weight: 700; color: #111827; margin: 0; letter-spacing: 5px;">
+                                     ${otp}
+                                 </p>
+                             </div>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
+                                 This OTP is valid for 5 minutes. For your security, please do not share it with anyone.
+                             </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
+                                &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
+                            </p>
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
+                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+};
+
 
         await transporter.sendMail(mailOptions);
 
@@ -580,22 +650,84 @@ async function issueCertificateAutomatically(testId, studentEmail) {
             }
         }));
 
-        const mailOptions = {
-            from: '"TESTIFY" <testifylearning.help@gmail.com>',
-            to: studentEmail,
-            subject: `Congratulations! You've earned a certificate for ${testTitle}`,
-            html: `
-                <div style="font-family: Arial, sans-serif; border: 5px solid #4F46E5; padding: 20px; text-align: center;">
-                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" style="width: 80px; margin-bottom: 20px;">
-                    <h1 style="color: #4F46E5;">Certificate of Achievement</h1>
-                    <p style="font-size: 18px;">This is to certify that</p>
-                    <h2 style="font-size: 24px; color: #111827; margin: 10px 0;">${studentName}</h2>
-                    <p style="font-size: 18px;">has successfully completed the test</p>
-                    <h3 style="font-size: 22px; color: #111827; margin: 10px 0;">${testTitle}</h3>
-                    <p style="font-size: 16px;">on ${issueDate}</p>
-                </div>
-            `
-        };
+       const mailOptions = {
+    from: '"TESTIFY" <testifylearning.help@gmail.com>',
+    to: result.studentEmail,
+    subject: `Congratulations! You've earned a certificate for ${testTitle}`,
+    html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Certificate of Achievement</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; }
+        @media screen and (max-width: 600px) {
+            .content-width {
+                width: 90% !important;
+            }
+        }
+    </style>
+</head>
+<body style="background-color: #f3f4f6; margin: 0; padding: 0;">
+    <!-- Preheader text for inbox preview -->
+    <span style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        Congratulations on earning your certificate!
+    </span>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <!-- Main Card -->
+                <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
+                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" 
+                                 alt="Testify Logo" style="height: 50px; width: auto;">
+                        </td>
+                    </tr>
+                    
+                    <!-- Content Body -->
+                    <tr>
+                        <td align="center" style="padding: 40px; text-align: center;">
+                             <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">Certificate Earned!</h1>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 30px; line-height: 1.7;">
+                                 Congratulations, <b>${studentName}</b>! You've successfully passed the test for "<b>${testTitle}</b>". Your new certificate is waiting for you in your dashboard.
+                             </p>
+                             <a href="https://testify-io-ai.onrender.com/student/my-certificates.html" 
+                                target="_blank"
+                                style="display: inline-block; padding: 15px 35px; font-family: 'Poppins', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #4338ca; border-radius: 8px; text-decoration: none;">
+                                 View My Certificate
+                             </a>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
+                                 Well done on your achievement!
+                             </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
+                                &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
+                            </p>
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
+                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+};
+
+
 
         await transporter.sendMail(mailOptions);
         console.log(`Successfully auto-issued certificate to ${studentEmail} for test ${testTitle}`);
@@ -861,12 +993,84 @@ app.post('/api/assign-test', authMiddleware, adminOrModeratorAuth, async (req, r
 
         // Send email notifications
         if (sendEmail && studentsToNotify.length > 0) {
-            const mailOptions = {
-                from: '"TESTIFY" <testifylearning.help@gmail.com>',
-                to: studentsToNotify.join(','),
-                subject: `New Test Assigned: ${testName}`,
-                html: `<p>Hello,</p><p>A new test, "<b>${testName}</b>", has been assigned to you. Please log in to your TESTIFY dashboard to take the test.<a href="https://testify-io-ai.onrender.com/student/take-test.html">Click here to login</a></p><p>Best regards,<br/>The TESTIFY Team</p>`
-            };
+    const mailOptions = {
+        from: '"TESTIFY" <testifylearning.help@gmail.com>',
+        to: studentsToNotify.join(','),
+        subject: `New Test Assigned: ${testName}`,
+        html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>New Test Assigned</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; }
+        @media screen and (max-width: 600px) {
+            .content-width {
+                width: 90% !important;
+            }
+        }
+    </style>
+</head>
+<body style="background-color: #f3f4f6; margin: 0; padding: 0;">
+    <!-- Preheader text for inbox preview -->
+    <span style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        You have a new test waiting for you.
+    </span>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <!-- Main Card -->
+                <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
+                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" 
+                                 alt="Testify Logo" style="height: 50px; width: auto;">
+                        </td>
+                    </tr>
+                    
+                    <!-- Content Body -->
+                    <tr>
+                        <td align="center" style="padding: 40px; text-align: center;">
+                             <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">New Test Assigned</h1>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 30px; line-height: 1.7;">
+                                 A new test, "<b>${testName}</b>", has been assigned to you. Please log in to your TESTIFY dashboard to take the test.
+                             </p>
+                             <a href="https://testify-io-ai.onrender.com/student/take-test.html" 
+                                target="_blank"
+                                style="display: inline-block; padding: 15px 35px; font-family: 'Poppins', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #3b82f6; border-radius: 8px; text-decoration: none;">
+                                 Go to Test
+                             </a>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
+                                 Good luck!
+                             </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
+                                &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
+                            </p>
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
+                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+    };
+    // Your email sending logic would go here
+
             await transporter.sendMail(mailOptions);
         }
         res.status(200).json({ message: 'Test assigned successfully!' });
@@ -1155,13 +1359,89 @@ app.post('/api/admin/assign-course', authMiddleware, adminOrModeratorAuth, async
         }
 
         if (sendEmail) {
-            const studentEmails = studentsToAssign.map(s => s.email);
-            const mailOptions = {
-                from: '"TESTIFY" <testifylearning.help@gmail.com>',
-                to: studentEmails.join(','),
-                subject: `New Course Assigned: ${course.title}`,
-                html: `<p>Hello,</p><p>A new course, "<b>${course.title}</b>", has been assigned to you. Please log in to your TESTIFY dashboard to begin learning.</p><p>Best regards,<br/>The TESTIFY Team</p>`
-            };
+    const studentEmails = studentsToAssign.map(s => s.email);
+    const appBaseUrl = req.headers.origin || 'http://localhost:3000';
+    const loginLink = `${appBaseUrl}/login`; // Or your specific dashboard URL
+
+    const mailOptions = {
+        from: '"TESTIFY" <testifylearning.help@gmail.com>',
+        to: studentEmails.join(','),
+        subject: `New Course Assigned: ${course.title}`,
+        html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>New Course Assigned</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; }
+        @media screen and (max-width: 600px) {
+            .content-width {
+                width: 90% !important;
+            }
+        }
+    </style>
+</head>
+<body style="background-color: #f3f4f6; margin: 0; padding: 0;">
+    <!-- Preheader text for inbox preview -->
+    <span style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        You've been enrolled in a new course!
+    </span>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <!-- Main Card -->
+                <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
+                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" 
+                                 alt="Testify Logo" style="height: 50px; width: auto;">
+                        </td>
+                    </tr>
+                    
+                    <!-- Content Body -->
+                    <tr>
+                        <td align="center" style="padding: 40px; text-align: center;">
+                             <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">You're Enrolled!</h1>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 30px; line-height: 1.7;">
+                                 A new course, "<b>${course.title}</b>", has been assigned to you. Click the button below to log in and start learning.
+                             </p>
+                             <a href="https://testify-io-ai.onrender.com/student/my-courses.html" 
+                                target="_blank"
+                                style="display: inline-block; padding: 15px 35px; font-family: 'Poppins', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #3b82f6; border-radius: 8px; text-decoration: none;">
+                                 Go to Course
+                             </a>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
+                                 Happy learning!
+                             </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
+                                &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
+                            </p>
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
+                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+    };
+    // You would add your email sending logic here, e.g., transporter.sendMail(mailOptions);
+
+
             await transporter.sendMail(mailOptions);
         }
 
@@ -1315,11 +1595,82 @@ app.post('/api/student/courses/progress', authMiddleware, async (req, res) => {
                 }));
                 
                 const mailOptions = {
-                    from: '"TESTIFY" <testifylearning.help@gmail.com>',
-                    to: studentEmail,
-                    subject: `Final Test Unlocked for ${course.title}`,
-                    html: `<p>Congratulations!</p><p>You have completed the course "<b>${course.title}</b>". The final test, "<b>${test.title}</b>", is now available in your dashboard.</p><p>Best of luck!</p>`
-                };
+    from: '"TESTIFY" <testifylearning.help@gmail.com>',
+    to: studentEmail,
+    subject: `Final Test Unlocked for ${course.title}`,
+    html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Final Test Unlocked</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; }
+        @media screen and (max-width: 600px) {
+            .content-width {
+                width: 90% !important;
+            }
+        }
+    </style>
+</head>
+<body style="background-color: #f3f4f6; margin: 0; padding: 0;">
+    <!-- Preheader text for inbox preview -->
+    <span style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        Your final test for ${course.title} is now available!
+    </span>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <!-- Main Card -->
+                <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
+                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" 
+                                 alt="Testify Logo" style="height: 50px; width: auto;">
+                        </td>
+                    </tr>
+                    
+                    <!-- Content Body -->
+                    <tr>
+                        <td align="center" style="padding: 40px; text-align: center;">
+                             <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">Congratulations!</h1>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 30px; line-height: 1.7;">
+                                 You have completed the course "<b>${course.title}</b>". The final test, "<b>${test.title}</b>", is now unlocked in your dashboard.
+                             </p>
+                             <a href="https://testify-io-ai.onrender.com/student/take-test.html" 
+                                target="_blank"
+                                style="display: inline-block; padding: 15px 35px; font-family: 'Poppins', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #16a34a; border-radius: 8px; text-decoration: none;">
+                                 Start Final Test
+                             </a>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
+                                 Best of luck!
+                             </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
+                                &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
+                            </p>
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
+                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+};
+
                 await transporter.sendMail(mailOptions);
             }
             res.json({ message: 'Progress updated. Course complete and final test assigned!' });
@@ -1771,21 +2122,83 @@ app.post('/api/admin/issue-certificates', authMiddleware, async (req, res) => {
             }));
 
             const mailOptions = {
-                from: '"TESTIFY" <testifylearning.help@gmail.com>',
-                to: result.studentEmail,
-                subject: `Congratulations! You've earned a certificate for ${testTitle}`,
-                html: `
-                    <div style="font-family: Arial, sans-serif; border: 5px solid #4F46E5; padding: 20px; text-align: center;">
-                        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" style="width: 80px; margin-bottom: 20px;">
-                        <h1 style="color: #4F46E5;">Certificate of Achievement</h1>
-                        <p style="font-size: 18px;">This is to certify that</p>
-                        <h2 style="font-size: 24px; color: #111827; margin: 10px 0;">${studentName}</h2>
-                        <p style="font-size: 18px;">has successfully completed the test</p>
-                        <h3 style="font-size: 22px; color: #111827; margin: 10px 0;">${testTitle}</h3>
-                        <p style="font-size: 16px;">on ${issueDate}</p>
-                    </div>
-                `
-            };
+    from: '"TESTIFY" <testifylearning.help@gmail.com>',
+    to: result.studentEmail,
+    subject: `Congratulations! You've earned a certificate for ${testTitle}`,
+    html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Certificate of Achievement</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; }
+        @media screen and (max-width: 600px) {
+            .content-width {
+                width: 90% !important;
+            }
+        }
+    </style>
+</head>
+<body style="background-color: #f3f4f6; margin: 0; padding: 0;">
+    <!-- Preheader text for inbox preview -->
+    <span style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        Congratulations on earning your certificate!
+    </span>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <!-- Main Card -->
+                <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
+                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" 
+                                 alt="Testify Logo" style="height: 50px; width: auto;">
+                        </td>
+                    </tr>
+                    
+                    <!-- Content Body -->
+                    <tr>
+                        <td align="center" style="padding: 40px; text-align: center;">
+                             <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">Certificate Earned!</h1>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 30px; line-height: 1.7;">
+                                 Congratulations, <b>${studentName}</b>! You've successfully passed the test for "<b>${testTitle}</b>". Your new certificate is waiting for you in your dashboard.
+                             </p>
+                             <a href="https://testify-io-ai.onrender.com/student/my-courses.html" 
+                                target="_blank"
+                                style="display: inline-block; padding: 15px 35px; font-family: 'Poppins', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #4338ca; border-radius: 8px; text-decoration: none;">
+                                 View My Certificate
+                             </a>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
+                                 Well done on your achievement!
+                             </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
+                                &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
+                            </p>
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
+                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+};
+
+
             await transporter.sendMail(mailOptions);
         }
         res.status(200).json({ message: `Successfully issued ${passedStudents.length} certificates.` });
@@ -3152,16 +3565,87 @@ app.post('/api/forgot-password', async (req, res) => {
         }));
 
         const appBaseUrl = req.headers.origin || 'http://localhost:3000';
-        const resetLink = `${appBaseUrl}/reset-password.html?token=${resetToken}&email=${email}`;
-        
-        const mailOptions = {
-            from: '"TESTIFY" <testifylearning.help@gmail.com>',
-            to: email,
-            subject: 'Password Reset Request',
-            html: `<p>You have requested a password reset for your TESTIFY account.</p>
-                   <p>Click <a href="${resetLink}">here</a> to reset your password.</p>
-                   <p>If you did not request this, please ignore this email.</p>`
-        };
+const resetLink = `${appBaseUrl}/reset-password.html?token=${resetToken}&email=${email}`;
+
+const mailOptions = {
+    from: '"TESTIFY" <testifylearning.help@gmail.com>',
+    to: email,
+    subject: 'Password Reset Request',
+    html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Password Reset Request</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; }
+        @media screen and (max-width: 600px) {
+            .content-width {
+                width: 90% !important;
+            }
+        }
+    </style>
+</head>
+<body style="background-color: #f3f4f6; margin: 0; padding: 0;">
+    <!-- Preheader text for inbox preview -->
+    <span style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        A request to reset your password was received.
+    </span>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <!-- Main Card -->
+                <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
+                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" 
+                                 alt="Testify Logo" style="height: 50px; width: auto;">
+                        </td>
+                    </tr>
+                    
+                    <!-- Content Body -->
+                    <tr>
+                        <td align="center" style="padding: 40px; text-align: center;">
+                             <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">Password Reset Request</h1>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 30px; line-height: 1.7;">
+                                 We received a request to reset your password. Click the button below to set a new one. This link is valid for 1 hour.
+                             </p>
+                             <a href="${resetLink}" 
+                                target="_blank"
+                                style="display: inline-block; padding: 15px 35px; font-family: 'Poppins', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #3b82f6; border-radius: 8px; text-decoration: none;">
+                                 Reset Password
+                             </a>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
+                                 If you didn't request this, you can safely ignore this email.
+                             </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
+                                &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
+                            </p>
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
+                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+`
+};
+
+
 
         await transporter.sendMail(mailOptions);
         res.status(200).json({ message: 'Password reset link sent to your email.' });
@@ -4503,14 +4987,84 @@ app.post('/api/admin/contests', authMiddleware, async (req, res) => {
                 ProjectionExpression: "email"
             }));
             
-            const studentEmails = students.map(s => s.email);
-            if (studentEmails.length > 0) {
-                const mailOptions = {
-                    from: '"TESTIFY" <testifylearning.help@gmail.com>',
-                    to: studentEmails.join(','),
-                    subject: `New Coding Contest Assigned: ${title}`,
-                    html: `<p>Hello,</p><p>A new coding contest, "<b>${title}</b>", has been assigned to you. Please log in to your TESTIFY dashboard to participate.</p><p>Best regards,<br/>The TESTIFY Team</p>`
-                };
+           const studentEmails = students.map(s => s.email);
+if (studentEmails.length > 0) {
+    const mailOptions = {
+        from: '"TESTIFY" <testifylearning.help@gmail.com>',
+        to: studentEmails.join(','),
+        subject: `New Coding Contest Assigned: ${title}`,
+        html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>New Coding Contest</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; }
+        @media screen and (max-width: 600px) {
+            .content-width {
+                width: 90% !important;
+            }
+        }
+    </style>
+</head>
+<body style="background-color: #f3f4f6; margin: 0; padding: 0;">
+    <!-- Preheader text for inbox preview -->
+    <span style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        A new coding contest is waiting for you!
+    </span>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <!-- Main Card -->
+                <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
+                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" 
+                                 alt="Testify Logo" style="height: 50px; width: auto;">
+                        </td>
+                    </tr>
+                    
+                    <!-- Content Body -->
+                    <tr>
+                        <td align="center" style="padding: 40px; text-align: center;">
+                             <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">New Coding Contest!</h1>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 30px; line-height: 1.7;">
+                                 A new coding contest, "<b>${title}</b>", has been assigned to you. Sharpen your skills and compete with your peers!
+                             </p>
+                             <a href="https://testify-io-ai.onrender.com/student/contests.html" 
+                                target="_blank"
+                                style="display: inline-block; padding: 15px 35px; font-family: 'Poppins', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #db2777; border-radius: 8px; text-decoration: none;">
+                                 Go to Contest
+                             </a>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
+                                 Good luck!
+                             </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
+                                &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
+                            </p>
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
+                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+    };
                 await transporter.sendMail(mailOptions);
             }
         }
@@ -5006,12 +5560,87 @@ app.post('/api/admin/issue-course-certificates', authMiddleware, async (req, res
                 TableName: "TestifyCertificates",
                 Item: { certificateId, studentEmail: email, courseId, courseTitle, certificateType: 'Course', issuedAt: new Date().toISOString() }
             }));
-            await transporter.sendMail({
+            
+            // This is the mailOptions object from your certificateNotificationEmail.js file
+            const mailOptions = {
                 from: '"TESTIFY" <testifylearning.help@gmail.com>',
                 to: email,
                 subject: `Congratulations! You've earned a certificate for ${courseTitle}`,
-                html: `<p>Congratulations ${studentName},</p><p>You have successfully completed the course "<b>${courseTitle}</b>" and earned a certificate. You can view it in your dashboard.</p>`
-            });
+                html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Certificate Earned!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; }
+        @media screen and (max-width: 600px) {
+            .content-width {
+                width: 90% !important;
+            }
+        }
+    </style>
+</head>
+<body style="background-color: #f3f4f6; margin: 0; padding: 0;">
+    <!-- Preheader text for inbox preview -->
+    <span style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        Congratulations, ${studentName}! You've earned a new certificate.
+    </span>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <!-- Main Card -->
+                <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
+                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" 
+                                 alt="Testify Logo" style="height: 50px; width: auto;">
+                        </td>
+                    </tr>
+                    
+                    <!-- Content Body -->
+                    <tr>
+                        <td align="center" style="padding: 40px; text-align: center;">
+                             <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">Certificate Earned!</h1>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 30px; line-height: 1.7;">
+                                 Congratulations ${studentName}, you have successfully completed the course "<b>${courseTitle}</b>" and earned a certificate.
+                             </p>
+                             <a href="https://testify-io-ai.onrender.com/student/my-certificates.html" 
+                                target="_blank"
+                                style="display: inline-block; padding: 15px 35px; font-family: 'Poppins', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #16a34a; border-radius: 8px; text-decoration: none;">
+                                 View Certificate
+                             </a>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
+                                 Well done on your achievement!
+                             </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
+                                &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
+                            </p>
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
+                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+            };
+            
+            // FIX: Added the missing line to actually send the email.
+            await transporter.sendMail(mailOptions);
         }
         res.status(200).json({ message: `Successfully issued ${studentEmails.length} certificates.` });
     } catch (error) {
@@ -5019,7 +5648,6 @@ app.post('/api/admin/issue-course-certificates', authMiddleware, async (req, res
         res.status(500).json({ message: 'Server error.' });
     }
 });
-
 
 // --- NEW ENDPOINT: Get all certificates for Admin view ---
 app.get('/api/admin/all-certificates', authMiddleware, adminOrModeratorAuth, async (req, res) => {
