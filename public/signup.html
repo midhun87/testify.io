@@ -6,8 +6,6 @@
     <title>Sign Up - TESTIFY</title>
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- NEW: Google Identity Services (GIS) Library -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -41,6 +39,7 @@
                 <h1 class="text-5xl font-bold tracking-tight text-gray-900">TESTIFY</h1>
                 <p class="mt-4 text-lg text-gray-600">The professional platform for secure online assessments.</p>
                 
+                <!-- Updated Flyer/Visual -->
                 <div class="mt-12 p-1 bg-gray-200/50 rounded-xl shadow-2xl">
                      <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757066742/Gemini_Generated_Image_njiwz6njiwz6njiw_1_zziakv.png" alt="Platform Screenshot" class="w-full max-w-md rounded-lg mx-auto">
                 </div>
@@ -73,6 +72,7 @@
                             <label for="mobile-otp" class="block mb-2 text-sm font-medium text-gray-600">Mobile Number</label>
                             <input type="tel" id="mobile-otp" name="mobile-otp" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition placeholder-gray-400 text-gray-900">
                         </div>
+                        <!-- Terms and Conditions Checkbox -->
                         <div class="flex items-center">
                             <input id="terms" name="terms" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
                             <label for="terms" class="ml-2 block text-sm text-gray-900">
@@ -90,25 +90,30 @@
                         <input type="hidden" id="email-final" name="email">
                         <input type="hidden" id="mobile-final" name="mobile">
                         
+                        <!-- OTP Input Field -->
                         <div class="mb-5">
                             <label for="otp" class="block mb-2 text-sm font-medium text-gray-700">Enter OTP</label>
                             <input type="text" id="otp" name="otp" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
                             <a href="#" id="resend-otp" class="text-sm text-indigo-600 hover:underline mt-2 inline-block">Resend OTP?</a>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+                            <!-- Full Name -->
                             <div class="mb-5">
                                 <label for="fullName" class="block mb-2 text-sm font-medium text-gray-700">Full Name</label>
                                 <input type="text" id="fullName" name="fullName" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
                             </div>
+                            <!-- Mobile Number (Display Only) -->
                             <div class="mb-5">
                                 <label for="mobile" class="block mb-2 text-sm font-medium text-gray-700">Mobile Number</label>
                                 <input type="tel" id="mobile" name="mobile" required readonly class="w-full px-4 py-3 bg-gray-200 border border-gray-300 rounded-lg cursor-not-allowed">
                             </div>
                         </div>
+                        <!-- Email Address (Display Only)-->
                         <div class="mb-5">
                             <label for="email" class="block mb-2 text-sm font-medium text-gray-700">Email Address</label>
                             <input type="email" id="email" name="email" required readonly class="w-full px-4 py-3 bg-gray-200 border border-gray-300 rounded-lg cursor-not-allowed">
                         </div>
+                        <!-- College Name -->
                         <div class="mb-5">
                             <label for="college" class="block mb-2 text-sm font-medium text-gray-700">College Name</label>
                             <select id="college" name="college" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
@@ -116,6 +121,7 @@
                             </select>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+                            <!-- Year -->
                             <div class="mb-5">
                                 <label for="year" class="block mb-2 text-sm font-medium text-gray-700">Year</label>
                                 <select id="year" name="year" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
@@ -127,6 +133,7 @@
                                     <option value="Other">Other</option>
                                 </select>
                             </div>
+                            <!-- Department -->
                             <div class="mb-5">
                                 <label for="department" class="block mb-2 text-sm font-medium text-gray-700">Department</label>
                                 <select id="department" name="department" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
@@ -134,44 +141,23 @@
                                 </select>
                             </div>
                         </div>
+                        <!-- Roll Number -->
                         <div class="mb-5">
                             <label for="rollNumber" class="block mb-2 text-sm font-medium text-gray-700">Roll Number</label>
                             <input type="text" id="rollNumber" name="rollNumber" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
                         </div>
+                        <!-- Password -->
                         <div class="mb-6">
                             <label for="password" class="block mb-2 text-sm font-medium text-gray-700">Password</label>
                             <input type="password" id="password" name="password" required minlength="6" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
                         </div>
                         
+                        <!-- Submit Button -->
                         <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-105">Create Account</button>
                     </form>
-                    
-                    <div class="my-6 flex items-center">
-                        <div class="flex-grow border-t border-gray-300"></div>
-                        <span class="mx-4 text-sm font-medium text-gray-500">OR</span>
-                        <div class="flex-grow border-t border-gray-300"></div>
-                    </div>
 
-                    <!-- NEW: Google Sign-In Button Container -->
-                    <div id="g_id_onload"
-                         data-client_id="440805375438-75q1gb5qiu2v5rh233u1bvgd4nulq90c.apps.googleusercontent.com"
-                         data-context="signup"
-                         data-ux_mode="popup"
-                         data-callback="handleGoogleCredentialResponse"
-                         data-nonce="">
-                    </div>
-
-                    <div class="g_id_signin"
-                         data-type="standard"
-                         data-shape="rectangular"
-                         data-theme="outline"
-                         data-text="signup_with"
-                         data-size="large"
-                         data-logo_alignment="left">
-                    </div>
-                    
                     <div id="message" class="hidden text-center mt-4 p-3 rounded-lg font-medium"></div>
-
+                    
                     <div class="mt-8 text-center space-y-2">
                          <p class="text-center text-sm text-gray-500">
                             Already have an account? <a href="/login.html" class="font-medium text-indigo-600 hover:text-indigo-500">Log In</a>
@@ -186,56 +172,6 @@
     </div>
     
     <script>
-        // --- NEW: GOOGLE SIGN-IN CALLBACK ---
-        // This function is called by the Google GIS library after a user signs in.
-        async function handleGoogleCredentialResponse(response) {
-            const googleData = {
-                credential: response.credential
-            };
-
-            const messageDiv = document.getElementById('message'); // Get message div here
-            function showMessage(message, isSuccess) { // Define showMessage locally for the callback
-                if (!messageDiv) return;
-                messageDiv.textContent = message;
-                messageDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
-                if (isSuccess) {
-                    messageDiv.classList.add('bg-green-100', 'text-green-700');
-                } else {
-                    messageDiv.classList.add('bg-red-100', 'text-red-700');
-                }
-            }
-
-            try {
-                const res = await fetch('/api/google-signup', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(googleData)
-                });
-                const result = await res.json();
-
-                if (res.ok) {
-                    showMessage('Authentication successful! Redirecting...', true);
-                    localStorage.setItem('token', result.token);
-                    localStorage.setItem('user', JSON.stringify(result.user));
-                    
-                    // Redirect based on role
-                    if (result.user.role === 'Admin') {
-                        window.location.href = '/admin/dashboard.html';
-                    } else if (result.user.role === 'Moderator') {
-                        window.location.href = '/moderator/dashboard.html';
-                    } else {
-                        window.location.href = '/student/dashboard.html';
-                    }
-                } else {
-                    showMessage(result.message, false);
-                }
-            } catch (error) {
-                console.error('Google Signup Fetch Error:', error);
-                showMessage('An error occurred during Google sign up.', false);
-            }
-        }
-
-
         document.addEventListener('DOMContentLoaded', async () => {
             const collegeSelect = document.getElementById('college');
             const departmentSelect = document.getElementById('department');
@@ -315,11 +251,13 @@
                 }
             }
 
+            // Initially populate dropdowns
             await Promise.all([
                 fetchAndPopulateColleges(),
                 fetchAndPopulateDepartments()
             ]);
 
+            // Handle "Send OTP" button click
             sendOtpBtn.addEventListener('click', async () => {
                 const email = emailOtpInput.value.trim();
                 const mobile = mobileOtpInput.value.trim();
@@ -369,6 +307,7 @@
                 }
             });
 
+            // Handle "Resend OTP" link click
             resendOtpLink.addEventListener('click', async (e) => {
                 e.preventDefault();
                 const email = emailOtpInput.value.trim();
@@ -379,6 +318,7 @@
                     return;
                 }
 
+                // Temporary message while sending
                 showMessage('Resending OTP...', true);
 
                 try {
@@ -395,6 +335,7 @@
                 }
             });
 
+            // Handle full signup form submission
             signupForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const formData = new FormData(signupForm);
@@ -423,4 +364,3 @@
     </script>
 </body>
 </html>
-
