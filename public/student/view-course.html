@@ -11,10 +11,9 @@
     <style>
         body { 
             font-family: 'Inter', sans-serif; 
-            background-color: #f7f8fc; 
-            --tw-bg-opacity: 1;
-            background-color: rgb(248 250 252 / var(--tw-bg-opacity));
+            background-color: #f8fafc;
         }
+        /* Sidebar slide-in/out transition */
         .sidebar { 
             transition: transform 0.3s ease-in-out; 
             transform: translateX(0);
@@ -24,9 +23,10 @@
         }
         .sidebar-item.active { 
             background-color: #e0e7ff; 
-            color: #3730a3; 
+            color: #4338ca; 
             font-weight: 600;
         }
+        /* Status icon styling for completed/pending lessons */
         .sidebar-item .status-icon {
             transition: color 0.3s;
         }
@@ -36,9 +36,7 @@
         .sidebar-item:not(.completed) .status-icon { 
             color: #d1d5db; 
         }
-        .prose { 
-            max-width: 75ch; 
-        }
+        /* Styling for video embeds */
         .content-view iframe {
             width: 100%;
             aspect-ratio: 16 / 9;
@@ -48,87 +46,111 @@
         }
         /* Custom Modal Styles */
         .modal-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 50;
-            opacity: 0;
-            visibility: hidden;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 100; opacity: 0; visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s ease;
         }
         .modal-backdrop.visible {
-            opacity: 1;
-            visibility: visible;
+            opacity: 1; visibility: visible;
         }
         .modal-content {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 0.75rem;
+            background-color: white; padding: 2rem; border-radius: 0.75rem;
             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            transform: scale(0.95);
-            transition: transform 0.3s ease;
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
+            transform: scale(0.95); transition: transform 0.3s ease;
+            text-align: center; max-width: 400px; width: 90%;
         }
         .modal-backdrop.visible .modal-content {
             transform: scale(1);
         }
+        /* Floating Action Button styles */
+        #floating-complete-btn {
+            transition: opacity 0.3s, transform 0.3s;
+        }
     </style>
 </head>
 <body class="overflow-hidden">
-    <div class="flex h-screen">
+    <div id="app-container" class="flex h-screen">
+        <!-- Sidebar Backdrop (for mobile) -->
+        <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden"></div>
+
         <!-- Collapsible Sidebar -->
-        <aside id="sidebar" class="sidebar w-80 bg-white border-r flex-shrink-0 flex flex-col absolute lg:relative z-20">
-            <div class="h-16 flex items-center justify-between px-4 border-b">
-                <a href="#" class="flex items-center text-sm font-semibold text-indigo-700 hover:text-indigo-900">
+        <aside id="sidebar" class="sidebar w-80 bg-white border-r flex-shrink-0 flex flex-col absolute h-full z-30 lg:relative lg:z-auto">
+            <div class="h-16 flex items-center justify-between px-4 border-b flex-shrink-0">
+                <a href="./my-courses.html" class="flex items-center text-sm font-semibold text-indigo-700 hover:text-indigo-900">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     Back to Courses
                 </a>
             </div>
+            <!-- Search Bar -->
+            <div class="p-4 border-b">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </span>
+                    <input type="text" id="search-lessons" placeholder="Search lessons..." class="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+            </div>
             <div id="modules-sidebar" class="flex-1 overflow-y-auto p-4 space-y-6">
                 <!-- Sidebar content will be injected here -->
+                 <div class="text-center p-8 text-gray-500">Loading lessons...</div>
             </div>
         </aside>
 
         <!-- Main Content Area -->
         <div class="flex-1 flex flex-col">
             <!-- Top Header Bar -->
-            <header class="h-16 bg-white border-b flex items-center justify-between px-6 flex-shrink-0">
+            <header class="h-16 bg-white border-b flex items-center justify-between px-4 sm:px-6 flex-shrink-0">
                 <div class="flex items-center">
-                    <button id="toggle-sidebar-btn" class="p-2 mr-4 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button id="toggle-sidebar-btn" class="p-2 mr-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 lg:hidden">
                         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
                     <div>
-                        <h1 id="course-title" class="text-lg font-bold text-gray-800">Loading Course...</h1>
-                        <p id="current-lesson-title" class="text-sm text-gray-500"></p>
+                        <h1 id="course-title" class="text-lg font-bold text-gray-800 truncate">Loading Course...</h1>
+                        <p id="current-lesson-title" class="text-sm text-gray-500 truncate"></p>
                     </div>
                 </div>
-                <div class="w-full max-w-xs">
-                    <div class="flex items-center justify-between mb-1">
-                        <span class="text-sm font-medium text-gray-700">Course Progress</span>
-                        <span id="progress-percent" class="text-sm font-medium text-indigo-600">0%</span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2.5">
-                        <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                <div class="w-full max-w-xs ml-4">
+                    <div class="group relative">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm font-medium text-gray-700">Course Progress</span>
+                            <span id="progress-percent" class="text-sm font-medium text-indigo-600">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                         <!-- Tooltip -->
+                        <div id="progress-tooltip" class="absolute bottom-full mb-2 w-max bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none left-1/2 -translate-x-1/2">
+                            0 of 0 lessons completed
+                            <svg class="absolute text-gray-800 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,0 127.5,127.5 255,0"/></svg>
+                        </div>
                     </div>
                 </div>
             </header>
 
             <!-- Content Viewer -->
-            <main class="flex-1 overflow-y-auto p-6 md:p-8 lg:p-12">
-                <div id="content-view" class="max-w-4xl mx-auto">
-                    <!-- Main content will be displayed here -->
+            <main id="main-content" class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 lg:p-12">
+                 <div class="max-w-4xl mx-auto">
+                    <button id="resume-course-btn" class="mb-6 w-full text-left p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow flex items-center justify-between">
+                        <div>
+                            <h2 class="font-bold text-lg text-indigo-700">Resume Course</h2>
+                            <p class="text-sm text-gray-500">Jump back to where you left off.</p>
+                        </div>
+                        <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                    </button>
+                    <div id="content-view">
+                        <!-- Main content will be displayed here -->
+                    </div>
                 </div>
             </main>
         </div>
     </div>
+    
+    <!-- Floating Action Button -->
+    <button id="floating-complete-btn" class="fixed bottom-6 right-6 bg-indigo-600 text-white rounded-full p-4 shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 z-40 opacity-0 transform translate-y-4 pointer-events-none">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    </button>
     
     <!-- Custom Modal -->
     <div id="custom-modal" class="modal-backdrop">
@@ -149,27 +171,32 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('token');
             if (!token) { 
-                // In a real app, you'd redirect. For this demo, we'll just show an error.
-                document.body.innerHTML = '<p class="p-8 text-center text-red-500">Authentication token not found. Please log in.</p>';
+                document.getElementById('app-container').innerHTML = '<p class="p-8 text-center text-red-500">Authentication token not found. Please <a href="/login.html" class="underline">log in</a>.</p>';
                 return; 
             }
 
             const urlParams = new URLSearchParams(window.location.search);
             const courseId = urlParams.get('id');
             if (!courseId) { 
-                document.body.innerHTML = '<p class="p-8 text-center text-red-500">No course ID specified in the URL.</p>'; 
+                document.getElementById('app-container').innerHTML = '<p class="p-8 text-center text-red-500">No course ID specified in the URL.</p>'; 
                 return; 
             }
 
             // --- UI Elements ---
             const sidebar = document.getElementById('sidebar');
+            const sidebarBackdrop = document.getElementById('sidebar-backdrop');
             const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
+            const searchInput = document.getElementById('search-lessons');
+            const resumeBtn = document.getElementById('resume-course-btn');
             const courseTitleEl = document.getElementById('course-title');
             const currentLessonTitleEl = document.getElementById('current-lesson-title');
             const progressBar = document.getElementById('progress-bar');
             const progressPercent = document.getElementById('progress-percent');
+            const progressTooltip = document.getElementById('progress-tooltip');
             const modulesSidebar = document.getElementById('modules-sidebar');
+            const mainContent = document.getElementById('main-content');
             const contentView = document.getElementById('content-view');
+            const floatingBtn = document.getElementById('floating-complete-btn');
             const modal = document.getElementById('custom-modal');
             const modalCloseBtn = document.getElementById('modal-close-btn');
 
@@ -178,6 +205,7 @@
             let allSubModules = [];
             let completedSubModules = new Set();
             let currentSubModuleId = null;
+            let lastViewedSubModuleId = null;
 
             // --- Custom Modal Logic ---
             const showModal = (title, message) => {
@@ -191,21 +219,26 @@
                 if (e.target === modal) hideModal();
             });
 
-
             // --- Functions ---
             const updateProgressUI = () => {
                 if (!allSubModules || allSubModules.length === 0) return;
                 const percentage = Math.round((completedSubModules.size / allSubModules.length) * 100);
                 progressBar.style.width = `${percentage}%`;
                 progressPercent.textContent = `${percentage}%`;
+                progressTooltip.innerHTML = `${completedSubModules.size} of ${allSubModules.length} lessons completed <svg class="absolute text-gray-800 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,0 127.5,127.5 255,0"/></svg>`;
             };
 
-            const renderSidebar = () => {
+            const renderSidebar = (searchTerm = '') => {
                 if (!courseData || !courseData.modules) return;
                 modulesSidebar.innerHTML = '';
+                const lowerCaseSearch = searchTerm.toLowerCase();
+
                 courseData.modules.forEach(module => {
+                    const filteredSubModules = module.subModules.filter(sub => sub.title.toLowerCase().includes(lowerCaseSearch));
+                    if (filteredSubModules.length === 0) return;
+
                     const moduleEl = document.createElement('div');
-                    const subModulesHtml = module.subModules.map(sub => {
+                    const subModulesHtml = filteredSubModules.map(sub => {
                         const isCompleted = completedSubModules.has(sub.subModuleId);
                         return `
                             <a href="#" class="sidebar-item flex items-center p-3 rounded-lg transition-colors hover:bg-gray-100 ${isCompleted ? 'completed' : ''}" data-submodule-id="${sub.subModuleId}">
@@ -217,13 +250,22 @@
                                 <span class="text-sm ${isCompleted ? 'text-gray-500 line-through' : 'text-gray-700'}">${sub.title}</span>
                             </a>`;
                     }).join('');
+                    
                     moduleEl.innerHTML = `<h3 class="px-3 font-bold text-gray-500 uppercase text-xs tracking-wider mb-2">${module.title}</h3><div class="space-y-1">${subModulesHtml}</div>`;
                     modulesSidebar.appendChild(moduleEl);
                 });
+                 // Re-highlight the active item after re-rendering
+                 if (currentSubModuleId) {
+                    const activeItem = modulesSidebar.querySelector(`[data-submodule-id="${currentSubModuleId}"]`);
+                    if (activeItem) activeItem.classList.add('active');
+                 }
             };
 
             const renderContent = (subModuleId) => {
                 currentSubModuleId = subModuleId;
+                lastViewedSubModuleId = subModuleId; // Update last viewed
+                localStorage.setItem(`lastViewed_${courseId}`, subModuleId);
+
                 const subModule = allSubModules.find(s => s.subModuleId === subModuleId);
                 if (!subModule) return;
 
@@ -253,15 +295,16 @@
                 const isLast = currentIndex === allSubModules.length - 1;
 
                 contentView.innerHTML = `
-                    <h2 class="text-3xl font-bold text-gray-900 mb-8">${subModule.title}</h2>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-8">${subModule.title}</h2>
                     ${contentHtml}
-                    <footer class="mt-12 pt-8 border-t flex justify-between items-center">
-                        <button id="prev-btn" class="px-6 py-2 font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" ${isFirst ? 'disabled' : ''}>Previous</button>
-                        <button id="next-btn" class="px-8 py-3 ${isCompleted ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white font-bold rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    <footer class="mt-12 pt-8 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <button id="prev-btn" class="w-full sm:w-auto px-6 py-2 font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" ${isFirst ? 'disabled' : ''}>Previous Lesson</button>
+                        <button id="next-btn" class="w-full sm:w-auto px-8 py-3 ${isCompleted ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white font-bold rounded-lg shadow-md transition-transform transform hover:scale-105">
                             ${isCompleted ? (isLast ? '✓ Course Complete' : '✓ Completed: Next') : (isLast ? 'Finish Course' : 'Complete & Continue')}
                         </button>
                     </footer>
                 `;
+                 mainContent.scrollTop = 0; // Scroll to top of content on navigation
             };
 
             const navigate = (direction) => {
@@ -278,26 +321,20 @@
                     return;
                 }
                 try {
-                    // This is the live API call to your backend to save progress.
                     const response = await fetch('/api/student/courses/progress', {
                         method: 'POST',
-                        headers: { 
-                            'Content-Type': 'application/json', 
-                            'x-auth-token': token 
-                        },
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                         body: JSON.stringify({ courseId, subModuleId: currentSubModuleId })
                     });
 
-                    if (!response.ok) {
-                        throw new Error('Server responded with an error.');
-                    }
+                    if (!response.ok) throw new Error('Server responded with an error.');
                     
                     completedSubModules.add(currentSubModuleId);
                     updateProgressUI();
-                    renderSidebar();
+                    renderSidebar(searchInput.value); // Re-render with search term
                     const isLast = allSubModules.findIndex(s => s.subModuleId === currentSubModuleId) === allSubModules.length - 1;
                     if (isLast) {
-                        renderContent(currentSubModuleId); // Re-render to show final state
+                        renderContent(currentSubModuleId);
                         showModal("Congratulations!", "You have completed the course. The final test is now available in your dashboard.");
                     } else {
                         navigate('next');
@@ -309,28 +346,56 @@
             };
 
             // --- Event Listeners ---
-            toggleSidebarBtn.addEventListener('click', () => {
+            const toggleMenu = () => {
                 sidebar.classList.toggle('collapsed');
+                sidebarBackdrop.classList.toggle('hidden');
+            };
+            toggleSidebarBtn.addEventListener('click', toggleMenu);
+            sidebarBackdrop.addEventListener('click', toggleMenu);
+            
+            searchInput.addEventListener('input', (e) => renderSidebar(e.target.value));
+
+            resumeBtn.addEventListener('click', () => {
+                if (lastViewedSubModuleId) {
+                    renderContent(lastViewedSubModuleId);
+                    const lastItem = document.querySelector(`[data-submodule-id="${lastViewedSubModuleId}"]`);
+                    if(lastItem) lastItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
             });
+
             modulesSidebar.addEventListener('click', e => {
                 e.preventDefault();
                 const item = e.target.closest('.sidebar-item');
-                if (item) renderContent(item.dataset.submoduleId);
+                if (item) {
+                     renderContent(item.dataset.submoduleId);
+                     if (window.innerWidth < 1024) toggleMenu(); // Close sidebar on mobile after selection
+                }
             });
+
             contentView.addEventListener('click', e => {
                 if (e.target.id === 'prev-btn') navigate('prev');
                 if (e.target.id === 'next-btn') markAsCompleteAndProceed();
             });
 
+            floatingBtn.addEventListener('click', markAsCompleteAndProceed);
+
+            mainContent.addEventListener('scroll', () => {
+                if (mainContent.scrollTop > 200) {
+                    floatingBtn.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+                } else {
+                    floatingBtn.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+                }
+            });
+
             // --- Initial Load ---
             try {
-                // This is the live API call to your backend to get course data.
                 const response = await fetch(`/api/student/courses/${courseId}`, { 
                     headers: { 'x-auth-token': token } 
                 });
                 
                 if (!response.ok) {
-                    throw new Error('Could not load course data from the server.');
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Could not load course data.');
                 }
                 
                 const { course, progress } = await response.json();
@@ -343,18 +408,26 @@
                 updateProgressUI();
                 renderSidebar();
 
+                const savedSubModuleId = localStorage.getItem(`lastViewed_${courseId}`);
+                lastViewedSubModuleId = savedSubModuleId && allSubModules.some(s => s.subModuleId === savedSubModuleId) ? savedSubModuleId : null;
+
                 const firstIncomplete = allSubModules.find(s => !completedSubModules.has(s.subModuleId));
-                const initialSubModule = firstIncomplete || allSubModules[0];
-                
+                let initialSubModule = firstIncomplete || allSubModules[0];
+
+                if(lastViewedSubModuleId) {
+                    initialSubModule = allSubModules.find(s => s.subModuleId === lastViewedSubModuleId) || initialSubModule;
+                }
+
                 if (initialSubModule) {
                     renderContent(initialSubModule.subModuleId);
                 } else {
                     contentView.innerHTML = '<p class="text-center text-gray-500">This course has no content yet.</p>';
+                    resumeBtn.style.display = 'none';
                 }
 
             } catch (error) {
                 console.error("Failed to load course:", error);
-                document.body.innerHTML = `<p class="p-8 text-center text-red-500">${error.message}</p>`;
+                document.getElementById('app-container').innerHTML = `<p class="p-8 text-center text-red-500">${error.message}</p>`;
             }
         });
     </script>
