@@ -29,8 +29,8 @@ const JWT_SECRET = 'your-super-secret-key-for-jwt-in-production';
 const client = new DynamoDBClient({
     region: 'ap-south-1',
     credentials: {
-        accessKeyId: 'AKIATCKAN7T2MYCBT7OD',
-        secretAccessKey: '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'
+        accessKeyId: 'AKIAT4YSUMZD6GD5PC4X',
+        secretAccessKey: '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'
     }
 });
 const docClient = DynamoDBDocumentClient.from(client);
