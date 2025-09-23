@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Manage Job Openings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .modal-overlay { transition: opacity 0.3s ease; }
+        .modal-content { transition: transform 0.3s ease; }
+        .sidebar-link:hover { background-color: #4f46e5; }
+        .sidebar-link.active { background-color: #4338ca; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div id="root">
+        <!-- Initial loading state -->
+        <div class="flex h-screen items-center justify-center">
+            <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <p class="ml-4 text-gray-700">Verifying session...</p>
+        </div>
+    </div>
+    
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const root = document.getElementById('root');
+
+        async function verifyAdminSession() {
+            const authToken = localStorage.getItem('token');
+            if (!authToken) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/check-auth', {
+                    headers: { 'x-auth-token': authToken }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Session invalid');
+                }
+
+                const user = await response.json();
+
+                if (user.role !== 'Admin') {
+                    root.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-screen bg-gray-100">
+                            <div class="p-8 bg-white shadow-lg rounded-lg text-center">
+                                <h1 class="text-3xl font-bold text-red-600">Access Denied</h1>
+                                <p class="mt-4 text-gray-700">You do not have the required permissions to view this page.</p>
+                                <button onclick="window.location.href='/login.html'" class="mt-6 inline-block px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">
+                                    Go to Login
+                                </button>
+                            </div>
+                        </div>`;
+                    return;
+                }
+                
+                renderPage(authToken);
+
+            } catch (error) {
+                console.error('Authentication check failed:', error);
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login.html';
+            }
+        }
+
+        function renderPage(authToken) {
+            root.innerHTML = `
+                <div class="flex h-screen bg-gray-100">
+                    <!-- Sidebar -->
+                    <div class="w-64 bg-gray-800 text-white flex flex-col">
+                        <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo" class="h-10 w-auto mr-2">
+                            <span class="text-2xl font-bold">Testify Admin</span>
+                        </div>
+                        <nav class="flex-1 px-4 py-6 space-y-2">
+                            <a href="#" class="sidebar-link active flex items-center px-4 py-2 rounded-lg">
+                                <svg class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                Job Openings
+                            </a>
+                        </nav>
+                    </div>
+
+                    <!-- Main content -->
+                    <div class="flex-1 flex flex-col overflow-hidden">
+                        <header class="bg-white shadow-sm p-4">
+                            <h1 class="text-2xl font-semibold text-gray-800">Manage Careers</h1>
+                        </header>
+                        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+                            <div class="container mx-auto">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h2 class="text-xl font-bold text-gray-700">All Job Postings</h2>
+                                    <button onclick="openModal()" class="px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300">
+                                        Create New Job
+                                    </button>
+                                </div>
+                                <div class="bg-white shadow-md rounded-lg overflow-hidden">
+                                    <div id="loading" class="text-center p-8">
+                                        <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                        <p class="mt-2 text-gray-600">Loading jobs...</p>
+                                    </div>
+                                    <table id="jobs-table" class="min-w-full leading-normal hidden">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Title</th>
+                                                <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Department</th>
+                                                <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Deadline</th>
+                                                <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                                                <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="jobs-table-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </main>
+                    </div>
+                </div>
+                
+                <!-- Create/Edit Job Modal -->
+                <div id="job-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 modal-overlay opacity-0">
+                    <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-full overflow-y-auto modal-content transform scale-95">
+                        <div class="flex justify-between items-center p-5 border-b sticky top-0 bg-white">
+                            <h3 id="modal-title" class="text-xl font-semibold text-gray-900">Create New Job Opening</h3>
+                            <button type="button" onclick="closeModal()" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                            </button>
+                        </div>
+                        <div class="p-6">
+                            <form id="job-form" class="space-y-6">
+                                <div>
+                                    <label for="title" class="block mb-2 text-sm font-medium text-gray-900">Job Title</label>
+                                    <input type="text" name="title" id="title" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" required>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="department" class="block mb-2 text-sm font-medium text-gray-900">Department</label>
+                                        <input type="text" name="department" id="department" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" required>
+                                    </div>
+                                    <div>
+                                        <label for="location" class="block mb-2 text-sm font-medium text-gray-900">Location</label>
+                                        <input type="text" name="location" id="location" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" required>
+                                    </div>
+                                </div>
+                                 <div>
+                                    <label for="applicationDeadline" class="block mb-2 text-sm font-medium text-gray-900">Application Deadline</label>
+                                    <input type="date" name="applicationDeadline" id="applicationDeadline" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5" required>
+                                </div>
+                                <div>
+                                    <label for="description" class="block mb-2 text-sm font-medium text-gray-900">Job Description</label>
+                                    <textarea id="description" name="description" rows="6" class="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500" required></textarea>
+                                </div>
+                                <div id="form-feedback" class="text-sm"></div>
+                                <button type="submit" id="submit-button" class="w-full text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-4 focus:outline-none focus:ring-indigo-300 font-medium rounded-lg text-sm px-5 py-3 text-center">
+                                    Create Job
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>`;
+            
+            initializePageLogic(authToken);
+        }
+
+        function initializePageLogic(authToken) {
+            const loadingDiv = document.getElementById('loading');
+            const jobsTable = document.getElementById('jobs-table');
+            const jobsTableBody = document.getElementById('jobs-table-body');
+            const modal = document.getElementById('job-modal');
+            const modalOverlay = document.querySelector('.modal-overlay');
+            const modalContent = document.querySelector('.modal-content');
+            const jobForm = document.getElementById('job-form');
+            const formFeedback = document.getElementById('form-feedback');
+            const submitButton = document.getElementById('submit-button');
+
+            async function fetchJobs() {
+                loadingDiv.style.display = 'block';
+                jobsTable.classList.add('hidden');
+
+                try {
+                    const response = await fetch('/api/admin/all-jobs', {
+                        headers: { 'x-auth-token': authToken }
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch jobs');
+                    const jobs = await response.json();
+                    displayJobs(jobs);
+                } catch (error) {
+                    jobsTableBody.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-red-600">Could not load jobs. ${error.message}</td></tr>`;
+                } finally {
+                    loadingDiv.style.display = 'none';
+                    jobsTable.classList.remove('hidden');
+                }
+            }
+
+            function displayJobs(jobs) {
+                jobsTableBody.innerHTML = '';
+                if (jobs.length === 0) {
+                    jobsTableBody.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-gray-500">No job openings created yet.</td></tr>`;
+                    return;
+                }
+                jobs.forEach(job => {
+                    const deadline = new Date(job.applicationDeadline).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                    const statusClass = job.status === 'Open' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+                    const row = `
+                        <tr>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm"><p class="text-gray-900">${job.title}</p></td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm"><p class="text-gray-900">${job.department}</p></td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm"><p class="text-gray-900">${deadline}</p></td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm"><span class="relative inline-block px-3 py-1 font-semibold leading-tight ${statusClass} rounded-full">${job.status}</span></td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm"><a href="view-applications.html?jobId=${job.jobId}&jobTitle=${encodeURIComponent(job.title)}" class="text-indigo-600 hover:text-indigo-900">View Applications</a></td>
+                        </tr>`;
+                    jobsTableBody.innerHTML += row;
+                });
+            }
+
+            window.openModal = function() {
+                jobForm.reset();
+                formFeedback.innerHTML = '';
+                submitButton.disabled = false;
+                submitButton.textContent = 'Create Job';
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modalOverlay.classList.remove('opacity-0');
+                    modalContent.classList.remove('scale-95');
+                }, 10);
+            }
+
+            window.closeModal = function() {
+                modalOverlay.classList.add('opacity-0');
+                modalContent.classList.add('scale-95');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+            
+            jobForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                submitButton.disabled = true;
+                submitButton.textContent = 'Creating...';
+                formFeedback.innerHTML = '';
+                
+                const formData = new FormData(this);
+                const jobData = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch('/api/admin/jobs', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-auth-token': authToken
+                        },
+                        body: JSON.stringify(jobData)
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message);
+
+                    formFeedback.innerHTML = `<div class="p-3 text-green-800 bg-green-100 rounded-lg">${result.message}</div>`;
+                    fetchJobs();
+                    setTimeout(closeModal, 1500);
+
+                } catch (error) {
+                    formFeedback.innerHTML = `<div class="p-3 text-red-800 bg-red-100 rounded-lg">Error: ${error.message}</div>`;
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Create Job';
+                }
+            });
+
+            fetchJobs();
+        }
+
+        verifyAdminSession();
+    });
+</script>
+</body>
+</html>
+
