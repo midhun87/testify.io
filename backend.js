@@ -29,8 +29,8 @@ const JWT_SECRET = 'your-super-secret-key-for-jwt-in-production';
 const client = new DynamoDBClient({
     region: 'ap-south-1',
     credentials: {
-        accessKeyId: 'AKIAT4YSUMZD6GD5PC4X',
-        secretAccessKey: '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'
+        accessKeyId: 'AKIATCKAN7T2GJJYYJSH',
+        secretAccessKey: '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'
     }
 });
 const docClient = DynamoDBDocumentClient.from(client);
@@ -5729,6 +5729,520 @@ app.get('/api/certificate/:id', async (req, res) => {
 
 
 
+// =================================================================
+// --- CAREERS & JOB APPLICATION ROUTES ---
+// =================================================================
+// Note: Ensure you have created two DynamoDB tables: 
+// 1. "TestifyJobs" with "jobId" as the primary key.
+// 2. "TestifyApplications" with "applicationId" as the primary key.
+// =================================================================
+
+// --- ADMIN ROUTES ---
+
+// ADMIN ONLY: Create a new job opening
+app.post('/api/admin/jobs', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { title, location, department, description } = req.body;
+    if (!title || !location || !department || !description) {
+        return res.status(400).json({ message: 'All job fields are required.' });
+    }
+    const jobId = `job_${uuidv4()}`;
+    const newJob = {
+        jobId,
+        title,
+        location,
+        department,
+        description,
+        status: 'Open',
+        createdAt: new Date().toISOString()
+    };
+    try {
+        await docClient.send(new PutCommand({ TableName: "TestifyJobs", Item: newJob }));
+        res.status(201).json({ message: 'Job opening created successfully!', job: newJob });
+    } catch (error) {
+        console.error("Create Job Error:", error);
+        res.status(500).json({ message: 'Server error creating job opening.' });
+    }
+});
+
+/**
+ * @route   GET /api/admin/all-jobs
+ * @desc    Admin: Get ALL job listings (open and closed)
+ * @access  Private (Admin Only)
+ */
+app.get('/api/admin/all-jobs', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyJobs"
+        }));
+        Items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        res.json(Items);
+    } catch (error) {
+        console.error("Get All Jobs for Admin Error:", error);
+        res.status(500).json({ message: 'Server error fetching jobs.' });
+    }
+});
+
+/**
+ * @route   GET /api/admin/applications/:jobId
+ * @desc    Admin: Get all applications for a specific job
+ * @access  Private (Admin Only)
+ */
+app.get('/api/admin/applications/:jobId', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { jobId } = req.params;
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyApplications",
+            FilterExpression: "jobId = :jid",
+            ExpressionAttributeValues: { ":jid": jobId }
+        }));
+        Items.sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt));
+        res.json(Items);
+    } catch (error) {
+        console.error("Get Applications Error:", error);
+        res.status(500).json({ message: 'Server error fetching applications.' });
+    }
+});
+
+
+// --- PUBLIC & USER ROUTES ---
+
+/**
+ * @route   GET /api/careers/jobs
+ * @desc    Public: Get all OPEN job listings for the careers page
+ * @access  Public
+ */
+app.get('/api/careers/jobs', async (req, res) => {
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyJobs",
+            FilterExpression: "#status = :status",
+            ExpressionAttributeNames: { "#status": "status" },
+            ExpressionAttributeValues: { ":status": "Open" }
+        }));
+        Items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        res.json(Items);
+    } catch (error) {
+        console.error("Get Jobs Error:", error);
+        res.status(500).json({ message: 'Server error fetching jobs.' });
+    }
+});
+
+/**
+ * @route   POST /api/careers/apply/:jobId
+ * @desc    Public: Submit a detailed job application with file uploads
+ * @access  Public
+ */
+app.post('/api/careers/apply/:jobId',
+    upload.fields([
+        { name: 'passportPhoto', maxCount: 1 },
+        { name: 'resume', maxCount: 1 },
+        { name: 'proofs', maxCount: 5 }
+    ]),
+    async (req, res) => {
+        const { jobId } = req.params;
+        const {
+            firstName, lastName, email, phone,
+            edu_10_institute, edu_10_score, edu_10_year,
+            edu_12_institute, edu_12_score, edu_12_year,
+            edu_btech_institute, edu_btech_score, edu_btech_year,
+            edu_higher_institute, edu_higher_score, edu_higher_year,
+            experiences,
+            linkedinUrl, githubUrl, portfolioUrl
+        } = req.body;
+
+        if (!req.files || !req.files.passportPhoto || !req.files.resume) {
+            return res.status(400).json({ message: 'Passport photo and resume are mandatory.' });
+        }
+        if (!firstName || !lastName || !email || !phone) {
+            return res.status(400).json({ message: 'Personal details are required.' });
+        }
+
+        try {
+            const { Item: job } = await docClient.send(new GetCommand({ TableName: "TestifyJobs", Key: { jobId } }));
+            if (!job) {
+                return res.status(404).json({ message: 'Job opening not found.' });
+            }
+
+            const uploadToCloudinary = async (file) => {
+                const b64 = Buffer.from(file.buffer).toString("base64");
+                const dataURI = `data:${file.mimetype};base64,${b64}`;
+                return await cloudinary.uploader.upload(dataURI, {
+                    folder: "applications",
+                    resource_type: "auto"
+                });
+            };
+
+            const photoUpload = await uploadToCloudinary(req.files.passportPhoto[0]);
+            const resumeUpload = await uploadToCloudinary(req.files.resume[0]);
+            
+            let proofUploadUrls = [];
+            if (req.files.proofs) {
+                for (const file of req.files.proofs) {
+                    const result = await uploadToCloudinary(file);
+                    proofUploadUrls.push(result.secure_url);
+                }
+            }
+
+            const applicationId = `app_${uuidv4()}`;
+            const newApplication = {
+                applicationId,
+                jobId,
+                jobTitle: job.title,
+                firstName,
+                lastName,
+                email,
+                phone,
+                passportPhotoUrl: photoUpload.secure_url,
+                resumeUrl: resumeUpload.secure_url,
+                proofsAndCertificatesUrls: proofUploadUrls,
+                education: {
+                    tenth: { institute: edu_10_institute, score: edu_10_score, year: edu_10_year },
+                    twelfth: { institute: edu_12_institute, score: edu_12_score, year: edu_12_year },
+                    btech: { institute: edu_btech_institute, score: edu_btech_score, year: edu_btech_year },
+                    higher: { institute: edu_higher_institute, score: edu_higher_score, year: edu_higher_year },
+                },
+                experiences: JSON.parse(experiences || '[]'),
+                links: {
+                    linkedin: linkedinUrl,
+                    github: githubUrl,
+                    portfolio: portfolioUrl
+                },
+                status: 'Received',
+                appliedAt: new Date().toISOString()
+            };
+
+            await docClient.send(new PutCommand({ TableName: "TestifyApplications", Item: newApplication }));
+
+            // --- EXISTING: Admin Notification Email ---
+            const adminMailOptions = {
+                from: '"TESTIFY Careers" <testifylearning.help@gmail.com>',
+                to: 'testifylearning.help@gmail.com', // Your admin notification email
+                subject: `New Application for ${job.title}: ${firstName} ${lastName}`,
+                html: `<h1>Application for ${job.title}</h1><p>From: ${firstName} ${lastName} (${email})</p><p>View the full application in the admin panel.</p>`
+            };
+            await transporter.sendMail(adminMailOptions);
+
+            // --- START: NEW CODE TO EMAIL APPLICANT ---
+            // This block sends a confirmation email to the person who applied.
+            const applicantMailOptions = {
+                from: '"TESTIFY Careers" <testifylearning.help@gmail.com>',
+                to: email, // The applicant's email from the form
+                subject: `We've Received Your Application for ${job.title}`,
+                html: `
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8" />
+                        <title>Application Received</title>
+                        <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+                            body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; background-color: #f3f4f6; }
+                        </style>
+                    </head>
+                    <body style="margin: 0; padding: 0; background-color: #f3f4f6;">
+                        <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
+                            <tr>
+                                <td align="center" style="padding: 40px 20px;">
+                                    <table width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
+                                        <tr>
+                                            <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
+                                                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo" style="height: 50px; width: auto;">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td align="center" style="padding: 40px; text-align: center;">
+                                                <h1 style="font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">Application Received!</h1>
+                                                <p style="font-size: 16px; color: #4b5563; margin: 0 0 30px; line-height: 1.7;">
+                                                    Hi ${firstName},<br><br>Thank you for your interest in the <strong>${job.title}</strong> position at Testify. We have successfully received your application.
+                                                </p>
+                                                <p style="font-size: 14px; color: #6b7280; margin: 30px 0 0;">
+                                                    Our team will review your qualifications and get back to you if you are a good fit for the role.
+                                                </p>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
+                                                <p style="font-size: 12px; color: #6b7280; margin: 0;">&copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.</p>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </body>
+                    </html>
+                `
+            };
+            await transporter.sendMail(applicantMailOptions);
+            // --- END: NEW CODE TO EMAIL APPLICANT ---
+
+            res.status(201).json({ message: 'Application submitted successfully! We will be in touch.' });
+
+        } catch (error) {
+            console.error("Apply Job Error:", error);
+            res.status(500).json({ message: 'Server error submitting application.' });
+        }
+    }
+);
+/**
+ * @route   GET /api/student/my-applications
+ * @desc    Student: Get all their past applications
+ * @access  Private (Student)
+ */
+app.get('/api/student/my-applications', authMiddleware, async (req, res) => {
+    // Assuming the authMiddleware populates req.user.email for the logged-in student
+    const studentEmail = req.user.email;
+    if (!studentEmail) {
+        return res.status(401).json({ message: 'Authentication required.' });
+    }
+
+    try {
+        // UPDATED: Changed from Scan to a more efficient Query on the new index.
+        const { Items } = await docClient.send(new QueryCommand({
+            TableName: "TestifyApplications",
+            IndexName: "email-index", // Use the newly created Global Secondary Index
+            KeyConditionExpression: "email = :email",
+            ExpressionAttributeValues: { ":email": studentEmail }
+        }));
+        
+        Items.sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt));
+        
+        res.json(Items);
+    } catch (error) {
+        console.error("Get My Applications Error:", error);
+        res.status(500).json({ message: 'Server error fetching your applications.' });
+    }
+});
+
+/**
+ * @route   GET /api/check-auth
+ * @desc    Verify user's token and return user data if valid
+ * @access  Private
+ */
+// app.get('/api/check-auth', authMiddleware, async (req, res) => {
+//     // The authMiddleware handles token verification. If it passes, the token is valid.
+//     // We then fetch the user's latest data from the database to ensure it's fresh.
+//     try {
+//         const { Item } = await docClient.send(new GetCommand({
+//             TableName: "TestifyUsers", // Assuming your users are in 'TestifyUsers'
+//             Key: { email: req.user.email }
+//         }));
+//         if (!Item) {
+//             return res.status(404).json({ message: 'User not found.' });
+//         }
+//         const { password, ...userData } = Item; // Exclude password from the response
+//         res.json(userData);
+//     } catch (error) {
+//         console.error("Check Auth Error:", error);
+//         res.status(500).json({ message: 'Server error during authentication check.' });
+//     }
+// });
+
+app.patch('/api/admin/applications/status', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { applicationId, status } = req.body;
+    if (!applicationId || !status) {
+        return res.status(400).json({ message: 'Application ID and new status are required.' });
+    }
+    const validStatuses = ['Received', 'Under Review', 'Interview', 'Hired', 'Rejected'];
+    if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: 'Invalid status value.' });
+    }
+    try {
+        await docClient.send(new UpdateCommand({
+            TableName: "TestifyApplications",
+            Key: { applicationId },
+            UpdateExpression: "set #status = :s",
+            ExpressionAttributeNames: { "#status": "status" },
+            ExpressionAttributeValues: { ":s": status }
+        }));
+        res.json({ message: 'Application status updated successfully.' });
+    } catch (error) {
+        console.error("Update Application Status Error:", error);
+        res.status(500).json({ message: 'Server error updating application status.' });
+    }
+});
+
+
+app.get('/api/check-auth', authMiddleware, async (req, res) => {
+    // The authMiddleware already verifies the token and populates req.user.
+    // This endpoint re-fetches user data to ensure it's fresh (e.g., role changes, blocks).
+    try {
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: "TestifyUsers",
+            Key: { email: req.user.email }
+        }));
+
+        if (!Item) {
+            // This case is unlikely if the token is valid, but it's a good safeguard.
+            return res.status(404).json({ message: 'User associated with token not found.' });
+        }
+        
+        // Exclude sensitive information like the password hash before sending the user object.
+        const { password, ...userData } = Item;
+        res.json(userData);
+
+    } catch (error) {
+        console.error("Check Auth Error:", error);
+        res.status(500).json({ message: 'Server error during authentication check.' });
+    }
+});
+app.get('/api/public/my-applications', async (req, res) => {
+    const { email } = req.query;
+    if (!email) {
+        return res.status(400).json({ message: 'Email query parameter is required.' });
+    }
+
+    try {
+        // Use the efficient GSI to query applications by email
+        const { Items } = await docClient.send(new QueryCommand({
+            TableName: "TestifyApplications",
+            IndexName: "email-index", 
+            KeyConditionExpression: "email = :email",
+            ExpressionAttributeValues: { ":email": email.toLowerCase() }
+        }));
+        
+        Items.sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt));
+        
+        res.json(Items);
+    } catch (error) {
+        console.error("Get Public Applications Error:", error);
+        res.status(500).json({ message: 'Server error fetching your applications.' });
+    }
+});
+// --- NEW: OTP-based authentication for viewing applications ---
+
+/**
+ * @route   POST /api/careers/send-view-otp
+ * @desc    Public: Send an OTP to a user's email to let them view their applications.
+ * @access  Public
+ */
+app.post('/api/careers/send-view-otp', async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required.' });
+    }
+    const emailLower = email.toLowerCase();
+
+    try {
+        // First, check if any applications exist for this email to prevent unnecessary OTP sends.
+        const { Items } = await docClient.send(new QueryCommand({
+            TableName: "TestifyApplications",
+            IndexName: "email-index",
+            KeyConditionExpression: "email = :email",
+            ExpressionAttributeValues: { ":email": emailLower }
+        }));
+
+        if (!Items || Items.length === 0) {
+            return res.status(404).json({ message: 'No applications found for this email address.' });
+        }
+
+        // Generate and store OTP (using the existing in-memory store)
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expirationTime = Date.now() + 5 * 60 * 1000; // 5-minute validity
+
+        // The 'otpStore' object should already be defined at the top of your backend.js
+        otpStore[emailLower] = { otp, expirationTime };
+        console.log(`Generated application view OTP for ${email}: ${otp}`);
+
+        // Send the OTP via email
+        const mailOptions = {
+            from: '"TESTIFY" <testifylearning.help@gmail.com>',
+            to: email,
+            subject: 'Your Application Status Verification Code',
+            html: `
+                <div style="font-family: Arial, sans-serif; text-align: center; color: #333;">
+                    <h2>TESTIFY Application Status</h2>
+                    <p>Your verification code is:</p>
+                    <p style="font-size: 24px; font-weight: bold; letter-spacing: 3px; color: #4F46E5;">${otp}</p>
+                    <p>This code will expire in 5 minutes.</p>
+                </div>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+        res.status(200).json({ message: 'A verification code has been sent to your email.' });
+
+    } catch (error) {
+        console.error("Send Application View OTP Error:", error);
+        res.status(500).json({ message: 'Server error. Please try again later.' });
+    }
+});
+
+/**
+ * @route   POST /api/careers/verify-view-otp
+ * @desc    Public: Verify OTP and fetch all applications for that email.
+ * @access  Public
+ */
+app.post('/api/careers/verify-view-otp', async (req, res) => {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+        return res.status(400).json({ message: 'Email and verification code are required.' });
+    }
+    const emailLower = email.toLowerCase();
+
+    // Verify the OTP
+    const storedOtpData = otpStore[emailLower];
+    if (!storedOtpData || storedOtpData.otp !== otp || Date.now() > storedOtpData.expirationTime) {
+        return res.status(400).json({ message: 'Invalid or expired verification code.' });
+    }
+
+    try {
+        // OTP is valid, remove it to prevent reuse
+        delete otpStore[emailLower];
+
+        // Fetch applications using the GSI for efficiency
+        const { Items: applications } = await docClient.send(new QueryCommand({
+            TableName: "TestifyApplications",
+            IndexName: "email-index",
+            KeyConditionExpression: "email = :email",
+            ExpressionAttributeValues: { ":email": emailLower }
+        }));
+
+        if (!applications || applications.length === 0) {
+            return res.json([]);
+        }
+
+        // Fetch job details to get the application deadline for the "Edit" button logic
+        const jobIds = [...new Set(applications.map(app => app.jobId))];
+        const keys = jobIds.map(jobId => ({ jobId }));
+        
+        const { Responses } = await docClient.send(new BatchGetCommand({
+            RequestItems: { "TestifyJobs": { Keys: keys } }
+        }));
+        
+        const jobs = Responses.TestifyJobs || [];
+        const jobDeadlineMap = new Map(jobs.map(j => [j.jobId, j.applicationDeadline]));
+
+        // Enrich application data with the deadline
+        const enrichedApplications = applications.map(app => ({
+            ...app,
+            jobDeadline: jobDeadlineMap.get(app.jobId) || null
+        }));
+
+        enrichedApplications.sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt));
+        
+        res.status(200).json(enrichedApplications);
+
+    } catch (error) {
+        console.error("Verify OTP & Fetch Applications Error:", error);
+        res.status(500).json({ message: 'Server error fetching applications.' });
+    }
+});
+// =================================================================
+// --- END OF CAREERS ROUTES ---
+// =================================================================
 
 
 // --- SERVER START ---
