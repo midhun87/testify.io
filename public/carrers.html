@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Careers at Testify</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .job-description-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-40">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo" class="h-10 w-auto">
+                <span class="text-2xl font-bold text-gray-800">Testify</span>
+            </div>
+            <div>
+                 <a href="welcome.html" class="text-gray-600 hover:text-indigo-600 font-medium px-4">Home</a>
+                 <a href="my-applications.html" class="text-gray-600 hover:text-indigo-600 font-medium">My Applications</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <section class="bg-indigo-700 text-white">
+            <div class="container mx-auto px-6 py-20 text-center">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4">Join Our Mission</h1>
+                <p class="text-lg md:text-xl text-indigo-200 max-w-3xl mx-auto">We're building the future of assessment and learning. If you're passionate about education, technology, and innovation, you've come to the right place.</p>
+            </div>
+        </section>
+
+        <!-- Job Listings -->
+        <section id="job-listings" class="py-16 sm:py-24">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Current Openings</h2>
+                    <p class="mt-4 text-lg leading-8 text-gray-600">Find your next opportunity and make an impact with us.</p>
+                </div>
+
+                <!-- Job List Container -->
+                <div id="jobs-container" class="max-w-4xl mx-auto space-y-6">
+                    <!-- Loading State -->
+                    <div id="loading" class="text-center py-10">
+                        <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="mt-4 text-gray-500">Loading open positions...</p>
+                    </div>
+
+                    <!-- Error State -->
+                     <div id="error" class="hidden text-center py-10 bg-red-50 border border-red-200 rounded-lg">
+                        <p class="text-red-700 font-medium">Could not load job openings.</p>
+                        <p class="text-red-600 mt-2">Please try again later.</p>
+                    </div>
+
+                    <!-- No Jobs State -->
+                     <div id="no-jobs" class="hidden text-center py-10 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p class="text-blue-700 font-medium">No Open Positions Currently</p>
+                        <p class="text-blue-600 mt-2">Please check back soon for new opportunities!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const jobsContainer = document.getElementById('jobs-container');
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const noJobsDiv = document.getElementById('no-jobs');
+
+            async function fetchJobs() {
+                loadingDiv.style.display = 'block';
+                errorDiv.style.display = 'none';
+                noJobsDiv.style.display = 'none';
+                jobsContainer.innerHTML = ''; // Clear previous content
+                jobsContainer.appendChild(loadingDiv);
+
+                try {
+                    const response = await fetch('/api/careers/jobs');
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    const jobs = await response.json();
+                    
+                    if (jobs.length === 0) {
+                        jobsContainer.innerHTML = '';
+                        jobsContainer.appendChild(noJobsDiv);
+                        noJobsDiv.style.display = 'block';
+                    } else {
+                        displayJobs(jobs);
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch jobs:', err);
+                    jobsContainer.innerHTML = '';
+                    jobsContainer.appendChild(errorDiv);
+                    errorDiv.style.display = 'block';
+                } finally {
+                     loadingDiv.style.display = 'none';
+                }
+            }
+            
+            function formatDescription(description) {
+                // This is a more robust formatting function.
+                // It handles paragraphs, headings (lines ending in ':'), and bullet points.
+                const lines = description.split('\n').filter(line => line.trim() !== '');
+                let html = '';
+                let inList = false;
+
+                lines.forEach(line => {
+                    line = line.trim();
+                    // Check for headings (ends with a colon)
+                    if (line.endsWith(':')) {
+                        if (inList) {
+                            html += '</ul>';
+                            inList = false;
+                        }
+                        html += `<h4 class="font-semibold text-gray-800 mt-4 mb-2">${line}</h4>`;
+                    } 
+                    // Check for list items (starts with *, -, or a number)
+                    else if (line.startsWith('* ') || line.startsWith('- ') || /^\d+\.\s/.test(line)) {
+                        if (!inList) {
+                            html += '<ul class="list-disc list-inside text-gray-600 space-y-1 mt-2">';
+                            inList = true;
+                        }
+                        html += `<li>${line.replace(/^(\* |-\s|\d+\.\s)/, '')}</li>`;
+                    } 
+                    // Otherwise, it's a paragraph
+                    else {
+                        if (inList) {
+                            html += '</ul>';
+                            inList = false;
+                        }
+                        html += `<p class="text-gray-600 text-sm leading-relaxed mt-2">${line}</p>`;
+                    }
+                });
+
+                if (inList) {
+                    html += '</ul>'; // Close any open list at the end
+                }
+
+                return html;
+            }
+
+            function displayJobs(jobs) {
+                jobsContainer.innerHTML = '';
+                jobs.forEach((job) => {
+                    const formattedDescription = formatDescription(job.description);
+                    const jobCard = document.createElement('div');
+                    jobCard.className = "bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300";
+                    jobCard.innerHTML = `
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-start cursor-pointer" data-job-id="${job.jobId}">
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-900">${job.title}</h3>
+                                <div class="mt-2 flex items-center text-sm text-gray-500 gap-x-4">
+                                    <span>${job.department}</span>
+                                    <span class="w-1 h-1 bg-gray-400 rounded-full"></span>
+                                    <span>${job.location}</span>
+                                </div>
+                            </div>
+                            <div class="mt-4 sm:mt-0 flex-shrink-0 flex items-center space-x-4">
+                                <a href="apply.html?jobId=${job.jobId}&jobTitle=${encodeURIComponent(job.title)}" class="w-full sm:w-auto inline-flex items-center justify-center px-5 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300">
+                                    Apply Now
+                                </a>
+                                <svg class="w-5 h-5 text-gray-500 transform transition-transform duration-300 job-arrow" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div id="desc-${job.jobId}" class="job-description-content mt-4 border-t pt-4">
+                           ${formattedDescription}
+                        </div>
+                    `;
+                    jobsContainer.appendChild(jobCard);
+
+                    const header = jobCard.querySelector(`[data-job-id="${job.jobId}"]`);
+                    header.addEventListener('click', (e) => {
+                        if (e.target.closest('a')) return;
+                        
+                        const content = document.getElementById(`desc-${job.jobId}`);
+                        const arrow = header.querySelector('.job-arrow');
+
+                        if (content.style.maxHeight) {
+                            content.style.maxHeight = null;
+                            arrow.classList.remove('rotate-180');
+                        } else {
+                            content.style.maxHeight = content.scrollHeight + "px";
+                            arrow.classList.add('rotate-180');
+                        }
+                    });
+                });
+            }
+
+            fetchJobs();
+        });
+    </script>
+
+</body>
+</html>
+
