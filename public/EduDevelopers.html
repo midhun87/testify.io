@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduDevelopers | Crafting the Future of Education</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758718248/EduDevelopers_logo_m1h9db.png">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-color: #f8fafc; /* Use slate-50 */
+        }
+        
+        .gradient-text {
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-bg {
+             background-color: #ffffff;
+             background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+             background-size: 20px 20px;
+        }
+
+        /* Entrance animations */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .fade-in-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .team-card:hover img {
+            transform: scale(1.05);
+        }
+        .product-card:hover, .blog-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15);
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Navigation Bar -->
+    <nav id="navbar" class="bg-white/70 backdrop-blur-xl fixed top-0 left-0 right-0 z-50 transition-all duration-300 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16 md:h-20">
+                <!-- Logo -->
+                <a href="edudevelopers.html" class="flex-shrink-0 flex items-center space-x-3">
+                    <img class="h-9 w-9" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758718248/EduDevelopers_logo_m1h9db.png" alt="EduDevelopers Logo">
+                    <span class="text-2xl font-bold text-slate-900 tracking-tight">EduDevelopers</span>
+                </a>
+                
+                <!-- Desktop Navigation Links -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#products" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">Products</a>
+                    <a href="#about" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">About</a>
+                    <a href="https://testify-io-ai.onrender.com/carrers.html" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">Careers</a>
+                    <a href="https://testify-io-ai.onrender.com/contact.html" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">Contact</a>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-slate-600 hover:text-violet-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-violet-500">
+                        <span class="sr-only">Open main menu</span>
+                        <svg id="menu-open-icon" class="h-6 w-6 block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg>
+                        <svg id="menu-close-icon" class="h-6 w-6 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div class="md:hidden hidden" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-slate-200">
+                <a href="#products" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Products</a>
+                <a href="#about" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">About</a>
+                <a href="carrers.html" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Careers</a>
+                <a href="contact.html" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="relative pt-40 pb-32 hero-bg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h1 class="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-7xl leading-tight fade-in-up">
+                    <span class="block text-slate-900">Building the Future of</span>
+                    <span class="block gradient-text mt-2">Education Technology</span>
+                </h1>
+                <p class="mt-6 max-w-2xl mx-auto text-lg text-slate-600 leading-relaxed fade-in-up" style="transition-delay: 150ms;">
+                    We are EduDevelopers, a team of innovators passionate about creating technology that empowers learners and educators worldwide.
+                </p>
+                <div class="mt-12 flex justify-center gap-4 fade-in-up" style="transition-delay: 300ms;">
+                    <a href="#products" class="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-full shadow-lg text-base font-semibold text-white bg-violet-600 hover:bg-violet-700 transition-all duration-300 transform hover:scale-105">
+                        Explore Our Products
+                    </a>
+                    <a href="https://testify-io-ai.onrender.com/carrers.html" class="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-full text-base font-semibold text-violet-700 bg-violet-100 hover:bg-violet-200 transition-all duration-300 transform hover:scale-105">
+                        Join Our Team
+                    </a>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Our Products Section -->
+        <section id="products" class="py-24 sm:py-32">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                 <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl fade-in-up">From Our Labs to the Classroom</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600 fade-in-up" style="transition-delay: 150ms;">
+                       We craft intuitive and powerful solutions to solve real-world challenges in education.
+                    </p>
+                </div>
+                <div class="mt-20 max-w-lg mx-auto">
+                    <a href="https://testify-io-ai.onrender.com/" class="block bg-white rounded-3xl shadow-lg overflow-hidden product-card transition-all duration-300 fade-in-up">
+                        <div class="p-8">
+                            <div class="flex items-center gap-4">
+                                <img class="h-16 w-16 rounded-2xl" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                                <div>
+                                    <h3 class="text-2xl font-bold text-gray-900">TESTIFY</h3>
+                                    <p class="text-violet-600 font-semibold">AI-Powered Assessment Platform</p>
+                                </div>
+                            </div>
+                            <p class="mt-4 text-slate-600">An intelligent platform that leverages AI to create, manage, and proctor secure online assessments with unparalleled ease and integrity.</p>
+                            <span class="mt-6 inline-block text-violet-600 font-semibold group">
+                               Learn More <span class="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
+                            </span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+         <!-- Core Values Section -->
+        <section id="values" class="py-24 sm:py-32 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl fade-in-up">The Principles That Guide Us</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600 fade-in-up" style="transition-delay: 150ms;">
+                        Our commitment to these values ensures we build products that make a real difference.
+                    </p>
+                </div>
+                <div class="mt-20 grid gap-10 md:grid-cols-3">
+                    <!-- Value Card 1: Innovation -->
+                    <div class="p-8 text-center fade-in-up">
+                        <div class="flex items-center justify-center h-16 w-16 rounded-2xl bg-violet-100 text-violet-600 mx-auto">
+                            <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.311a7.5 7.5 0 01-7.5 0c-1.255 0-2.443.29-3.5.832m14.25-8.832a7.5 7.5 0 00-7.5 0c1.255 0 2.443.29 3.5.832m-14.25 8.832c-1.289-.543-2.396-1.342-3.3-2.345m12.45-13.352a6.017 6.017 0 01-1.5.189m1.5-.189a6.017 6.017 0 001.5-.189m-1.5 2.311a7.5 7.5 0 00-7.5 0c1.255 0 2.443.29 3.5.832m-14.25-8.832c1.289-.543 2.396-1.342 3.3-2.345m12.45-13.352a6.017 6.017 0 01-1.5.189m1.5-.189a6.017 6.017 0 001.5-.189m-1.5 2.311a7.5 7.5 0 00-7.5 0c-1.255 0-2.443.29-3.5.832m14.25-8.832a7.5 7.5 0 00-7.5 0c.883 0 1.7.218 2.426.608M12 6.75v5.25m0 0a6.01 6.01 0 011.5.189m-1.5-.189a6.01 6.01 0 00-1.5.189" /></svg>
+                        </div>
+                        <h3 class="mt-6 text-xl font-bold text-gray-900">Innovation</h3>
+                        <p class="mt-2 text-base text-gray-600">We constantly push the boundaries of technology to create groundbreaking solutions for education.</p>
+                    </div>
+                    <!-- Value Card 2: Accessibility -->
+                    <div class="p-8 text-center fade-in-up" style="transition-delay: 150ms;">
+                        <div class="flex items-center justify-center h-16 w-16 rounded-2xl bg-violet-100 text-violet-600 mx-auto">
+                            <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" /></svg>
+                        </div>
+                        <h3 class="mt-6 text-xl font-bold text-gray-900">Accessibility</h3>
+                        <p class="mt-2 text-base text-gray-600">We believe powerful educational tools should be available and easy to use for everyone, everywhere.</p>
+                    </div>
+                    <!-- Value Card 3: Integrity -->
+                    <div class="p-8 text-center fade-in-up" style="transition-delay: 300ms;">
+                        <div class="flex items-center justify-center h-16 w-16 rounded-2xl bg-violet-100 text-violet-600 mx-auto">
+                           <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.286zm0 13.036h.008v.008h-.008v-.008z" /></svg>
+                        </div>
+                        <h3 class="mt-6 text-xl font-bold text-gray-900">Integrity</h3>
+                        <p class="mt-2 text-base text-gray-600">We are committed to the highest standards of academic honesty and data security in all our products.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Our Story Section -->
+        <section class="py-24 sm:py-32">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="lg:grid lg:grid-cols-2 lg:gap-16 lg:items-center">
+                    <div class="fade-in-up">
+                         <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Our Journey: From an Idea to Impact</h2>
+                         <p class="mt-6 text-lg text-slate-600 leading-relaxed">
+                            Founded in a small garage by a group of passionate educators and developers, EduDevelopers started with a simple yet ambitious goal: to make technology a seamless and powerful ally in the pursuit of knowledge. We saw the gaps in existing educational tools and envisioned a future where learning was more engaging, assessments were more insightful, and opportunities were accessible to all. TESTIFY is the first realization of that vision, and our journey is just beginning.
+                         </p>
+                    </div>
+                    <div class="mt-10 lg:mt-0 fade-in-up" style="transition-delay: 150ms;">
+                        <img class="rounded-3xl shadow-xl w-full" src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2070&auto=format&fit=crop" alt="Team brainstorming session">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technology We Use Section -->
+        <section class="py-24 sm:py-32 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                 <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl fade-in-up">Technology That Powers Our Innovation</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600 fade-in-up" style="transition-delay: 150ms;">
+                       We use a modern, scalable, and secure technology stack to build reliable and innovative products.
+                    </p>
+                </div>
+                <div class="mt-16 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-y-10 gap-x-8 justify-items-center">
+                    <!-- Tech Icon -->
+                    <div class="flex flex-col items-center gap-2 text-center text-slate-600 font-medium fade-in-up"><svg class="h-12 w-12" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Python</title><path d="M23.414 10.414l-2.021-2.021-3.143 3.143c-1.125-1.922-2.891-3.328-5.009-3.969V2.5h-2.5v4.547c-2.422.391-4.438 1.938-5.781 4.25-1.297 2.297-1.297 4.922 0 7.219 1.344 2.313 3.359 3.859 5.781 4.25V21.5h2.5v-5.031c2.117-.64 3.883-2.047 5.008-3.969l3.143 3.143 2.021-2.021-3.143-3.143c.531-1.125.844-2.391.844-3.75s-.313-2.625-.844-3.75l3.143-3.143zm-10.125 7.047c-1.719 0-3.109-1.391-3.109-3.109s1.391-3.109 3.109-3.109 3.109 1.391 3.109 3.109-1.39 3.109-3.109 3.109zM.586 13.586l2.021 2.021 3.143-3.143c1.125 1.922 2.891 3.328 5.008 3.969v5.031h2.5V21.5c2.422-.391 4.438-1.938 5.781-4.25 1.297-2.297 1.297-4.922 0-7.219-1.344-2.313-3.359-3.859-5.781-4.25V2.5h-2.5v5.031c-2.117.64-3.883-2.047-5.008-3.969L5.75.424 3.729 2.445l3.143 3.143c-.531 1.125-.844 2.391-.844 3.75s.313 2.625.844 3.75L3.729 16.25l-2.021-2.021.878-.843zM7.703 6.969c1.719 0 3.109 1.391 3.109 3.109s-1.391 3.109-3.109 3.109-3.109-1.391-3.109-3.109 1.39-3.109 3.109-3.109z"/></svg>Python</div>
+                    <div class="flex flex-col items-center gap-2 text-center text-slate-600 font-medium fade-in-up"><svg class="h-12 w-12" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>JavaScript</title><path d="M0 0h24v24H0V0zm22.034 18.262c-.323 1.625-1.453 2.846-3.237 3.481-.92.323-2.11.485-3.561.485-1.937 0-3.481-.564-4.646-1.694-1.165-1.129-1.747-2.727-1.747-4.793 0-1.548.363-2.883 1.09-4.002.727-1.12 1.818-1.938 3.27-2.455 1.453-.517 3.19-.776 5.212-.776.842 0 1.565.04 2.169.121.604.081 1.13.202 1.577.363V5.54c0-.92-.202-1.658-.604-2.213-.403-.556-1.01-1.01-1.819-1.362-1.01-.444-2.213-.665-3.601-.665-1.494 0-2.828.403-4.003 1.21-1.174.808-1.938 1.938-2.299 3.395L2.66 5.378c.444-2.018 1.61-3.638 3.481-4.858C7.949-.646 9.99-.966 12.287-.966c1.777 0 3.237.363 4.381 1.09.959.605 1.658 1.413 2.096 2.415.44.92.662 2.059.662 3.438v10.45c0 .92.08 1.658.241 2.213.162.556.403.97.726 1.25H22.03v-1.938zM18.41 15.3c0-1.166-.323-2.13-.97-2.894-.645-.765-1.61-1.147-2.894-1.147-1.205 0-2.213.363-3.021 1.09-.808.727-1.21 1.777-1.21 3.151 0 1.205.403 2.213 1.21 3.022.808.808 1.817 1.21 3.021 1.21 1.243 0 2.213-.403 2.894-1.21.682-.808 1.023-1.817 1.023-3.022z"/></svg>JavaScript</div>
+                    <div class="flex flex-col items-center gap-2 text-center text-slate-600 font-medium fade-in-up"><svg class="h-12 w-12" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>React</title><path d="M12.03 2.02c-1.12 0-2.18.3-3.13.82-1.18.64-2.2 1.6-2.95 2.78-.75 1.18-1.24 2.55-1.4 4-.17 1.46.03 2.94.58 4.31.55 1.37 1.42 2.6 2.53 3.56.28.24.58.46.88.66-1.38-1.25-2.2-2.97-2.31-4.83-.12-1.85.5-3.68 1.74-4.99 1.25-1.3 3.07-2.02 4.99-1.9 1.85.12 3.57.94 4.82 2.31-.2-.2-.42-.39-.65-.57-1.03-.78-2.2-1.38-3.46-1.72-1.26-.34-2.59-.4-3.89-.16zM11.97 22c1.12 0 2.18-.3 3.13-.82 1.18-.64 2.2-1.6 2.95-2.78.75-1.18 1.24-2.55 1.4-4 .17-1.46-.03-2.94-.58-4.31-.55-1.37-1.42-2.6-2.53-3.56-.28-.24-.58-.46-.88-.66 1.38 1.25 2.2 2.97 2.31 4.83.12 1.85-.5 3.68-1.74-4.99-1.25 1.3-3.07 2.02-4.99 1.9-1.85-.12-3.57-.94-4.82-2.31.2.2.42.39.65.57 1.03.78 2.2 1.38 3.46 1.72 1.26.34 2.59.4 3.89.16zM8.9 12.02c0 1.7 1.38 3.08 3.08 3.08s3.08-1.38 3.08-3.08-1.38-3.08-3.08-3.08-3.08 1.38-3.08 3.08z"/></svg>React</div>
+                    <div class="flex flex-col items-center gap-2 text-center text-slate-600 font-medium fade-in-up"><svg class="h-12 w-12" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Node.js</title><path d="M22.02 14.21c-.34-.41-.75-.77-1.2-1.07-.36-.23-.74-.44-1.14-.62-.7-.32-1.42-.58-2.15-.79-.56-.16-1.13-.29-1.7-.41-.53-.11-1.06-.2-1.6-.28-.2-.03-.4-.06-.6-.08l-.3-.02h-.2c-.2 0-.39.02-.59.03-.52.06-1.04.14-1.55.25-.56.12-1.11.26-1.66.42-.74.22-1.47.5-2.19.82-.4.18-.8.38-1.18.6-.45.3-.85.65-1.18 1.03L1.53 8.8c.34-.42.75-.78 1.2-1.08.36-.23.75-.44 1.15-.62.7-.32 1.42-.58 2.15-.79.56-.16 1.13-.29 1.7-.41.53-.11 1.06-.2 1.6-.28.2-.03.4-.06.6-.08l.3-.02h.2c.2 0 .39.02.59.03.52.06 1.04.14 1.55.25.56.12 1.11.26 1.66.42.74.22 1.47.5 2.19.82.4.18.8.38 1.18.6.45.3.85.65 1.18 1.03l3.49 4.24zm-9.04 8.25h1.2v-7.2h-1.2v7.2zm-2.99-1.89c.73 0 1.33-.21 1.8-.62.48-.42.71-.97.71-1.67v-3.02h1.18v3.02c0 .98-.31 1.79-.93 2.42-.62.63-1.44.95-2.48.95-.62 0-1.18-.12-1.67-.35-.5-.23-.9-.56-1.22-.98l.8-1.01c.23.33.52.59.85.79.34.2.71.3 1.12.3zm6.65 1.89h1.28l-3.32-7.2h-1.17l-3.3 7.2h1.28l.8-1.73h3.56l.83 1.73zm-.4-2.86l-1.3-3.1-1.29 3.1h2.59z"/></svg>Node.js</div>
+                    <div class="flex flex-col items-center gap-2 text-center text-slate-600 font-medium fade-in-up"><svg class="h-12 w-12" role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Amazon Web Services</title><path d="M13.882 19.929c.427.346.729.83.729 1.404 0 .993-.807 1.799-1.8 1.799-.025 0-.049-.002-.073-.005-.595 1.341-2.003 2.296-3.642 2.296-1.638 0-3.047-.955-3.642-2.296-.024.003-.048.005-.073.005-.993 0-1.8-.806-1.8-1.799 0-.574.303-1.058.729-1.404a10.043 10.043 0 0 1-.301-2.31c0-2.802 1.16-5.32 3.018-7.106-1.033-1.484-1.66-3.26-1.66-5.188C5.284 2.42 7.152.923 9.492.316 8.35 1.44 7.714 2.92 7.714 4.525c0 3.38 1.464 6.362 3.784 8.283 1.132.935 2.478 1.636 3.96 2.036.52.138.92.292 1.189.434.19.1.34.204.453.308.113.102.19.208.232.314.128.32.186.666.186 1.026 0 .58-.17 1.13-.483 1.583a1.94 1.94 0 0 1-.587.49zm2.44-9.333c1.033-1.484 1.66-3.26 1.66-5.188 0-2.906-1.868-5.284-4.208-5.891 1.14 1.123 1.774 2.602 1.774 4.208 0 3.38-1.464 6.362-3.784 8.283-1.132.935-2.478 1.636-3.96 2.036-.52.138-.92.292-1.189.434-.19.1-.34.204-.453.308-.113.102-.19.208-.232.314a2.23 2.23 0 0 0-.186 1.026c0 .58.17 1.13.483 1.583.136.196.302.37.488.514a1.8 1.8 0 0 0 1.957-.428c.427-.346.729-.83.729-1.404 0-2.802 1.16-5.32 3.018-7.106Z"/></svg>AWS</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Insights and News Section -->
+        <section class="py-24 sm:py-32">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl fade-in-up">Insights & News from EduDevelopers</h2>
+                     <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600 fade-in-up" style="transition-delay: 150ms;">
+                       Exploring the intersection of technology and education.
+                    </p>
+                </div>
+                <div class="mt-20 grid gap-10 md:grid-cols-2 lg:grid-cols-3">
+                    <!-- Blog Card 1 -->
+                    <div class="blog-card bg-white rounded-3xl shadow-lg overflow-hidden transition-all duration-300 fade-in-up cursor-pointer"
+                        data-title="The Role of AI in Personalized Learning Paths"
+                        data-category="Artificial Intelligence"
+                        data-img="https://images.unsplash.com/photo-1516321497487-e288fb19713f?q=80&w=2070&auto=format&fit=crop"
+                        data-content="Artificial Intelligence is revolutionizing education by shifting the paradigm from a one-size-fits-all approach to a deeply personalized learning journey. At its core, AI analyzes vast amounts of data on how individual students interact with learning materials. It tracks progress, identifies areas of strength and weakness, and even gauges engagement levels. Based on this continuous analysis, AI-powered platforms can dynamically adjust the curriculum in real-time. If a student is struggling with a concept, the system can provide additional resources, simpler explanations, or foundational exercises. Conversely, if a student masters a topic quickly, the AI can introduce more advanced material, ensuring they remain challenged and engaged. This adaptive learning model helps to operationalize educational theories like Vygotsky's Zone of Proximal Development, ensuring every learner receives the right level of support and challenge at the right time, fostering a more efficient, effective, and motivating educational experience for all.">
+                        <img class="h-48 w-full object-cover" src="https://images.unsplash.com/photo-1516321497487-e288fb19713f?q=80&w=2070&auto=format&fit=crop" alt="Blog post image on AI in education">
+                        <div class="p-6">
+                            <p class="text-sm font-semibold text-violet-600">Artificial Intelligence</p>
+                            <h3 class="mt-2 text-xl font-bold text-gray-900">The Role of AI in Personalized Learning Paths</h3>
+                            <p class="mt-3 text-base text-gray-600">Discover how AI is tailoring educational experiences to individual student needs, boosting engagement and outcomes.</p>
+                            <span class="mt-4 inline-block font-semibold text-violet-600 group">
+                                Read More <span class="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
+                            </span>
+                        </div>
+                    </div>
+                    <!-- Blog Card 2 -->
+                    <div class="blog-card bg-white rounded-3xl shadow-lg overflow-hidden transition-all duration-300 fade-in-up cursor-pointer" style="transition-delay: 150ms;"
+                         data-title="Ensuring Fairness: The Evolution of Remote Proctoring"
+                         data-category="Academic Integrity"
+                         data--img="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=2070&auto=format&fit=crop"
+                         data-content="As education moves increasingly online, maintaining academic integrity has become a paramount concern. Remote proctoring technology has emerged as a key solution, but it's a field that requires a delicate balance between security and student privacy. Early proctoring systems were often intrusive and rigid. However, the technology is evolving rapidly. Modern solutions, like the one integrated into our TESTIFY platform, use a multi-layered approach. This includes AI-powered monitoring that flags unusual behavior—such as looking away from the screen frequently, the presence of another person, or unauthorized materials—without constant human surveillance. This data is then compiled into a report for review by an educator. At EduDevelopers, we are committed to an ethical approach, prioritizing systems that are transparent to students about what is being monitored, while using sophisticated algorithms to minimize false positives and reduce student anxiety, thereby ensuring a fair and secure testing environment for everyone.">
+                        <img class="h-48 w-full object-cover" src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=2070&auto=format&fit=crop" alt="Blog post image on remote proctoring">
+                        <div class="p-6">
+                            <p class="text-sm font-semibold text-violet-600">Academic Integrity</p>
+                            <h3 class="mt-2 text-xl font-bold text-gray-900">Ensuring Fairness: The Evolution of Remote Proctoring</h3>
+                            <p class="mt-3 text-base text-gray-600">A deep dive into the technology and ethics behind securing online assessments in the age of remote learning.</p>
+                             <span class="mt-4 inline-block font-semibold text-violet-600 group">
+                                Read More <span class="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
+                            </span>
+                        </div>
+                    </div>
+                    <!-- Blog Card 3 -->
+                    <div class="blog-card bg-white rounded-3xl shadow-lg overflow-hidden transition-all duration-300 fade-in-up cursor-pointer" style="transition-delay: 300ms;"
+                         data-title="Beyond the Classroom: Our Vision for 2030"
+                         data-category="Future of EdTech"
+                         data-img="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop"
+                         data-content="Looking towards the next decade, our CEO, Midhun Kotagiri, envisions a future where the line between learning and application blurs completely. The focus will shift from simple knowledge acquisition to demonstrable skills. We see technologies like Augmented and Virtual Reality (AR/VR) not as novelties, but as essential tools for creating immersive, hands-on learning simulations—from virtual chemistry labs to historical site explorations. Furthermore, education will become a lifelong pursuit. Our platforms will evolve to support continuous upskilling and reskilling, with AI recommending career paths and the micro-credentials needed to achieve them. Data analytics will be the backbone of this ecosystem, providing institutions with predictive insights to improve curriculums and offering individuals a clear roadmap for their personal and professional growth. At EduDevelopers, we are not just building tools for today's classroom; we are architecting the learning infrastructure for tomorrow's world.">
+                        <img class="h-48 w-full object-cover" src="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop" alt="Blog post image on the future of EdTech">
+                        <div class="p-6">
+                             <p class="text-sm font-semibold text-violet-600">Future of EdTech</p>
+                            <h3 class="mt-2 text-xl font-bold text-gray-900">Beyond the Classroom: Our Vision for 2030</h3>
+                            <p class="mt-3 text-base text-gray-600">EduDevelopers CEO, Midhun Kotagiri, shares his vision for the next decade of educational technology.</p>
+                             <span class="mt-4 inline-block font-semibold text-violet-600 group">
+                                Read More <span class="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Meet the Team Section -->
+        <section id="about" class="py-24 sm:py-32">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Meet the Innovators</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">A passionate team of builders, thinkers, and educators.</p>
+                </div>
+                <div class="mt-20 flex justify-center gap-10 md:gap-16 flex-wrap">
+                    <!-- Team Member Card: Midhun Kotagiri -->
+                    <div class="team-member-card text-center fade-in-up cursor-pointer" 
+                        data-name="Midhun Kotagiri" 
+                        data-title="Founder & CEO" 
+                        data-img="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758718874/DSC_1016_dnqxtn.jpg"
+                        data-bio="Midhun is the visionary behind EduDevelopers, driven by a passion for leveraging technology to create accessible and impactful educational experiences. With a background in software engineering and a keen eye for innovation, he leads the company's strategic direction and product development.">
+                        <div class="relative w-48 h-48 mx-auto rounded-full overflow-hidden shadow-lg team-card transition-transform duration-300">
+                             <img class="w-full h-full object-cover transition-transform duration-300" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758718874/DSC_1016_dnqxtn.jpg" alt="Midhun Kotagiri">
+                        </div>
+                        <h3 class="mt-6 text-xl font-bold text-gray-900">Midhun Kotagiri</h3>
+                        <p class="text-violet-600 font-semibold">Founder & CEO</p>
+                    </div>
+                    <!-- Team Member Card: Charitha Sharma -->
+                    <div class="team-member-card text-center fade-in-up cursor-pointer" style="transition-delay: 150ms;"
+                        data-name="Charitha Sharma"
+                        data-title="Co-Founder & Lead Manager/Instructor"
+                        data-img="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758728402/WhatsApp_Image_2025-09-24_at_21.08.35_8d5c7d72_gb2lxk.jpg"
+                        data-bio="Charitha brings a wealth of educational expertise to the team. As Co-Founder and Lead Manager, she bridges the gap between technology and pedagogy, ensuring our products are not only innovative but also effective and user-friendly for both students and instructors.">
+                         <div class="relative w-48 h-48 mx-auto rounded-full overflow-hidden shadow-lg team-card transition-transform duration-300">
+                             <img class="w-full h-full object-cover transition-transform duration-300" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758728402/WhatsApp_Image_2025-09-24_at_21.08.35_8d5c7d72_gb2lxk.jpg" alt="Charitha Sharma">
+                        </div>
+                        <h3 class="mt-6 text-xl font-bold text-gray-900">Charitha Sharma</h3>
+                        <p class="text-violet-600 font-semibold">Co-Founder & Lead Instructor</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Join Us CTA -->
+        <section class="bg-violet-600">
+            <div class="max-w-4xl mx-auto text-center py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
+                <h2 class="text-3xl font-extrabold text-white sm:text-4xl">
+                    <span class="block">Join Our Mission</span>
+                </h2>
+                <p class="mt-4 text-lg leading-6 text-violet-200">We're always looking for passionate individuals to help us shape the future of education. Explore our open roles and become an EduDeveloper.</p>
+                <a href="https://testify-io-ai.onrender.com/carrers.html" class="mt-8 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-full text-violet-600 bg-white hover:bg-violet-50 sm:w-auto">
+                    View Careers
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer id="contact" class="bg-slate-900 text-slate-300">
+        <div class="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center text-center md:text-left">
+                <div>
+                     <a href="edudevelopers.html" class="inline-flex items-center justify-center md:justify-start space-x-3">
+                        <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758718248/EduDevelopers_logo_m1h9db.png" alt="EduDevelopers Logo">
+                        <span class="text-2xl font-bold text-white">EduDevelopers</span>
+                    </a>
+                    <p class="text-slate-400 text-base mt-4">Crafting the future of Education Technology.</p>
+                </div>
+                <div class="mt-8 md:mt-0">
+                    <p class="text-base text-slate-400">&copy; 2025 EduDevelopers. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Team Member Modal -->
+    <div id="team-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-60 transition-opacity duration-300 ease-in-out opacity-0 pointer-events-none">
+        <div id="team-modal-content" class="relative w-full max-w-2xl p-8 bg-white rounded-3xl shadow-2xl transition-all duration-300 transform scale-95 mx-4">
+            <button id="close-team-modal" class="absolute top-4 right-4 text-slate-600 hover:text-red-500 transition-transform duration-200 transform hover:rotate-90">
+                <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="flex flex-col sm:flex-row gap-8 items-center sm:items-start">
+                <img id="modal-img" src="" alt="" class="w-32 h-32 rounded-full object-cover flex-shrink-0 border-4 border-violet-200">
+                <div class="text-center sm:text-left">
+                    <h3 id="modal-name" class="text-3xl font-bold text-slate-900"></h3>
+                    <p id="modal-title" class="text-violet-600 font-semibold text-lg"></p>
+                    <p id="modal-bio" class="mt-4 text-slate-600 text-base"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blog Modal -->
+    <div id="blog-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-60 transition-opacity duration-300 ease-in-out opacity-0 pointer-events-none">
+        <div id="blog-modal-content" class="relative w-full max-w-3xl bg-white rounded-3xl shadow-2xl transition-all duration-300 transform scale-95 mx-4 flex flex-col max-h-[90vh]">
+            <button id="close-blog-modal" class="absolute top-4 right-4 text-slate-600 hover:text-red-500 transition-transform duration-200 transform hover:rotate-90 z-10">
+                <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <img id="blog-modal-img" src="" alt="" class="w-full h-64 object-cover rounded-t-3xl flex-shrink-0">
+            <div class="p-8 overflow-y-auto">
+                <p id="blog-modal-category" class="text-sm font-semibold text-violet-600"></p>
+                <h3 id="blog-modal-title" class="mt-2 text-3xl font-bold text-slate-900"></h3>
+                <p id="blog-modal-content-full" class="mt-6 text-slate-600 text-base leading-relaxed"></p>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Mobile Menu Logic ---
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const menuOpenIcon = document.getElementById('menu-open-icon');
+            const menuCloseIcon = document.getElementById('menu-close-icon');
+            const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+
+            const toggleMenu = () => {
+                mobileMenu.classList.toggle('hidden');
+                menuOpenIcon.classList.toggle('block');
+                menuOpenIcon.classList.toggle('hidden');
+                menuCloseIcon.classList.toggle('hidden');
+                menuCloseIcon.classList.toggle('block');
+            };
+
+            mobileMenuButton.addEventListener('click', toggleMenu);
+            mobileNavLinks.forEach(link => link.addEventListener('click', () => {
+                if (!mobileMenu.classList.contains('hidden')) {
+                    toggleMenu();
+                }
+            }));
+
+            // --- Animate elements on scroll ---
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+
+            // --- Team Member Modal Logic ---
+            const teamCards = document.querySelectorAll('.team-member-card');
+            const teamModal = document.getElementById('team-modal');
+            const teamModalContent = document.getElementById('team-modal-content');
+            const closeTeamModalButton = document.getElementById('close-team-modal');
+
+            const modalName = document.getElementById('modal-name');
+            const modalTitle = document.getElementById('modal-title');
+            const modalImg = document.getElementById('modal-img');
+            const modalBio = document.getElementById('modal-bio');
+
+            const showTeamModal = (card) => {
+                modalName.textContent = card.dataset.name;
+                modalTitle.textContent = card.dataset.title;
+                modalImg.src = card.dataset.img;
+                modalImg.alt = card.dataset.name;
+                modalBio.textContent = card.dataset.bio;
+
+                teamModal.classList.remove('opacity-0', 'pointer-events-none');
+                teamModalContent.classList.remove('scale-95');
+            };
+
+            const hideTeamModal = () => {
+                teamModal.classList.add('opacity-0');
+                teamModalContent.classList.add('scale-95');
+                setTimeout(() => {
+                    teamModal.classList.add('pointer-events-none');
+                }, 300); // Wait for transition
+            };
+
+            teamCards.forEach(card => {
+                card.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showTeamModal(card);
+                });
+            });
+
+            closeTeamModalButton.addEventListener('click', hideTeamModal);
+            teamModal.addEventListener('click', (e) => {
+                if (e.target === teamModal) {
+                    hideTeamModal();
+                }
+            });
+
+            // --- Blog Post Modal Logic ---
+            const blogCards = document.querySelectorAll('.blog-card');
+            const blogModal = document.getElementById('blog-modal');
+            const blogModalContent = document.getElementById('blog-modal-content');
+            const closeBlogModalButton = document.getElementById('close-blog-modal');
+
+            const blogModalImg = document.getElementById('blog-modal-img');
+            const blogModalCategory = document.getElementById('blog-modal-category');
+            const blogModalTitle = document.getElementById('blog-modal-title');
+            const blogModalContentFull = document.getElementById('blog-modal-content-full');
+
+            const showBlogModal = (card) => {
+                blogModalImg.src = card.dataset.img;
+                blogModalCategory.textContent = card.dataset.category;
+                blogModalTitle.textContent = card.dataset.title;
+                blogModalContentFull.textContent = card.dataset.content;
+
+                blogModal.classList.remove('opacity-0', 'pointer-events-none');
+                blogModalContent.classList.remove('scale-95');
+            };
+
+            const hideBlogModal = () => {
+                blogModal.classList.add('opacity-0');
+                blogModalContent.classList.add('scale-95');
+                 setTimeout(() => {
+                    blogModal.classList.add('pointer-events-none');
+                }, 300); // Wait for transition
+            };
+
+            blogCards.forEach(card => {
+                card.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showBlogModal(card);
+                });
+            });
+
+            closeBlogModalButton.addEventListener('click', hideBlogModal);
+            blogModal.addEventListener('click', (e) => {
+                if (e.target === blogModal) {
+                    hideBlogModal();
+                }
+            });
+
+        });
+    </script>
+
+</body>
+</html>
+
