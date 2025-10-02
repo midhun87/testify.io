@@ -1,18 +1,27 @@
 {
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.873.0",
-    "@aws-sdk/client-rekognition": "^3.873.0",
+    "@aws-sdk/client-rekognition": "^3.876.0",
     "@aws-sdk/lib-dynamodb": "^3.873.0",
+    "@google-cloud/local-auth": "^3.0.1",
+    "@google/generative-ai": "^0.24.1",
+    "@zoom/meetingsdk": "^4.0.7",
     "bcryptjs": "^3.0.2",
-    "cloudinary": "^2.2.0",
+    "canvas": "^3.2.0",
+    "cloudinary": "^2.7.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "face-api.js": "^0.22.2",
+    "google-auth-library": "^10.3.0",
+    "googleapis": "^161.0.0",
     "jsonwebtoken": "^9.0.2",
-    "multer": "^1.4.5-lts.1",
-    "node-fetch": "^2.6.7",
+    "multer": "^2.0.2",
+    "node-fetch": "^2.7.0",
     "nodemailer": "^7.0.5",
     "pdf-parse": "^1.1.1",
+    "sib-api-v3-sdk": "^8.5.0",
+    "sqlite3": "^5.1.7",
     "uuid": "^11.1.0"
   }
 }
