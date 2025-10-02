@@ -41,7 +41,7 @@
         .fade-in-up {
             opacity: 0;
             transform: translateY(20px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+            transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
         .fade-in-up.visible {
             opacity: 1;
@@ -51,9 +51,42 @@
         .team-card:hover img {
             transform: scale(1.05);
         }
+        .product-card, .blog-card, .team-member-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
         .product-card:hover, .blog-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15);
+        }
+
+        /* Modal animations */
+        #team-modal-content, #blog-modal-content {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+        }
+        #team-modal.open #team-modal-content,
+        #blog-modal.open #blog-modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        #team-modal #modal-img {
+            transition: transform 0.3s ease;
+        }
+
+        #team-modal #modal-img:hover {
+            transform: scale(1.05);
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -74,7 +107,7 @@
                     <a href="#products" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">Products</a>
                     <a href="#about" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">About</a>
                     <a href="https://testify-io-ai.onrender.com/carrers.html" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">Careers</a>
-                    <a href="https://testify-io-ai.onrender.com/contact.html" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">Contact</a>
+                    <a href="#contact" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">Contact</a>
                 </div>
 
                 <!-- Mobile Menu Button -->
@@ -93,8 +126,8 @@
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-slate-200">
                 <a href="#products" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Products</a>
                 <a href="#about" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">About</a>
-                <a href="carrers.html" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Careers</a>
-                <a href="contact.html" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Contact</a>
+                <a href="https://testify-io-ai.onrender.com/carrers.html" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Careers</a>
+                <a href="#contact" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Contact</a>
             </div>
         </div>
     </nav>
@@ -124,10 +157,10 @@
         <!-- Our Products Section -->
         <section id="products" class="py-24 sm:py-32">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                 <div class="text-center">
+                <div class="text-center">
                     <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl fade-in-up">From Our Labs to the Classroom</h2>
                     <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600 fade-in-up" style="transition-delay: 150ms;">
-                       We craft intuitive and powerful solutions to solve real-world challenges in education.
+                        We craft intuitive and powerful solutions to solve real-world challenges in education.
                     </p>
                 </div>
                 <div class="mt-20 max-w-lg mx-auto">
@@ -142,7 +175,7 @@
                             </div>
                             <p class="mt-4 text-slate-600">An intelligent platform that leverages AI to create, manage, and proctor secure online assessments with unparalleled ease and integrity.</p>
                             <span class="mt-6 inline-block text-violet-600 font-semibold group">
-                               Learn More <span class="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
+                                Learn More <span class="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
                             </span>
                         </div>
                     </a>
@@ -150,7 +183,9 @@
             </div>
         </section>
 
-         <!-- Core Values Section -->
+        
+
+        <!-- Core Values Section -->
         <section id="values" class="py-24 sm:py-32 bg-white">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
@@ -193,10 +228,10 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="lg:grid lg:grid-cols-2 lg:gap-16 lg:items-center">
                     <div class="fade-in-up">
-                         <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Our Journey: From an Idea to Impact</h2>
-                         <p class="mt-6 text-lg text-slate-600 leading-relaxed">
+                        <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Our Journey: From an Idea to Impact</h2>
+                        <p class="mt-6 text-lg text-slate-600 leading-relaxed">
                             Founded in a small garage by a group of passionate educators and developers, EduDevelopers started with a simple yet ambitious goal: to make technology a seamless and powerful ally in the pursuit of knowledge. We saw the gaps in existing educational tools and envisioned a future where learning was more engaging, assessments were more insightful, and opportunities were accessible to all. TESTIFY is the first realization of that vision, and our journey is just beginning.
-                         </p>
+                        </p>
                     </div>
                     <div class="mt-10 lg:mt-0 fade-in-up" style="transition-delay: 150ms;">
                         <img class="rounded-3xl shadow-xl w-full" src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2070&auto=format&fit=crop" alt="Team brainstorming session">
@@ -208,10 +243,10 @@
         <!-- Technology We Use Section -->
         <section class="py-24 sm:py-32 bg-white">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                 <div class="text-center">
+                <div class="text-center">
                     <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl fade-in-up">Technology That Powers Our Innovation</h2>
                     <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600 fade-in-up" style="transition-delay: 150ms;">
-                       We use a modern, scalable, and secure technology stack to build reliable and innovative products.
+                        We use a modern, scalable, and secure technology stack to build reliable and innovative products.
                     </p>
                 </div>
                 <div class="mt-16 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-y-10 gap-x-8 justify-items-center">
@@ -230,8 +265,8 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="text-center">
                     <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl fade-in-up">Insights & News from EduDevelopers</h2>
-                     <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600 fade-in-up" style="transition-delay: 150ms;">
-                       Exploring the intersection of technology and education.
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600 fade-in-up" style="transition-delay: 150ms;">
+                        Exploring the intersection of technology and education.
                     </p>
                 </div>
                 <div class="mt-20 grid gap-10 md:grid-cols-2 lg:grid-cols-3">
@@ -239,6 +274,8 @@
                     <div class="blog-card bg-white rounded-3xl shadow-lg overflow-hidden transition-all duration-300 fade-in-up cursor-pointer"
                         data-title="The Role of AI in Personalized Learning Paths"
                         data-category="Artificial Intelligence"
+                        data-author="Pushkarni"
+                        data-date="October 20, 2025"
                         data-img="https://images.unsplash.com/photo-1516321497487-e288fb19713f?q=80&w=2070&auto=format&fit=crop"
                         data-content="Artificial Intelligence is revolutionizing education by shifting the paradigm from a one-size-fits-all approach to a deeply personalized learning journey. At its core, AI analyzes vast amounts of data on how individual students interact with learning materials. It tracks progress, identifies areas of strength and weakness, and even gauges engagement levels. Based on this continuous analysis, AI-powered platforms can dynamically adjust the curriculum in real-time. If a student is struggling with a concept, the system can provide additional resources, simpler explanations, or foundational exercises. Conversely, if a student masters a topic quickly, the AI can introduce more advanced material, ensuring they remain challenged and engaged. This adaptive learning model helps to operationalize educational theories like Vygotsky's Zone of Proximal Development, ensuring every learner receives the right level of support and challenge at the right time, fostering a more efficient, effective, and motivating educational experience for all.">
                         <img class="h-48 w-full object-cover" src="https://images.unsplash.com/photo-1516321497487-e288fb19713f?q=80&w=2070&auto=format&fit=crop" alt="Blog post image on AI in education">
@@ -253,32 +290,36 @@
                     </div>
                     <!-- Blog Card 2 -->
                     <div class="blog-card bg-white rounded-3xl shadow-lg overflow-hidden transition-all duration-300 fade-in-up cursor-pointer" style="transition-delay: 150ms;"
-                         data-title="Ensuring Fairness: The Evolution of Remote Proctoring"
-                         data-category="Academic Integrity"
-                         data--img="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=2070&auto=format&fit=crop"
-                         data-content="As education moves increasingly online, maintaining academic integrity has become a paramount concern. Remote proctoring technology has emerged as a key solution, but it's a field that requires a delicate balance between security and student privacy. Early proctoring systems were often intrusive and rigid. However, the technology is evolving rapidly. Modern solutions, like the one integrated into our TESTIFY platform, use a multi-layered approach. This includes AI-powered monitoring that flags unusual behavior—such as looking away from the screen frequently, the presence of another person, or unauthorized materials—without constant human surveillance. This data is then compiled into a report for review by an educator. At EduDevelopers, we are committed to an ethical approach, prioritizing systems that are transparent to students about what is being monitored, while using sophisticated algorithms to minimize false positives and reduce student anxiety, thereby ensuring a fair and secure testing environment for everyone.">
+                        data-title="Ensuring Fairness: The Evolution of Remote Proctoring"
+                        data-category="Academic Integrity"
+                        data-author="Charitha Sharma"
+                        data-date="October 15, 2025"
+                        data-img="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=2070&auto=format&fit=crop"
+                        data-content="As education moves increasingly online, maintaining academic integrity has become a paramount concern. Remote proctoring technology has emerged as a key solution, but it's a field that requires a delicate balance between security and student privacy. Early proctoring systems were often intrusive and rigid. However, the technology is evolving rapidly. Modern solutions, like the one integrated into our TESTIFY platform, use a multi-layered approach. This includes AI-powered monitoring that flags unusual behavior—such as looking away from the screen frequently, the presence of another person, or unauthorized materials—without constant human surveillance. This data is then compiled into a report for review by an educator. At EduDevelopers, we are committed to an ethical approach, prioritizing systems that are transparent to students about what is being monitored, while using sophisticated algorithms to minimize false positives and reduce student anxiety, thereby ensuring a fair and secure testing environment for everyone.">
                         <img class="h-48 w-full object-cover" src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=2070&auto=format&fit=crop" alt="Blog post image on remote proctoring">
                         <div class="p-6">
                             <p class="text-sm font-semibold text-violet-600">Academic Integrity</p>
                             <h3 class="mt-2 text-xl font-bold text-gray-900">Ensuring Fairness: The Evolution of Remote Proctoring</h3>
                             <p class="mt-3 text-base text-gray-600">A deep dive into the technology and ethics behind securing online assessments in the age of remote learning.</p>
-                             <span class="mt-4 inline-block font-semibold text-violet-600 group">
+                            <span class="mt-4 inline-block font-semibold text-violet-600 group">
                                 Read More <span class="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
                             </span>
                         </div>
                     </div>
                     <!-- Blog Card 3 -->
                     <div class="blog-card bg-white rounded-3xl shadow-lg overflow-hidden transition-all duration-300 fade-in-up cursor-pointer" style="transition-delay: 300ms;"
-                         data-title="Beyond the Classroom: Our Vision for 2030"
-                         data-category="Future of EdTech"
-                         data-img="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop"
-                         data-content="Looking towards the next decade, our CEO, Midhun Kotagiri, envisions a future where the line between learning and application blurs completely. The focus will shift from simple knowledge acquisition to demonstrable skills. We see technologies like Augmented and Virtual Reality (AR/VR) not as novelties, but as essential tools for creating immersive, hands-on learning simulations—from virtual chemistry labs to historical site explorations. Furthermore, education will become a lifelong pursuit. Our platforms will evolve to support continuous upskilling and reskilling, with AI recommending career paths and the micro-credentials needed to achieve them. Data analytics will be the backbone of this ecosystem, providing institutions with predictive insights to improve curriculums and offering individuals a clear roadmap for their personal and professional growth. At EduDevelopers, we are not just building tools for today's classroom; we are architecting the learning infrastructure for tomorrow's world.">
+                        data-title="Beyond the Classroom: Our Vision for 2030"
+                        data-category="Future of EdTech"
+                        data-author="Midhun Kotagiri"
+                        data-date="October 10, 2025"
+                        data-img="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop"
+                        data-content="Looking towards the next decade, our CEO, Midhun Kotagiri, envisions a future where the line between learning and application blurs completely. The focus will shift from simple knowledge acquisition to demonstrable skills. We see technologies like Augmented and Virtual Reality (AR/VR) not as novelties, but as essential tools for creating immersive, hands-on learning simulations—from virtual chemistry labs to historical site explorations. Furthermore, education will become a lifelong pursuit. Our platforms will evolve to support continuous upskilling and reskilling, with AI recommending career paths and the micro-credentials needed to achieve them. Data analytics will be the backbone of this ecosystem, providing institutions with predictive insights to improve curriculums and offering individuals a clear roadmap for their personal and professional growth. At EduDevelopers, we are not just building tools for today's classroom; we are architecting the learning infrastructure for tomorrow's world.">
                         <img class="h-48 w-full object-cover" src="https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=2070&auto=format&fit=crop" alt="Blog post image on the future of EdTech">
                         <div class="p-6">
-                             <p class="text-sm font-semibold text-violet-600">Future of EdTech</p>
+                            <p class="text-sm font-semibold text-violet-600">Future of EdTech</p>
                             <h3 class="mt-2 text-xl font-bold text-gray-900">Beyond the Classroom: Our Vision for 2030</h3>
                             <p class="mt-3 text-base text-gray-600">EduDevelopers CEO, Midhun Kotagiri, shares his vision for the next decade of educational technology.</p>
-                             <span class="mt-4 inline-block font-semibold text-violet-600 group">
+                            <span class="mt-4 inline-block font-semibold text-violet-600 group">
                                 Read More <span class="transition-transform duration-300 group-hover:translate-x-1">&rarr;</span>
                             </span>
                         </div>
@@ -296,13 +337,15 @@
                 </div>
                 <div class="mt-20 flex justify-center gap-10 md:gap-16 flex-wrap">
                     <!-- Team Member Card: Midhun Kotagiri -->
-                    <div class="team-member-card text-center fade-in-up cursor-pointer" 
-                        data-name="Midhun Kotagiri" 
-                        data-title="Founder & CEO" 
+                    <div class="team-member-card text-center fade-in-up cursor-pointer"
+                        data-name="Midhun Kotagiri"
+                        data-title="Founder & CEO"
+                        data-quote="Our vision is to build technology that makes learning more accessible and more powerful for every student, everywhere."
                         data-img="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758718874/DSC_1016_dnqxtn.jpg"
-                        data-bio="Midhun is the visionary behind EduDevelopers, driven by a passion for leveraging technology to create accessible and impactful educational experiences. With a background in software engineering and a keen eye for innovation, he leads the company's strategic direction and product development.">
+                        data-bio="Midhun is the visionary behind EduDevelopers, driven by a passion for leveraging technology to create accessible and impactful educational experiences. With a background in software engineering and a keen eye for innovation, he leads the company's strategic direction and product development."
+                        data-linkedin="https://www.linkedin.com/in/midhunkotagiri/">
                         <div class="relative w-48 h-48 mx-auto rounded-full overflow-hidden shadow-lg team-card transition-transform duration-300">
-                             <img class="w-full h-full object-cover transition-transform duration-300" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758718874/DSC_1016_dnqxtn.jpg" alt="Midhun Kotagiri">
+                            <img class="w-full h-full object-cover transition-transform duration-300" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758718874/DSC_1016_dnqxtn.jpg" alt="Midhun Kotagiri">
                         </div>
                         <h3 class="mt-6 text-xl font-bold text-gray-900">Midhun Kotagiri</h3>
                         <p class="text-violet-600 font-semibold">Founder & CEO</p>
@@ -310,19 +353,109 @@
                     <!-- Team Member Card: Charitha Sharma -->
                     <div class="team-member-card text-center fade-in-up cursor-pointer" style="transition-delay: 150ms;"
                         data-name="Charitha Sharma"
-                        data-title="Co-Founder & Lead Manager/Instructor"
+                        data-title="Co-Founder & Lead Instructor"
+                        data-quote="We believe that a strong product is built on a deep understanding of the user. Our goal is to make a difference in the classroom, one user at a time."
                         data-img="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758728402/WhatsApp_Image_2025-09-24_at_21.08.35_8d5c7d72_gb2lxk.jpg"
-                        data-bio="Charitha brings a wealth of educational expertise to the team. As Co-Founder and Lead Manager, she bridges the gap between technology and pedagogy, ensuring our products are not only innovative but also effective and user-friendly for both students and instructors.">
-                         <div class="relative w-48 h-48 mx-auto rounded-full overflow-hidden shadow-lg team-card transition-transform duration-300">
-                             <img class="w-full h-full object-cover transition-transform duration-300" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758728402/WhatsApp_Image_2025-09-24_at_21.08.35_8d5c7d72_gb2lxk.jpg" alt="Charitha Sharma">
+                        data-bio="Charitha brings a wealth of educational expertise to the team. As Co-Founder and Lead Manager, she bridges the gap between technology and pedagogy, ensuring our products are not only innovative but also effective and user-friendly for both students and instructors."
+                        data-linkedin="https://www.linkedin.com/in/adivi-charitha-54aa00265/">
+                        <div class="relative w-48 h-48 mx-auto rounded-full overflow-hidden shadow-lg team-card transition-transform duration-300">
+                            <img class="w-full h-full object-cover transition-transform duration-300" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758728402/WhatsApp_Image_2025-09-24_at_21.08.35_8d5c7d72_gb2lxk.jpg" alt="Charitha Sharma">
                         </div>
                         <h3 class="mt-6 text-xl font-bold text-gray-900">Charitha Sharma</h3>
                         <p class="text-violet-600 font-semibold">Co-Founder & Lead Instructor</p>
                     </div>
+                     <!-- New row for other team members -->
+                    <div class="w-full mt-12 flex justify-center items-start gap-10 md:gap-16 flex-wrap">
+                        <!-- Sathvika -->
+                        <div class="team-member-card text-center fade-in-up cursor-pointer"
+                             data-name="Sathvika"
+                             data-title="AI Interview bot Developer"
+                             data-quote="My goal is to create technology that makes the interview process more efficient and objective, removing bias and providing clear insights."
+                             data-img="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758206439/applications/glwwunfbagi4kim25o94.jpg"
+                             data-bio="Sathvika is a key developer for the TESTIFY Interview Bot. She focuses on implementing the core AI functionalities, including automated question delivery, response recording, and developing the anti-cheating mechanisms to ensure a fair and secure assessment environment."
+                             style="transition-delay: 300ms;">
+                            <div class="relative w-40 h-40 mx-auto rounded-full overflow-hidden shadow-lg team-card transition-transform duration-300">
+                                <img class="w-full h-full object-cover transition-transform duration-300" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758206439/applications/glwwunfbagi4kim25o94.jpg" alt="Sathvika">
+                            </div>
+                            <h3 class="mt-5 text-lg font-bold text-gray-900">Sathvika</h3>
+                            <p class="text-violet-600 font-semibold text-sm">AI Interview bot Developer</p>
+                        </div>
+                        <!-- Teja -->
+                        <div class="team-member-card text-center fade-in-up cursor-pointer"
+                             data-name="Teja"
+                             data-title="AI Interview bot Developer"
+                             data-quote="Building an AI tool that students find easy and fair to use is my top priority. A positive user experience is crucial for accurate assessment."
+                             data-img="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758904265/1756705778919_wh3ngc.jpg"
+                             data-bio="Teja is an integral part of the AI Interview Bot development team. His work centers on the student-facing experience, ensuring the interface is intuitive, from the initial face and ID verification to the final submission. He plays a vital role in making the technology accessible and user-friendly."
+                             style="transition-delay: 450ms;">
+                            <div class="relative w-40 h-40 mx-auto rounded-full overflow-hidden shadow-lg team-card transition-transform duration-300">
+                                <img class="w-full h-full object-cover transition-transform duration-300" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758904265/1756705778919_wh3ngc.jpg" alt="Teja">
+                            </div>
+                            <h3 class="mt-5 text-lg font-bold text-gray-900">Teja</h3>
+                            <p class="text-violet-600 font-semibold text-sm">AI Interview bot Developer</p>
+                        </div>
+                        <!-- Pushkarni -->
+                        <div class="team-member-card text-center fade-in-up cursor-pointer"
+                             data-name="Pushkarni"
+                             data-title="Course Lead"
+                             data-quote="Education is about sparking curiosity. My mission is to create content that not only teaches but also inspires a lifelong love for learning."
+                             data-img="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758905051/PUSHKARNI2_hgtvpt.jpg"
+                             data-bio="As the Course Lead, Pushkarni is responsible for the educational integrity and effectiveness of our content. She works closely with subject matter experts and our development team to design engaging and impactful learning materials that align with modern pedagogical standards."
+                             style="transition-delay: 600ms;">
+                            <div class="relative w-40 h-40 mx-auto rounded-full overflow-hidden shadow-lg team-card transition-transform duration-300">
+                                <img class="w-full h-full object-cover transition-transform duration-300" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758905051/PUSHKARNI2_hgtvpt.jpg" alt="Pushkarni">
+                            </div>
+                            <h3 class="mt-5 text-lg font-bold text-gray-900">Pushkarni</h3>
+                            <p class="text-violet-600 font-semibold text-sm">Course Lead</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
-        
+
+        <!-- Contact Section -->
+        <section id="contact" class="py-24 sm:py-32 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl fade-in-up">Get in Touch</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600 fade-in-up" style="transition-delay: 150ms;">
+                        Have questions? We'd love to hear from you.
+                    </p>
+                </div>
+                <div class="mt-16 max-w-lg mx-auto bg-slate-50 p-8 rounded-3xl shadow-lg fade-in-up" style="transition-delay: 300ms;">
+                    <form id="contact-form" action="https://formspree.io/f/xgvnvdew" method="POST" class="space-y-6">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                            <input type="text" name="name" id="name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm p-3">
+                        </div>
+                        <div>
+                            <label for="organization" class="block text-sm font-medium text-gray-700">Organization</label>
+                            <input type="text" name="organization" id="organization" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm p-3">
+                        </div>
+                        <div>
+                            <label for="mobile" class="block text-sm font-medium text-gray-700">Mobile</label>
+                            <input type="tel" name="mobile" id="mobile" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm p-3">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                            <input type="email" name="email" id="email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm p-3">
+                        </div>
+                        <div>
+                            <label for="message" class="block text-sm font-medium text-gray-700">Message</label>
+                            <textarea id="message" name="message" rows="4" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 sm:text-sm p-3"></textarea>
+                        </div>
+                        <div id="form-status" class="text-center text-sm font-medium h-4"></div>
+                        <div>
+                            <button id="form-submit-btn" type="submit" class="w-full inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-full shadow-sm text-base font-semibold text-white bg-violet-600 hover:bg-violet-700 transition-all duration-300">
+                                <span id="button-text">Send Message</span>
+                                <div id="spinner" class="spinner ml-3 hidden"></div>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
         <!-- Join Us CTA -->
         <section class="bg-violet-600">
             <div class="max-w-4xl mx-auto text-center py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
@@ -335,15 +468,21 @@
                 </a>
             </div>
         </section>
-
     </main>
 
+    <!-- Scroll to Top Button -->
+    <button id="scrollToTopBtn" class="fixed bottom-6 right-6 p-3 rounded-full bg-violet-600 text-white shadow-lg transition-all duration-300 opacity-0 invisible hover:bg-violet-700 z-50">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+        </svg>
+    </button>
+
     <!-- Footer -->
-    <footer id="contact" class="bg-slate-900 text-slate-300">
+    <footer class="bg-slate-900 text-slate-300">
         <div class="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row justify-between items-center text-center md:text-left">
                 <div>
-                     <a href="edudevelopers.html" class="inline-flex items-center justify-center md:justify-start space-x-3">
+                    <a href="edudevelopers.html" class="inline-flex items-center justify-center md:justify-start space-x-3">
                         <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758718248/EduDevelopers_logo_m1h9db.png" alt="EduDevelopers Logo">
                         <span class="text-2xl font-bold text-white">EduDevelopers</span>
                     </a>
@@ -360,6 +499,7 @@
     <div id="team-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-60 transition-opacity duration-300 ease-in-out opacity-0 pointer-events-none">
         <div id="team-modal-content" class="relative w-full max-w-2xl p-8 bg-white rounded-3xl shadow-2xl transition-all duration-300 transform scale-95 mx-4">
             <button id="close-team-modal" class="absolute top-4 right-4 text-slate-600 hover:text-red-500 transition-transform duration-200 transform hover:rotate-90">
+                <span class="sr-only">Close modal</span>
                 <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -368,7 +508,16 @@
                 <img id="modal-img" src="" alt="" class="w-32 h-32 rounded-full object-cover flex-shrink-0 border-4 border-violet-200">
                 <div class="text-center sm:text-left">
                     <h3 id="modal-name" class="text-3xl font-bold text-slate-900"></h3>
-                    <p id="modal-title" class="text-violet-600 font-semibold text-lg"></p>
+                    <div class="flex items-center justify-center sm:justify-start gap-2 mt-1">
+                        <p id="modal-title" class="text-violet-600 font-semibold text-lg"></p>
+                        <a id="modal-linkedin" href="#" target="_blank" rel="noopener noreferrer" class="text-slate-500 hover:text-blue-700 transition-colors duration-300">
+                            <span class="sr-only">LinkedIn Profile</span>
+                            <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                            </svg>
+                        </a>
+                    </div>
+                    <p id="modal-quote" class="mt-2 text-md font-semibold text-slate-500 italic"></p>
                     <p id="modal-bio" class="mt-4 text-slate-600 text-base"></p>
                 </div>
             </div>
@@ -379,13 +528,20 @@
     <div id="blog-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-60 transition-opacity duration-300 ease-in-out opacity-0 pointer-events-none">
         <div id="blog-modal-content" class="relative w-full max-w-3xl bg-white rounded-3xl shadow-2xl transition-all duration-300 transform scale-95 mx-4 flex flex-col max-h-[90vh]">
             <button id="close-blog-modal" class="absolute top-4 right-4 text-slate-600 hover:text-red-500 transition-transform duration-200 transform hover:rotate-90 z-10">
+                <span class="sr-only">Close modal</span>
                 <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
             <img id="blog-modal-img" src="" alt="" class="w-full h-64 object-cover rounded-t-3xl flex-shrink-0">
             <div class="p-8 overflow-y-auto">
-                <p id="blog-modal-category" class="text-sm font-semibold text-violet-600"></p>
+                <div class="flex items-center space-x-4 text-sm font-semibold text-gray-500">
+                    <p id="blog-modal-category" class="text-violet-600"></p>
+                    <span>&bull;</span>
+                    <p id="blog-modal-date"></p>
+                    <span>&bull;</span>
+                    <p id="blog-modal-author"></p>
+                </div>
                 <h3 id="blog-modal-title" class="mt-2 text-3xl font-bold text-slate-900"></h3>
                 <p id="blog-modal-content-full" class="mt-6 text-slate-600 text-base leading-relaxed"></p>
             </div>
@@ -417,6 +573,18 @@
                 }
             }));
 
+            // --- Sticky Navbar Logic ---
+            const navbar = document.getElementById('navbar');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('shadow-lg');
+                    navbar.classList.remove('shadow-sm');
+                } else {
+                    navbar.classList.add('shadow-sm');
+                    navbar.classList.remove('shadow-lg');
+                }
+            });
+
             // --- Animate elements on scroll ---
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
@@ -429,7 +597,7 @@
             document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
 
             // --- Team Member Modal Logic ---
-            const teamCards = document.querySelectorAll('.team-member-card');
+            const teamCards = document.querySelectorAll('.team-member-card[data-name]');
             const teamModal = document.getElementById('team-modal');
             const teamModalContent = document.getElementById('team-modal-content');
             const closeTeamModalButton = document.getElementById('close-team-modal');
@@ -438,6 +606,8 @@
             const modalTitle = document.getElementById('modal-title');
             const modalImg = document.getElementById('modal-img');
             const modalBio = document.getElementById('modal-bio');
+            const modalQuote = document.getElementById('modal-quote');
+            const modalLinkedin = document.getElementById('modal-linkedin');
 
             const showTeamModal = (card) => {
                 modalName.textContent = card.dataset.name;
@@ -445,17 +615,30 @@
                 modalImg.src = card.dataset.img;
                 modalImg.alt = card.dataset.name;
                 modalBio.textContent = card.dataset.bio;
+                modalQuote.textContent = card.dataset.quote;
+
+                const linkedinUrl = card.dataset.linkedin;
+                if (linkedinUrl) {
+                    modalLinkedin.href = linkedinUrl;
+                    modalLinkedin.classList.remove('hidden');
+                } else {
+                    modalLinkedin.classList.add('hidden');
+                }
 
                 teamModal.classList.remove('opacity-0', 'pointer-events-none');
+                teamModal.classList.add('open');
                 teamModalContent.classList.remove('scale-95');
+                document.body.style.overflow = 'hidden';
             };
 
             const hideTeamModal = () => {
                 teamModal.classList.add('opacity-0');
+                teamModal.classList.remove('open');
                 teamModalContent.classList.add('scale-95');
                 setTimeout(() => {
                     teamModal.classList.add('pointer-events-none');
-                }, 300); // Wait for transition
+                    document.body.style.overflow = '';
+                }, 300);
             };
 
             teamCards.forEach(card => {
@@ -482,23 +665,31 @@
             const blogModalCategory = document.getElementById('blog-modal-category');
             const blogModalTitle = document.getElementById('blog-modal-title');
             const blogModalContentFull = document.getElementById('blog-modal-content-full');
+            const blogModalAuthor = document.getElementById('blog-modal-author');
+            const blogModalDate = document.getElementById('blog-modal-date');
 
             const showBlogModal = (card) => {
                 blogModalImg.src = card.dataset.img;
                 blogModalCategory.textContent = card.dataset.category;
                 blogModalTitle.textContent = card.dataset.title;
                 blogModalContentFull.textContent = card.dataset.content;
+                blogModalAuthor.textContent = card.dataset.author;
+                blogModalDate.textContent = card.dataset.date;
 
                 blogModal.classList.remove('opacity-0', 'pointer-events-none');
+                blogModal.classList.add('open');
                 blogModalContent.classList.remove('scale-95');
+                document.body.style.overflow = 'hidden';
             };
 
             const hideBlogModal = () => {
                 blogModal.classList.add('opacity-0');
+                blogModal.classList.remove('open');
                 blogModalContent.classList.add('scale-95');
-                 setTimeout(() => {
+                setTimeout(() => {
                     blogModal.classList.add('pointer-events-none');
-                }, 300); // Wait for transition
+                    document.body.style.overflow = '';
+                }, 300);
             };
 
             blogCards.forEach(card => {
@@ -515,6 +706,76 @@
                 }
             });
 
+            // --- Scroll to Top Button Logic ---
+            const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+            const scrollThreshold = 300; // Show button after 300px scroll
+
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > scrollThreshold) {
+                    scrollToTopBtn.classList.remove('invisible', 'opacity-0');
+                    scrollToTopBtn.classList.add('visible', 'opacity-100');
+                } else {
+                    scrollToTopBtn.classList.remove('visible', 'opacity-100');
+                    scrollToTopBtn.classList.add('invisible', 'opacity-0');
+                }
+            });
+
+            scrollToTopBtn.addEventListener('click', () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+            
+            // --- Contact Form Submission Logic ---
+            const contactForm = document.getElementById('contact-form');
+            const formStatus = document.getElementById('form-status');
+            const formSubmitBtn = document.getElementById('form-submit-btn');
+            const buttonText = document.getElementById('button-text');
+            const spinner = document.getElementById('spinner');
+
+            contactForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                // Show loading state
+                buttonText.textContent = "Sending...";
+                spinner.classList.remove('hidden');
+                formSubmitBtn.disabled = true;
+
+                const formData = new FormData(contactForm);
+
+                try {
+                    const response = await fetch(e.target.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        formStatus.textContent = "Message sent successfully! We'll be in touch.";
+                        formStatus.className = "text-center text-sm font-medium h-4 text-green-600";
+                        contactForm.reset();
+                    } else {
+                        const data = await response.json();
+                        if (Object.hasOwn(data, 'errors')) {
+                            formStatus.textContent = data.errors.map(error => error.message).join(", ");
+                        } else {
+                            formStatus.textContent = "Oops! There was a problem submitting your form.";
+                        }
+                        formStatus.className = "text-center text-sm font-medium h-4 text-red-600";
+                    }
+                } catch (error) {
+                    formStatus.textContent = "Oops! Network error. Please try again.";
+                    formStatus.className = "text-center text-sm font-medium h-4 text-red-600";
+                } finally {
+                    // Reset button state
+                    buttonText.textContent = "Send Message";
+                    spinner.classList.add('hidden');
+                    formSubmitBtn.disabled = false;
+                }
+            });
         });
     </script>
 

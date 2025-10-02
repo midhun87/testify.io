@@ -47,26 +47,6 @@
 
                 <div class="bg-white p-8 rounded-2xl shadow-2xl border border-gray-200/80">
                     
-                    <!-- Important Notice for Users -->
-                    <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-r-lg" role="alert">
-                        <div class="flex">
-                            <div class="py-1">
-                                <!-- Heroicon name: solid/exclamation -->
-                                <svg class="h-6 w-6 text-red-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.21 3.03-1.742 3.03H4.42c-1.532 0-2.492-1.696-1.742-3.03l5.58-9.92zM10 13a1 1 0 110-2 1 1 0 010 2zm-1-8a1 1 0 00-1 1v3a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="font-bold text-red-800">Important System Update</p>
-                                <p class="text-sm text-red-700 mt-1">
-                                    Due to a critical server failure on our previous platform, all user accounts and data have been lost. We sincerely apologize for this major inconvenience.
-                                    <br><br>
-                                    All users must <a href="/signup.html" class="font-semibold underline hover:text-red-600">Sign Up</a> again to create a new account.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
                     <h2 class="text-3xl font-bold text-gray-900 text-center">Welcome Back!</h2>
                     <p class="text-gray-500 text-center mt-2 mb-8">Please log in or create a new account.</p>
 
@@ -86,7 +66,7 @@
                             <input type="password" id="password" name="password" required class="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition placeholder-gray-400 text-gray-900">
                         </div>
                         <div class="text-right mb-6">
-                            <a href="/forgot-password.html" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Forgot Password?</a>
+                            <a href="forgot-password.html" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Forgot Password?</a>
                         </div>
                         
                         <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white focus:ring-indigo-500 transition duration-300 transform hover:scale-105">
@@ -97,10 +77,10 @@
                     <div id="message" class="hidden text-center mt-4 p-3 rounded-lg font-medium"></div>
 
                     <p class="text-center text-sm text-gray-500 mt-8">
-                        Don't have an account? <a href="/signup.html" class="font-medium text-indigo-600 hover:text-indigo-500">Sign Up</a>
+                        Don't have an account? <a href="signup.html" class="font-medium text-indigo-600 hover:text-indigo-500">Sign Up</a>
                     </p>
                     <p class="text-center text-sm text-gray-500 mt-4">
-                        Back to Home &larr; <a href="/welcome.html" class="font-medium text-indigo-600 hover:text-indigo-500">Home</a>
+                        Back to Home &larr; <a href="welcome.html" class="font-medium text-indigo-600 hover:text-indigo-500">Home</a>
                     </p>
                 </div>
             </div>
@@ -109,3 +89,4 @@
     <script src="auth.js"></script>
 </body>
 </html>
+
