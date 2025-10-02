@@ -259,15 +259,15 @@
             backToListBtn.addEventListener('click', showListView);
 
             // --- DATA FETCHING & RENDERING ---
-            async function fetchAndDisplayTests() {
+             async function fetchAndDisplayTests() {
                 try {
                     const response = await fetch('/api/tests', { headers: { 'x-auth-token': token } });
                     if (!response.ok) throw new Error('Failed to fetch tests');
                     const tests = await response.json();
                     
                     testsTableBody.innerHTML = '';
-                    if (tests.length === 0) {
-                        testsTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">No tests found.</td></tr>';
+                    if (!tests || tests.length === 0) {
+                        testsTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">No AI Proctored tests found to modify.</td></tr>';
                         return;
                     }
 
@@ -276,7 +276,7 @@
                         row.className = 'bg-white border-b hover:bg-gray-50';
                         row.innerHTML = `
                             <td class="px-6 py-4 font-medium text-gray-900">${test.title}</td>
-                            <td class="px-6 py-4">${test.questions.length}</td>
+                            <td class="px-6 py-4">${(test.questions || []).length}</td>
                             <td class="px-6 py-4">${test.status}</td>
                             <td class="px-6 py-4 text-right">
                                 <button class="edit-btn font-medium text-indigo-600 hover:text-indigo-900" data-testid="${test.testId}">Edit</button>
@@ -290,7 +290,6 @@
                 }
             }
             await fetchAndDisplayTests();
-
             // --- EDIT TEST LOGIC ---
             testsTableBody.addEventListener('click', async (e) => {
                 if (e.target.classList.contains('edit-btn')) {

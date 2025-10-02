@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modify Full Screen Test - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        .sidebar-heading { padding: 0.75rem 1rem; font-size: 0.75rem; letter-spacing: 0.05em; color: #9CA3AF; text-transform: uppercase; }
+        .question-block { transition: all 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold">TESTIFY</span>
+            </div>
+             <nav class="flex-grow p-4 overflow-y-auto">
+                 <a href="/dashboard" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <div class="sidebar-heading mt-4">Test Management</div>
+                <a href="/create-test" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    <span class="ml-3">AI Proctored Tests</span>
+                </a>
+                <a href="/manage-fullscreen-tests" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                    <span class="ml-3">Full Screen Tests</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+                <h1 class="text-2xl font-bold text-gray-800">Modify Full Screen Test</h1>
+                 <div class="flex items-center">
+                    <a href="/manage-fullscreen-tests" class="text-indigo-600 hover:text-indigo-800 font-semibold">Back to All Tests</a>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <form id="modify-test-form">
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4">Test Details</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <input type="text" id="testTitle" placeholder="Test Title" class="p-3 border rounded-lg" required>
+                            <input type="number" id="duration" placeholder="Duration (minutes)" class="p-3 border rounded-lg" required>
+                            <input type="number" id="totalMarks" placeholder="Total Marks" class="p-3 border rounded-lg" required>
+                            <input type="number" id="passingPercentage" placeholder="Passing Percentage (%)" class="p-3 border rounded-lg" required>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <div class="flex justify-between items-center mb-4">
+                             <h2 class="text-xl font-bold text-gray-800">Questions</h2>
+                             <button type="button" id="add-question-btn" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700">Add Question</button>
+                        </div>
+                        <div id="questions-container" class="space-y-6"></div>
+                    </div>
+                    <div class="mt-8 flex justify-end">
+                        <button type="submit" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700">Update Test</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const token = localStorage.getItem('token');
+        if (!token) { window.location.href = '/login'; return; }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const testId = urlParams.get('testId');
+        if (!testId) { alert('No test ID provided.'); window.location.href = '/manage-fullscreen-tests'; return; }
+
+        const modifyTestForm = document.getElementById('modify-test-form');
+        const questionsContainer = document.getElementById('questions-container');
+        const addQuestionBtn = document.getElementById('add-question-btn');
+        let questionCounter = 0;
+        
+        async function fetchTestDetails() {
+            try {
+                const response = await fetch(`/api/fullscreen-tests/${testId}`, { headers: { 'x-auth-token': token } });
+                if (!response.ok) throw new Error('Failed to fetch test details.');
+                const test = await response.json();
+                
+                document.getElementById('testTitle').value = test.title;
+                document.getElementById('duration').value = test.duration;
+                document.getElementById('totalMarks').value = test.totalMarks;
+                document.getElementById('passingPercentage').value = test.passingPercentage;
+
+                if (test.questions && test.questions.length > 0) {
+                    test.questions.forEach(q => addQuestion(q));
+                }
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function addQuestion(data = {}) {
+            questionCounter++;
+            const questionId = `question-${questionCounter}`;
+            const questionBlock = document.createElement('div');
+            questionBlock.id = `${questionId}-block`;
+            questionBlock.className = 'question-block bg-white p-6 rounded-xl shadow-md border';
+            questionBlock.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Question ${questionCounter}</h3>
+                    <button type="button" class="remove-question-btn text-red-500 hover:text-red-700" data-question-id="${questionId}">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Type</label>
+                        <select class="question-type-select mt-1 block w-full p-2 border border-gray-300 rounded-md" data-question-id="${questionId}">
+                            <option value="mcq-single">Single Choice</option>
+                            <option value="mcq-multiple">Multiple Choice</option>
+                            <option value="fill-blank">Fill in the Blanks</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700">Marks</label>
+                        <input type="number" required class="marks-input mt-1 block w-full p-2 border border-gray-300 rounded-md" value="${data.marks || ''}">
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700">Question Text</label>
+                    <textarea rows="3" required class="question-text-input mt-1 block w-full p-2 border border-gray-300 rounded-md">${data.text || ''}</textarea>
+                </div>
+                <div class="answer-area mt-4"></div>
+            `;
+            questionsContainer.appendChild(questionBlock);
+
+            const typeSelect = questionBlock.querySelector('.question-type-select');
+            if (data.type) typeSelect.value = data.type;
+            updateAnswerArea(questionBlock, typeSelect.value, data);
+        }
+
+        function updateAnswerArea(questionBlock, type, data = {}) {
+            const answerArea = questionBlock.querySelector('.answer-area');
+            const questionId = questionBlock.id.replace('-block','');
+            
+            if (type === 'mcq-single' || type === 'mcq-multiple') {
+                const inputType = type === 'mcq-single' ? 'radio' : 'checkbox';
+                answerArea.innerHTML = `
+                    <h4 class="text-md font-semibold text-gray-700 mb-2">Options</h4>
+                    <div class="options-container space-y-2"></div>
+                    <button type="button" class="add-option-btn mt-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800" data-input-type="${inputType}">+ Add Option</button>
+                `;
+                const options = data.options || ['', ''];
+                options.forEach((optionText, index) => {
+                    let isChecked = false;
+                    if (type === 'mcq-single') isChecked = String(data.correctAnswer) === String(index);
+                    else if (type === 'mcq-multiple') isChecked = data.correctAnswers && data.correctAnswers.includes(String(index));
+                    addOption(questionBlock, inputType, optionText, isChecked);
+                });
+            } else if (type === 'fill-blank') {
+                answerArea.innerHTML = `
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Correct Answer</label>
+                        <input type="text" required class="correct-answer-input mt-1 block w-full p-2 border border-gray-300 rounded-md" value="${data.correctAnswer || ''}">
+                    </div>
+                `;
+            }
+        }
+
+        function addOption(questionBlock, inputType, text = '', isChecked = false) {
+            const optionsContainer = questionBlock.querySelector('.options-container');
+            const questionId = questionBlock.id.replace('-block', '');
+            const optionIndex = optionsContainer.children.length;
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'flex items-center space-x-3';
+            optionDiv.innerHTML = `
+                <input name="${questionId}-correct" type="${inputType}" value="${optionIndex}" class="h-4 w-4 text-indigo-600" ${isChecked ? 'checked' : ''}>
+                <input type="text" placeholder="Option ${optionIndex + 1}" required class="option-text-input flex-grow p-2 border border-gray-300 rounded-md" value="${text}">
+                <button type="button" class="remove-option-btn text-gray-500 hover:text-red-500">&times;</button>
+            `;
+            optionsContainer.appendChild(optionDiv);
+        }
+
+        addQuestionBtn.addEventListener('click', () => addQuestion());
+
+        questionsContainer.addEventListener('click', (e) => {
+            const questionBlock = e.target.closest('.question-block');
+            if (e.target.closest('.remove-question-btn')) {
+                questionBlock.remove();
+                reIndexQuestions();
+            }
+            if (e.target.closest('.add-option-btn')) {
+                const btn = e.target.closest('.add-option-btn');
+                addOption(questionBlock, btn.dataset.inputType);
+            }
+            if(e.target.closest('.remove-option-btn')) {
+                e.target.closest('.flex').remove();
+            }
+        });
+
+        questionsContainer.addEventListener('change', (e) => {
+            if (e.target.matches('.question-type-select')) {
+                updateAnswerArea(e.target.closest('.question-block'), e.target.value);
+            }
+        });
+
+        function reIndexQuestions() {
+            document.querySelectorAll('.question-block').forEach((block, index) => {
+                block.querySelector('h3').textContent = `Question ${index + 1}`;
+            });
+            questionCounter = document.querySelectorAll('.question-block').length;
+        }
+
+        modifyTestForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const questions = [];
+            document.querySelectorAll('.question-block').forEach(block => {
+                const type = block.querySelector('.question-type-select').value;
+                const questionData = {
+                    type,
+                    text: block.querySelector('.question-text-input').value,
+                    marks: parseInt(block.querySelector('.marks-input').value)
+                };
+                if (type === 'mcq-single' || type === 'mcq-multiple') {
+                    questionData.options = [];
+                    block.querySelectorAll('.option-text-input').forEach(input => questionData.options.push(input.value));
+                    if (type === 'mcq-single') {
+                        const correctRadio = block.querySelector('input[type="radio"]:checked');
+                        questionData.correctAnswer = correctRadio ? correctRadio.value : null;
+                    } else {
+                        const correctCheckboxes = block.querySelectorAll('input[type="checkbox"]:checked');
+                        questionData.correctAnswers = Array.from(correctCheckboxes).map(cb => cb.value);
+                    }
+                } else {
+                    questionData.correctAnswer = block.querySelector('.correct-answer-input').value;
+                }
+                questions.push(questionData);
+            });
+
+            const payload = {
+                testTitle: document.getElementById('testTitle').value,
+                duration: parseInt(document.getElementById('duration').value),
+                totalMarks: parseInt(document.getElementById('totalMarks').value),
+                passingPercentage: parseInt(document.getElementById('passingPercentage').value),
+                questions
+            };
+
+            try {
+                const response = await fetch(`/api/fullscreen-tests/${testId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error((await response.json()).message);
+                alert('Test updated successfully!');
+                window.location.href = '/manage-fullscreen-tests';
+            } catch (error) {
+                alert(`Error updating test: ${error.message}`);
+            }
+        });
+
+        fetchTestDetails();
+    });
+    </script>
+</body>
+</html>

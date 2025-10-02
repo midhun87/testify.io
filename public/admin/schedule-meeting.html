@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Meeting - Admin</title>
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        .select2-container--default .select2-selection--multiple {
+            border-radius: 0.5rem;
+            border-color: #D1D5DB;
+            min-height: 42px;
+            padding-top: 4px;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: #4F46E5;
+            border-color: #4338CA;
+            color: white;
+            padding: 4px 8px;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            color: rgba(255,255,255,0.7);
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold">ADMIN</span>
+            </div>
+            <div class="flex flex-col flex-grow p-4">
+                <a href="#" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M-4.5 12h21" />
+                    </svg>
+                    <span class="ml-3">Schedule Meeting</span>
+                </a>
+                 <a href="scheduled-meetings.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                   <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
+                   </svg>
+                   <span class="ml-3">View Meetings</span>
+                </a>
+                <!-- Add other admin links here -->
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+                 <div>
+                    <h1 class="text-2xl font-bold text-gray-800">Schedule New Meeting</h1>
+                 </div>
+                 <!-- Header right side can go here -->
+            </div>
+            <div class="p-6 md:p-8">
+                <form id="schedule-meeting-form" class="bg-white p-8 rounded-xl shadow-lg space-y-6 max-w-4xl mx-auto">
+                    <div>
+                        <label for="title" class="block text-sm font-medium text-gray-700">Meeting Title</label>
+                        <input type="text" id="title" name="title" required class="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea id="description" name="description" rows="3" class="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="startTime" class="block text-sm font-medium text-gray-700">Start Time</label>
+                            <input type="datetime-local" id="startTime" name="startTime" required class="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label for="durationMinutes" class="block text-sm font-medium text-gray-700">Duration (in minutes)</label>
+                            <input type="number" id="durationMinutes" name="durationMinutes" value="30" required class="mt-1 block w-full px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
+                    <div class="border-t pt-6 space-y-4">
+                        <label class="block text-base font-semibold text-gray-800 mb-2">Assign To</label>
+                        <div class="flex items-center space-x-6">
+                            <label class="flex items-center"><input type="radio" name="assignmentType" value="college" checked class="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"><span class="ml-2 text-gray-700">By College</span></label>
+                            <label class="flex items-center"><input type="radio" name="assignmentType" value="student" class="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"><span class="ml-2 text-gray-700">By Student Email</span></label>
+                        </div>
+                    </div>
+                    <div id="college-assignment">
+                        <label for="colleges" class="block text-sm font-medium text-gray-700">Colleges</label>
+                        <select id="colleges" name="colleges" multiple="multiple" class="w-full mt-1"></select>
+                    </div>
+                    <div id="student-assignment" class="hidden">
+                        <label for="studentEmails" class="block text-sm font-medium text-gray-700">Student Emails</label>
+                        <textarea id="studentEmails" rows="3" class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="Enter comma-separated emails..."></textarea>
+                    </div>
+                    <div class="flex items-center pt-4">
+                        <input id="sendEmail" name="sendEmail" type="checkbox" checked class="h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        <label for="sendEmail" class="ml-3 block text-sm text-gray-900">Send email notification to students</label>
+                    </div>
+                    <div class="flex justify-end pt-4">
+                        <button type="submit" class="inline-flex justify-center py-3 px-8 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Schedule Meeting
+                        </button>
+                    </div>
+                </form>
+                <div id="message-container" class="mt-6 text-center text-sm"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            // In a real app, you'd also check for an admin role here
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const collegeSelect = $('#colleges');
+            fetch('/api/colleges', { headers: { 'x-auth-token': token } })
+                .then(res => res.json())
+                .then(colleges => {
+                    colleges.forEach(c => {
+                        const option = new Option(c.collegeName, c.collegeName, false, false);
+                        collegeSelect.append(option);
+                    });
+                    collegeSelect.select2({ placeholder: "Select colleges to assign", allowClear: true });
+                });
+
+            document.querySelectorAll('input[name="assignmentType"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    if (e.target.value === 'college') {
+                        document.getElementById('college-assignment').classList.remove('hidden');
+                        document.getElementById('student-assignment').classList.add('hidden');
+                    } else {
+                        document.getElementById('college-assignment').classList.add('hidden');
+                        document.getElementById('student-assignment').classList.remove('hidden');
+                    }
+                });
+            });
+
+            const form = document.getElementById('schedule-meeting-form');
+            const messageContainer = document.getElementById('message-container');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                messageContainer.innerHTML = `<p class="text-blue-600">Scheduling...</p>`;
+                const submitButton = form.querySelector('button[type="submit"]');
+                submitButton.disabled = true;
+
+                const assignmentType = document.querySelector('input[name="assignmentType"]:checked').value;
+                let colleges = null;
+                let studentEmails = null;
+                if (assignmentType === 'college') {
+                    colleges = $('#colleges').val();
+                } else {
+                    const emailsText = document.getElementById('studentEmails').value.trim();
+                    if(emailsText) {
+                        studentEmails = emailsText.split(',').map(email => email.trim()).filter(Boolean);
+                    }
+                }
+
+                const body = {
+                    title: document.getElementById('title').value,
+                    description: document.getElementById('description').value,
+                    startTime: document.getElementById('startTime').value,
+                    durationMinutes: parseInt(document.getElementById('durationMinutes').value),
+                    colleges,
+                    studentEmails,
+                    sendEmail: document.getElementById('sendEmail').checked,
+                };
+
+                try {
+                    const response = await fetch('/api/meetings/schedule', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-auth-token': token
+                        },
+                        body: JSON.stringify(body)
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message);
+
+                    messageContainer.innerHTML = `<p class="text-green-600 font-semibold">${result.message}</p>`;
+                    form.reset();
+                    $('#colleges').val(null).trigger('change');
+                } catch (error) {
+                    messageContainer.innerHTML = `<p class="text-red-600 font-semibold">${error.message}</p>`;
+                } finally {
+                    submitButton.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

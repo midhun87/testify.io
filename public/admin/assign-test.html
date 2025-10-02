@@ -308,8 +308,8 @@
             
             function displayTests(tests) {
                 testsTableBody.innerHTML = '';
-                if (tests.length === 0) {
-                    testsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No tests found. Create one!</td></tr>';
+                if (!tests || tests.length === 0) {
+                    testsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No AI Proctored tests found. Create one!</td></tr>';
                     return;
                 }
                 tests.forEach(test => {
@@ -320,7 +320,7 @@
                         : `<span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">${test.status}</span>`;
                     row.innerHTML = `
                         <td class="px-6 py-4 font-medium text-gray-900">${test.title}</td>
-                        <td class="px-6 py-4">${test.questions.length}</td>
+                        <td class="px-6 py-4">${(test.questions || []).length}</td>
                         <td class="px-6 py-4">${test.duration} mins</td>
                         <td class="px-6 py-4">${statusBadge}</td>
                         <td class="px-6 py-4 text-right">
@@ -330,7 +330,6 @@
                     testsTableBody.appendChild(row);
                 });
             }
-            
             userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
             logoutButton.addEventListener('click', () => {
                 localStorage.removeItem('token');

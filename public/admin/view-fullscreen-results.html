@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Test Results - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        @media print {
+            body {
+                background-color: white;
+            }
+            .no-print, .no-print * {
+                display: none !important;
+            }
+            #print-header {
+                display: block !important;
+            }
+            .p-8, .p-6 {
+                padding: 0;
+            }
+            .shadow-md {
+                box-shadow: none;
+            }
+            #results-table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            #results-table th, #results-table td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                color: #000 !important; /* Ensure text is black */
+            }
+             /* Ensure result colors are still visible when printed */
+            .text-green-600 { color: #166534 !important; }
+            .text-red-600 { color: #991b1b !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Print-only header -->
+    <div id="print-header" class="hidden p-8">
+        <div class="flex items-center justify-between mb-6">
+             <div class="flex items-center">
+                <img class="h-12 w-12" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-4 text-3xl font-bold text-gray-800">TESTIFY</span>
+             </div>
+             <h1 id="test-title-print" class="text-2xl font-bold text-gray-800 text-right"></h1>
+        </div>
+    </div>
+    
+    <!-- Main Content Area -->
+    <div class="p-8">
+         <div class="flex justify-between items-center mb-6 no-print">
+             <h1 id="test-title" class="text-3xl font-bold text-gray-800">Test Results</h1>
+             <button id="print-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                 </svg>
+                <span>Print Results</span>
+            </button>
+         </div>
+         <div class="bg-white p-6 rounded-lg shadow-md">
+             <table id="results-table" class="w-full text-left">
+                 <thead>
+                     <tr class="bg-gray-50">
+                         <th class="p-3">Student Name</th>
+                         <th class="p-3">Email</th>
+                         <th class="p-3">College</th>
+                         <th class="p-3">Score (%)</th>
+                         <th class="p-3">Result</th>
+                         <th class="p-3">Violation Reason</th>
+                     </tr>
+                 </thead>
+                 <tbody id="results-table-body">
+                     <!-- Results will be populated here -->
+                 </tbody>
+             </table>
+         </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            const urlParams = new URLSearchParams(window.location.search);
+            const testId = urlParams.get('testId');
+
+            if (!token || !testId) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const resultsTableBody = document.getElementById('results-table-body');
+            const mainTitle = document.getElementById('test-title');
+            const printTitle = document.getElementById('test-title-print');
+            const printBtn = document.getElementById('print-btn');
+
+            printBtn.addEventListener('click', () => {
+                window.print();
+            });
+
+            try {
+                // Fetch all fullscreen tests to find the title
+                const allTestsResponse = await fetch('/api/fullscreen-tests', {
+                    headers: { 'x-auth-token': token }
+                });
+                if (!allTestsResponse.ok) throw new Error('Could not fetch test details.');
+                const allTests = await allTestsResponse.json();
+                const test = allTests.find(t => t.testId === testId);
+                
+                const titleText = test ? `Results for: ${test.title}` : `Results for Test`;
+                mainTitle.textContent = titleText;
+                printTitle.textContent = titleText;
+
+
+                // Fetch results for the specific test
+                const resultsResponse = await fetch(`/api/fullscreen-results/${testId}`, {
+                    headers: { 'x-auth-token': token }
+                });
+                if (!resultsResponse.ok) throw new Error('Could not fetch test results.');
+                const results = await resultsResponse.json();
+                
+                resultsTableBody.innerHTML = ''; 
+                
+                if(results.length === 0){
+                    resultsTableBody.innerHTML = '<tr><td colspan="6" class="p-3 text-center">No results found for this test yet.</td></tr>';
+                    return;
+                }
+
+                results.forEach(result => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b';
+                    row.innerHTML = `
+                        <td class="p-3">${result.studentName || 'N/A'}</td>
+                        <td class="p-3">${result.studentEmail}</td>
+                        <td class="p-3">${result.college || 'N/A'}</td>
+                        <td class="p-3">${result.score}</td>
+                        <td class="p-3 ${result.result === 'Pass' ? 'text-green-600' : 'text-red-600'} font-semibold">${result.result}</td>
+                        <td class="p-3">${result.violationReason || 'None'}</td>
+                    `;
+                    resultsTableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error fetching results:', error);
+                const errorMessage = `<tr><td colspan="6" class="p-3 text-center text-red-500">${error.message}</td></tr>`;
+                resultsTableBody.innerHTML = errorMessage;
+                alert('Could not load test results.');
+            }
+        });
+    </script>
+</body>
+</html>
+
