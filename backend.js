@@ -1,9 +1,8 @@
 // backend_moderator.js
-// --- IMPORTS ---
 require('dotenv').config();
 const express = require('express');
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, QueryCommand, UpdateCommand, BatchGetCommand, DeleteCommand } = require("@aws-sdk/lib-dynamodb");
+const { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, QueryCommand, UpdateCommand, BatchGetCommand, DeleteCommand, BatchWriteCommand } = require("@aws-sdk/lib-dynamodb");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
@@ -14,10 +13,13 @@ const multer = require('multer');
 const pdf = require('pdf-parse');
 const fetch = require('node-fetch');
 const cloudinary = require('cloudinary').v2;
-const { BatchWriteCommand } = require("@aws-sdk/lib-dynamodb");
 const { RekognitionClient, CompareFacesCommand } = require("@aws-sdk/client-rekognition");
+const crypto = require('crypto');
+const SibApiV3Sdk = require('sib-api-v3-sdk');
 
-
+const ZOOM_ACCOUNT_ID = process.env.ZOOM_ACCOUNT_ID || 'bq5-fIbESBONjaZAr184uA';
+const ZOOM_CLIENT_ID = process.env.ZOOM_CLIENT_ID || 'CXxbks94RlmD_90vofVqg';
+const ZOOM_CLIENT_SECRET = process.env.ZOOM_CLIENT_SECRET || 'XXoYPmG5z8rSf1J6Fov7iXSminmBRuO9';
 
 
 // --- INITIALIZATION ---
@@ -36,13 +38,31 @@ const client = new DynamoDBClient({
 const docClient = DynamoDBDocumentClient.from(client);
 
 // --- NODEMAILER TRANSPORTER SETUP ---
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'testifylearning.help@gmail.com',
-        pass: 'gkiz belc koar elxi '
+let defaultClient = SibApiV3Sdk.ApiClient.instance;
+
+// Configure API key authorization: api-key
+let apiKey = defaultClient.authentications['api-key'];
+// IMPORTANT: Store this in an environment variable (e.g., BREVO_API_KEY) on Render
+apiKey.apiKey = process.env.BREVO_API_KEY || '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';
+
+// How to use it to send mail:
+async function sendEmailWithBrevo(mailOptions) {
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+
+    sendSmtpEmail.subject = mailOptions.subject;
+    sendSmtpEmail.htmlContent = mailOptions.html;
+    sendSmtpEmail.sender = { name: 'TESTIFY', email: 'testifylearning.help@gmail.com' }; // Must be a verified sender
+    sendSmtpEmail.to = [{ email: mailOptions.to }];
+
+    try {
+        await apiInstance.sendTransacEmail(sendSmtpEmail);
+        console.log('Email sent successfully with Brevo');
+    } catch (error) {
+        console.error('Error sending email with Brevo:', error);
     }
-});
+}
+
 
 // --- CLOUDINARY CONFIG ---
 cloudinary.config({
@@ -62,14 +82,18 @@ const rekognitionClient = new RekognitionClient({
 });
 
 
-// --- MIDDLEWARE ---
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 app.use('/moderator', express.static(path.join(__dirname, 'public/moderator')));
 
+// =================================================================
+// --- PERMANENT FIX FOR SERVING ZOOM SDK LOCALLY ---
+// This line serves the files from the package you installed with NPM.
+// It correctly points to the '@zoom/meetingsdk' directory.
+// =================================================================
 
-// --- AUTHENTICATION MIDDLEWARE [MODIFIED] ---
+
 const authMiddleware = async (req, res, next) => {
     const token = req.header('x-auth-token');
     if (!token) {
@@ -102,6 +126,49 @@ const authMiddleware = async (req, res, next) => {
         res.status(401).json({ message: 'Token is not valid' });
     }
 };
+
+// const authMiddleware = async (req, res, next) => {
+//     const token = req.header('x-auth-token');
+//     if (!token) {
+//         return res.status(401).json({ message: 'No token, authorization denied' });
+//     }
+//     try {
+//         const decoded = jwt.verify(token, JWT_SECRET);
+//         req.user = decoded.user;
+
+//         const { Item } = await docClient.send(new GetCommand({
+//             TableName: "TestifyUsers",
+//             Key: { email: req.user.email }
+//         }));
+
+//         if (!Item) {
+//             return res.status(404).json({ message: 'User not found.' });
+//         }
+
+//         if (Item.isBlocked) {
+//             return res.status(403).json({ message: 'Your account has been blocked by the administrator.' });
+//         }
+
+//         req.user.fullName = Item.fullName; // Add fullName to req.user
+//         req.user.college = Item.college; // Add college to req.user
+
+//         if (Item.role === 'Moderator') {
+//             req.user.assignedColleges = Item.assignedColleges || [];
+//         }
+
+//         next();
+//     } catch (e) {
+//         res.status(401).json({ message: 'Token is not valid' });
+//     }
+// };
+
+// const adminOrModeratorAuth = (req, res, next) => {
+//     if (req.user.role !== 'Admin' && req.user.role !== 'Moderator') {
+//         return res.status(403).json({ message: 'Access denied.' });
+//     }
+//     next();
+// };
+
 
 
 // =================================================================
@@ -207,7 +274,7 @@ app.post('/api/send-otp', async (req, res) => {
 };
 
 
-        await transporter.sendMail(mailOptions);
+        await sendEmailWithBrevo(mailOptions);
 
         res.status(200).json({ message: 'OTP sent successfully. Please check your email.' });
     } catch (error) {
@@ -729,7 +796,7 @@ async function issueCertificateAutomatically(testId, studentEmail) {
 
 
 
-        await transporter.sendMail(mailOptions);
+        await sendEmailWithBrevo(mailOptions);
         console.log(`Successfully auto-issued certificate to ${studentEmail} for test ${testTitle}`);
 
     } catch (error) {
@@ -1071,7 +1138,7 @@ app.post('/api/assign-test', authMiddleware, adminOrModeratorAuth, async (req, r
     };
     // Your email sending logic would go here
 
-            await transporter.sendMail(mailOptions);
+            await sendEmailWithBrevo(mailOptions);
         }
         res.status(200).json({ message: 'Test assigned successfully!' });
     } catch (error) {
@@ -1442,7 +1509,7 @@ app.post('/api/admin/assign-course', authMiddleware, adminOrModeratorAuth, async
     // You would add your email sending logic here, e.g., transporter.sendMail(mailOptions);
 
 
-            await transporter.sendMail(mailOptions);
+            await sendEmailWithBrevo(mailOptions);
         }
 
         res.status(200).json({ message: `Course assigned to ${studentsToAssign.length} students successfully!` });
@@ -1671,7 +1738,7 @@ app.post('/api/student/courses/progress', authMiddleware, async (req, res) => {
 </html>`
 };
 
-                await transporter.sendMail(mailOptions);
+                await sendEmailWithBrevo(mailOptions);
             }
             res.json({ message: 'Progress updated. Course complete and final test assigned!' });
         } else {
@@ -2199,7 +2266,7 @@ app.post('/api/admin/issue-certificates', authMiddleware, async (req, res) => {
 };
 
 
-            await transporter.sendMail(mailOptions);
+            await sendEmailWithBrevo(mailOptions);
         }
         res.status(200).json({ message: `Successfully issued ${passedStudents.length} certificates.` });
 
@@ -3647,7 +3714,7 @@ const mailOptions = {
 
 
 
-        await transporter.sendMail(mailOptions);
+        await sendEmailWithBrevo(mailOptions);
         res.status(200).json({ message: 'Password reset link sent to your email.' });
 
     } catch (error) {
@@ -5065,7 +5132,7 @@ if (studentEmails.length > 0) {
 </body>
 </html>`
     };
-                await transporter.sendMail(mailOptions);
+                await sendEmailWithBrevo(mailOptions);
             }
         }
         
@@ -5195,7 +5262,7 @@ app.post('/api/admin/contests', authMiddleware, async (req, res) => {
                     subject: `New Coding Contest Assigned: ${title}`,
                     html: `<p>Hello,</p><p>A new coding contest, "<b>${title}</b>", has been assigned to you. Please log in to your TESTIFY dashboard to participate.</p><p>Best regards,<br/>The TESTIFY Team</p>`
                 };
-                await transporter.sendMail(mailOptions);
+                await sendEmailWithBrevo(mailOptions);
             }
         }
 
@@ -5640,7 +5707,7 @@ app.post('/api/admin/issue-course-certificates', authMiddleware, async (req, res
             };
             
             // FIX: Added the missing line to actually send the email.
-            await transporter.sendMail(mailOptions);
+            await sendEmailWithBrevo(mailOptions);
         }
         res.status(200).json({ message: `Successfully issued ${studentEmails.length} certificates.` });
     } catch (error) {
@@ -6171,7 +6238,7 @@ app.post('/api/careers/send-view-otp', async (req, res) => {
             `
         };
 
-        await transporter.sendMail(mailOptions);
+        await sendEmailWithBrevo(mailOptions);
         res.status(200).json({ message: 'A verification code has been sent to your email.' });
 
     } catch (error) {
@@ -6243,6 +6310,637 @@ app.post('/api/careers/verify-view-otp', async (req, res) => {
 // =================================================================
 // --- END OF CAREERS ROUTES ---
 // =================================================================
+
+// Add these new endpoints to your backend.js file.
+// You can place them after your existing /api/assign-test endpoint.
+
+app.post('/api/fullscreen-tests', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Access denied.' });
+    
+    const { testTitle, duration, totalMarks, passingPercentage, questions } = req.body;
+    const testId = uuidv4();
+
+    const newTest = {
+        testId,
+        title: testTitle,
+        duration,
+        totalMarks,
+        passingPercentage,
+        questions,
+        testType: 'fullscreen', // Differentiate from AI proctored tests
+        createdAt: new Date().toISOString(),
+        status: 'Not Assigned',
+        // Ensure this property exists to avoid future errors
+        autoIssueCertificates: false 
+    };
+
+    try {
+        await docClient.send(new PutCommand({ TableName: "TestifyTests", Item: newTest }));
+        res.status(201).json({ message: 'Full Screen Test created successfully!', test: newTest });
+    } catch (error) {
+        console.error("Create Full Screen Test Error:", error);
+        res.status(500).json({ message: 'Server error creating test.' });
+    }
+});
+
+// Get all Full Screen tests (Admin)
+app.get('/api/fullscreen-tests', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Access denied.' });
+    try {
+        const { Items } = await docClient.send(new ScanCommand({ 
+            TableName: "TestifyTests",
+            FilterExpression: "attribute_exists(testType) AND testType = :type",
+            ExpressionAttributeValues: {
+                ":type": "fullscreen"
+            }
+        }));
+        res.json(Items);
+    } catch (error) {
+        console.error("Get Full Screen Tests Error:", error);
+        res.status(500).json({ message: 'Server error fetching tests.' });
+    }
+});
+
+// Get Full Screen test results (Admin)
+app.get('/api/fullscreen-results/:testId', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Access denied.' });
+    const { testId } = req.params;
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyResults",
+            FilterExpression: "testId = :tid",
+            ExpressionAttributeValues: {
+                ":tid": testId
+            }
+        }));
+
+        const studentEmails = [...new Set(Items.map(item => item.studentEmail))];
+        if (studentEmails.length === 0) {
+            return res.json([]);
+        }
+
+        const keys = studentEmails.map(email => ({ email }));
+        const { Responses } = await docClient.send(new BatchGetCommand({
+            RequestItems: { "TestifyUsers": { Keys: keys } }
+        }));
+        const students = Responses.TestifyUsers || [];
+        const studentMap = new Map(students.map(s => [s.email, { fullName: s.fullName, college: s.college }]));
+
+        const resultsWithNames = Items.map(result => ({
+            ...result,
+            studentName: studentMap.get(result.studentEmail)?.fullName || 'Unknown',
+            college: studentMap.get(result.studentEmail)?.college || 'Unknown'
+        }));
+
+        res.json(resultsWithNames);
+    } catch (error) {
+        console.error("Get Full Screen Test Results Error:", error);
+        res.status(500).json({ message: 'Server error fetching results.' });
+    }
+});
+
+// NEW: Endpoint specifically for assigning Full Screen tests
+app.post('/api/assign-fullscreen-test', authMiddleware, adminOrModeratorAuth, async (req, res) => {
+    // This endpoint is simpler and does not handle 'autoIssueCertificates'.
+    const { testId, testName, colleges, studentEmails, sendEmail } = req.body;
+
+    try {
+        let studentsToNotify = [];
+
+        // Logic for assigning to specific students (allows retakes)
+        if (studentEmails && studentEmails.length > 0) {
+            for (const email of studentEmails) {
+                // Delete existing result to allow retake
+                const { Items: existingResults } = await docClient.send(new ScanCommand({
+                    TableName: "TestifyResults",
+                    FilterExpression: "studentEmail = :email AND testId = :tid",
+                    ExpressionAttributeValues: { ":email": email, ":tid": testId }
+                }));
+
+                if (existingResults && existingResults.length > 0) {
+                    const deleteRequests = existingResults.map(result => ({ DeleteRequest: { Key: { resultId: result.resultId } } }));
+                    const batches = [];
+                    for (let i = 0; i < deleteRequests.length; i += 25) {
+                        batches.push(deleteRequests.slice(i, i + 25));
+                    }
+                    for (const batch of batches) {
+                        await docClient.send(new BatchWriteCommand({ RequestItems: { "TestifyResults": batch } }));
+                    }
+                }
+
+                // Create an assignment record if one doesn't exist
+                const { Items: existingAssignments } = await docClient.send(new ScanCommand({
+                    TableName: "TestifyAssignments",
+                    FilterExpression: "studentEmail = :email AND testId = :tid",
+                    ExpressionAttributeValues: { ":email": email, ":tid": testId }
+                }));
+                if (!existingAssignments || existingAssignments.length === 0) {
+                    await docClient.send(new PutCommand({
+                        TableName: "TestifyAssignments",
+                        Item: { assignmentId: uuidv4(), testId, studentEmail: email, assignedAt: new Date().toISOString() }
+                    }));
+                }
+            }
+            studentsToNotify = studentEmails;
+        } 
+        // Logic for assigning to entire colleges
+        else if (colleges && colleges.length > 0) {
+            if (req.user.role === 'Moderator') {
+                const isAllowed = colleges.every(college => req.user.assignedColleges.includes(college));
+                if (!isAllowed) {
+                    return res.status(403).json({ message: 'You can only assign tests to your assigned colleges.' });
+                }
+            }
+            
+            const filterExpression = colleges.map((_, index) => `college = :c${index}`).join(' OR ');
+            const expressionAttributeValues = colleges.reduce((acc, college, index) => ({ ...acc, [`:c${index}`]: college }), {});
+            
+            const { Items: studentsInColleges } = await docClient.send(new ScanCommand({
+                TableName: "TestifyUsers",
+                FilterExpression: filterExpression,
+                ExpressionAttributeValues: expressionAttributeValues
+            }));
+
+            if (studentsInColleges.length > 0) {
+                const assignmentWrites = studentsInColleges.map(student => ({
+                    PutRequest: { Item: { assignmentId: uuidv4(), testId, studentEmail: student.email, assignedAt: new Date().toISOString() } }
+                }));
+                const batches = [];
+                for (let i = 0; i < assignmentWrites.length; i += 25) {
+                    batches.push(assignmentWrites.slice(i, i + 25));
+                }
+                for (const batch of batches) {
+                    await docClient.send(new BatchWriteCommand({ RequestItems: { "TestifyAssignments": batch } }));
+                }
+            }
+            studentsToNotify = studentsInColleges.map(s => s.email);
+        }
+
+        // Mark the test as 'Assigned'. This update is safe for Full Screen tests.
+        await docClient.send(new UpdateCommand({
+            TableName: "TestifyTests",
+            Key: { testId },
+            UpdateExpression: "set #status = :status",
+            ExpressionAttributeNames: { "#status": "status" },
+            ExpressionAttributeValues: { ":status": `Assigned` }
+        }));
+
+        // Send email notifications
+        if (sendEmail && studentsToNotify.length > 0) {
+            const mailOptions = {
+                from: '"TESTIFY" <testifylearning.help@gmail.com>',
+                to: studentsToNotify.join(','),
+                subject: `New Full Screen Test Assigned: ${testName}`,
+                html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>New Test Assigned</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; }
+        @media screen and (max-width: 600px) {
+            .content-width { width: 90% !important; }
+        }
+    </style>
+</head>
+<body style="background-color: #f3f4f6; margin: 0; padding: 0;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
+                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo" style="height: 50px; width: auto;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding: 40px; text-align: center;">
+                             <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">New Test Assigned</h1>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 30px; line-height: 1.7;">
+                                 A new full screen test, "<b>${testName}</b>", has been assigned to you. Please log in to your dashboard to take the test.
+                             </p>
+                             <a href="http://localhost:3000/student/fullscreen-test.html" 
+                                target="_blank"
+                                style="display: inline-block; padding: 15px 35px; font-family: 'Poppins', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #3b82f6; border-radius: 8px; text-decoration: none;">
+                                 Go to Full Screen Tests
+                             </a>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
+                                 Good luck!
+                             </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
+                                &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
+                            </p>
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
+                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+            };
+            await sendEmailWithBrevo(mailOptions);
+        }
+        res.status(200).json({ message: 'Full Screen Test assigned successfully!' });
+    } catch (error) {
+        console.error("Assign Full Screen Test Error:", error);
+        res.status(500).json({ message: 'Server error assigning test.' });
+    }
+});
+
+
+// Add these endpoints to your main backend.js file
+
+// GET a single fullscreen test's details (for modification page)
+app.get('/api/fullscreen-tests/:id', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Access denied.' });
+    try {
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests",
+            Key: { testId: req.params.id }
+        }));
+        if (Item && Item.testType === 'fullscreen') {
+            res.json(Item);
+        } else {
+            res.status(404).json({ message: 'Full screen test not found.' });
+        }
+    } catch (error) {
+        console.error("Get Single Full Screen Test Error:", error);
+        res.status(500).json({ message: 'Server error fetching test.' });
+    }
+});
+
+// PUT (update) a fullscreen test
+app.put('/api/fullscreen-tests/:id', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Access denied.' });
+    
+    const { testTitle, duration, totalMarks, passingPercentage, questions } = req.body;
+    const testId = req.params.id;
+
+    try {
+        const { Item: existingTest } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests",
+            Key: { testId }
+        }));
+        if (!existingTest || existingTest.testType !== 'fullscreen') {
+            return res.status(404).json({ message: 'Full screen test not found for update.' });
+        }
+
+        const updatedTest = {
+            ...existingTest, 
+            title: testTitle,
+            duration,
+            totalMarks,
+            passingPercentage,
+            questions
+        };
+
+        await docClient.send(new PutCommand({
+            TableName: "TestifyTests",
+            Item: updatedTest
+        }));
+        res.status(200).json({ message: 'Test updated successfully!', test: updatedTest });
+    } catch (error) {
+        console.error("Update Full Screen Test Error:", error);
+        res.status(500).json({ message: 'Server error updating test.' });
+    }
+});
+// ... existing code ...
+
+// METT?///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+async function getZoomAccessToken() {
+    try {
+        const response = await fetch(`https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${ZOOM_ACCOUNT_ID}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Basic ${Buffer.from(`${ZOOM_CLIENT_ID}:${ZOOM_CLIENT_SECRET}`).toString('base64')}`
+            }
+        });
+        if (!response.ok) {
+            const errorBody = await response.json();
+            console.error("Zoom Token Error:", errorBody);
+            throw new Error('Failed to get Zoom access token');
+        }
+        const data = await response.json();
+        return data.access_token;
+    } catch (error) {
+        console.error("Error in getZoomAccessToken:", error);
+        throw error;
+    }
+}
+
+/**
+ * Creates a new Zoom meeting.
+ * @param {object} meetingDetails Details for the meeting.
+ */
+async function createZoomMeeting(meetingDetails) {
+    const accessToken = await getZoomAccessToken(); // Use the new function to get a token
+    const zoomApiUrl = 'https://api.zoom.us/v2/users/me/meetings';
+
+    const payload = {
+        topic: meetingDetails.topic,
+        type: 2, // Scheduled meeting
+        start_time: meetingDetails.startTime,
+        duration: meetingDetails.duration, // in minutes
+        timezone: 'Asia/Kolkata',
+        settings: {
+            host_video: true,
+            participant_video: true,
+            join_before_host: false,
+            mute_upon_entry: true,
+            use_pmi: false,
+            approval_type: 0,
+            registration_type: 1,
+            audio: 'both',
+            auto_recording: 'none',
+        },
+    };
+
+    const response = await fetch(zoomApiUrl, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`, // Use the Bearer token
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        const errorBody = await response.json();
+        console.error("Zoom API Error:", errorBody);
+        throw new Error(`Zoom API failed with status: ${response.status}`);
+    }
+
+    return await response.json();
+}
+
+// ... (The rest of your backend.js code remains the same from here) ...
+
+// --- AUTHENTICATION MIDDLEWARE [MODIFIED] ---
+// const authMiddleware = async (req, res, next) => {
+//     const token = req.header('x-auth-token');
+//     if (!token) {
+//         return res.status(401).json({ message: 'No token, authorization denied' });
+//     }
+//     try {
+//         const decoded = jwt.verify(token, JWT_SECRET);
+//         req.user = decoded.user;
+
+//         const { Item } = await docClient.send(new GetCommand({
+//             TableName: "TestifyUsers",
+//             Key: { email: req.user.email }
+//         }));
+
+//         if (!Item) {
+//             return res.status(404).json({ message: 'User not found.' });
+//         }
+
+//         if (Item.isBlocked) {
+//             return res.status(403).json({ message: 'Your account has been blocked by the administrator.' });
+//         }
+
+//         if (Item.role === 'Moderator') {
+//             req.user.assignedColleges = Item.assignedColleges || [];
+//         }
+
+
+//         next();
+//     } catch (e) {
+//         res.status(401).json({ message: 'Token is not valid' });
+//     }
+// };
+
+// const adminOrModeratorAuth = (req, res, next) => {
+//     if (req.user.role !== 'Admin' && req.user.role !== 'Moderator') {
+//         return res.status(403).json({ message: 'Access denied.' });
+//     }
+//     next();
+// };
+
+
+app.post('/api/meetings/schedule', authMiddleware, adminOrModeratorAuth, async (req, res) => {
+    const { title, description, startTime, durationMinutes, colleges, studentEmails, sendEmail } = req.body;
+    const scheduledBy = req.user.email;
+
+    if (!title || !startTime || !durationMinutes || (!colleges && !studentEmails)) {
+        return res.status(400).json({ message: 'Missing required fields for scheduling a meeting.' });
+    }
+    try {
+        const meetingDetails = {
+            topic: title,
+            startTime: new Date(startTime).toISOString(),
+            duration: durationMinutes,
+        };
+        const zoomMeeting = await createZoomMeeting(meetingDetails);
+        const meetLink = zoomMeeting.join_url;
+        let targetAttendees = [];
+        if (studentEmails && studentEmails.length > 0) {
+            targetAttendees = studentEmails;
+        } else if (colleges && colleges.length > 0) {
+             const filterExpression = colleges.map((_, index) => `college = :c${index}`).join(' OR ');
+             const expressionAttributeValues = {};
+             colleges.forEach((college, index) => { expressionAttributeValues[`:c${index}`] = college; });
+             const { Items } = await docClient.send(new ScanCommand({
+                 TableName: "TestifyUsers",
+                 FilterExpression: filterExpression,
+                 ExpressionAttributeValues: expressionAttributeValues,
+                 ProjectionExpression: "email"
+             }));
+             targetAttendees = Items.map(s => s.email);
+        }
+        if (targetAttendees.length === 0) {
+            return res.status(400).json({ message: 'No students found for the selected criteria.' });
+        }
+        const meetingId = `meet_${uuidv4()}`;
+        const newMeeting = {
+            testId: meetingId,
+            title, description, duration: durationMinutes, startTime, isMeeting: true,
+            meetLink, scheduledBy, attendees: [], createdAt: new Date().toISOString()
+        };
+        await docClient.send(new PutCommand({ TableName: "TestifyTests", Item: newMeeting }));
+        const assignmentWrites = targetAttendees.map(email => ({
+            PutRequest: {
+                Item: {
+                    assignmentId: uuidv4(),
+                    testId: meetingId,
+                    studentEmail: email,
+                    assignedAt: new Date().toISOString()
+                }
+            }
+        }));
+        const batches = [];
+        for (let i = 0; i < assignmentWrites.length; i += 25) {
+            batches.push(assignmentWrites.slice(i, i + 25));
+        }
+        for (const batch of batches) {
+            await docClient.send(new BatchWriteCommand({ RequestItems: { "TestifyAssignments": batch } }));
+        }
+        if (sendEmail && targetAttendees.length > 0) {
+            const mailOptions = {
+                from: '"TESTIFY" <testifylearning.help@gmail.com>',
+                to: targetAttendees.join(','),
+                subject: `Invitation: ${title}`,
+                html: `<p>You have been invited to a meeting: <strong>${title}</strong>.</p><p>It is scheduled for ${new Date(startTime).toLocaleString()}. Please check your dashboard to join.</p>`
+            };
+            await sendEmailWithBrevo(mailOptions);
+        }
+        res.status(201).json({ message: 'Zoom meeting scheduled and assigned successfully!', meeting: newMeeting });
+    } catch (error) {
+        console.error("Schedule Meeting Error:", error);
+        res.status(500).json({ message: 'Server error scheduling meeting.' });
+    }
+});
+
+// The remaining meeting endpoints do not need to change as they only interact with your DynamoDB tables.
+
+// Endpoint for students to get their assigned meetings.
+app.get('/api/student/meetings', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+
+    try {
+        const { Items: assignments } = await docClient.send(new ScanCommand({
+            TableName: "TestifyAssignments",
+            FilterExpression: "studentEmail = :email",
+            ExpressionAttributeValues: { ":email": req.user.email }
+        }));
+
+        if (!assignments || assignments.length === 0) return res.json([]);
+        
+        const meetingIds = assignments.map(a => a.testId).filter(id => id && id.startsWith('meet_'));
+        if (meetingIds.length === 0) return res.json([]);
+
+        const keys = [...new Set(meetingIds)].map(testId => ({ testId }));
+        const { Responses } = await docClient.send(new BatchGetCommand({
+            RequestItems: { "TestifyTests": { Keys: keys } }
+        }));
+        
+        const meetings = Responses.TestifyTests ? Responses.TestifyTests.filter(item => item.isMeeting === true) : [];
+        meetings.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+        
+        res.json(meetings);
+    } catch (error) {
+        console.error("Get Student Meetings Error:", error);
+        res.status(500).json({ message: 'Server error fetching meetings.' });
+    }
+});
+
+// Endpoint for students to "check-in" to a meeting. This records their attendance.
+app.post('/api/meetings/:meetingId/join', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+    
+    const { meetingId } = req.params;
+    const studentEmail = req.user.email;
+    const studentName = req.user.fullName;
+
+    try {
+        const { Item: meeting } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests",
+            Key: { testId: meetingId }
+        }));
+        
+        if (!meeting || !meeting.isMeeting) return res.status(404).json({ message: 'Meeting not found.' });
+
+        const alreadyJoined = meeting.attendees && meeting.attendees.some(att => att.email === studentEmail);
+        if (!alreadyJoined) {
+            const attendeeInfo = {
+                email: studentEmail,
+                name: studentName,
+                joinTime: new Date().toISOString()
+            };
+            await docClient.send(new UpdateCommand({
+                TableName: "TestifyTests",
+                Key: { testId: meetingId },
+                UpdateExpression: "SET attendees = list_append(if_not_exists(attendees, :empty_list), :newAttendee)",
+                ExpressionAttributeValues: { 
+                    ":newAttendee": [attendeeInfo],
+                    ":empty_list": []
+                }
+            }));
+        }
+        
+        res.status(200).json({ message: 'Attendance recorded.' });
+    } catch (error) {
+        console.error("Join Meeting Error:", error);
+        res.status(500).json({ message: 'Server error recording attendance.' });
+    }
+});
+
+
+// Endpoint for Admins to get all scheduled meetings.
+app.get('/api/admin/meetings', authMiddleware, adminOrModeratorAuth, async (req, res) => {
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyTests",
+            FilterExpression: "isMeeting = :true",
+            ExpressionAttributeValues: { ":true": true }
+        }));
+        Items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        res.json(Items);
+    } catch (error) {
+        console.error("Get All Meetings Error:", error);
+        res.status(500).json({ message: 'Server error fetching meetings.' });
+    }
+});
+
+// Endpoint for Admins to get the list of attendees for a specific meeting.
+app.get('/api/admin/meetings/:meetingId/attendees', authMiddleware, adminOrModeratorAuth, async (req, res) => {
+    const { meetingId } = req.params;
+    try {
+         const { Item: meeting } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests",
+            Key: { testId: meetingId }
+        }));
+        if (!meeting || !meeting.isMeeting) return res.status(404).json({ message: 'Meeting not found.' });
+        
+        const attendees = meeting.attendees || [];
+        if (attendees.length === 0) {
+            return res.json([]);
+        }
+
+        // Get all unique attendee emails
+        const attendeeEmails = [...new Set(attendees.map(att => att.email))];
+
+        // Fetch user details from TestifyUsers table to get their college
+        const keys = attendeeEmails.map(email => ({ email }));
+        const { Responses } = await docClient.send(new BatchGetCommand({
+            RequestItems: {
+                "TestifyUsers": {
+                    Keys: keys,
+                    ProjectionExpression: "email, college" // Only fetch what we need
+                }
+            }
+        }));
+
+        const users = Responses.TestifyUsers || [];
+        const collegeMap = new Map(users.map(u => [u.email, u.college]));
+
+        // Enrich the attendee list with college information
+        const enrichedAttendees = attendees.map(att => ({
+            ...att,
+            college: collegeMap.get(att.email) || 'N/A' // Add college, with a fallback
+        }));
+        
+        res.json(enrichedAttendees); // Send the enriched list
+    } catch (error) {
+        console.error("Get Attendees Error:", error);
+        res.status(500).json({ message: 'Server error fetching attendees.' });
+    }
+});
+
+
+
+
 
 
 // --- SERVER START ---
