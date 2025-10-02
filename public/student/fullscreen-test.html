@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Screen Test - TESTIFY</title>
+    <!-- FAVICON ADDED -->
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif;
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ and Edge */
+            user-select: none; /* Standard syntax */
+        }
+        /* ENHANCED FULLSCREEN STYLES */
+        #test-environment.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            overflow: hidden; /* Prevent body scroll in fullscreen */
+            background-color: #f9fafb; /* Light background */
+        }
+        .test-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        /* STYLES FOR PALETTE BUTTONS UPDATED */
+        .palette-btn {
+            border: 2px solid #D1D5DB; /* Default light border */
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        .palette-btn.active {
+            background-color: #4F46E5; /* Indigo */
+            color: white;
+            font-weight: bold;
+            border-color: #3730A3; /* Darker Indigo */
+            transform: scale(1.05);
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.5);
+        }
+        .palette-btn.answered {
+            background-color: #10B981; /* Emerald Green */
+            color: white;
+            border-color: #059669;
+        }
+        .palette-btn.marked {
+            background-color: #8B5CF6; /* Violet/Purple for marked */
+            color: white;
+            border-color: #7C3AED;
+            /* Combined status: Answered AND Marked (Green/Purple blend look) */
+        }
+        .palette-btn.answered.marked {
+            background-color: #7C3AED; /* Use marked color for priority */
+            border-color: #6D28D9;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        .modal-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            max-width: 90%;
+            width: 550px; /* Increased width for more content */
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        /* Custom radio button style */
+        .custom-radio:checked + .option-box {
+            border-color: #4F46E5; /* Indigo */
+            background-color: #EEF2FF; /* Indigo-50 */
+            box-shadow: 0 0 0 3px #C7D2FE; /* Ring effect */
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Main content area before test starts -->
+    <div id="main-content" class="min-h-screen flex flex-col">
+        <header class="bg-white shadow-lg sticky top-0 z-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-20">
+                    <div class="flex-shrink-0 flex items-center">
+                        <img class="h-10 w-auto" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo">
+                        <span class="ml-2 text-2xl font-extrabold text-indigo-700">TESTIFY</span>
+                    </div>
+                    <h1 class="text-3xl font-bold text-gray-800 tracking-tight">Available Tests</h1>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-grow p-4 sm:p-6 lg:p-10">
+            <div id="test-list-container" class="max-w-7xl mx-auto">
+                <div id="test-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Dynamically loaded tests will appear here -->
+                </div>
+            </div>
+        </main>
+        
+        <footer class="bg-white mt-12 py-4 border-t border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-center items-center">
+                <p class="text-sm text-gray-500 mr-2">Powered by</p>
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758718248/EduDevelopers_logo_m1h9db.png" alt="EduDevelopers Logo" class="h-11">
+            </div>
+        </footer>
+    </div>
+
+    <!-- Test Environment (Initially Hidden) -->
+    <div id="test-environment" class="hidden">
+        <!-- FIXED HEADER (TOP BAR) -->
+        <header class="flex items-center justify-between h-20 bg-white border-b border-gray-300 px-6 fixed top-0 left-0 w-full z-20 shadow-xl">
+            <div class="flex items-center">
+                <!-- LOGO SIZE INCREASED -->
+                <img class="h-12 w-auto" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo">
+                <h1 id="test-title" class="ml-4 text-xl font-extrabold text-indigo-700">Test Title</h1>
+            </div>
+            <div class="flex items-center space-x-6">
+                <!-- TIMER - RESTYLED -->
+                <div class="flex items-center bg-red-100 border-2 border-red-200 rounded-lg px-4 py-1.5 shadow-inner">
+                    <span class="text-sm font-bold text-red-800 mr-3 uppercase tracking-wider">Time Left</span>
+                    <div id="timer" class="text-2xl font-extrabold text-red-600" style="font-variant-numeric: tabular-nums;">00:00</div>
+                </div>
+                <!-- SUBMIT BUTTON -->
+                <button id="submit-test-btn" class="px-6 py-2.5 bg-red-600 text-white font-bold rounded-xl shadow-lg hover:bg-red-700 transition-colors transform hover:scale-[1.02]">
+                    Submit Test
+                </button>
+            </div>
+        </header>
+
+        <div class="pt-20 flex" style="height: 100vh;">
+            <!-- QUESTION PANE -->
+            <div class="flex-1 p-8 overflow-y-auto">
+                <div id="question-content" class="bg-white p-8 rounded-2xl shadow-xl border border-gray-200">
+                    <!-- Question and options rendered here -->
+                </div>
+                
+                <!-- NAVIGATION & ACTION BUTTONS -->
+                <div class="mt-8 flex justify-between items-center bg-white p-4 rounded-xl shadow-md border border-gray-100">
+                    <button id="prev-btn" class="px-6 py-2 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400 disabled:opacity-50 transition-colors">
+                        <svg class="h-5 w-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                        Previous
+                    </button>
+                    
+                    <div class="flex space-x-4">
+                        <!-- Clear Response Button -->
+                        <button id="clear-response-btn" class="px-5 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors shadow-md">
+                            Clear Response
+                        </button>
+                        
+                        <!-- Mark/Unmark Button -->
+                        <button id="mark-review-btn" class="px-5 py-2 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600 transition-colors shadow-md">
+                            Mark for Review
+                        </button>
+                    </div>
+                    
+                    <button id="next-btn" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                        Next 
+                        <svg class="h-5 w-5 inline ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- QUESTION PALETTE SIDEBAR -->
+            <aside class="w-72 bg-gray-50 border-l border-gray-200 p-6 flex flex-col space-y-6 flex-shrink-0 overflow-y-auto">
+                <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-100 flex-grow">
+                    <h3 class="font-extrabold text-xl text-indigo-700 mb-4 border-b pb-2 text-center">Question Palette</h3>
+                    <div id="question-palette" class="grid grid-cols-5 gap-3"></div>
+                </div>
+                
+                <!-- Legend -->
+                <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-100 text-sm">
+                    <h4 class="font-bold text-gray-800 mb-3">Status Legend</h4>
+                    <div class="space-y-2">
+                        <div class="flex items-center"><span class="h-4 w-4 rounded-full bg-gray-200 border-2 border-indigo-600 mr-2"></span> Current</div>
+                        <div class="flex items-center"><span class="h-4 w-4 rounded-full bg-gray-200 mr-2"></span> Not Answered</div>
+                        <div class="flex items-center"><span class="h-4 w-4 rounded-full bg-green-500 mr-2"></span> Answered</div>
+                        <div class="flex items-center"><span class="h-4 w-4 rounded-full bg-purple-500 mr-2"></span> Marked for Review</div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Test Loader Overlay -->
+    <div id="test-loader-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-80 z-[10001] flex flex-col items-center justify-center text-white backdrop-blur-sm">
+        <svg class="animate-spin h-10 w-10 text-white mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="text-xl font-semibold tracking-wide">Initiating Secure Test Environment...</p>
+        <p class="text-gray-300 mt-1">Please wait, do not refresh the page.</p>
+    </div>
+
+    <!-- Pre-Test Instructions Modal (REDESIGNED) -->
+    <div id="pre-test-modal" class="modal-overlay hidden">
+        <div class="modal-container">
+             <div class="flex items-center justify-center flex-col">
+                <div class="bg-indigo-100 p-3 rounded-full">
+                    <svg class="h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.286z" />
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mt-4">Instructions & System Check</h2>
+                <p class="text-gray-600 mt-2 text-center">Please read and confirm the following before starting your test.</p>
+            </div>
+            <div class="mt-6 text-left bg-gray-50 p-4 rounded-lg border">
+                 <h3 class="font-semibold text-gray-700">Test Rules:</h3>
+                 <ul class="list-disc list-inside mt-2 space-y-1.5 text-sm text-gray-600">
+                    <li>This test **MUST** be taken in full-screen mode.</li>
+                    <li>**Do NOT** exit full-screen mode or switch to another tab/application.</li>
+                    <li>Any violation will result in an **automatic submission** of your test.</li>
+                </ul>
+            </div>
+             <div class="mt-6 text-left">
+                <h3 class="font-semibold text-gray-700">Confirmation Checklist:</h3>
+                <div class="mt-3 space-y-3">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 pre-test-checkbox">
+                        <span class="ml-3 text-gray-700">I have closed all other browser tabs.</span>
+                    </label>
+                    <label class="flex items-center cursor-pointer">
+                        <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 pre-test-checkbox">
+                        <span class="ml-3 text-gray-700">I have closed all other applications (e.g., chat, email).</span>
+                    </label>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end space-x-4">
+                <button id="pre-test-cancel-btn" class="px-6 py-2.5 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition-colors">Cancel</button>
+                <button id="pre-test-confirm-btn" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" disabled>Start Test Now</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for confirmations - ENHANCED STYLING -->
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="modal-container">
+            <svg class="mx-auto h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.896 3.376 2.673 3.376h14.594c1.777 0 3.539-1.876 2.673-3.376L12.55 4.723a1.875 1.875 0 00-3.1 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+            <p id="modal-message" class="text-gray-700 text-xl text-center font-semibold mt-4"></p>
+            <div class="mt-8 flex justify-center space-x-4">
+                <button id="modal-cancel-btn" class="px-6 py-2.5 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition-colors shadow-md">Cancel</button>
+                <button id="modal-confirm-btn" class="px-6 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-lg">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                // Modified alert to console log for compliance
+                console.error("Authentication token missing. Redirecting to login.");
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const mainContent = document.getElementById('main-content');
+            const testEnvironment = document.getElementById('test-environment');
+            const testListDiv = document.getElementById('test-list');
+            const confirmModal = document.getElementById('confirm-modal');
+            const modalMessage = document.getElementById('modal-message');
+            const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+            const modalCancelBtn = document.getElementById('modal-cancel-btn');
+            // PRE-TEST MODAL ELEMENTS
+            const preTestModal = document.getElementById('pre-test-modal');
+            const preTestCheckboxes = document.querySelectorAll('.pre-test-checkbox');
+            const preTestConfirmBtn = document.getElementById('pre-test-confirm-btn');
+            const preTestCancelBtn = document.getElementById('pre-test-cancel-btn');
+            const testLoaderOverlay = document.getElementById('test-loader-overlay');
+            // EXISTING BUTTON ELEMENTS
+            const markReviewBtn = document.getElementById('mark-review-btn');
+            const clearResponseBtn = document.getElementById('clear-response-btn');
+
+            let availableTests = [];
+            let currentTest = null;
+            let currentQuestionIndex = 0;
+            let studentAnswers = [];
+            // EXISTING STATE FOR MARKING QUESTIONS
+            let markedForReview = [];
+            let timerInterval;
+            let timeTaken = 0;
+            let isSubmitting = false;
+
+            // --- Custom Modal (Backend Logic Unchanged) ---
+            function showModal(message) {
+                return new Promise(resolve => {
+                    modalMessage.textContent = message;
+                    confirmModal.classList.remove('hidden');
+
+                    const confirmHandler = () => {
+                        confirmModal.classList.add('hidden');
+                        resolve(true);
+                        modalConfirmBtn.removeEventListener('click', confirmHandler);
+                        modalCancelBtn.removeEventListener('click', cancelHandler);
+                    };
+
+                    const cancelHandler = () => {
+                        confirmModal.classList.add('hidden');
+                        resolve(false);
+                        modalConfirmBtn.removeEventListener('click', confirmHandler);
+                        modalCancelBtn.removeEventListener('click', cancelHandler);
+                    };
+                    
+                    modalConfirmBtn.addEventListener('click', confirmHandler);
+                    modalCancelBtn.addEventListener('click', cancelHandler);
+                });
+            }
+
+            // --- Pre-Test Instructions Modal ---
+            function showPreTestInstructions() {
+                return new Promise(resolve => {
+                    // Reset modal state
+                    preTestConfirmBtn.disabled = true;
+                    preTestCheckboxes.forEach(cb => cb.checked = false);
+                    preTestModal.classList.remove('hidden');
+
+                    const checkHandler = () => {
+                        const allChecked = Array.from(preTestCheckboxes).every(cb => cb.checked);
+                        preTestConfirmBtn.disabled = !allChecked;
+                    };
+
+                    preTestCheckboxes.forEach(cb => cb.addEventListener('change', checkHandler));
+
+                    const confirmHandler = () => {
+                        preTestModal.classList.add('hidden');
+                        cleanup();
+                        resolve(true);
+                    };
+
+                    const cancelHandler = () => {
+                        preTestModal.classList.add('hidden');
+                        cleanup();
+                        resolve(false);
+                    };
+
+                    const cleanup = () => {
+                        preTestConfirmBtn.removeEventListener('click', confirmHandler);
+                        preTestCancelBtn.removeEventListener('click', cancelHandler);
+                        preTestCheckboxes.forEach(cb => cb.removeEventListener('change', checkHandler));
+                    };
+
+                    preTestConfirmBtn.addEventListener('click', confirmHandler);
+                    preTestCancelBtn.addEventListener('click', cancelHandler);
+                });
+            }
+
+
+            // --- Fetch and Render Tests (Backend Logic Unchanged) ---
+            async function fetchAndDisplayTests() {
+                try {
+                    const response = await fetch('/api/student/tests', {
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch tests');
+                    
+                    const allTests = await response.json();
+                    availableTests = allTests.filter(t => t.testType === 'fullscreen');
+
+                    testListDiv.innerHTML = '';
+                    if (availableTests.length === 0) {
+                        testListDiv.innerHTML = '<p class="text-gray-500 col-span-full text-center">No new full screen tests assigned to you.</p>';
+                        return;
+                    }
+
+                    availableTests.forEach(test => {
+                        const testElement = document.createElement('div');
+                        testElement.className = 'test-card bg-white p-6 rounded-2xl shadow-lg border border-gray-200 flex flex-col hover:border-indigo-400';
+                        testElement.innerHTML = `
+                            <div class="flex-grow">
+                                <h3 class="font-bold text-xl text-gray-800">${test.title}</h3>
+                                <div class="mt-3 space-y-1 text-gray-600">
+                                    <p class="text-sm flex items-center"><svg class="w-4 h-4 mr-1.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> 
+                                        Duration: <span class="font-semibold ml-1">${test.duration} minutes</span>
+                                    </p>
+                                    <p class="text-sm flex items-center"><svg class="w-4 h-4 mr-1.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2-8H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2z"></path></svg>
+                                        Questions: <span class="font-semibold ml-1">${test.questions.length}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <button class="start-test-btn mt-6 w-full px-4 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition-colors transform hover:scale-[1.01]" data-testid="${test.testId}">
+                                Start Full Screen Test
+                            </button>
+                        `;
+                        testListDiv.appendChild(testElement);
+                    });
+                } catch (error) {
+                    console.error(error);
+                    testListDiv.innerHTML = '<p class="text-red-500 col-span-full text-center p-4 rounded-lg bg-red-100 mt-8">Could not load tests. Check your connection.</p>';
+                }
+            }
+
+            testListDiv.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('start-test-btn')) {
+                    const testId = e.target.dataset.testid;
+                    currentTest = availableTests.find(t => t.testId === testId);
+                    if (currentTest) {
+                        const consent = await showPreTestInstructions();
+                        if (consent) {
+                             // Show loader
+                            testLoaderOverlay.classList.remove('hidden');
+
+                            // Wait for a few seconds before starting
+                            setTimeout(() => {
+                                testLoaderOverlay.classList.add('hidden');
+                                startTest(currentTest);
+                            }, 2500); // 2.5 second delay
+                        }
+                    }
+                }
+            });
+
+            function startTest(testData) {
+                enterFullScreen();
+                mainContent.classList.add('hidden');
+                testEnvironment.classList.remove('hidden');
+                testEnvironment.classList.add('fullscreen');
+
+                studentAnswers = new Array(testData.questions.length).fill(null);
+                // INITIALIZE MARKED FOR REVIEW STATE (Unchanged)
+                markedForReview = new Array(testData.questions.length).fill(false);
+                document.getElementById('test-title').textContent = testData.title;
+                
+                startTimer(testData.duration * 60);
+                renderQuestion();
+                renderPalette();
+
+                document.addEventListener('fullscreenchange', handleFullScreenChange);
+                document.addEventListener('visibilitychange', handleVisibilityChange);
+                document.addEventListener('contextmenu', e => e.preventDefault());
+            }
+            
+            function enterFullScreen() {
+                // Log non-alert message for compliance
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                    showModal(`Error: Failed to enter full-screen mode. Please try again. (${err.name})`);
+                });
+            }
+
+            function handleFullScreenChange() {
+                if (!document.fullscreenElement && !isSubmitting) {
+                    forceSubmitTest('Exited Full-Screen Mode');
+                }
+            }
+
+            function handleVisibilityChange() {
+                if (document.hidden && !isSubmitting) {
+                    forceSubmitTest('Switched to Another Tab/Window');
+                }
+            }
+
+            function startTimer(duration) {
+                let timer = duration;
+                timeTaken = 0;
+                const timerDisplay = document.getElementById('timer');
+                timerInterval = setInterval(() => {
+                    timeTaken++;
+                    timer--;
+                    let minutes = parseInt(timer / 60, 10);
+                    let seconds = parseInt(timer % 60, 10);
+                    minutes = minutes < 10 ? "0" + minutes : minutes;
+                    seconds = seconds < 10 ? "0" + seconds : seconds;
+                    timerDisplay.textContent = `${minutes}:${seconds}`;
+                    if (timer <= 60 && !timerDisplay.parentElement.classList.contains('animate-pulse')) {
+                         timerDisplay.parentElement.classList.add('animate-pulse');
+                         timerDisplay.parentElement.classList.remove('bg-red-100');
+                         timerDisplay.parentElement.classList.add('bg-red-500');
+                         timerDisplay.querySelectorAll('span').forEach(el => el.classList.add('text-white'));
+                         timerDisplay.classList.add('text-white');
+                    }
+                    if (timer <= 0) {
+                        forceSubmitTest('Time is up!');
+                    }
+                }, 1000);
+            }
+
+            function renderQuestion() {
+                const question = currentTest.questions[currentQuestionIndex];
+                const questionContent = document.getElementById('question-content');
+                const savedAnswer = studentAnswers[currentQuestionIndex];
+                
+                // ENHANCED OPTIONS RENDERING (using custom-radio class for better styling)
+                const optionsHtml = question.options.map((opt, i) => `
+                    <label class="block relative">
+                        <input type="radio" name="option" value="${i}" class="absolute custom-radio opacity-0 h-0 w-0" ${savedAnswer == i ? 'checked' : ''}>
+                        <div class="option-box flex items-center p-4 border border-gray-300 rounded-xl bg-white hover:bg-gray-50 transition-all duration-150 cursor-pointer shadow-sm">
+                            <span class="h-5 w-5 rounded-full border-2 border-gray-400 flex items-center justify-center mr-4 flex-shrink-0
+                                ${savedAnswer == i ? 'bg-indigo-600 border-indigo-600' : 'bg-white'}">
+                                <span class="text-xs font-semibold text-white">${String.fromCharCode(65 + i)}</span>
+                            </span>
+                            <span class="text-gray-800 text-base font-medium">${opt}</span>
+                        </div>
+                    </label>
+                `).join('');
+
+                questionContent.innerHTML = `
+                    <p class="text-lg font-extrabold text-indigo-600 mb-2">Question ${currentQuestionIndex + 1} of ${currentTest.questions.length}</p>
+                    <p class="text-gray-900 text-2xl font-semibold mb-8 leading-relaxed">${question.text}</p>
+                    <div class="space-y-4" id="options-list">${optionsHtml}</div>
+                `;
+                
+                // Add event listener to the options container for delegation
+                document.getElementById('options-list').addEventListener('change', saveAnswerAndMarkAsAnswered);
+
+                updateNavButtons();
+                updatePalette();
+                updateMarkButtonText();
+            }
+            
+            function renderPalette() {
+                const paletteDiv = document.getElementById('question-palette');
+                paletteDiv.innerHTML = '';
+                currentTest.questions.forEach((_, i) => {
+                    const btn = document.createElement('button');
+                    btn.textContent = i + 1;
+                    // Updated Palette Button Class
+                    btn.className = 'palette-btn h-10 w-10 flex items-center justify-center bg-gray-200 rounded-lg font-medium border-2 transition-all shadow-md';
+                    btn.addEventListener('click', () => {
+                        saveAnswer();
+                        currentQuestionIndex = i;
+                        renderQuestion();
+                    });
+                    paletteDiv.appendChild(btn);
+                });
+            }
+
+            function updatePalette() {
+                document.querySelectorAll('.palette-btn').forEach((btn, i) => {
+                    btn.classList.remove('active', 'answered', 'marked', 'bg-gray-200', 'border-gray-200');
+                    
+                    // Default style
+                    btn.classList.add('bg-gray-200', 'border-gray-300', 'text-gray-800');
+                    
+                    if (studentAnswers[i] !== null) {
+                        btn.classList.add('answered');
+                        btn.classList.remove('bg-gray-200', 'text-gray-800');
+                    }
+                    
+                    if (markedForReview[i]) {
+                        btn.classList.add('marked');
+                        btn.classList.remove('bg-gray-200', 'text-gray-800');
+                    }
+                    
+                    if (i === currentQuestionIndex) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+
+            function updateNavButtons() {
+                const prevBtn = document.getElementById('prev-btn');
+                const nextBtn = document.getElementById('next-btn');
+                prevBtn.disabled = currentQuestionIndex === 0;
+                nextBtn.disabled = currentQuestionIndex === currentTest.questions.length - 1;
+            }
+            
+            // --- NEW AND UPDATED EVENT HANDLERS (Logic Unchanged) ---
+            function updateMarkButtonText() {
+                if (markedForReview[currentQuestionIndex]) {
+                    markReviewBtn.textContent = 'Unmark';
+                    markReviewBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                    markReviewBtn.classList.add('bg-purple-600', 'hover:bg-purple-700');
+                } else {
+                    markReviewBtn.textContent = 'Mark for Review';
+                    markReviewBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+                    markReviewBtn.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+                }
+            }
+            
+            function toggleMarkForReview() {
+                markedForReview[currentQuestionIndex] = !markedForReview[currentQuestionIndex];
+                updatePalette();
+                updateMarkButtonText();
+            }
+
+            function clearCurrentResponse() {
+                studentAnswers[currentQuestionIndex] = null;
+                // Ensure marked status is cleared if the answer is cleared, only if it wasn't marked before answering.
+                // For simplicity and adherence to original logic, only clear the answer and update UI.
+                renderQuestion(); // Re-renders the question with radio buttons unchecked
+                updatePalette();
+            }
+            
+            function saveAnswerAndMarkAsAnswered() {
+                saveAnswer();
+                updatePalette();
+            }
+
+            // EVENT LISTENERS (Backend Logic Unchanged)
+            markReviewBtn.addEventListener('click', toggleMarkForReview);
+            clearResponseBtn.addEventListener('click', clearCurrentResponse);
+
+            document.getElementById('next-btn').addEventListener('click', () => {
+                if (currentQuestionIndex < currentTest.questions.length - 1) {
+                    saveAnswer();
+                    currentQuestionIndex++;
+                    renderQuestion();
+                }
+            });
+
+            document.getElementById('prev-btn').addEventListener('click', () => {
+                if (currentQuestionIndex > 0) {
+                    saveAnswer();
+                    currentQuestionIndex--;
+                    renderQuestion();
+                }
+            });
+            
+            document.getElementById('submit-test-btn').addEventListener('click', async () => {
+                const unansweredCount = studentAnswers.filter(a => a === null).length;
+                let message = `You have **${currentTest.questions.length - unansweredCount}** questions answered.`;
+                if (unansweredCount > 0) {
+                    message += ` You still have **${unansweredCount}** questions unanswered. Do you want to submit now?`;
+                } else {
+                    message += ` Do you want to submit your final answers?`;
+                }
+                
+                const confirm = await showModal(message);
+                if(confirm) performSubmission();
+            });
+
+            function saveAnswer() {
+                // Find selected option in the DOM of the current question
+                const selectedOption = document.querySelector('#question-content input[name="option"]:checked');
+                studentAnswers[currentQuestionIndex] = selectedOption ? selectedOption.value : null;
+            }
+            
+            // Core Submission Logic (Backend Logic Unchanged)
+            async function forceSubmitTest(reason) {
+                if (isSubmitting) return;
+                isSubmitting = true;
+                console.warn(`Violation Detected: ${reason}. The test is being submitted automatically.`);
+                showModal(`Violation Detected: ${reason}. The test is being submitted automatically. Your results may be invalidated.`);
+                // Note: The original code used alert, which is not compliant. I'm using showModal but maintaining the existing flow for compliance with "don't change functionality".
+                await performSubmission(reason);
+            }
+
+            async function performSubmission(violationReason = null) {
+                if (isSubmitting && violationReason === null) return; // Prevent double submission
+                if (!isSubmitting) isSubmitting = true;
+                
+                saveAnswer();
+                clearInterval(timerInterval);
+
+                const payload = {
+                    testId: currentTest.testId,
+                    answers: studentAnswers,
+                    timeTaken: timeTaken,
+                    violationReason
+                };
+
+                // Show submission message directly in the modal
+                modalMessage.textContent = "Submitting your test... Please wait.";
+                confirmModal.classList.remove('hidden');
+                modalCancelBtn.classList.add('hidden');
+                modalConfirmBtn.classList.add('hidden');
+
+                try {
+                    const response = await fetch('/api/student/submit-test', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    let submissionMessage = 'Test submitted successfully!';
+                    if (!response.ok) {
+                        const error = await response.json();
+                        submissionMessage = 'An error occurred during submission: ' + (error.message || 'Submission failed');
+                        console.error(submissionMessage);
+                    } else {
+                        console.log(submissionMessage);
+                    }
+                    
+                    // Update modal with the final message
+                    modalMessage.textContent = submissionMessage + " Redirecting to dashboard...";
+
+                } catch (error) {
+                    console.error('An unhandled error occurred during submission:', error);
+                     // Update modal with the error message
+                    modalMessage.textContent = 'An unexpected error occurred during submission: ' + error.message + ". Redirecting...";
+                } finally {
+                    if (document.fullscreenElement) {
+                        document.exitFullscreen();
+                    }
+                    // Increased delay to allow user to read the modal message
+                    setTimeout(() => {
+                        window.location.href = '/student/dashboard.html';
+                    }, 2500);
+                }
+            }
+
+            fetchAndDisplayTests();
+        });
+    </script>
+</body>
+</html>
+
+
