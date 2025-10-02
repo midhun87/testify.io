@@ -6523,7 +6523,7 @@ app.post('/api/assign-fullscreen-test', authMiddleware, adminOrModeratorAuth, as
                              <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 30px; line-height: 1.7;">
                                  A new full screen test, "<b>${testName}</b>", has been assigned to you. Please log in to your dashboard to take the test.
                              </p>
-                             <a href="http://localhost:3000/student/fullscreen-test.html" 
+                             <a href="https://testify-io-ai.onrender.com/student/fullscreen-test.html" 
                                 target="_blank"
                                 style="display: inline-block; padding: 15px 35px; font-family: 'Poppins', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #3b82f6; border-radius: 8px; text-decoration: none;">
                                  Go to Full Screen Tests
@@ -6947,5 +6947,6 @@ app.get('/api/admin/meetings/:meetingId/attendees', authMiddleware, adminOrModer
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
 
 
