@@ -225,7 +225,7 @@
             const token = localStorage.getItem('token');
 
             if (!token || !user || user.role !== 'Student') {
-                window.location.href = '/login.html';
+                window.location.href = '/login';
                 return;
             }
             document.getElementById('user-name').textContent = user.fullName;
@@ -425,7 +425,7 @@
             function logout() {
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
-                window.location.href = '/login.html';
+                window.location.href = '/login';
             }
 
             // --- FACE VERIFICATION ---

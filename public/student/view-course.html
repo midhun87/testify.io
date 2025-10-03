@@ -171,7 +171,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('token');
             if (!token) { 
-                document.getElementById('app-container').innerHTML = '<p class="p-8 text-center text-red-500">Authentication token not found. Please <a href="/login.html" class="underline">log in</a>.</p>';
+                document.getElementById('app-container').innerHTML = '<p class="p-8 text-center text-red-500">Authentication token not found. Please <a href="/login" class="underline">log in</a>.</p>';
                 return; 
             }
 
