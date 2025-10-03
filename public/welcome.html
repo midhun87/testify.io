@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- SEO Title Tag (Corrected: Removed duplicate title tag) -->
+
+    <!-- SEO Title Tag -->
     <title>TESTIFY - Secure AI Proctored & Online Testing Platform</title>
     
     <!-- SEO Meta Description Tag -->
     <meta name="description" content="TESTIFY offers a reliable platform for conducting secure, AI-proctored online exams, full-screen tests, and coding contests for educational institutions and businesses.">
     
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
-    
+    <!-- Favicon Links (Enhanced for better compatibility) -->
+    <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
+    <link rel="shortcut icon" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -34,7 +37,7 @@
         .gradient-bg-custom {
             background-image: linear-gradient(to bottom right, rgba(79, 70, 229, 0.85), rgba(109, 40, 217, 0.9));
         }
-        
+
         /* Animated shine effect for 'Powered by AI' */
         @keyframes shine {
             0% { background-position: -200% center; }
@@ -48,13 +51,13 @@
             background-clip: text;
             animation: shine 6s linear infinite;
         }
-        
+
         /* Improved focus rings for accessibility */
         :focus-visible {
             outline: 3px solid #8b5cf6;
             outline-offset: 2px;
         }
-        
+
         /* Custom scrollbar */
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: #e2e8f0; }
@@ -71,7 +74,7 @@
             opacity: 1;
             transform: translateY(0);
         }
-        
+
         /* Testimonial card glow effect */
         .testimonial-card:hover {
             box-shadow: 0 0 30px rgba(124, 58, 237, 0.2);
@@ -89,7 +92,7 @@
                     <img class="h-9 w-9 rounded-full object-cover" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
                     <span class="text-2xl font-bold text-slate-900 tracking-tight">TESTIFY</span>
                 </a>
-                                
+                
                 <!-- Desktop Navigation Links -->
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="features.html" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">Features</a>
@@ -100,8 +103,8 @@
 
                 <!-- Auth Buttons & Mobile Menu Button -->
                 <div class="flex items-center space-x-2">
-                    <a href="/login.html" class="hidden sm:inline-block px-4 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-100/80 rounded-full transition-all duration-300">Log in</a>
-                    <a href="/signup.html" class="inline-flex items-center justify-center px-5 py-2.5 border border-transparent rounded-full shadow-lg text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 transition-all duration-300 transform hover:scale-105">
+                    <a href="/login" class="hidden sm:inline-block px-4 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-100/80 rounded-full transition-all duration-300">Log in</a>
+                    <a href="/signup" class="inline-flex items-center justify-center px-5 py-2.5 border border-transparent rounded-full shadow-lg text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 transition-all duration-300 transform hover:scale-105">
                         Sign up for free
                     </a>
                     <!-- Hamburger Menu Button -->
@@ -119,6 +122,7 @@
         <!-- Mobile Menu -->
         <div class="md:hidden hidden" id="mobile-menu">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-slate-200">
+                <a href="/login" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Login</a>
                 <a href="features.html" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Features</a>
                 <a href="about.html" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">How It Works</a>
                 <a href="verify-certificate.html" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Verify Certificate</a>
@@ -354,7 +358,7 @@
             function fetchImpactStats() {
                 // This function fetches data from the backend API.
                 console.log('Fetching impact stats from backend...');
-                const API_URL = '/api/impact-stats';
+                const API_URL = '/api/impact-stats'; 
                 
                  return fetch(API_URL)
                     .then(response => {
@@ -452,5 +456,7 @@
             });
         });
     </script>
+
 </body>
 </html>
+
