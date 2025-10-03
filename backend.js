@@ -7027,6 +7027,47 @@ app.get('/api/admin/meetings/:meetingId/attendees', authMiddleware, adminOrModer
 });
 
 
+app.post('/api/certificates-by-email', async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ message: "Email is required." });
+    }
+
+    try {
+        // 1. Find all certificates for the given email using the GSI
+        const { Items: certificates } = await docClient.send(new QueryCommand({
+            TableName: "TestifyCertificates",
+            IndexName: "StudentEmailIndex", // Assumes a GSI with studentEmail as the partition key
+            KeyConditionExpression: "studentEmail = :email",
+            ExpressionAttributeValues: { ":email": email.toLowerCase() }
+        }));
+
+        if (!certificates || certificates.length === 0) {
+            return res.status(404).json({ message: "No certificates found for this email address." });
+        }
+
+        // 2. Since we have the certificates, we can get the student details once.
+        const { Item: student } = await docClient.send(new GetCommand({
+            TableName: "TestifyUsers",
+            Key: { email: email.toLowerCase() }
+        }));
+
+        // 3. Enrich each certificate with the student's details, even if student is not found
+        const enrichedCertificates = certificates.map(cert => ({
+            ...cert,
+            studentName: student ? student.fullName : 'Unknown Student',
+            college: student ? student.college : 'N/A',
+            rollNumber: student ? student.rollNumber : 'N/A',
+            profileImageUrl: student ? student.profileImageUrl : null
+        }));
+        
+        res.json(enrichedCertificates);
+
+    } catch (error) {
+        console.error("Verify Certificate by Email Error:", error);
+        res.status(500).json({ message: 'Server error verifying certificates by email.' });
+    }
+});
 
 
 
