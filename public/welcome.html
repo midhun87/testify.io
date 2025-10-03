@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TESTIFY | The Future of AI-Powered Assessments</title>
-
-    <!-- SEO Title Tag -->
+    
+    <!-- SEO Title Tag (Corrected: Removed duplicate title tag) -->
     <title>TESTIFY - Secure AI Proctored & Online Testing Platform</title>
     
     <!-- SEO Meta Description Tag -->
     <meta name="description" content="TESTIFY offers a reliable platform for conducting secure, AI-proctored online exams, full-screen tests, and coding contests for educational institutions and businesses.">
+    
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
     
@@ -34,7 +34,7 @@
         .gradient-bg-custom {
             background-image: linear-gradient(to bottom right, rgba(79, 70, 229, 0.85), rgba(109, 40, 217, 0.9));
         }
-
+        
         /* Animated shine effect for 'Powered by AI' */
         @keyframes shine {
             0% { background-position: -200% center; }
@@ -48,13 +48,13 @@
             background-clip: text;
             animation: shine 6s linear infinite;
         }
-
+        
         /* Improved focus rings for accessibility */
         :focus-visible {
             outline: 3px solid #8b5cf6;
             outline-offset: 2px;
         }
-
+        
         /* Custom scrollbar */
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: #e2e8f0; }
@@ -71,7 +71,7 @@
             opacity: 1;
             transform: translateY(0);
         }
-
+        
         /* Testimonial card glow effect */
         .testimonial-card:hover {
             box-shadow: 0 0 30px rgba(124, 58, 237, 0.2);
@@ -89,7 +89,7 @@
                     <img class="h-9 w-9 rounded-full object-cover" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
                     <span class="text-2xl font-bold text-slate-900 tracking-tight">TESTIFY</span>
                 </a>
-                
+                                
                 <!-- Desktop Navigation Links -->
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="features.html" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">Features</a>
@@ -261,7 +261,7 @@
                     <h3 class="text-sm font-semibold text-white tracking-wider uppercase">Company</h3>
                     <ul class="mt-4 space-y-2">
                         <li><a href="about.html" class="text-base text-slate-400 hover:text-white">About Us</a></li>
-                        <li><a href="carrers.html" class="text-base text-slate-400 hover:text-white">Careers</a></li>
+                        <li><a href="careers.html" class="text-base text-slate-400 hover:text-white">Careers</a></li>
                         <li><a href="contact.html" class="text-base text-slate-400 hover:text-white">Contact</a></li>
                     </ul>
                 </div>
@@ -275,7 +275,6 @@
             <div class="mt-12 border-t border-slate-800 pt-8 flex flex-col sm:flex-row justify-between items-center">
                 <p class="text-base text-slate-400">&copy; 2025 TESTIFY. All rights reserved.</p>
                 <a href="https://newoneop.s3.ap-south-1.amazonaws.com/EduDevelopers.html">A product by EduDevelopers</a>
-
             </div>
         </div>
     </footer>
@@ -355,9 +354,9 @@
             function fetchImpactStats() {
                 // This function fetches data from the backend API.
                 console.log('Fetching impact stats from backend...');
-                const API_URL = '/api/impact-stats'; 
+                const API_URL = '/api/impact-stats';
                 
-                return fetch(API_URL)
+                 return fetch(API_URL)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error('Network response was not ok');
@@ -411,7 +410,7 @@
                         if (counter.locale) {
                             value = Math.round(current).toLocaleString('en-US');
                         }
-
+                        
                         el.textContent = value + counter.suffix;
 
                         if (frame === totalFrames) {
@@ -453,8 +452,5 @@
             });
         });
     </script>
-
 </body>
 </html>
-
-
