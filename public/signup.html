@@ -190,6 +190,44 @@
             const sendOtpSpinner = document.getElementById('send-otp-spinner');
             const termsCheckbox = document.getElementById('terms');
             
+            function showMessage(message, isSuccess) {
+                if (!messageDiv) return;
+                
+                messageDiv.textContent = message;
+                messageDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+                
+                if (isSuccess) {
+                    messageDiv.classList.add('bg-green-100', 'text-green-700');
+                } else {
+                    messageDiv.classList.add('bg-red-100', 'text-red-700');
+                }
+            }
+            
+            // --- REGISTRATION STATUS ---
+            // Set to true to disable registration and show a message
+            const registrationClosed = true; 
+
+            if (registrationClosed) {
+                // Disable form fields
+                emailOtpInput.disabled = true;
+                mobileOtpInput.disabled = true;
+                termsCheckbox.disabled = true;
+                
+                // Disable and style the button
+                sendOtpBtn.disabled = true;
+                sendOtpBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'hover:scale-105');
+                sendOtpBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                
+                // Change button text
+                sendOtpText.textContent = 'Registrations Closed';
+                
+                // Show info message
+                showMessage('New user registrations are currently closed. We apologize for any inconvenience.', false);
+                
+                return; // Stop further script execution
+            }
+            // --- END REGISTRATION STATUS ---
+
             async function fetchAndPopulateColleges() {
                 try {
                     const response = await fetch('/api/colleges');
@@ -238,19 +276,6 @@
                 }
             }
             
-            function showMessage(message, isSuccess) {
-                if (!messageDiv) return;
-                
-                messageDiv.textContent = message;
-                messageDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
-                
-                if (isSuccess) {
-                    messageDiv.classList.add('bg-green-100', 'text-green-700');
-                } else {
-                    messageDiv.classList.add('bg-red-100', 'text-red-700');
-                }
-            }
-
             // Initially populate dropdowns
             await Promise.all([
                 fetchAndPopulateColleges(),
