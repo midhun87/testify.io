@@ -84,8 +84,96 @@ const rekognitionClient = new RekognitionClient({
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
+// app.use(express.static('public'));
+// app.use('/moderator', express.static(path.join(__dirname, 'public/moderator')));
+
+app.get('/', (req, res) => res.redirect('/welcome'));
+app.get('/welcome', (req, res) => res.sendFile(path.join(__dirname, 'public', 'welcome.html')));
+app.get('/about', (req, res) => res.sendFile(path.join(__dirname, 'public', 'about.html')));
+app.get('/apply', (req, res) => res.sendFile(path.join(__dirname, 'public', 'apply.html')));
+app.get('/careers', (req, res) => res.sendFile(path.join(__dirname, 'public', 'careers.html')));
+app.get('/contact', (req, res) => res.sendFile(path.join(__dirname, 'public', 'contact.html')));
+app.get('/detailed-view', (req, res) => res.sendFile(path.join(__dirname, 'public', 'detailed-view.html')));
+app.get('/EduDevelopers', (req, res) => res.sendFile(path.join(__dirname, 'public', 'EduDevelopers.html')));
+app.get('/features', (req, res) => res.sendFile(path.join(__dirname, 'public', 'features.html')));
+app.get('/forgot-password', (req, res) => res.sendFile(path.join(__dirname, 'public', 'forgot-password.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/my-applications', (req, res) => res.sendFile(path.join(__dirname, 'public', 'my-applications.html')));
+app.get('/reset-password', (req, res) => res.sendFile(path.join(__dirname, 'public', 'reset-password.html')));
+app.get('/signup', (req, res) => res.sendFile(path.join(__dirname, 'public', 'signup.html')));
+app.get('/T&C', (req, res) => res.sendFile(path.join(__dirname, 'public', 'T&C.html')));
+app.get('/verify-certificate', (req, res) => res.sendFile(path.join(__dirname, 'public', 'verify-certificate.html')));
+
+// --- Student Page Routes ---
+app.get('/student/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'dashboard.html')));
+app.get('/student/cognizant-cloud', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'cognizant-cloud.html')));
+app.get('/student/cognizant-cloud-quiz', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'cognizant-cloud-quiz.html')));
+app.get('/student/compiler', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'compiler.html')));
+app.get('/student/contests', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'contests.html')));
+app.get('/student/fullscreen-test', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'fullscreen-test.html')));
+app.get('/student/interview-complete', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'interview-complete.html')));
+app.get('/student/interview-dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'interview-dashboard.html')));
+app.get('/student/interview-page', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'interview-page.html')));
+app.get('/student/join-meeting', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'join-meeting.html')));
+app.get('/student/my-certificates', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'my-certificates.html')));
+app.get('/student/my-courses', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'my-courses.html')));
+app.get('/student/practicetest', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'practicetest.html')));
+app.get('/student/sql-compiler', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'sql-compiler.html')));
+app.get('/student/profile', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'student-profile.html')));
+app.get('/student/take-coding-contest', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'take-coding-contest.html')));
+app.get('/student/take-test', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'take-test.html')));
+app.get('/student/test-history', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'test-history.html')));
+app.get('/student/Test', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'Test.html')));
+app.get('/student/view-certificate', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'view-certificate.html')));
+app.get('/student/view-course', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'view-course.html')));
+
+// --- Admin Page Routes ---
+app.get('/admin/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'dashboard.html')));
+app.get('/admin/add-college', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'add-college.html')));
+app.get('/admin/add-department', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'add-department.html')));
+app.get('/admin/add-features', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'add-features.html')));
+app.get('/admin/add-problems', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'add-problems.html')));
+app.get('/admin/admin-impact', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'admin-impact.html')));
+app.get('/admin/admin-students', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'admin-students.html')));
+app.get('/admin/admin-interview-dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'admin-interview-dashboard.html')));
+app.get('/admin/assign-course', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'assign-course.html')));
+app.get('/admin/assign-practicetest', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'assign-practicetest.html')));
+app.get('/admin/assign-test', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'assign-test.html')));
+app.get('/admin/assignment-report', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'assignment-report.html')));
+app.get('/admin/code-sections', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'code-sections.html')));
+app.get('/admin/compiler-scores', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'compiler-scores.html')));
+app.get('/admin/contest-submissions', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'contest-submissions.html')));
+app.get('/admin/course-progress', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'course-progress.html')));
+app.get('/admin/course-report', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'course-report.html')));
+app.get('/admin/create-contest', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'create-contest.html')));
+app.get('/admin/create-course', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'create-course.html')));
+app.get('/admin/create-practicetest', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'create-practicetest.html')));
+app.get('/admin/create-test', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'create-test.html')));
+app.get('/admin/FSTest', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'FSTest.html')));
+app.get('/admin/interview-report', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'interview-report.html')));
+app.get('/admin/issue-certificates', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'issue-certificates.html')));
+app.get('/admin/issue-course-certificates', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'issue-course-certificates.html')));
+app.get('/admin/manage-jobs', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'manage-jobs.html')));
+app.get('/admin/manage-moderator', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'manage-moderator.html')));
+app.get('/admin/modify-course', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'modify-course.html')));
+app.get('/admin/modify-fullscreen-test', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'modify-fullscreen-test.html')));
+app.get('/admin/modify-test', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'modify-test.html')));
+app.get('/admin/report', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'report.html')));
+app.get('/admin/schedule-meeting', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'schedule-meeting.html')));
+app.get('/admin/scheduled-meetings', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'scheduled-meetings.html')));
+app.get('/admin/sql-scores', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'sql-scores.html')));
+app.get('/admin/sql-sections', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'sql-sections.html')));
+app.get('/admin/sql', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'sql.html')));
+app.get('/admin/test-history', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'test-history.html')));
+app.get('/admin/un-assign', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'un-assign.html')));
+app.get('/admin/view-all-certificates', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'view-all-certificates.html')));
+app.get('/admin/view-applications', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'view-applications.html')));
+app.get('/admin/view-certificate', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'view-certificate.html')));
+app.get('/admin/view-fullscreen-results', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'view-fullscreen-results.html')));
+
 app.use(express.static('public'));
 app.use('/moderator', express.static(path.join(__dirname, 'public/moderator')));
+
 
 // =================================================================
 // --- PERMANENT FIX FOR SERVING ZOOM SDK LOCALLY ---
@@ -6947,6 +7035,5 @@ app.get('/api/admin/meetings/:meetingId/attendees', authMiddleware, adminOrModer
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-
 
 
