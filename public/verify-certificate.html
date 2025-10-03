@@ -105,10 +105,19 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         
-        // This part remains for potential future use with Firebase, but the main logic hits your custom backend.
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "DEMO_KEY", authDomain: "demo.firebaseapp.com", projectId: "demo" };
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+        
+        try {
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                signInWithCustomToken(auth, __initial_auth_token).catch(err => console.error("Firebase custom token sign-in failed:", err));
+            } else {
+                signInAnonymously(auth).catch(err => console.error("Firebase anonymous sign-in failed:", err));
+            }
+        } catch(error) {
+            console.error("Firebase initialization failed:", error);
+        }
         
         // --- DOM Elements ---
         const verifyBtn = document.getElementById('verify-btn');
@@ -124,6 +133,8 @@
 
         searchTypeRadios.forEach(radio => {
             radio.addEventListener('change', (e) => {
+                searchInput.value = '';
+                resultContainer.innerHTML = '';
                 if (e.target.value === 'id') {
                     searchInput.placeholder = 'Enter Certificate ID';
                     inputIcon.innerHTML = idIconPath;
@@ -165,7 +176,7 @@
                 </div>
                 <div class="mt-4 border-t border-green-200 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm text-gray-800">
                     <div><strong class="font-semibold text-gray-500 block">Student Name</strong> ${data.studentName}</div>
-                    <div><strong class="font-semibold text-gray-500 block">Course/Test</strong> ${data.testTitle}</div>
+                    <div><strong class="font-semibold text-gray-500 block">Course/Test</strong> ${data.testTitle || data.courseTitle}</div>
                     <div><strong class="font-semibold text-gray-500 block">College</strong> ${data.college}</div>
                     <div><strong class="font-semibold text-gray-500 block">Date of Issue</strong> ${issuedDate}</div>
                     <div class="col-span-1 sm:col-span-2"><strong class="font-semibold text-gray-500 block">Certificate ID</strong> ${data.certificateId}</div>
@@ -184,7 +195,7 @@
                 accordionHtml += `
                     <div class="border border-gray-200 rounded-lg">
                         <button type="button" class="accordion-header flex items-center justify-between w-full p-4 font-medium text-left text-gray-700 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-200 rounded-lg transition-colors" data-accordion-target="#cert-body-${index}">
-                            <span>Certificate for: <strong>${cert.testTitle}</strong></span>
+                            <span>Certificate for: <strong>${cert.testTitle || cert.courseTitle}</strong></span>
                             <svg class="w-3 h-3 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
                         <div id="cert-body-${index}" class="accordion-content">
@@ -205,19 +216,14 @@
                     const targetPanel = document.querySelector(targetId);
                     const arrowIcon = button.querySelector('svg');
 
-                    // Close all other panels
+                    const isOpening = !targetPanel.style.maxHeight;
+
                     document.querySelectorAll('.accordion-content').forEach(panel => {
-                        if (panel !== targetPanel && panel.style.maxHeight) {
-                            panel.style.maxHeight = null;
-                            panel.previousElementSibling.querySelector('svg').classList.remove('rotate-180');
-                        }
+                        panel.style.maxHeight = null;
+                        panel.previousElementSibling.querySelector('svg').classList.remove('rotate-180');
                     });
 
-                    // Toggle the clicked panel
-                    if (targetPanel.style.maxHeight) {
-                        targetPanel.style.maxHeight = null;
-                        arrowIcon.classList.remove('rotate-180');
-                    } else {
+                    if (isOpening) {
                         targetPanel.style.maxHeight = targetPanel.scrollHeight + "px";
                         arrowIcon.classList.add('rotate-180');
                     }
@@ -261,48 +267,37 @@
                     });
                 }
 
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: "An unknown error occurred." }));
+                    throw new Error(errorData.message || `Server responded with status ${response.status}`);
+                }
+                
                 const data = await response.json();
 
-                if (response.ok) {
-                    if (Array.isArray(data) && data.length > 1) {
-                        renderMultipleCertificates(data);
-                    } else if (Array.isArray(data) && data.length === 1) {
-                        resultContainer.innerHTML = renderSingleCertificate(data[0]);
-                    } else if (!Array.isArray(data)) {
-                        resultContainer.innerHTML = renderSingleCertificate(data);
-                    } else {
-                         resultContainer.innerHTML = renderError('Verification Failed', 'No certificates were found for the provided email.');
-                    }
+                if (Array.isArray(data) && data.length > 1) {
+                    renderMultipleCertificates(data);
+                } else if (Array.isArray(data) && data.length === 1) {
+                    resultContainer.innerHTML = renderSingleCertificate(data[0]);
+                } else if (!Array.isArray(data) && data.certificateId) {
+                    resultContainer.innerHTML = renderSingleCertificate(data);
                 } else {
-                     resultContainer.innerHTML = renderError('Verification Failed', data.message || 'The provided value is invalid or could not be found.');
+                     resultContainer.innerHTML = renderError('Verification Failed', 'No certificates were found for the provided input.');
                 }
             } catch (error) {
                 console.error('Verification Error:', error);
-                resultContainer.innerHTML = renderError('Error', 'An error occurred while trying to verify. Please try again later.');
+                resultContainer.innerHTML = renderError('Verification Failed', error.message || 'An error occurred. Please try again later.');
             } finally {
                 setLoadingState(false);
             }
         };
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch(error) {
-                console.error("Firebase initialization failed:", error);
+        
+        verifyBtn.addEventListener('click', handleVerification);
+        searchInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                handleVerification();
             }
-
-            verifyBtn.addEventListener('click', handleVerification);
-            searchInput.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') {
-                    handleVerification();
-                }
-            });
         });
+
     </script>
 </body>
 </html>
-
