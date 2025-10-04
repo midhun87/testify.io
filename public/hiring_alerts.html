@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hiring Alerts | Testify</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(180deg, #f0f4f8 0%, #ffffff 30%);
+        }
+        .header-blur {
+            backdrop-filter: saturate(180%) blur(5px);
+            -webkit-backdrop-filter: saturate(180%) blur(5px);
+            background-color: rgba(255, 255, 255, 0.75);
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2.375rem;
+            top: 0.125rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            background-color: white;
+            border: 4px solid #3b82f6; /* blue-500 */
+            border-radius: 9999px;
+            z-index: 10;
+            transition: transform 0.3s ease;
+        }
+        .timeline-item:hover::before {
+            transform: scale(1.1);
+        }
+        .timeline-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: -1.875rem; /* Center the line */
+            top: 1rem;
+            bottom: -1rem;
+            width: 2px;
+            background-color: #e2e8f0; /* slate-200 */
+        }
+        .timeline-item-dark::before {
+            border-color: #334155; /* slate-700 */
+        }
+        .job-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .job-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        .scroll-animate {
+            opacity: 0;
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+            transform: translateY(30px);
+        }
+        .scroll-animate.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Header -->
+    <header class="header-blur shadow-sm sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo" class="h-10 w-10">
+                <span class="text-2xl font-bold text-slate-900">Testify</span>
+            </div>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#" class="text-slate-600 hover:text-blue-600 transition-colors font-medium">Home</a>
+                <a href="#internships" class="text-blue-600 font-semibold">Internships</a>
+                <a href="#full-time" class="text-slate-600 hover:text-blue-600 transition-colors font-medium">Full-Time Roles</a>
+                <a href="#" class="text-slate-600 hover:text-blue-600 transition-colors font-medium">About Us</a>
+            </div>
+            <button class="md:hidden" id="menu-btn">
+                <i data-lucide="menu" class="text-slate-800"></i>
+            </button>
+        </nav>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white shadow-lg">
+            <a href="#" class="block text-slate-700 hover:bg-blue-50 px-6 py-3">Home</a>
+            <a href="#internships" class="block text-slate-700 hover:bg-blue-50 px-6 py-3">Internships</a>
+            <a href="#full-time" class="block text-slate-700 hover:bg-blue-50 px-6 py-3">Full-Time Roles</a>
+            <a href="#" class="block text-slate-700 hover:bg-blue-50 px-6 py-3">About Us</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12 md:py-20">
+        
+        <!-- Hero Section -->
+        <section class="text-center mb-20 md:mb-28 scroll-animate">
+            <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 mb-5 leading-tight">Your Next Career Move Starts Here.</h1>
+            <p class="text-lg text-slate-600 max-w-3xl mx-auto">Shape the future of technology with a career at leading companies like SmartBridge. We connect passionate innovators with incredible opportunities.</p>
+        </section>
+
+        <!-- Internship Section -->
+        <section id="internships" class="mb-20 scroll-animate">
+            <div class="bg-white p-8 rounded-2xl shadow-lg border border-slate-200 job-card">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                    
+                    <!-- Left Column: Internship Details -->
+                    <div class="lg:col-span-2">
+                        <span class="inline-block bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full mb-4">Internship Drive</span>
+                        <h2 class="text-3xl font-bold text-slate-900 mb-3">Internship Drive for SmartBridge</h2>
+                        <p class="text-slate-500 mb-6">Powered by <span class="font-semibold text-slate-700">Testify – Your AI-powered Online Assessment & Proctoring Platform</span></p>
+
+                        <div class="mb-8">
+                            <h3 class="text-xl font-semibold mb-4 border-b pb-2">About SmartBridge</h3>
+                            <p class="text-slate-600 leading-relaxed">SmartBridge is a next-gen innovation and learning platform dedicated to building future-ready talent in IoT, Data Science, Artificial Intelligence, and Cloud. With over 1.25 million students, 2,700+ colleges, and strong industry collaborations, SmartBridge empowers learners with hands-on project experience, ensuring every student is job-ready.</p>
+                        </div>
+                        
+                        <div class="mb-8">
+                            <h3 class="text-xl font-semibold mb-4 border-b pb-2">Internship Tracks</h3>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                    <h4 class="font-bold text-blue-700 mb-2">Machine Learning Intern</h4>
+                                    <ul class="list-disc list-inside text-slate-600 space-y-1 text-sm">
+                                        <li>Data preprocessing & feature engineering</li>
+                                        <li>Explore supervised/unsupervised learning</li>
+                                        <li>Apply ML to real-world problems</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                    <h4 class="font-bold text-blue-700 mb-2">Cloud Computing Intern</h4>
+                                    <ul class="list-disc list-inside text-slate-600 space-y-1 text-sm">
+                                        <li>Deploy infrastructure on AWS/Azure/GCP</li>
+                                        <li>Gain exposure to serverless & containers</li>
+                                        <li>Work on scalable cloud-based solutions</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-slate-50 p-4 rounded-lg md:col-span-2 border border-slate-200">
+                                    <h4 class="font-bold text-blue-700 mb-2">Generative AI Intern</h4>
+                                    <ul class="list-disc list-inside text-slate-600 space-y-1 text-sm">
+                                        <li>Build and fine-tune LLM-based applications</li>
+                                        <li>Work with LangChain, HuggingFace, etc.</li>
+                                        <li>Apply prompt engineering and RAG</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                         <div class="grid md:grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="text-xl font-semibold mb-4 border-b pb-2">Eligibility</h3>
+                                <ul class="list-none space-y-2">
+                                    <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 text-green-500 mr-2 mt-1 flex-shrink-0"></i><span>B.Tech/B.E/M.Tech students</span></li>
+                                    <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 text-green-500 mr-2 mt-1 flex-shrink-0"></i><span>Strong programming skills (Python)</span></li>
+                                    <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 text-green-500 mr-2 mt-1 flex-shrink-0"></i><span>Basic domain understanding</span></li>
+                                    <li class="flex items-start"><i data-lucide="check-circle" class="w-5 h-5 text-green-500 mr-2 mt-1 flex-shrink-0"></i><span>Analytical & passionate mindset</span></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold mb-4 border-b pb-2">Perks & Benefits</h3>
+                                <ul class="list-none space-y-2">
+                                    <li class="flex items-start"><i data-lucide="star" class="w-5 h-5 text-yellow-500 mr-2 mt-1 flex-shrink-0"></i><span>Live industry projects with mentorship</span></li>
+                                    <li class="flex items-start"><i data-lucide="award" class="w-5 h-5 text-yellow-500 mr-2 mt-1 flex-shrink-0"></i><span>Internship Certificate</span></li>
+                                    <li class="flex items-start"><i data-lucide="briefcase" class="w-5 h-5 text-yellow-500 mr-2 mt-1 flex-shrink-0"></i><span>Pre-Placement Offers (PPOs)</span></li>
+                                     <li class="flex items-start"><i data-lucide="clock" class="w-5 h-5 text-yellow-500 mr-2 mt-1 flex-shrink-0"></i><span>Duration: 2-3 Months</span></li>
+                                     <li class="flex items-start"><i data-lucide="home" class="w-5 h-5 text-yellow-500 mr-2 mt-1 flex-shrink-0"></i><span>Mode: Hybrid/Remote</span></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Right Column: Hiring Timeline -->
+                    <div class="bg-blue-50 p-6 rounded-xl border border-blue-200">
+                        <h3 class="text-xl font-bold text-slate-900 mb-6 text-center">Hiring Process Timeline</h3>
+                        <div class="relative pl-16">
+                            <div class="timeline-item relative pb-8">
+                                <h4 class="font-semibold text-slate-800">Application Submission</h4>
+                                <p class="text-sm text-slate-500">Oct 5, 2025 - Oct 7, 2025</p>
+                            </div>
+                             <div class="timeline-item relative pb-8">
+                                <h4 class="font-semibold text-slate-800">Application Review</h4>
+                                <p class="text-sm text-slate-500">Oct 9 & 10, 2025</p>
+                            </div>
+                            <div class="timeline-item relative pb-8">
+                                <h4 class="font-semibold text-slate-800">Aptitude & Reasoning Test</h4>
+                                <p class="text-sm text-slate-500">Oct 12, 2025</p>
+                            </div>
+                            <div class="timeline-item relative pb-8">
+                                <h4 class="font-semibold text-slate-800">Technical MCQs</h4>
+                                <p class="text-sm text-slate-500">Oct 14, 2025</p>
+                            </div>
+                            <div class="timeline-item relative pb-8">
+                                <h4 class="font-semibold text-slate-800">Coding Round</h4>
+                                <p class="text-sm text-slate-500">Oct 15 - 18, 2025</p>
+                            </div>
+                            <div class="timeline-item relative">
+                                <h4 class="font-semibold text-slate-800">Final Interview</h4>
+                                <p class="text-sm text-slate-500">Oct 20, 2025</p>
+                            </div>
+                        </div>
+                        <div class="mt-8 text-center">
+                            <button disabled class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg opacity-50 cursor-not-allowed">
+                                Register Here
+                            </button>
+                            <p class="text-xs text-slate-500 mt-2">Applications open on October 5, 2025</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Full-Time Roles Section -->
+        <section id="full-time" class="mb-16 scroll-animate">
+            <h2 class="text-3xl font-bold text-center mb-10">Full-Time Opportunities</h2>
+            <div class="space-y-8">
+                <!-- AI Developer Job Card -->
+                <div class="bg-white p-8 rounded-2xl shadow-lg border border-slate-200 job-card">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                        <!-- Left Column: Job Details -->
+                        <div class="lg:col-span-2">
+                            <h3 class="text-2xl font-bold text-slate-900">AI Developer</h3>
+                            <div class="flex items-center text-sm text-slate-500 space-x-4 mt-2 mb-6">
+                                <span class="inline-flex items-center bg-gray-100 text-gray-800 px-2.5 py-0.5 rounded-full text-xs font-medium"><i class="inline-block w-4 h-4 mr-1.5" data-lucide="tag"></i>AUTOMATION</span>
+                                <span class="inline-flex items-center bg-gray-100 text-gray-800 px-2.5 py-0.5 rounded-full text-xs font-medium"><i class="inline-block w-4 h-4 mr-1.5" data-lucide="map-pin"></i>Remote</span>
+                            </div>
+                            <p class="text-slate-600 leading-relaxed mb-6">We are seeking a creative and skilled AI Developer to build intelligent systems and AI-powered applications for our platform. You will design, implement, and deploy machine learning and AI solutions that solve real-world problems.</p>
+                            <div class="grid md:grid-cols-2 gap-8">
+                                <div>
+                                    <h4 class="font-semibold text-lg mb-3">Responsibilities:</h4>
+                                    <ul class="list-disc list-inside text-slate-600 space-y-1.5">
+                                        <li>Design and develop AI/ML models for NLP, computer vision, or predictive analytics.</li>
+                                        <li>Build APIs and services that integrate AI capabilities into applications.</li>
+                                        <li>Train, fine-tune, and optimize models for performance and scalability.</li>
+                                        <li>Deploy AI solutions on cloud environments (AWS, GCP, Azure).</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-lg mb-3">Requirements:</h4>
+                                    <ul class="list-disc list-inside text-slate-600 space-y-1.5">
+                                        <li>Strong experience with Python and ML libraries (TensorFlow, PyTorch, Scikit-learn).</li>
+                                        <li>Understanding of ML algorithms, neural networks, and deep learning.</li>
+                                        <li>Experience in RESTful API development and MLOps.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Right Column: Hiring Timeline -->
+                        <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                            <h3 class="text-xl font-bold text-slate-900 mb-6 text-center">Hiring Process Timeline</h3>
+                            <div class="relative pl-16">
+                                <div class="timeline-item timeline-item-dark relative pb-8">
+                                    <h4 class="font-semibold text-slate-800">Application Submission</h4>
+                                    <p class="text-sm text-slate-500">Oct 5, 2025 - Oct 7, 2025</p>
+                                </div>
+                                <div class="timeline-item timeline-item-dark relative pb-8">
+                                    <h4 class="font-semibold text-slate-800">Application Review</h4>
+                                    <p class="text-sm text-slate-500">Oct 9 & 10, 2025</p>
+                                </div>
+                                <div class="timeline-item timeline-item-dark relative pb-8">
+                                    <h4 class="font-semibold text-slate-800">Aptitude & Reasoning Test</h4>
+                                    <p class="text-sm text-slate-500">Oct 12, 2025</p>
+                                </div>
+                                <div class="timeline-item timeline-item-dark relative pb-8">
+                                    <h4 class="font-semibold text-slate-800">Technical MCQs</h4>
+                                    <p class="text-sm text-slate-500">Oct 14, 2025</p>
+                                </div>
+                                <div class="timeline-item timeline-item-dark relative pb-8">
+                                    <h4 class="font-semibold text-slate-800">Coding Round</h4>
+                                    <p class="text-sm text-slate-500">Oct 15 - 18, 2025</p>
+                                </div>
+                                <div class="timeline-item timeline-item-dark relative">
+                                    <h4 class="font-semibold text-slate-800">Final Interview</h4>
+                                    <p class="text-sm text-slate-500">Oct 20, 2025</p>
+                                </div>
+                            </div>
+                            <div class="mt-8 text-center">
+                                <button disabled class="w-full bg-slate-800 text-white font-bold py-3 px-6 rounded-lg opacity-50 cursor-not-allowed">
+                                    Apply Now
+                                </button>
+                                <p class="text-xs text-slate-500 mt-2">Applications open on October 5, 2025</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Compiler API Developer Job Card -->
+                <div class="bg-white p-8 rounded-2xl shadow-lg border border-slate-200 job-card">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                        <!-- Left Column: Job Details -->
+                        <div class="lg:col-span-2">
+                            <h3 class="text-2xl font-bold text-slate-900">Compiler API Developer</h3>
+                            <div class="flex items-center text-sm text-slate-500 space-x-4 mt-2 mb-6">
+                                <span class="inline-flex items-center bg-gray-100 text-gray-800 px-2.5 py-0.5 rounded-full text-xs font-medium"><i class="inline-block w-4 h-4 mr-1.5" data-lucide="tag"></i>ENGINEERING</span>
+                                <span class="inline-flex items-center bg-gray-100 text-gray-800 px-2.5 py-0.5 rounded-full text-xs font-medium"><i class="inline-block w-4 h-4 mr-1.5" data-lucide="map-pin"></i>Remote</span>
+                            </div>
+                            <p class="text-slate-600 leading-relaxed mb-6">We are looking for a passionate and detail-oriented Compiler API Developer to join our engineering team. The candidate will be responsible for designing, building, and maintaining compiler APIs, language tooling, and related systems.</p>
+                            <div class="grid md:grid-cols-2 gap-8">
+                                <div>
+                                    <h4 class="font-semibold text-lg mb-3">Responsibilities:</h4>
+                                    <ul class="list-disc list-inside text-slate-600 space-y-1.5">
+                                        <li>Design and develop compiler APIs, parsers, and language runtimes.</li>
+                                        <li>Optimize code generation, execution speed, and memory management.</li>
+                                        <li>Debug and resolve compiler-related issues and performance bottlenecks.</li>
+                                        <li>Write clean, scalable, and well-documented code.</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-lg mb-3">Requirements:</h4>
+                                    <ul class="list-disc list-inside text-slate-600 space-y-1.5">
+                                        <li>Strong proficiency in C/C++, Rust, or Java.</li>
+                                        <li>Hands-on experience with compiler theory (lexers, parsers, ASTs, etc.).</li>
+                                        <li>Knowledge of LLVM, GCC, or similar compiler frameworks.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Right Column: Hiring Timeline -->
+                        <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                            <h3 class="text-xl font-bold text-slate-900 mb-6 text-center">Hiring Process Timeline</h3>
+                            <div class="relative pl-16">
+                                <div class="timeline-item timeline-item-dark relative pb-8">
+                                    <h4 class="font-semibold text-slate-800">Application Submission</h4>
+                                    <p class="text-sm text-slate-500">Oct 5, 2025 - Oct 7, 2025</p>
+                                </div>
+                                <div class="timeline-item timeline-item-dark relative pb-8">
+                                    <h4 class="font-semibold text-slate-800">Application Review</h4>
+                                    <p class="text-sm text-slate-500">Oct 9 & 10, 2025</p>
+                                </div>
+                                <div class="timeline-item timeline-item-dark relative pb-8">
+                                    <h4 class="font-semibold text-slate-800">Aptitude & Reasoning Test</h4>
+                                    <p class="text-sm text-slate-500">Oct 12, 2025</p>
+                                </div>
+                                <div class="timeline-item timeline-item-dark relative pb-8">
+                                    <h4 class="font-semibold text-slate-800">Technical MCQs</h4>
+                                    <p class="text-sm text-slate-500">Oct 14, 2025</p>
+                                </div>
+                                <div class="timeline-item timeline-item-dark relative pb-8">
+                                    <h4 class="font-semibold text-slate-800">Coding Round</h4>
+                                    <p class="text-sm text-slate-500">Oct 15 - 18, 2025</p>
+                                </div>
+                                <div class="timeline-item timeline-item-dark relative">
+                                    <h4 class="font-semibold text-slate-800">Final Interview</h4>
+                                    <p class="text-sm text-slate-500">Oct 20, 2025</p>
+                                </div>
+                            </div>
+                            <div class="mt-8 text-center">
+                                <button disabled class="w-full bg-slate-800 text-white font-bold py-3 px-6 rounded-lg opacity-50 cursor-not-allowed">
+                                    Apply Now
+                                </button>
+                                <p class="text-xs text-slate-500 mt-2">Applications open on October 5, 2025</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400">
+        <div class="container mx-auto px-6 py-8 text-center">
+             <div class="flex items-center justify-center space-x-4 mb-4">
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo" class="h-8 w-8">
+                <span class="text-xl font-bold text-white">Testify</span>
+            </div>
+            <p>&copy; 2025 Testify. All rights reserved. Powering the future of hiring.</p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // Mobile Menu Toggle
+        const menuBtn = document.getElementById('menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        menuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Scroll Animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.scroll-animate').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
+
