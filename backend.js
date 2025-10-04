@@ -16,7 +16,7 @@ const cloudinary = require('cloudinary').v2;
 const { RekognitionClient, CompareFacesCommand } = require("@aws-sdk/client-rekognition");
 const crypto = require('crypto');
 const SibApiV3Sdk = require('sib-api-v3-sdk');
-// const { Resend } = require('resend');
+
 
 const ZOOM_ACCOUNT_ID = process.env.ZOOM_ACCOUNT_ID || 'bq5-fIbESBONjaZAr184uA';
 const ZOOM_CLIENT_ID = process.env.ZOOM_CLIENT_ID || 'CXxbks94RlmD_90vofVqg';
@@ -362,7 +362,7 @@ const authMiddleware = async (req, res, next) => {
 // };
 
 
-//        await sendEmailWithResend(mailOptions);
+//        await sendEmailWithBrevo(mailOptions);
 
 //         res.status(200).json({ message: 'OTP sent successfully. Please check your email.' });
 //     } catch (error) {
@@ -946,7 +946,7 @@ async function issueCertificateAutomatically(testId, studentEmail) {
 
 
 
-       await sendEmailWithResend(mailOptions);
+       await sendEmailWithBrevo(mailOptions);
         console.log(`Successfully auto-issued certificate to ${studentEmail} for test ${testTitle}`);
 
     } catch (error) {
@@ -1288,7 +1288,7 @@ app.post('/api/assign-test', authMiddleware, adminOrModeratorAuth, async (req, r
     };
     // Your email sending logic would go here
 
-           await sendEmailWithResend(mailOptions);
+           await sendEmailWithBrevo(mailOptions);
         }
         res.status(200).json({ message: 'Test assigned successfully!' });
     } catch (error) {
@@ -1659,7 +1659,7 @@ app.post('/api/admin/assign-course', authMiddleware, adminOrModeratorAuth, async
     // You would add your email sending logic here, e.g., transporter.sendMail(mailOptions);
 
 
-           await sendEmailWithResend(mailOptions);
+           await sendEmailWithBrevo(mailOptions);
         }
 
         res.status(200).json({ message: `Course assigned to ${studentsToAssign.length} students successfully!` });
@@ -1888,7 +1888,7 @@ app.post('/api/student/courses/progress', authMiddleware, async (req, res) => {
 </html>`
 };
 
-               await sendEmailWithResend(mailOptions);
+               await sendEmailWithBrevo(mailOptions);
             }
             res.json({ message: 'Progress updated. Course complete and final test assigned!' });
         } else {
@@ -2428,7 +2428,7 @@ app.post('/api/admin/issue-certificates', authMiddleware, async (req, res) => {
 };
 
 
-           await sendEmailWithResend(mailOptions);
+           await sendEmailWithBrevo(mailOptions);
         }
         res.status(200).json({ message: `Successfully issued ${passedStudents.length} certificates.` });
 
@@ -3876,7 +3876,7 @@ const mailOptions = {
 
 
 
-       await sendEmailWithResend(mailOptions);
+       await sendEmailWithBrevo(mailOptions);
         res.status(200).json({ message: 'Password reset link sent to your email.' });
 
     } catch (error) {
@@ -5294,7 +5294,7 @@ if (studentEmails.length > 0) {
 </body>
 </html>`
     };
-               await sendEmailWithResend(mailOptions);
+               await sendEmailWithBrevo(mailOptions);
             }
         }
         
@@ -5424,7 +5424,7 @@ app.post('/api/admin/contests', authMiddleware, async (req, res) => {
                     subject: `New Coding Contest Assigned: ${title}`,
                     html: `<p>Hello,</p><p>A new coding contest, "<b>${title}</b>", has been assigned to you. Please log in to your TESTIFY dashboard to participate.</p><p>Best regards,<br/>The TESTIFY Team</p>`
                 };
-               await sendEmailWithResend(mailOptions);
+               await sendEmailWithBrevo(mailOptions);
             }
         }
 
@@ -5869,7 +5869,7 @@ app.post('/api/admin/issue-course-certificates', authMiddleware, async (req, res
             };
             
             // FIX: Added the missing line to actually send the email.
-           await sendEmailWithResend(mailOptions);
+           await sendEmailWithBrevo(mailOptions);
         }
         res.status(200).json({ message: `Successfully issued ${studentEmails.length} certificates.` });
     } catch (error) {
@@ -6400,7 +6400,7 @@ app.post('/api/careers/send-view-otp', async (req, res) => {
             `
         };
 
-       await sendEmailWithResend(mailOptions);
+       await sendEmailWithBrevo(mailOptions);
         res.status(200).json({ message: 'A verification code has been sent to your email.' });
 
     } catch (error) {
@@ -6712,7 +6712,7 @@ app.post('/api/assign-fullscreen-test', authMiddleware, adminOrModeratorAuth, as
 </body>
 </html>`
             };
-           await sendEmailWithResend(mailOptions);
+           await sendEmailWithBrevo(mailOptions);
         }
         res.status(200).json({ message: 'Full Screen Test assigned successfully!' });
     } catch (error) {
@@ -6955,7 +6955,7 @@ app.post('/api/meetings/schedule', authMiddleware, adminOrModeratorAuth, async (
                 subject: `Invitation: ${title}`,
                 html: `<p>You have been invited to a meeting: <strong>${title}</strong>.</p><p>It is scheduled for ${new Date(startTime).toLocaleString()}. Please check your dashboard to join.</p>`
             };
-           await sendEmailWithResend(mailOptions);
+           await sendEmailWithBrevo(mailOptions);
         }
         res.status(201).json({ message: 'Zoom meeting scheduled and assigned successfully!', meeting: newMeeting });
     } catch (error) {
@@ -7168,6 +7168,5 @@ app.get('/api/student/test-attempts/:testId', authMiddleware, async (req, res) =
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-
 
 
