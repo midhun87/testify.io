@@ -16,7 +16,7 @@ const cloudinary = require('cloudinary').v2;
 const { RekognitionClient, CompareFacesCommand } = require("@aws-sdk/client-rekognition");
 const crypto = require('crypto');
 const SibApiV3Sdk = require('sib-api-v3-sdk');
-const { Resend } = require('resend');
+// const { Resend } = require('resend');
 
 const ZOOM_ACCOUNT_ID = process.env.ZOOM_ACCOUNT_ID || 'bq5-fIbESBONjaZAr184uA';
 const ZOOM_CLIENT_ID = process.env.ZOOM_CLIENT_ID || 'CXxbks94RlmD_90vofVqg';
@@ -7168,5 +7168,6 @@ app.get('/api/student/test-attempts/:testId', authMiddleware, async (req, res) =
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
 
 
