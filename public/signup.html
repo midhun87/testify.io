@@ -28,8 +28,10 @@
 </head>
 <body class="bg-gray-50 text-gray-800">
     <div class="flex min-h-screen">
+        <!-- Left Pane: Branding and Visuals -->
         <div class="hidden lg:flex w-1/2 items-center justify-center bg-white p-12 relative overflow-hidden border-r border-gray-200">
-             <div class="absolute top-0 left-0 w-72 h-72 bg-indigo-50 rounded-full -translate-x-1/2 -translate-y-1/2 filter blur-3xl"></div>
+             <!-- Background decorative elements -->
+            <div class="absolute top-0 left-0 w-72 h-72 bg-indigo-50 rounded-full -translate-x-1/2 -translate-y-1/2 filter blur-3xl"></div>
             <div class="absolute bottom-0 right-0 w-96 h-96 bg-purple-50 rounded-full translate-x-1/2 translate-y-1/2 filter blur-3xl"></div>
             
             <div class="relative z-10 text-center">
@@ -37,6 +39,7 @@
                 <h1 class="text-5xl font-bold tracking-tight text-gray-900">TESTIFY</h1>
                 <p class="mt-4 text-lg text-gray-600">The professional platform for secure online assessments.</p>
                 
+                <!-- Updated Flyer/Visual -->
                 <div class="mt-12 p-1 bg-gray-200/50 rounded-xl shadow-2xl">
                      <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757066742/Gemini_Generated_Image_njiwz6njiwz6njiw_1_zziakv.png" alt="Platform Screenshot" class="w-full max-w-md rounded-lg mx-auto">
                 </div>
@@ -46,8 +49,10 @@
             </div>
         </div>
 
+        <!-- Form Section (Right side) -->
         <div class="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
             <div class="w-full max-w-md">
+                <!-- Mobile Branding -->
                 <div class="lg:hidden text-center mb-8">
                     <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="w-20 h-20 mx-auto mb-2">
                     <h1 class="text-3xl font-bold text-gray-900">TESTIFY</h1>
@@ -57,6 +62,7 @@
                     <h2 class="text-3xl font-bold text-gray-900 text-center">Create an Account</h2>
                     <p class="text-gray-500 text-center mt-2 mb-8">Join our platform to start your journey.</p>
                     
+                    <!-- First Step: Email Input and OTP Request -->
                     <div id="otp-step" class="space-y-6">
                         <div>
                             <label for="email-otp" class="block mb-2 text-sm font-medium text-gray-600">Email Address</label>
@@ -66,41 +72,48 @@
                             <label for="mobile-otp" class="block mb-2 text-sm font-medium text-gray-600">Mobile Number</label>
                             <input type="tel" id="mobile-otp" name="mobile-otp" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition placeholder-gray-400 text-gray-900">
                         </div>
+                        <!-- Terms and Conditions Checkbox -->
                         <div class="flex items-center">
                             <input id="terms" name="terms" type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
                             <label for="terms" class="ml-2 block text-sm text-gray-900">
                                 I agree to the <a href="T&C.html" target="_blank" rel="noopener noreferrer" class="font-medium text-indigo-600 hover:underline">Terms & Conditions</a>
                             </label>
                         </div>
-                        <button id="send-otp-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2">
-                            <span id="send-otp-text">Send OTP</span>
-                            <div id="send-otp-spinner" class="loader hidden"></div>
+                        <button id="get-otp-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2">
+                            <span id="get-otp-text">Get Verification Code</span>
+                            <div id="get-otp-spinner" class="loader hidden"></div>
                         </button>
                     </div>
 
+                    <!-- Second Step: Full Signup Form (Initially hidden) -->
                     <form id="signup-form" class="hidden">
                         <input type="hidden" id="email-final" name="email">
                         <input type="hidden" id="mobile-final" name="mobile">
                         
+                        <!-- OTP Input Field -->
                         <div class="mb-5">
-                            <label for="otp" class="block mb-2 text-sm font-medium text-gray-700">Enter OTP</label>
+                            <label for="otp" class="block mb-2 text-sm font-medium text-gray-700">Enter OTP from the new tab</label>
                             <input type="text" id="otp" name="otp" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
-                            <a href="#" id="resend-otp" class="text-sm text-indigo-600 hover:underline mt-2 inline-block">Resend OTP?</a>
+                            <a href="#" id="resend-otp" class="text-sm text-indigo-600 hover:underline mt-2 inline-block">Get new code</a>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+                            <!-- Full Name -->
                             <div class="mb-5">
                                 <label for="fullName" class="block mb-2 text-sm font-medium text-gray-700">Full Name</label>
                                 <input type="text" id="fullName" name="fullName" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
                             </div>
+                            <!-- Mobile Number (Display Only) -->
                             <div class="mb-5">
                                 <label for="mobile" class="block mb-2 text-sm font-medium text-gray-700">Mobile Number</label>
                                 <input type="tel" id="mobile" name="mobile" required readonly class="w-full px-4 py-3 bg-gray-200 border border-gray-300 rounded-lg cursor-not-allowed">
                             </div>
                         </div>
+                        <!-- Email Address (Display Only)-->
                         <div class="mb-5">
                             <label for="email" class="block mb-2 text-sm font-medium text-gray-700">Email Address</label>
                             <input type="email" id="email" name="email" required readonly class="w-full px-4 py-3 bg-gray-200 border border-gray-300 rounded-lg cursor-not-allowed">
                         </div>
+                        <!-- College Name -->
                         <div class="mb-5">
                             <label for="college" class="block mb-2 text-sm font-medium text-gray-700">College Name</label>
                             <select id="college" name="college" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
@@ -108,6 +121,7 @@
                             </select>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+                            <!-- Year -->
                             <div class="mb-5">
                                 <label for="year" class="block mb-2 text-sm font-medium text-gray-700">Year</label>
                                 <select id="year" name="year" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
@@ -119,6 +133,7 @@
                                     <option value="Other">Other</option>
                                 </select>
                             </div>
+                            <!-- Department -->
                             <div class="mb-5">
                                 <label for="department" class="block mb-2 text-sm font-medium text-gray-700">Department</label>
                                 <select id="department" name="department" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
@@ -126,31 +141,23 @@
                                 </select>
                             </div>
                         </div>
+                        <!-- Roll Number -->
                         <div class="mb-5">
                             <label for="rollNumber" class="block mb-2 text-sm font-medium text-gray-700">Roll Number</label>
                             <input type="text" id="rollNumber" name="rollNumber" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
                         </div>
+                        <!-- Password -->
                         <div class="mb-6">
                             <label for="password" class="block mb-2 text-sm font-medium text-gray-700">Password</label>
                             <input type="password" id="password" name="password" required minlength="6" class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
                         </div>
                         
+                        <!-- Submit Button -->
                         <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 transform hover:scale-105">Create Account</button>
                     </form>
 
                     <div id="message" class="hidden text-center mt-4 p-3 rounded-lg font-medium"></div>
                     
-                    <div class="mt-6 p-4 bg-indigo-50 border border-indigo-200 rounded-lg text-sm text-center">
-                        <p class="font-semibold text-indigo-900">Want to preview the platform?</p>
-                        <p class="mt-1 text-gray-700">
-                            Use our guest account on the <a href="/login.html" class="font-bold text-indigo-600 hover:underline">Login page</a>:
-                        </p>
-                        <div class="mt-2 space-y-1 text-gray-800 bg-indigo-100 p-2 rounded-md inline-block">
-                            <p><strong>Email:</strong> <code>guestuser@testify-lac.com</code></p>
-                            <p><strong>Password:</strong> <code>Guest@1</code></p>
-                        </div>
-                    </div>
-
                     <div class="mt-8 text-center space-y-2">
                          <p class="text-center text-sm text-gray-500">
                             Already have an account? <a href="/login.html" class="font-medium text-indigo-600 hover:text-indigo-500">Log In</a>
@@ -170,7 +177,7 @@
             const departmentSelect = document.getElementById('department');
             const otpStepDiv = document.getElementById('otp-step');
             const signupForm = document.getElementById('signup-form');
-            const sendOtpBtn = document.getElementById('send-otp-btn');
+            const getOtpBtn = document.getElementById('get-otp-btn'); // Changed ID
             const resendOtpLink = document.getElementById('resend-otp');
             const messageDiv = document.getElementById('message');
             const emailOtpInput = document.getElementById('email-otp');
@@ -179,48 +186,10 @@
             const mobileFinalInput = document.getElementById('mobile-final');
             const emailFinalInputDisplay = document.getElementById('email');
             const mobileFinalInputDisplay = document.getElementById('mobile');
-            const sendOtpText = document.getElementById('send-otp-text');
-            const sendOtpSpinner = document.getElementById('send-otp-spinner');
+            const getOtpText = document.getElementById('get-otp-text'); // Changed ID
+            const getOtpSpinner = document.getElementById('get-otp-spinner'); // Changed ID
             const termsCheckbox = document.getElementById('terms');
             
-            function showMessage(message, isSuccess) {
-                if (!messageDiv) return;
-                
-                messageDiv.textContent = message;
-                messageDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
-                
-                if (isSuccess) {
-                    messageDiv.classList.add('bg-green-100', 'text-green-700');
-                } else {
-                    messageDiv.classList.add('bg-red-100', 'text-red-700');
-                }
-            }
-            
-            // --- REGISTRATION STATUS ---
-            // Set to true to disable registration and show a message
-            const registrationClosed = true; 
-
-            if (registrationClosed) {
-                // Disable form fields
-                emailOtpInput.disabled = true;
-                mobileOtpInput.disabled = true;
-                termsCheckbox.disabled = true;
-                
-                // Disable and style the button
-                sendOtpBtn.disabled = true;
-                sendOtpBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'hover:scale-105');
-                sendOtpBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
-                
-                // Change button text
-                sendOtpText.textContent = 'Registrations Closed';
-                
-                // Show info message
-                showMessage('New user registrations are currently closed as the platform is under development.', false);
-                
-                return; // Stop further script execution
-            }
-            // --- END REGISTRATION STATUS ---
-
             async function fetchAndPopulateColleges() {
                 try {
                     const response = await fetch('/api/colleges');
@@ -269,14 +238,26 @@
                 }
             }
             
+            function showMessage(message, isSuccess) {
+                if (!messageDiv) return;
+                
+                messageDiv.textContent = message;
+                messageDiv.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700');
+                
+                if (isSuccess) {
+                    messageDiv.classList.add('bg-green-100', 'text-green-700');
+                } else {
+                    messageDiv.classList.add('bg-red-100', 'text-red-700');
+                }
+            }
+
             // Initially populate dropdowns
             await Promise.all([
                 fetchAndPopulateColleges(),
                 fetchAndPopulateDepartments()
             ]);
 
-            // Handle "Send OTP" button click
-            sendOtpBtn.addEventListener('click', async () => {
+            async function handleGetOtp() {
                 const email = emailOtpInput.value.trim();
                 const mobile = mobileOtpInput.value.trim();
 
@@ -290,9 +271,9 @@
                     return;
                 }
                 
-                sendOtpBtn.disabled = true;
-                sendOtpText.classList.add('hidden');
-                sendOtpSpinner.classList.remove('hidden');
+                getOtpBtn.disabled = true;
+                getOtpText.textContent = 'Generating...';
+                getOtpSpinner.classList.remove('hidden');
 
                 try {
                     const response = await fetch('/api/send-otp', {
@@ -303,8 +284,11 @@
 
                     const result = await response.json();
                     
-                    if (response.ok) {
-                        showMessage(result.message, true);
+                    if (response.ok && result.verificationLink) {
+                        // Open the verification page in a new tab
+                        window.open(result.verificationLink, '_blank');
+                        
+                        showMessage("Verification page opened in a new tab. Please copy the code and enter it below.", true);
                         otpStepDiv.classList.add('hidden');
                         signupForm.classList.remove('hidden');
                         
@@ -313,44 +297,22 @@
                         emailFinalInputDisplay.value = email;
                         mobileFinalInputDisplay.value = mobile;
                     } else {
-                        showMessage(result.message, false);
+                        showMessage(result.message || 'Failed to generate verification link.', false);
                     }
                 } catch (error) {
-                    console.error('Send OTP Fetch Error:', error);
+                    console.error('Get OTP Fetch Error:', error);
                     showMessage('An error occurred. Please try again.', false);
                 } finally {
-                    sendOtpBtn.disabled = false;
-                    sendOtpText.classList.remove('hidden');
-                    sendOtpSpinner.classList.add('hidden');
+                    getOtpBtn.disabled = false;
+                    getOtpText.textContent = 'Get Verification Code';
+                    getOtpSpinner.classList.add('hidden');
                 }
-            });
+            }
 
-            // Handle "Resend OTP" link click
-            resendOtpLink.addEventListener('click', async (e) => {
+            getOtpBtn.addEventListener('click', handleGetOtp);
+            resendOtpLink.addEventListener('click', (e) => {
                 e.preventDefault();
-                const email = emailOtpInput.value.trim();
-                const mobile = mobileOtpInput.value.trim();
-
-                if (!email || !mobile) {
-                    showMessage('Please go back and enter your email and mobile number first.', false);
-                    return;
-                }
-
-                // Temporary message while sending
-                showMessage('Resending OTP...', true);
-
-                try {
-                     const response = await fetch('/api/send-otp', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, mobile })
-                    });
-                    const result = await response.json();
-                    showMessage(result.message, response.ok);
-                } catch (error) {
-                    console.error('Resend OTP Fetch Error:', error);
-                    showMessage('An error occurred while resending. Please try again.', false);
-                }
+                handleGetOtp(); // Re-run the same logic to open a new tab with a new code
             });
 
             // Handle full signup form submission
@@ -382,3 +344,4 @@
     </script>
 </body>
 </html>
+
