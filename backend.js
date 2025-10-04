@@ -16,6 +16,7 @@ const cloudinary = require('cloudinary').v2;
 const { RekognitionClient, CompareFacesCommand } = require("@aws-sdk/client-rekognition");
 const crypto = require('crypto');
 const SibApiV3Sdk = require('sib-api-v3-sdk');
+const { Resend } = require('resend');
 
 const ZOOM_ACCOUNT_ID = process.env.ZOOM_ACCOUNT_ID || 'bq5-fIbESBONjaZAr184uA';
 const ZOOM_CLIENT_ID = process.env.ZOOM_CLIENT_ID || 'CXxbks94RlmD_90vofVqg';
@@ -43,23 +44,22 @@ let defaultClient = SibApiV3Sdk.ApiClient.instance;
 // Configure API key authorization: api-key
 let apiKey = defaultClient.authentications['api-key'];
 // IMPORTANT: Store this in an environment variable (e.g., BREVO_API_KEY) on Render
-apiKey.apiKey = process.env.BREVO_API_KEY || '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';
+const resend = new Resend(process.env.RESEND_API_KEY || 're_uJrbJkZT_DNuYt2VNVKhYmgCxNqJwyjyL');
 
-// How to use it to send mail:
-async function sendEmailWithBrevo(mailOptions) {
-    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-
-    sendSmtpEmail.subject = mailOptions.subject;
-    sendSmtpEmail.htmlContent = mailOptions.html;
-    sendSmtpEmail.sender = { name: 'TESTIFY', email: 'testifylearning.help@gmail.com' }; // Must be a verified sender
-    sendSmtpEmail.to = [{ email: mailOptions.to }];
-
+async function sendEmailWithResend(mailOptions) {
     try {
-        await apiInstance.sendTransacEmail(sendSmtpEmail);
-        console.log('Email sent successfully with Brevo');
+        await resend.emails.send({
+            // IMPORTANT: You must verify your domain (testify-lac.com) with Resend
+            // to use your own 'from' address. Once verified, you can use something like:
+            // from: 'TESTIFY <notifications@testify-lac.com>',
+            from: 'TESTIFY <onboarding@resend.dev>',
+            to: mailOptions.to,
+            subject: mailOptions.subject,
+            html: mailOptions.html,
+        });
+        console.log(`Email sent successfully to ${mailOptions.to} with Resend`);
     } catch (error) {
-        console.error('Error sending email with Brevo:', error);
+        console.error(`Error sending email with Resend to ${mailOptions.to}:`, error);
     }
 }
 
@@ -263,9 +263,116 @@ const authMiddleware = async (req, res, next) => {
 // --- OTP IMPLEMENTATION ---
 // =================================================================
 // In-memory store for OTPs. In a real application, use a database with TTL.
+// const otpStore = {};
+
+// // NEW ENDPOINT: Send OTP to user's email
+// app.post('/api/send-otp', async (req, res) => {
+//     const { email } = req.body;
+//     if (!email) {
+//         return res.status(400).json({ message: 'Email is required.' });
+//     }
+
+//     try {
+//         const existingUser = await docClient.send(new GetCommand({ TableName: "TestifyUsers", Key: { email: email.toLowerCase() } }));
+//         if (existingUser.Item) {
+//             return res.status(400).json({ message: 'User with this email already exists.' });
+//         }
+
+//         const otp = Math.floor(100000 + Math.random() * 900000).toString();
+//         const expirationTime = Date.now() + 5 * 60 * 1000; // 5 minutes from now
+
+//         otpStore[email.toLowerCase()] = { otp, expirationTime };
+//         console.log(`Generated OTP for ${email}: ${otp}`);
+
+//         const mailOptions = {
+//     from: '"TESTIFY" <testifylearning.help@gmail.com>',
+//     to: email,
+//     subject: 'TESTIFY Account Verification',
+//     html: `<!DOCTYPE html>
+// <html lang="en">
+// <head>
+//     <meta charset="UTF-8" />
+//     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+//     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+//     <title>Account Verification</title>
+//     <style>
+//         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+//         body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+//         a { text-decoration: none; }
+//         @media screen and (max-width: 600px) {
+//             .content-width {
+//                 width: 90% !important;
+//             }
+//         }
+//     </style>
+// </head>
+// <body style="background-color: #f3f4f6; margin: 0; padding: 0;">
+//     <!-- Preheader text for inbox preview -->
+//     <span style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+//         Your verification code is here.
+//     </span>
+//     <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
+//         <tr>
+//             <td align="center" style="padding: 40px 20px;">
+//                 <!-- Main Card -->
+//                 <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
+//                     <!-- Header -->
+//                     <tr>
+//                         <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
+//                             <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" 
+//                                  alt="Testify Logo" style="height: 50px; width: auto;">
+//                         </td>
+//                     </tr>
+                    
+//                     <!-- Content Body -->
+//                     <tr>
+//                         <td align="center" style="padding: 40px; text-align: center;">
+//                              <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">Verify Your Account</h1>
+//                              <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 30px; line-height: 1.7;">
+//                                  Here is your One-Time Password (OTP) to complete your account creation.
+//                              </p>
+//                              <div style="background-color: #f3f4f6; border-radius: 8px; padding: 20px 25px; display: inline-block;">
+//                                  <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 32px; font-weight: 700; color: #111827; margin: 0; letter-spacing: 5px;">
+//                                      ${otp}
+//                                  </p>
+//                              </div>
+//                              <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
+//                                  This OTP is valid for 5 minutes. For your security, please do not share it with anyone.
+//                              </p>
+//                         </td>
+//                     </tr>
+                    
+//                     <!-- Footer -->
+//                     <tr>
+//                         <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
+//                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
+//                                 &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
+//                             </p>
+//                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
+//                                 Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+//                             </p>
+//                         </td>
+//                     </tr>
+//                 </table>
+//             </td>
+//         </tr>
+//     </table>
+// </body>
+// </html>`
+// };
+
+
+//        await sendEmailWithResend(mailOptions);
+
+//         res.status(200).json({ message: 'OTP sent successfully. Please check your email.' });
+//     } catch (error) {
+//         console.error("Send OTP Error:", error);
+//         res.status(500).json({ message: 'Server error sending OTP. Please try again.' });
+//     }
+// });
+
 const otpStore = {};
 
-// NEW ENDPOINT: Send OTP to user's email
 app.post('/api/send-otp', async (req, res) => {
     const { email } = req.body;
     if (!email) {
@@ -279,96 +386,51 @@ app.post('/api/send-otp', async (req, res) => {
         }
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expirationTime = Date.now() + 5 * 60 * 1000; // 5 minutes from now
+        const expirationTime = Date.now() + 5 * 60 * 1000; // 5 minutes
+        const verificationToken = uuidv4();
 
-        otpStore[email.toLowerCase()] = { otp, expirationTime };
+        otpStore[email.toLowerCase()] = { otp, expirationTime, verificationToken };
         console.log(`Generated OTP for ${email}: ${otp}`);
 
-        const mailOptions = {
-    from: '"TESTIFY" <testifylearning.help@gmail.com>',
-    to: email,
-    subject: 'TESTIFY Account Verification',
-    html: `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Account Verification</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-        body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
-        a { text-decoration: none; }
-        @media screen and (max-width: 600px) {
-            .content-width {
-                width: 90% !important;
-            }
-        }
-    </style>
-</head>
-<body style="background-color: #f3f4f6; margin: 0; padding: 0;">
-    <!-- Preheader text for inbox preview -->
-    <span style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
-        Your verification code is here.
-    </span>
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
-        <tr>
-            <td align="center" style="padding: 40px 20px;">
-                <!-- Main Card -->
-                <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
-                    <!-- Header -->
-                    <tr>
-                        <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
-                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" 
-                                 alt="Testify Logo" style="height: 50px; width: auto;">
-                        </td>
-                    </tr>
-                    
-                    <!-- Content Body -->
-                    <tr>
-                        <td align="center" style="padding: 40px; text-align: center;">
-                             <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">Verify Your Account</h1>
-                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 30px; line-height: 1.7;">
-                                 Here is your One-Time Password (OTP) to complete your account creation.
-                             </p>
-                             <div style="background-color: #f3f4f6; border-radius: 8px; padding: 20px 25px; display: inline-block;">
-                                 <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 32px; font-weight: 700; color: #111827; margin: 0; letter-spacing: 5px;">
-                                     ${otp}
-                                 </p>
-                             </div>
-                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
-                                 This OTP is valid for 5 minutes. For your security, please do not share it with anyone.
-                             </p>
-                        </td>
-                    </tr>
-                    
-                    <!-- Footer -->
-                    <tr>
-                        <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
-                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
-                                &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
-                            </p>
-                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
-                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>`
-};
+        // Construct the verification link that will be opened in a new tab
+        const verificationLink = `/verify-otp.html?token=${verificationToken}`;
 
+        // Send the link back to the frontend instead of sending an email
+        res.status(200).json({ 
+            message: 'Verification token generated.',
+            verificationLink: verificationLink 
+        });
 
-        await sendEmailWithBrevo(mailOptions);
-
-        res.status(200).json({ message: 'OTP sent successfully. Please check your email.' });
     } catch (error) {
         console.error("Send OTP Error:", error);
-        res.status(500).json({ message: 'Server error sending OTP. Please try again.' });
+        res.status(500).json({ message: 'Server error generating verification code. Please try again.' });
     }
+});
+
+// Endpoint to get OTP using the secure token from the verification page
+app.post('/api/get-otp-by-token', (req, res) => {
+    const { token } = req.body;
+    if (!token) {
+        return res.status(400).json({ message: 'Verification token is missing.' });
+    }
+
+    const email = Object.keys(otpStore).find(key => otpStore[key].verificationToken === token);
+
+    if (!email) {
+        return res.status(404).json({ message: 'This verification link is invalid or has already been used.' });
+    }
+
+    const otpData = otpStore[email];
+
+    if (Date.now() > otpData.expirationTime) {
+        delete otpStore[email];
+        return res.status(400).json({ message: 'This verification link has expired.' });
+    }
+    
+    res.json({ otp: otpData.otp });
+    
+    // Invalidate the token after use
+    delete otpStore[email];
 });
 
 
@@ -884,7 +946,7 @@ async function issueCertificateAutomatically(testId, studentEmail) {
 
 
 
-        await sendEmailWithBrevo(mailOptions);
+       await sendEmailWithResend(mailOptions);
         console.log(`Successfully auto-issued certificate to ${studentEmail} for test ${testTitle}`);
 
     } catch (error) {
@@ -1226,7 +1288,7 @@ app.post('/api/assign-test', authMiddleware, adminOrModeratorAuth, async (req, r
     };
     // Your email sending logic would go here
 
-            await sendEmailWithBrevo(mailOptions);
+           await sendEmailWithResend(mailOptions);
         }
         res.status(200).json({ message: 'Test assigned successfully!' });
     } catch (error) {
@@ -1597,7 +1659,7 @@ app.post('/api/admin/assign-course', authMiddleware, adminOrModeratorAuth, async
     // You would add your email sending logic here, e.g., transporter.sendMail(mailOptions);
 
 
-            await sendEmailWithBrevo(mailOptions);
+           await sendEmailWithResend(mailOptions);
         }
 
         res.status(200).json({ message: `Course assigned to ${studentsToAssign.length} students successfully!` });
@@ -1826,7 +1888,7 @@ app.post('/api/student/courses/progress', authMiddleware, async (req, res) => {
 </html>`
 };
 
-                await sendEmailWithBrevo(mailOptions);
+               await sendEmailWithResend(mailOptions);
             }
             res.json({ message: 'Progress updated. Course complete and final test assigned!' });
         } else {
@@ -2000,43 +2062,48 @@ app.get('/api/student/tests', authMiddleware, async (req, res) => {
 app.post('/api/student/submit-test', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
     
-    const { testId, answers, timeTaken, violationReason } = req.body;
+    const { testId, answers, timeTaken, violationReason, testData } = req.body;
     const studentEmail = req.user.email;
     const resultId = uuidv4();
 
     try {
-        const { Item: test } = await docClient.send(new GetCommand({
-            TableName: "TestifyTests",
-            Key: { testId }
-        }));
+        let test;
+        // Logic to handle the static test case
+        if (testId === 'cognizant-cloud-fundamentals-static' && testData) {
+            test = testData;
+        } else {
+            // This is the existing logic for dynamic tests from the database
+            const { Item } = await docClient.send(new GetCommand({
+                TableName: "TestifyTests",
+                Key: { testId }
+            }));
+            test = Item;
+        }
 
-        if (!test) return res.status(404).json({ message: "Test not found." });
+        if (!test) {
+            return res.status(404).json({ message: "Test not found." });
+        }
 
-        let score = 0;
+        let marksScored = 0;
         test.questions.forEach((question, index) => {
             const studentAnswer = answers[index];
             if (studentAnswer === null || studentAnswer === undefined) return;
-
-            if (question.type === 'mcq-single' || question.type === 'fill-blank') {
-                if (String(studentAnswer).trim().toLowerCase() === String(question.correctAnswer).trim().toLowerCase()) {
-                    score += parseInt(question.marks, 10);
-                }
-            } else if (question.type === 'mcq-multiple') {
-                const correctAnswers = new Set(question.correctAnswers);
-                const studentAnswersSet = new Set(studentAnswer);
-                if (correctAnswers.size === studentAnswersSet.size && [...correctAnswers].every(val => studentAnswersSet.has(val))) {
-                     score += parseInt(question.marks, 10);
-                }
+            
+            if (String(studentAnswer).trim() === String(question.correctAnswer).trim()) {
+                marksScored += parseInt(question.marks, 10);
             }
         });
 
-        const percentageScore = Math.round((score / test.totalMarks) * 100);
+        const percentageScore = Math.round((marksScored / test.totalMarks) * 100);
         const result = percentageScore >= test.passingPercentage ? "Pass" : "Fail";
 
         const newResult = {
             resultId,
             testId,
             studentEmail,
+            studentName: req.user.fullName, 
+            college: req.user.college, 
+            testTitle: test.title, 
             answers,
             timeTaken,
             score: percentageScore,
@@ -2058,7 +2125,6 @@ app.post('/api/student/submit-test', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Server error submitting test.' });
     }
 });
-
 app.get('/api/student/history', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
     try {
@@ -2073,27 +2139,35 @@ app.get('/api/student/history', authMiddleware, async (req, res) => {
             return res.json([]);
         }
 
-        const testIds = [...new Set(results.map(r => r.testId))];
-        if (testIds.length === 0) {
-            return res.json([]);
-        }
-        
-        const keys = testIds.map(testId => ({ testId }));
+        const dynamicTestIds = results.map(r => r.testId).filter(id => id !== 'cognizant-cloud-fundamentals-static');
+        const testMap = new Map();
 
-        const { Responses } = await docClient.send(new BatchGetCommand({
-            RequestItems: { 
-                "TestifyTests": { 
-                    Keys: keys,
-                    ProjectionExpression: "testId, title, #dur, resultsPublished",
-                    ExpressionAttributeNames: { "#dur": "duration" }
-                } 
-            }
-        }));
-        
-        const tests = Responses.TestifyTests || [];
-        const testMap = new Map(tests.map(t => [t.testId, t]));
+        if (dynamicTestIds.length > 0) {
+            const keys = [...new Set(dynamicTestIds)].map(testId => ({ testId }));
+            const { Responses } = await docClient.send(new BatchGetCommand({
+                RequestItems: { 
+                    "TestifyTests": { 
+                        Keys: keys,
+                        ProjectionExpression: "testId, title, #dur, resultsPublished",
+                        ExpressionAttributeNames: { "#dur": "duration" }
+                    } 
+                }
+            }));
+            const tests = Responses.TestifyTests || [];
+            tests.forEach(t => testMap.set(t.testId, t));
+        }
 
         const enrichedHistory = results.map(result => {
+            if (result.testId === 'cognizant-cloud-fundamentals-static') {
+                // Handle the static test case directly
+                return {
+                    ...result,
+                    testTitle: "Cognizant Cloud Fundamentals Quiz",
+                    testDuration: 25, // Static value
+                    resultsPublished: true // Always show results for this public test
+                };
+            }
+            
             const testDetails = testMap.get(result.testId);
             if (testDetails && testDetails.resultsPublished === true) {
                 return {
@@ -2354,7 +2428,7 @@ app.post('/api/admin/issue-certificates', authMiddleware, async (req, res) => {
 };
 
 
-            await sendEmailWithBrevo(mailOptions);
+           await sendEmailWithResend(mailOptions);
         }
         res.status(200).json({ message: `Successfully issued ${passedStudents.length} certificates.` });
 
@@ -3802,7 +3876,7 @@ const mailOptions = {
 
 
 
-        await sendEmailWithBrevo(mailOptions);
+       await sendEmailWithResend(mailOptions);
         res.status(200).json({ message: 'Password reset link sent to your email.' });
 
     } catch (error) {
@@ -5220,7 +5294,7 @@ if (studentEmails.length > 0) {
 </body>
 </html>`
     };
-                await sendEmailWithBrevo(mailOptions);
+               await sendEmailWithResend(mailOptions);
             }
         }
         
@@ -5350,7 +5424,7 @@ app.post('/api/admin/contests', authMiddleware, async (req, res) => {
                     subject: `New Coding Contest Assigned: ${title}`,
                     html: `<p>Hello,</p><p>A new coding contest, "<b>${title}</b>", has been assigned to you. Please log in to your TESTIFY dashboard to participate.</p><p>Best regards,<br/>The TESTIFY Team</p>`
                 };
-                await sendEmailWithBrevo(mailOptions);
+               await sendEmailWithResend(mailOptions);
             }
         }
 
@@ -5795,7 +5869,7 @@ app.post('/api/admin/issue-course-certificates', authMiddleware, async (req, res
             };
             
             // FIX: Added the missing line to actually send the email.
-            await sendEmailWithBrevo(mailOptions);
+           await sendEmailWithResend(mailOptions);
         }
         res.status(200).json({ message: `Successfully issued ${studentEmails.length} certificates.` });
     } catch (error) {
@@ -6326,7 +6400,7 @@ app.post('/api/careers/send-view-otp', async (req, res) => {
             `
         };
 
-        await sendEmailWithBrevo(mailOptions);
+       await sendEmailWithResend(mailOptions);
         res.status(200).json({ message: 'A verification code has been sent to your email.' });
 
     } catch (error) {
@@ -6638,7 +6712,7 @@ app.post('/api/assign-fullscreen-test', authMiddleware, adminOrModeratorAuth, as
 </body>
 </html>`
             };
-            await sendEmailWithBrevo(mailOptions);
+           await sendEmailWithResend(mailOptions);
         }
         res.status(200).json({ message: 'Full Screen Test assigned successfully!' });
     } catch (error) {
@@ -6881,7 +6955,7 @@ app.post('/api/meetings/schedule', authMiddleware, adminOrModeratorAuth, async (
                 subject: `Invitation: ${title}`,
                 html: `<p>You have been invited to a meeting: <strong>${title}</strong>.</p><p>It is scheduled for ${new Date(startTime).toLocaleString()}. Please check your dashboard to join.</p>`
             };
-            await sendEmailWithBrevo(mailOptions);
+           await sendEmailWithResend(mailOptions);
         }
         res.status(201).json({ message: 'Zoom meeting scheduled and assigned successfully!', meeting: newMeeting });
     } catch (error) {
@@ -7069,6 +7143,24 @@ app.post('/api/certificates-by-email', async (req, res) => {
     }
 });
 
+app.get('/api/student/test-attempts/:testId', authMiddleware, async (req, res) => {
+    const { testId } = req.params;
+    const studentEmail = req.user.email;
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyResults",
+            FilterExpression: "testId = :tid AND studentEmail = :email",
+            ExpressionAttributeValues: {
+                ":tid": testId,
+                ":email": studentEmail
+            }
+        }));
+        res.json({ attempts: Items.length });
+    } catch (error) {
+        console.error("Get Test Attempts Error:", error);
+        res.status(500).json({ message: 'Server error fetching attempt count.' });
+    }
+});
 
 
 
