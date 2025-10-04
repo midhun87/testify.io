@@ -39,27 +39,29 @@ const client = new DynamoDBClient({
 const docClient = DynamoDBDocumentClient.from(client);
 
 // --- NODEMAILER TRANSPORTER SETUP ---
+// --- NODEMAILER TRANSPORTER SETUP ---
 let defaultClient = SibApiV3Sdk.ApiClient.instance;
 
 // Configure API key authorization: api-key
 let apiKey = defaultClient.authentications['api-key'];
 // IMPORTANT: Store this in an environment variable (e.g., BREVO_API_KEY) on Render
-const resend = new Resend(process.env.RESEND_API_KEY || 're_uJrbJkZT_DNuYt2VNVKhYmgCxNqJwyjyL');
+apiKey.apiKey = process.env.BREVO_API_KEY || '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';
 
-async function sendEmailWithResend(mailOptions) {
+// How to use it to send mail:
+async function sendEmailWithBrevo(mailOptions) {
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+
+    sendSmtpEmail.subject = mailOptions.subject;
+    sendSmtpEmail.htmlContent = mailOptions.html;
+    sendSmtpEmail.sender = { name: 'TESTIFY', email: 'testifylearning.help@gmail.com' }; // Must be a verified sender
+    sendSmtpEmail.to = [{ email: mailOptions.to }];
+
     try {
-        await resend.emails.send({
-            // IMPORTANT: You must verify your domain (testify-lac.com) with Resend
-            // to use your own 'from' address. Once verified, you can use something like:
-            // from: 'TESTIFY <notifications@testify-lac.com>',
-            from: 'TESTIFY <onboarding@resend.dev>',
-            to: mailOptions.to,
-            subject: mailOptions.subject,
-            html: mailOptions.html,
-        });
-        console.log(`Email sent successfully to ${mailOptions.to} with Resend`);
+        await apiInstance.sendTransacEmail(sendSmtpEmail);
+        console.log('Email sent successfully with Brevo');
     } catch (error) {
-        console.error(`Error sending email with Resend to ${mailOptions.to}:`, error);
+        console.error('Error sending email with Brevo:', error);
     }
 }
 
