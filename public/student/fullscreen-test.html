@@ -56,7 +56,6 @@
             background-color: #8B5CF6; /* Violet/Purple for marked */
             color: white;
             border-color: #7C3AED;
-            /* Combined status: Answered AND Marked (Green/Purple blend look) */
         }
         .palette-btn.answered.marked {
             background-color: #7C3AED; /* Use marked color for priority */
@@ -117,7 +116,7 @@
         <main class="flex-grow p-4 sm:p-6 lg:p-10">
             <div id="test-list-container" class="max-w-7xl mx-auto">
                 <div id="test-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <!-- Dynamically loaded tests will appear here -->
+                    <!-- Statically and dynamically loaded tests will appear here -->
                 </div>
             </div>
         </main>
@@ -135,17 +134,14 @@
         <!-- FIXED HEADER (TOP BAR) -->
         <header class="flex items-center justify-between h-20 bg-white border-b border-gray-300 px-6 fixed top-0 left-0 w-full z-20 shadow-xl">
             <div class="flex items-center">
-                <!-- LOGO SIZE INCREASED -->
                 <img class="h-12 w-auto" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo">
                 <h1 id="test-title" class="ml-4 text-xl font-extrabold text-indigo-700">Test Title</h1>
             </div>
             <div class="flex items-center space-x-6">
-                <!-- TIMER - RESTYLED -->
                 <div class="flex items-center bg-red-100 border-2 border-red-200 rounded-lg px-4 py-1.5 shadow-inner">
                     <span class="text-sm font-bold text-red-800 mr-3 uppercase tracking-wider">Time Left</span>
                     <div id="timer" class="text-2xl font-extrabold text-red-600" style="font-variant-numeric: tabular-nums;">00:00</div>
                 </div>
-                <!-- SUBMIT BUTTON -->
                 <button id="submit-test-btn" class="px-6 py-2.5 bg-red-600 text-white font-bold rounded-xl shadow-lg hover:bg-red-700 transition-colors transform hover:scale-[1.02]">
                     Submit Test
                 </button>
@@ -153,46 +149,32 @@
         </header>
 
         <div class="pt-20 flex" style="height: 100vh;">
-            <!-- QUESTION PANE -->
             <div class="flex-1 p-8 overflow-y-auto">
-                <div id="question-content" class="bg-white p-8 rounded-2xl shadow-xl border border-gray-200">
-                    <!-- Question and options rendered here -->
-                </div>
-                
-                <!-- NAVIGATION & ACTION BUTTONS -->
+                <div id="question-content" class="bg-white p-8 rounded-2xl shadow-xl border border-gray-200"></div>
                 <div class="mt-8 flex justify-between items-center bg-white p-4 rounded-xl shadow-md border border-gray-100">
                     <button id="prev-btn" class="px-6 py-2 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400 disabled:opacity-50 transition-colors">
                         <svg class="h-5 w-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                         Previous
                     </button>
-                    
                     <div class="flex space-x-4">
-                        <!-- Clear Response Button -->
                         <button id="clear-response-btn" class="px-5 py-2 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition-colors shadow-md">
                             Clear Response
                         </button>
-                        
-                        <!-- Mark/Unmark Button -->
                         <button id="mark-review-btn" class="px-5 py-2 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600 transition-colors shadow-md">
                             Mark for Review
                         </button>
                     </div>
-                    
                     <button id="next-btn" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors">
                         Next 
                         <svg class="h-5 w-5 inline ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </button>
                 </div>
             </div>
-
-            <!-- QUESTION PALETTE SIDEBAR -->
             <aside class="w-72 bg-gray-50 border-l border-gray-200 p-6 flex flex-col space-y-6 flex-shrink-0 overflow-y-auto">
                 <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-100 flex-grow">
                     <h3 class="font-extrabold text-xl text-indigo-700 mb-4 border-b pb-2 text-center">Question Palette</h3>
                     <div id="question-palette" class="grid grid-cols-5 gap-3"></div>
                 </div>
-                
-                <!-- Legend -->
                 <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-100 text-sm">
                     <h4 class="font-bold text-gray-800 mb-3">Status Legend</h4>
                     <div class="space-y-2">
@@ -206,7 +188,6 @@
         </div>
     </div>
 
-    <!-- Test Loader Overlay -->
     <div id="test-loader-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-80 z-[10001] flex flex-col items-center justify-center text-white backdrop-blur-sm">
         <svg class="animate-spin h-10 w-10 text-white mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -216,7 +197,6 @@
         <p class="text-gray-300 mt-1">Please wait, do not refresh the page.</p>
     </div>
 
-    <!-- Pre-Test Instructions Modal (REDESIGNED) -->
     <div id="pre-test-modal" class="modal-overlay hidden">
         <div class="modal-container">
              <div class="flex items-center justify-center flex-col">
@@ -256,7 +236,6 @@
         </div>
     </div>
     
-    <!-- Modal for confirmations - ENHANCED STYLING -->
     <div id="confirm-modal" class="modal-overlay hidden">
         <div class="modal-container">
             <svg class="mx-auto h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.896 3.376 2.673 3.376h14.594c1.777 0 3.539-1.876 2.673-3.376L12.55 4.723a1.875 1.875 0 00-3.1 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
@@ -272,11 +251,63 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('token');
             if (!token) {
-                // Modified alert to console log for compliance
                 console.error("Authentication token missing. Redirecting to login.");
                 window.location.href = '/login';
                 return;
             }
+
+            // --- STATIC COGNIZANT TEST DATA ---
+            const cognizantCloudTest = {
+                testId: 'cognizant-cloud-fundamentals-static',
+                title: 'Cognizant Cloud Fundamentals Quiz',
+                duration: 25,
+                totalMarks: 20, // 20 questions, 1 mark each
+                passingPercentage: 70,
+                questions: [
+                     { "id": 1, "text": "What is the primary benefit of using a Public Cloud in terms of expenditure?", "options": ["It increases Capital Expenditure (CapEx)", "It converts Capital Expenditure (CapEx) into Operational Expenditure (OpEx)", "It eliminates all operational costs", "It requires long-term hardware contracts"], "correctAnswer": "1", "marks": 1 },
+                    { "id": 2, "text": "Which cloud service model would you use to deploy an application without managing the underlying operating system or servers?", "options": ["IaaS (Infrastructure as a Service)", "PaaS (Platform as a Service)", "SaaS (Software as a Service)", "On-Premises"], "correctAnswer": "1", "marks": 1 },
+                    { "id": 3, "text": "A client needs to ensure their application remains online even if a single data center fails. This concept is known as:", "options": ["Scalability", "Elasticity", "High Availability", "Agility"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 4, "text": "Which AWS service is the direct equivalent of a physical server that you can rent?", "options": ["Amazon S3", "Amazon RDS", "Amazon EC2", "Amazon VPC"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 5, "text": "What is the main purpose of a 'Security Group' in AWS?", "options": ["To manage user identities", "To act as a virtual firewall for an EC2 instance", "To group physical servers together", "To monitor billing and costs"], "correctAnswer": "1", "marks": 1 },
+                    { "id": 6, "text": "If an application's traffic suddenly spikes, the cloud's ability to automatically add more resources is called:", "options": ["Scalability", "Durability", "Elasticity", "Fault Tolerance"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 7, "text": "Google Drive is a classic example of which cloud service model?", "options": ["IaaS", "PaaS", "SaaS", "FaaS"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 8, "text": "What is the primary function of a Content Delivery Network (CDN)?", "options": ["To secure the database", "To run backend code", "To reduce latency by caching content closer to users", "To manage user authentication"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 9, "text": "In the AWS Shared Responsibility Model, what is the customer always responsible for?", "options": ["Securing the physical data center", "Patching the hypervisor", "Securing their data and configuring access", "Managing the network hardware"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 10, "text": "Which of these is a NoSQL database service on AWS?", "options": ["Amazon RDS for MySQL", "Amazon Aurora", "Amazon DynamoDB", "Microsoft SQL Server on EC2"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 11, "text": "A 'Hybrid Cloud' architecture refers to a mix of:", "options": ["Two or more public clouds", "A public cloud and a private cloud/on-premises infrastructure", "Two or more private clouds", "A community cloud and a public cloud"], "correctAnswer": "1", "marks": 1 },
+                    { "id": 12, "text": "What is the primary function of Kubernetes?", "options": ["To create virtual machine images", "To orchestrate and manage containers at scale", "To provide a serverless compute platform", "To manage DNS records"], "correctAnswer": "1", "marks": 1 },
+                    { "id": 13, "text": "In AWS, what is an 'Availability Zone'?", "options": ["A specific geographic location like 'US-East'", "One or more discrete data centers with redundant power and networking", "A virtual network for your resources", "A type of load balancer"], "correctAnswer": "1", "marks": 1 },
+                    { "id": 14, "text": "Which service is used to create a logically isolated section of the AWS cloud where you can launch resources?", "options": ["AWS Shield", "Amazon S3", "Amazon EC2", "Amazon VPC"], "correctAnswer": "3", "marks": 1 },
+                    { "id": 15, "text": "The practice of managing and provisioning your cloud infrastructure using code is known as:", "options": ["Continuous Integration (CI)", "DevOps", "Infrastructure as Code (IaC)", "Agile Development"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 16, "text": "What is the key difference between 'scaling up' (vertical scaling) and 'scaling out' (horizontal scaling)?", "options": ["Scaling up adds more servers; scaling out increases the power of one server.", "Scaling up increases the power of one server; scaling out adds more servers.", "They are the same concept.", "Scaling up is for storage; scaling out is for compute."], "correctAnswer": "1", "marks": 1 },
+                    { "id": 17, "text": "Which Azure service is used for storing large amounts of unstructured data, like images and videos?", "options": ["Azure Cosmos DB", "Azure SQL Database", "Azure Virtual Machines", "Azure Blob Storage"], "correctAnswer": "3", "marks": 1 },
+                    { "id": 18, "text": "What does 'Serverless Computing' (like AWS Lambda) abstract away from the developer?", "options": ["The application logic", "The underlying servers and operating systems", "The need for a database", "The user interface"], "correctAnswer": "1", "marks": 1 },
+                    { "id": 19, "text": "What is the primary purpose of AWS IAM (Identity and Access Management)?", "options": ["To monitor application performance", "To manage users, groups, roles, and their access permissions", "To create backups of data", "To manage network routing"], "correctAnswer": "1", "marks": 1 },
+                    { "id": 20, "text": "What type of storage is Amazon S3?", "options": ["Block Storage", "File Storage", "Object Storage", "Network Attached Storage"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 21, "text": "Which deployment model offers the highest level of security and control?", "options": ["Public Cloud", "Private Cloud", "Hybrid Cloud", "Community Cloud"], "correctAnswer": "1", "marks": 1 },
+                    { "id": 22, "text": "What is a Load Balancer used for?", "options": ["To balance the cost of cloud resources", "To distribute incoming traffic across multiple servers", "To encrypt data at rest", "To create database replicas"], "correctAnswer": "1", "marks": 1 },
+                    { "id": 23, "text": "The term 'vendor lock-in' refers to:", "options": ["A security feature to lock user accounts", "A discount for long-term commitment", "The difficulty of moving from one cloud provider to another", "A network connectivity issue"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 24, "text": "Which Google Cloud service is used for running containerized applications with Kubernetes?", "options": ["Google Compute Engine", "Google Cloud Storage", "Google Kubernetes Engine (GKE)", "Google Cloud Functions"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 25, "text": "In cloud security, 'Authentication' is the process of _______, while 'Authorization' is the process of _______.", "options": ["granting access; verifying identity", "verifying identity; granting access", "encrypting data; decrypting data", "monitoring traffic; blocking threats"], "correctAnswer": "1", "marks": 1 },
+                    { "id": 26, "text": "Which AWS service is a managed relational database service?", "options": ["Amazon DynamoDB", "Amazon S3", "Amazon EC2", "Amazon RDS"], "correctAnswer": "3", "marks": 1 },
+                    { "id": 27, "text": "Which of these is NOT one of the five essential characteristics of cloud computing defined by NIST?", "options": ["On-demand self-service", "Resource pooling", "Guaranteed data locality", "Measured service"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 28, "text": "What does 'fault tolerance' mean?", "options": ["The ability to prevent all failures", "The ability of a system to continue operating even if a component fails", "The ability to scale resources on demand", "The ability to recover data from backups"], "correctAnswer": "1", "marks": 1 },
+                    { "id": 29, "text": "Which is a common use case for AWS Lambda?", "options": ["Hosting a complete website", "Running a relational database", "Processing data in response to an event, like an image upload to S3", "Running a long-term, computationally intensive simulation"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 30, "text": "A 'Region' in AWS is:", "options": ["A single data center", "A collection of Availability Zones in a specific geographic area", "A virtual network boundary", "A pricing tier"], "correctAnswer": "1", "marks": 1 },
+                    { "id": 31, "text": "What does 'data encryption in transit' protect against?", "options": ["Unauthorized access to stored data", "Physical theft of hard drives", "Eavesdropping or 'man-in-the-middle' attacks on data as it travels over a network", "Data corruption due to hardware failure"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 32, "text": "What is the primary benefit of using a managed service (PaaS) over an unmanaged service (IaaS)?", "options": ["It provides root access to the server", "It reduces the operational burden on the user", "It is always cheaper", "It offers more customization options"], "correctAnswer": "1", "marks": 1 },
+                    { "id": 33, "text": "Which statement is true about containers?", "options": ["They include a full guest operating system", "They are less portable than Virtual Machines", "They share the host OS kernel, making them lightweight", "They cannot be used for web applications"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 34, "text": "The strategy of moving an application from on-premises to the cloud with minimal changes is called:", "options": ["Re-architecting", "Re-platforming", "Re-hosting (Lift and Shift)", "Retiring"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 35, "text": "Which of the following is an example of Block Storage?", "options": ["Amazon S3", "Azure Blob Storage", "An Amazon EBS volume attached to an EC2 instance", "Google Drive"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 36, "text": "What is the purpose of an API Gateway?", "options": ["To provide a single entry point for API calls to your backend services", "To manage user passwords", "To store application logs", "To run virtual servers"], "correctAnswer": "0", "marks": 1 },
+                    { "id": 37, "text": "If a company uses services from both Azure and GCP, this is an example of a _____ strategy.", "options": ["Hybrid Cloud", "Private Cloud", "Multi-Cloud", "Community Cloud"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 38, "text": "What does RTO (Recovery Time Objective) define?", "options": ["The maximum amount of data that can be lost", "The target time within which a business process must be restored after a disaster", "The operational cost of a cloud service", "The time it takes to provision a new server"], "correctAnswer": "1", "marks": 1 },
+                    { "id": 39, "text": "Which pricing model offers the biggest discount but requires a long-term commitment?", "options": ["On-Demand Instances", "Spot Instances", "Reserved Instances", "Pay-as-you-go"], "correctAnswer": "2", "marks": 1 },
+                    { "id": 40, "text": "The five pillars of the AWS Well-Architected Framework are: Operational Excellence, Security, Reliability, Performance Efficiency, and _____.", "options": ["Cost Optimization", "Scalability", "Agility", "Innovation"], "correctAnswer": "0", "marks": 1 }
+                ].map(q => ({...q, type: 'mcq-single'}))
+            };
+
+
 
             const mainContent = document.getElementById('main-content');
             const testEnvironment = document.getElementById('test-environment');
@@ -285,13 +316,11 @@
             const modalMessage = document.getElementById('modal-message');
             const modalConfirmBtn = document.getElementById('modal-confirm-btn');
             const modalCancelBtn = document.getElementById('modal-cancel-btn');
-            // PRE-TEST MODAL ELEMENTS
             const preTestModal = document.getElementById('pre-test-modal');
             const preTestCheckboxes = document.querySelectorAll('.pre-test-checkbox');
             const preTestConfirmBtn = document.getElementById('pre-test-confirm-btn');
             const preTestCancelBtn = document.getElementById('pre-test-cancel-btn');
             const testLoaderOverlay = document.getElementById('test-loader-overlay');
-            // EXISTING BUTTON ELEMENTS
             const markReviewBtn = document.getElementById('mark-review-btn');
             const clearResponseBtn = document.getElementById('clear-response-btn');
 
@@ -299,86 +328,85 @@
             let currentTest = null;
             let currentQuestionIndex = 0;
             let studentAnswers = [];
-            // EXISTING STATE FOR MARKING QUESTIONS
             let markedForReview = [];
             let timerInterval;
             let timeTaken = 0;
             let isSubmitting = false;
+            const MAX_ATTEMPTS = 3;
 
-            // --- Custom Modal (Backend Logic Unchanged) ---
+            // --- Utility to shuffle array ---
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
             function showModal(message) {
                 return new Promise(resolve => {
                     modalMessage.textContent = message;
                     confirmModal.classList.remove('hidden');
-
                     const confirmHandler = () => {
                         confirmModal.classList.add('hidden');
                         resolve(true);
-                        modalConfirmBtn.removeEventListener('click', confirmHandler);
-                        modalCancelBtn.removeEventListener('click', cancelHandler);
+                        cleanup();
                     };
-
                     const cancelHandler = () => {
                         confirmModal.classList.add('hidden');
                         resolve(false);
+                        cleanup();
+                    };
+                    const cleanup = () => {
                         modalConfirmBtn.removeEventListener('click', confirmHandler);
                         modalCancelBtn.removeEventListener('click', cancelHandler);
                     };
-                    
                     modalConfirmBtn.addEventListener('click', confirmHandler);
                     modalCancelBtn.addEventListener('click', cancelHandler);
                 });
             }
 
-            // --- Pre-Test Instructions Modal ---
             function showPreTestInstructions() {
                 return new Promise(resolve => {
-                    // Reset modal state
                     preTestConfirmBtn.disabled = true;
                     preTestCheckboxes.forEach(cb => cb.checked = false);
                     preTestModal.classList.remove('hidden');
-
                     const checkHandler = () => {
-                        const allChecked = Array.from(preTestCheckboxes).every(cb => cb.checked);
-                        preTestConfirmBtn.disabled = !allChecked;
+                        preTestConfirmBtn.disabled = !Array.from(preTestCheckboxes).every(cb => cb.checked);
                     };
-
                     preTestCheckboxes.forEach(cb => cb.addEventListener('change', checkHandler));
-
                     const confirmHandler = () => {
                         preTestModal.classList.add('hidden');
                         cleanup();
                         resolve(true);
                     };
-
                     const cancelHandler = () => {
                         preTestModal.classList.add('hidden');
                         cleanup();
                         resolve(false);
                     };
-
                     const cleanup = () => {
                         preTestConfirmBtn.removeEventListener('click', confirmHandler);
                         preTestCancelBtn.removeEventListener('click', cancelHandler);
                         preTestCheckboxes.forEach(cb => cb.removeEventListener('change', checkHandler));
                     };
-
                     preTestConfirmBtn.addEventListener('click', confirmHandler);
                     preTestCancelBtn.addEventListener('click', cancelHandler);
                 });
             }
 
-
-            // --- Fetch and Render Tests (Backend Logic Unchanged) ---
             async function fetchAndDisplayTests() {
                 try {
+                    // Fetch dynamically assigned tests
                     const response = await fetch('/api/student/tests', {
                         headers: { 'x-auth-token': token }
                     });
                     if (!response.ok) throw new Error('Failed to fetch tests');
-                    
-                    const allTests = await response.json();
-                    availableTests = allTests.filter(t => t.testType === 'fullscreen');
+                    const dynamicTests = await response.json();
+                    availableTests = dynamicTests.filter(t => t.testType === 'fullscreen');
+
+                    // Add the static test to the beginning of the list
+                    availableTests.unshift(cognizantCloudTest);
 
                     testListDiv.innerHTML = '';
                     if (availableTests.length === 0) {
@@ -386,18 +414,29 @@
                         return;
                     }
 
-                    availableTests.forEach(test => {
+                    // Render all tests
+                    for (const test of availableTests) {
                         const testElement = document.createElement('div');
                         testElement.className = 'test-card bg-white p-6 rounded-2xl shadow-lg border border-gray-200 flex flex-col hover:border-indigo-400';
+                        
+                        let attemptsInfo = '';
+                        if (test.testId === 'cognizant-cloud-fundamentals-static') {
+                             const res = await fetch(`/api/student/test-attempts/${test.testId}`, { headers: { 'x-auth-token': token }});
+                             const data = await res.json();
+                             const attemptsLeft = MAX_ATTEMPTS - (data.attempts || 0);
+                             attemptsInfo = `<p class="text-sm font-semibold ${attemptsLeft > 0 ? 'text-green-600' : 'text-red-600'}">Attempts left: ${attemptsLeft}</p>`;
+                        }
+
                         testElement.innerHTML = `
                             <div class="flex-grow">
                                 <h3 class="font-bold text-xl text-gray-800">${test.title}</h3>
+                                ${attemptsInfo}
                                 <div class="mt-3 space-y-1 text-gray-600">
                                     <p class="text-sm flex items-center"><svg class="w-4 h-4 mr-1.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> 
                                         Duration: <span class="font-semibold ml-1">${test.duration} minutes</span>
                                     </p>
                                     <p class="text-sm flex items-center"><svg class="w-4 h-4 mr-1.5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2-8H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2z"></path></svg>
-                                        Questions: <span class="font-semibold ml-1">${test.questions.length}</span>
+                                        Questions: <span class="font-semibold ml-1">${test.testId === 'cognizant-cloud-fundamentals-static' ? '20' : test.questions.length}</span>
                                     </p>
                                 </div>
                             </div>
@@ -406,28 +445,40 @@
                             </button>
                         `;
                         testListDiv.appendChild(testElement);
-                    });
+                    }
                 } catch (error) {
                     console.error(error);
                     testListDiv.innerHTML = '<p class="text-red-500 col-span-full text-center p-4 rounded-lg bg-red-100 mt-8">Could not load tests. Check your connection.</p>';
                 }
             }
-
+            
             testListDiv.addEventListener('click', async (e) => {
                 if (e.target.classList.contains('start-test-btn')) {
                     const testId = e.target.dataset.testid;
-                    currentTest = availableTests.find(t => t.testId === testId);
+                    
+                    // Special handling for the static test
+                    if (testId === 'cognizant-cloud-fundamentals-static') {
+                        const res = await fetch(`/api/student/test-attempts/${testId}`, { headers: { 'x-auth-token': token }});
+                        const data = await res.json();
+                        if (data.attempts >= MAX_ATTEMPTS) {
+                            alert('You have reached the maximum number of attempts for this quiz.');
+                            return;
+                        }
+                        // Clone the static test and shuffle questions
+                        currentTest = JSON.parse(JSON.stringify(cognizantCloudTest));
+                        currentTest.questions = shuffleArray(currentTest.questions).slice(0, 20);
+                    } else {
+                        currentTest = availableTests.find(t => t.testId === testId);
+                    }
+
                     if (currentTest) {
                         const consent = await showPreTestInstructions();
                         if (consent) {
-                             // Show loader
                             testLoaderOverlay.classList.remove('hidden');
-
-                            // Wait for a few seconds before starting
                             setTimeout(() => {
                                 testLoaderOverlay.classList.add('hidden');
                                 startTest(currentTest);
-                            }, 2500); // 2.5 second delay
+                            }, 2500);
                         }
                     }
                 }
@@ -440,7 +491,6 @@
                 testEnvironment.classList.add('fullscreen');
 
                 studentAnswers = new Array(testData.questions.length).fill(null);
-                // INITIALIZE MARKED FOR REVIEW STATE (Unchanged)
                 markedForReview = new Array(testData.questions.length).fill(false);
                 document.getElementById('test-title').textContent = testData.title;
                 
@@ -454,7 +504,6 @@
             }
             
             function enterFullScreen() {
-                // Log non-alert message for compliance
                 document.documentElement.requestFullscreen().catch(err => {
                     console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
                     showModal(`Error: Failed to enter full-screen mode. Please try again. (${err.name})`);
@@ -486,10 +535,9 @@
                     seconds = seconds < 10 ? "0" + seconds : seconds;
                     timerDisplay.textContent = `${minutes}:${seconds}`;
                     if (timer <= 60 && !timerDisplay.parentElement.classList.contains('animate-pulse')) {
-                         timerDisplay.parentElement.classList.add('animate-pulse');
+                         timerDisplay.parentElement.classList.add('animate-pulse', 'bg-red-500');
                          timerDisplay.parentElement.classList.remove('bg-red-100');
-                         timerDisplay.parentElement.classList.add('bg-red-500');
-                         timerDisplay.querySelectorAll('span').forEach(el => el.classList.add('text-white'));
+                         timerDisplay.previousElementSibling.classList.add('text-white');
                          timerDisplay.classList.add('text-white');
                     }
                     if (timer <= 0) {
@@ -503,7 +551,6 @@
                 const questionContent = document.getElementById('question-content');
                 const savedAnswer = studentAnswers[currentQuestionIndex];
                 
-                // ENHANCED OPTIONS RENDERING (using custom-radio class for better styling)
                 const optionsHtml = question.options.map((opt, i) => `
                     <label class="block relative">
                         <input type="radio" name="option" value="${i}" class="absolute custom-radio opacity-0 h-0 w-0" ${savedAnswer == i ? 'checked' : ''}>
@@ -523,7 +570,6 @@
                     <div class="space-y-4" id="options-list">${optionsHtml}</div>
                 `;
                 
-                // Add event listener to the options container for delegation
                 document.getElementById('options-list').addEventListener('change', saveAnswerAndMarkAsAnswered);
 
                 updateNavButtons();
@@ -537,7 +583,6 @@
                 currentTest.questions.forEach((_, i) => {
                     const btn = document.createElement('button');
                     btn.textContent = i + 1;
-                    // Updated Palette Button Class
                     btn.className = 'palette-btn h-10 w-10 flex items-center justify-center bg-gray-200 rounded-lg font-medium border-2 transition-all shadow-md';
                     btn.addEventListener('click', () => {
                         saveAnswer();
@@ -551,20 +596,15 @@
             function updatePalette() {
                 document.querySelectorAll('.palette-btn').forEach((btn, i) => {
                     btn.classList.remove('active', 'answered', 'marked', 'bg-gray-200', 'border-gray-200');
-                    
-                    // Default style
                     btn.classList.add('bg-gray-200', 'border-gray-300', 'text-gray-800');
-                    
                     if (studentAnswers[i] !== null) {
                         btn.classList.add('answered');
                         btn.classList.remove('bg-gray-200', 'text-gray-800');
                     }
-                    
                     if (markedForReview[i]) {
                         btn.classList.add('marked');
                         btn.classList.remove('bg-gray-200', 'text-gray-800');
                     }
-                    
                     if (i === currentQuestionIndex) {
                         btn.classList.add('active');
                     }
@@ -578,7 +618,6 @@
                 nextBtn.disabled = currentQuestionIndex === currentTest.questions.length - 1;
             }
             
-            // --- NEW AND UPDATED EVENT HANDLERS (Logic Unchanged) ---
             function updateMarkButtonText() {
                 if (markedForReview[currentQuestionIndex]) {
                     markReviewBtn.textContent = 'Unmark';
@@ -599,9 +638,7 @@
 
             function clearCurrentResponse() {
                 studentAnswers[currentQuestionIndex] = null;
-                // Ensure marked status is cleared if the answer is cleared, only if it wasn't marked before answering.
-                // For simplicity and adherence to original logic, only clear the answer and update UI.
-                renderQuestion(); // Re-renders the question with radio buttons unchecked
+                renderQuestion();
                 updatePalette();
             }
             
@@ -610,7 +647,6 @@
                 updatePalette();
             }
 
-            // EVENT LISTENERS (Backend Logic Unchanged)
             markReviewBtn.addEventListener('click', toggleMarkForReview);
             clearResponseBtn.addEventListener('click', clearCurrentResponse);
 
@@ -632,9 +668,9 @@
             
             document.getElementById('submit-test-btn').addEventListener('click', async () => {
                 const unansweredCount = studentAnswers.filter(a => a === null).length;
-                let message = `You have **${currentTest.questions.length - unansweredCount}** questions answered.`;
+                let message = `You have ${currentTest.questions.length - unansweredCount} questions answered.`;
                 if (unansweredCount > 0) {
-                    message += ` You still have **${unansweredCount}** questions unanswered. Do you want to submit now?`;
+                    message += ` You still have ${unansweredCount} questions unanswered. Do you want to submit now?`;
                 } else {
                     message += ` Do you want to submit your final answers?`;
                 }
@@ -644,23 +680,20 @@
             });
 
             function saveAnswer() {
-                // Find selected option in the DOM of the current question
                 const selectedOption = document.querySelector('#question-content input[name="option"]:checked');
                 studentAnswers[currentQuestionIndex] = selectedOption ? selectedOption.value : null;
             }
             
-            // Core Submission Logic (Backend Logic Unchanged)
             async function forceSubmitTest(reason) {
                 if (isSubmitting) return;
                 isSubmitting = true;
-                console.warn(`Violation Detected: ${reason}. The test is being submitted automatically.`);
-                showModal(`Violation Detected: ${reason}. The test is being submitted automatically. Your results may be invalidated.`);
-                // Note: The original code used alert, which is not compliant. I'm using showModal but maintaining the existing flow for compliance with "don't change functionality".
+                console.warn(`Violation Detected: ${reason}.`);
+                await showModal(`Violation Detected: ${reason}. The test is being submitted automatically. Your results may be invalidated.`);
                 await performSubmission(reason);
             }
 
             async function performSubmission(violationReason = null) {
-                if (isSubmitting && violationReason === null) return; // Prevent double submission
+                if (isSubmitting && violationReason === null) return; 
                 if (!isSubmitting) isSubmitting = true;
                 
                 saveAnswer();
@@ -670,10 +703,11 @@
                     testId: currentTest.testId,
                     answers: studentAnswers,
                     timeTaken: timeTaken,
-                    violationReason
+                    violationReason,
+                    // Send the full test object for static tests
+                    testData: currentTest.testId === 'cognizant-cloud-fundamentals-static' ? currentTest : undefined
                 };
-
-                // Show submission message directly in the modal
+                
                 modalMessage.textContent = "Submitting your test... Please wait.";
                 confirmModal.classList.remove('hidden');
                 modalCancelBtn.classList.add('hidden');
@@ -686,37 +720,25 @@
                         body: JSON.stringify(payload)
                     });
                     
-                    let submissionMessage = 'Test submitted successfully!';
-                    if (!response.ok) {
-                        const error = await response.json();
-                        submissionMessage = 'An error occurred during submission: ' + (error.message || 'Submission failed');
-                        console.error(submissionMessage);
-                    } else {
-                        console.log(submissionMessage);
-                    }
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message || 'Submission failed');
                     
-                    // Update modal with the final message
-                    modalMessage.textContent = submissionMessage + " Redirecting to dashboard...";
+                    modalMessage.textContent = result.message + " Redirecting to dashboard...";
 
                 } catch (error) {
                     console.error('An unhandled error occurred during submission:', error);
-                     // Update modal with the error message
-                    modalMessage.textContent = 'An unexpected error occurred during submission: ' + error.message + ". Redirecting...";
+                    modalMessage.textContent = 'An unexpected error occurred: ' + error.message + ". Redirecting...";
                 } finally {
                     if (document.fullscreenElement) {
                         document.exitFullscreen();
                     }
-                    // Increased delay to allow user to read the modal message
                     setTimeout(() => {
                         window.location.href = '/student/dashboard.html';
                     }, 2500);
                 }
             }
-
             fetchAndDisplayTests();
         });
     </script>
 </body>
 </html>
-
-
