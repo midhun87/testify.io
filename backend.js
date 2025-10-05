@@ -2070,11 +2070,11 @@ app.post('/api/student/submit-test', authMiddleware, async (req, res) => {
 
     try {
         let test;
-        // Logic to handle the static test case
+        // Logic to handle the static test case from the request body
         if (testId === 'cognizant-cloud-fundamentals-static' && testData) {
             test = testData;
         } else {
-            // This is the existing logic for dynamic tests from the database
+            // Logic for dynamic tests from the database
             const { Item } = await docClient.send(new GetCommand({
                 TableName: "TestifyTests",
                 Key: { testId }
@@ -2111,7 +2111,9 @@ app.post('/api/student/submit-test', authMiddleware, async (req, res) => {
             score: percentageScore,
             result,
             submittedAt: new Date().toISOString(),
-            violationReason: violationReason || null 
+            violationReason: violationReason || null,
+            // FIX: Save the static test data with the result if it exists
+            staticTestData: testData || null 
         };
     
         await docClient.send(new PutCommand({ TableName: "TestifyResults", Item: newResult }));
@@ -2127,6 +2129,7 @@ app.post('/api/student/submit-test', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Server error submitting test.' });
     }
 });
+
 app.get('/api/student/history', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
     try {
@@ -5975,9 +5978,11 @@ app.post('/api/admin/jobs', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Admin') {
         return res.status(403).json({ message: 'Access denied.' });
     }
-    const { title, location, department, description } = req.body;
-    if (!title || !location || !department || !description) {
-        return res.status(400).json({ message: 'All job fields are required.' });
+    // FIX: Added 'applicationDeadline' to be read from the request body
+    const { title, location, department, description, applicationDeadline } = req.body;
+    if (!title || !location || !department || !description || !applicationDeadline) {
+        // FIX: Added deadline to validation check
+        return res.status(400).json({ message: 'All job fields, including deadline, are required.' });
     }
     const jobId = `job_${uuidv4()}`;
     const newJob = {
@@ -5986,6 +5991,7 @@ app.post('/api/admin/jobs', authMiddleware, async (req, res) => {
         location,
         department,
         description,
+        applicationDeadline, // FIX: Added deadline to the new job object
         status: 'Open',
         createdAt: new Date().toISOString()
     };
@@ -6073,26 +6079,17 @@ app.get('/api/careers/jobs', async (req, res) => {
  * @access  Public
  */
 app.post('/api/careers/apply/:jobId',
-    upload.fields([
-        { name: 'passportPhoto', maxCount: 1 },
-        { name: 'resume', maxCount: 1 },
-        { name: 'proofs', maxCount: 5 }
-    ]),
+    upload.any(), // Use upload.any() to accept all files with dynamic names
     async (req, res) => {
         const { jobId } = req.params;
         const {
             firstName, lastName, email, phone,
-            edu_10_institute, edu_10_score, edu_10_year,
-            edu_12_institute, edu_12_score, edu_12_year,
-            edu_btech_institute, edu_btech_score, edu_btech_year,
-            edu_higher_institute, edu_higher_score, edu_higher_year,
-            experiences,
-            linkedinUrl, githubUrl, portfolioUrl
+            education, // This is now a JSON string
+            experiences, // This is also a JSON string
+            linkedinUrl, githubUrl, portfolioUrl,
+            govtIdType // New field for Government ID type
         } = req.body;
 
-        if (!req.files || !req.files.passportPhoto || !req.files.resume) {
-            return res.status(400).json({ message: 'Passport photo and resume are mandatory.' });
-        }
         if (!firstName || !lastName || !email || !phone) {
             return res.status(400).json({ message: 'Personal details are required.' });
         }
@@ -6103,45 +6100,70 @@ app.post('/api/careers/apply/:jobId',
                 return res.status(404).json({ message: 'Job opening not found.' });
             }
 
+            // Helper function to upload a file buffer to Cloudinary
             const uploadToCloudinary = async (file) => {
                 const b64 = Buffer.from(file.buffer).toString("base64");
                 const dataURI = `data:${file.mimetype};base64,${b64}`;
+                // *** FIX: Explicitly set resource_type to "auto" for proper file handling ***
                 return await cloudinary.uploader.upload(dataURI, {
-                    folder: "applications",
+                    folder: "job_applications",
                     resource_type: "auto"
                 });
             };
 
-            const photoUpload = await uploadToCloudinary(req.files.passportPhoto[0]);
-            const resumeUpload = await uploadToCloudinary(req.files.resume[0]);
-            
-            let proofUploadUrls = [];
-            if (req.files.proofs) {
-                for (const file of req.files.proofs) {
-                    const result = await uploadToCloudinary(file);
-                    proofUploadUrls.push(result.secure_url);
+            // Process all incoming files dynamically
+            const files = req.files;
+            let passportPhotoUrl, resumeUrl, govtIdUrl;
+            const educationCertificates = {};
+            const experienceCertificates = {};
+
+            for (const file of files) {
+                const result = await uploadToCloudinary(file);
+                if (file.fieldname === 'passportPhoto') {
+                    passportPhotoUrl = result.secure_url;
+                } else if (file.fieldname === 'resume') {
+                    resumeUrl = result.secure_url;
+                } else if (file.fieldname === 'govtId') {
+                    govtIdUrl = result.secure_url;
+                } else if (file.fieldname.startsWith('education_certificate_')) {
+                    const index = file.fieldname.split('_')[2];
+                    educationCertificates[index] = result.secure_url;
+                } else if (file.fieldname.startsWith('experience_certificate_')) {
+                    const index = file.fieldname.split('_')[2];
+                    experienceCertificates[index] = result.secure_url;
                 }
             }
+
+            if (!passportPhotoUrl || !resumeUrl) {
+                return res.status(400).json({ message: 'Passport photo and resume are mandatory.' });
+            }
+
+            // Parse and enrich education data with certificate URLs
+            const educationData = JSON.parse(education || '[]').map((edu, index) => ({
+                ...edu,
+                certificateUrl: educationCertificates[index] || null
+            }));
+
+            // Parse and enrich experience data with certificate URLs
+            const experienceData = JSON.parse(experiences || '[]').map((exp, index) => ({
+                ...exp,
+                certificateUrl: experienceCertificates[index] || null
+            }));
 
             const applicationId = `app_${uuidv4()}`;
             const newApplication = {
                 applicationId,
                 jobId,
                 jobTitle: job.title,
-                firstName,
-                lastName,
-                email,
-                phone,
-                passportPhotoUrl: photoUpload.secure_url,
-                resumeUrl: resumeUpload.secure_url,
-                proofsAndCertificatesUrls: proofUploadUrls,
-                education: {
-                    tenth: { institute: edu_10_institute, score: edu_10_score, year: edu_10_year },
-                    twelfth: { institute: edu_12_institute, score: edu_12_score, year: edu_12_year },
-                    btech: { institute: edu_btech_institute, score: edu_btech_score, year: edu_btech_year },
-                    higher: { institute: edu_higher_institute, score: edu_higher_score, year: edu_higher_year },
+                firstName, lastName, email, phone,
+                passportPhotoUrl,
+                resumeUrl,
+                govtId: {
+                    type: govtIdType,
+                    url: govtIdUrl || null
                 },
-                experiences: JSON.parse(experiences || '[]'),
+                education: educationData,
+                experiences: experienceData,
                 links: {
                     linkedin: linkedinUrl,
                     github: githubUrl,
@@ -6152,69 +6174,6 @@ app.post('/api/careers/apply/:jobId',
             };
 
             await docClient.send(new PutCommand({ TableName: "TestifyApplications", Item: newApplication }));
-
-            // --- EXISTING: Admin Notification Email ---
-            const adminMailOptions = {
-                from: '"TESTIFY Careers" <testifylearning.help@gmail.com>',
-                to: 'testifylearning.help@gmail.com', // Your admin notification email
-                subject: `New Application for ${job.title}: ${firstName} ${lastName}`,
-                html: `<h1>Application for ${job.title}</h1><p>From: ${firstName} ${lastName} (${email})</p><p>View the full application in the admin panel.</p>`
-            };
-            await transporter.sendMail(adminMailOptions);
-
-            // --- START: NEW CODE TO EMAIL APPLICANT ---
-            // This block sends a confirmation email to the person who applied.
-            const applicantMailOptions = {
-                from: '"TESTIFY Careers" <testifylearning.help@gmail.com>',
-                to: email, // The applicant's email from the form
-                subject: `We've Received Your Application for ${job.title}`,
-                html: `
-                    <!DOCTYPE html>
-                    <html lang="en">
-                    <head>
-                        <meta charset="UTF-8" />
-                        <title>Application Received</title>
-                        <style>
-                            @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-                            body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; background-color: #f3f4f6; }
-                        </style>
-                    </head>
-                    <body style="margin: 0; padding: 0; background-color: #f3f4f6;">
-                        <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
-                            <tr>
-                                <td align="center" style="padding: 40px 20px;">
-                                    <table width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
-                                        <tr>
-                                            <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
-                                                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo" style="height: 50px; width: auto;">
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td align="center" style="padding: 40px; text-align: center;">
-                                                <h1 style="font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">Application Received!</h1>
-                                                <p style="font-size: 16px; color: #4b5563; margin: 0 0 30px; line-height: 1.7;">
-                                                    Hi ${firstName},<br><br>Thank you for your interest in the <strong>${job.title}</strong> position at Testify. We have successfully received your application.
-                                                </p>
-                                                <p style="font-size: 14px; color: #6b7280; margin: 30px 0 0;">
-                                                    Our team will review your qualifications and get back to you if you are a good fit for the role.
-                                                </p>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
-                                                <p style="font-size: 12px; color: #6b7280; margin: 0;">&copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.</p>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                        </table>
-                    </body>
-                    </html>
-                `
-            };
-            await transporter.sendMail(applicantMailOptions);
-            // --- END: NEW CODE TO EMAIL APPLICANT ---
 
             res.status(201).json({ message: 'Application submitted successfully! We will be in touch.' });
 
@@ -7161,6 +7120,138 @@ app.get('/api/student/test-attempts/:testId', authMiddleware, async (req, res) =
     } catch (error) {
         console.error("Get Test Attempts Error:", error);
         res.status(500).json({ message: 'Server error fetching attempt count.' });
+    }
+});
+
+
+// Add these new endpoints to your backend.js file
+
+// ADMIN: Get all test results for managing previews
+app.get('/api/admin/all-test-results', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const { Items: results } = await docClient.send(new ScanCommand({
+            TableName: "TestifyResults"
+        }));
+
+        if (!results || results.length === 0) {
+            return res.json([]);
+        }
+        
+        // To avoid fetching user details one-by-one, get all unique emails and fetch in a batch
+        const studentEmails = [...new Set(results.map(r => r.studentEmail))];
+        const userKeys = studentEmails.map(email => ({ email }));
+
+        const { Responses } = await docClient.send(new BatchGetCommand({
+            RequestItems: {
+                "TestifyUsers": {
+                    Keys: userKeys,
+                    ProjectionExpression: "email, fullName"
+                }
+            }
+        }));
+
+        const userMap = new Map((Responses.TestifyUsers || []).map(user => [user.email, user.fullName]));
+
+        const enrichedResults = results.map(result => ({
+            ...result,
+            studentName: userMap.get(result.studentEmail) || result.studentEmail // Fallback to email if name not found
+        }));
+
+        enrichedResults.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+        
+        res.json(enrichedResults);
+
+    } catch (error) {
+        console.error("Get All Test Results Error:", error);
+        res.status(500).json({ message: 'Server error fetching all test results.' });
+    }
+});
+
+
+// ADMIN: Update permission for a student to view a test preview
+app.post('/api/admin/update-preview-permission', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { resultId, allowPreview } = req.body;
+    if (!resultId || typeof allowPreview !== 'boolean') {
+        return res.status(400).json({ message: 'Result ID and permission status are required.' });
+    }
+
+    try {
+        await docClient.send(new UpdateCommand({
+            TableName: "TestifyResults",
+            Key: { resultId },
+            UpdateExpression: "set allowPreview = :val",
+            ExpressionAttributeValues: {
+                ":val": allowPreview
+            }
+        }));
+        res.status(200).json({ message: 'Preview permission updated successfully.' });
+    } catch (error) {
+        console.error("Update Preview Permission Error:", error);
+        res.status(500).json({ message: 'Server error updating permission.' });
+    }
+});
+
+
+// STUDENT: Get detailed test preview if permission is granted
+app.get('/api/student/test-preview/:resultId', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { resultId } = req.params;
+    const studentEmail = req.user.email;
+
+    try {
+        // 1. Fetch the student's result
+        const { Item: result } = await docClient.send(new GetCommand({
+            TableName: "TestifyResults",
+            Key: { resultId }
+        }));
+
+        // 2. Security checks
+        if (!result) {
+            return res.status(404).json({ message: 'Test result not found.' });
+        }
+        if (result.studentEmail !== studentEmail) {
+            return res.status(403).json({ message: 'You are not authorized to view this result.' });
+        }
+        if (result.allowPreview !== true) {
+            return res.status(403).json({ message: 'Preview for this test has not been enabled by the administrator.' });
+        }
+
+        // FIX: Add logic to handle both static and dynamic tests for preview
+        let test;
+        // 3. Check for embedded static test data first
+        if (result.staticTestData) {
+            test = result.staticTestData;
+        } else {
+            // 4. If not found, fetch from the original TestifyTests table
+            const { Item } = await docClient.send(new GetCommand({
+                TableName: "TestifyTests",
+                Key: { testId: result.testId }
+            }));
+            test = Item;
+        }
+
+        if (!test) {
+            return res.status(404).json({ message: 'Original test content not found.' });
+        }
+        
+        // 5. Combine and send the data
+        res.json({
+            testTitle: test.title,
+            questions: test.questions, // Contains questions, options, and correct answers
+            studentAnswers: result.answers // The student's submitted answers
+        });
+
+    } catch (error) {
+        console.error("Get Test Preview Error:", error);
+        res.status(500).json({ message: 'Server error fetching test preview.' });
     }
 });
 
