@@ -19,6 +19,17 @@
             background-color: #4F46E5;
             font-weight: 600;
         }
+        /* Modal styles */
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+        .modal-active {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        .modal-content {
+            transition: transform 0.25s ease;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -31,46 +42,46 @@
                 <span class="ml-3 text-2xl font-bold">TESTIFY</span>
             </div>
             <div class="flex flex-col flex-grow p-4">
-    <a href="/student/dashboard" class="sidebar-link  flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-        <span class="ml-3">Dashboard</span>
-    </a>
-    <a href="/student/join-meeting" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-        </svg>
-        <span class="ml-3">Join Meeting</span>
-    </a>
-    <a href="/student/Test" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-        <span class="ml-3">Take Test</span>
-    </a>
-    <a href="/student/test-history" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <span class="ml-3">Test History</span>
-    </a>
-    <a href="/student/my-certificates" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        <span class="ml-3">My Certificates</span>
-    </a>
-    <a href="/student/my-courses" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
-        <span class="ml-3">My Courses</span>
-    </a>
-    <a href="/student/profile" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"/></svg>
-        <span class="ml-3">My Profile</span>
-    </a>
-    <a href="/student/compiler" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200">
-        <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
-        <span>Code Space</span>
-    </a>
-    <a href="/student/sql-compiler" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200 mt-2">
-        <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9.75h7.5v7.5h-7.5v-7.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 3.375h17.25v17.25h-17.25v-17.25z" /></svg>
-        <span>SQL CodeLab</span>
-    </a>
-</div>
-</div>
+                <a href="/student/dashboard" class="sidebar-link  flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <a href="/student/join-meeting" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                    </svg>
+                    <span class="ml-3">Join Meeting</span>
+                </a>
+                <a href="/student/Test" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    <span class="ml-3">Take Test</span>
+                </a>
+                <a href="/student/test-history" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="ml-3">Test History</span>
+                </a>
+                <a href="/student/my-certificates" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span class="ml-3">My Certificates</span>
+                </a>
+                <a href="/student/my-courses" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
+                    <span class="ml-3">My Courses</span>
+                </a>
+                <a href="/student/profile" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"/></svg>
+                    <span class="ml-3">My Profile</span>
+                </a>
+                <a href="/student/compiler" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200">
+                    <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
+                    <span>Code Space</span>
+                </a>
+                <a href="/student/sql-compiler" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200 mt-2">
+                    <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9.75h7.5v7.5h-7.5v-7.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 3.375h17.25v17.25h-17.25v-17.25z" /></svg>
+                    <span>SQL CodeLab</span>
+                </a>
+            </div>
+        </div>
 
         <!-- Main content -->
         <div class="flex flex-col flex-1 overflow-y-auto">
@@ -101,6 +112,7 @@
                                     <th scope="col" class="px-6 py-3">Time Taken</th>
                                     <th scope="col" class="px-6 py-3">Score</th>
                                     <th scope="col" class="px-6 py-3">Result</th>
+                                    <th scope="col" class="px-6 py-3">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="history-table-body">
@@ -109,7 +121,7 @@
                         </table>
                     </div>
                 </div>
-                <P><Strong>Note :</Strong> The test history will only display results for tests that have been published by the instructor. If you do not see any results, please check back later or contact your instructor for more information.</P>
+                <p class="mt-4"><Strong>Note:</Strong> The test history will only display results for tests that have been published by the instructor. If you do not see any results, please check back later or contact your instructor for more information.</p>
             </div>
             <footer class="bg-white border-t border-gray-200 p-4 mt-auto">
                 <div class="text-center text-sm text-gray-500">
@@ -118,10 +130,28 @@
             </footer>
         </div>
     </div>
+    
+    <!-- Test Preview Modal -->
+    <div id="preview-modal" class="modal-overlay hidden fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full flex items-center justify-center z-50">
+        <div class="modal-container bg-white w-11/12 md:max-w-3xl mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
+            <div class="modal-content py-4 text-left px-6">
+                <div class="flex justify-between items-center pb-3">
+                    <p id="modal-test-title" class="text-2xl font-bold">Test Preview</p>
+                    <div id="close-modal" class="modal-close cursor-pointer z-50">
+                        <svg class="fill-current text-black" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+                            <path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div id="modal-body" class="my-5 max-h-[70vh] overflow-y-auto pr-4">
+                    <!-- Preview content will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            // --- AUTHENTICATION & USER INFO ---
             const user = JSON.parse(localStorage.getItem('user'));
             const token = localStorage.getItem('token');
 
@@ -131,16 +161,18 @@
             }
             document.getElementById('user-name').textContent = user.fullName;
             
-            // --- UI ELEMENT REFERENCES ---
             const userMenuButton = document.getElementById('user-menu-button');
             const userMenu = document.getElementById('user-menu');
             const logoutButton = document.getElementById('logout-button');
             const historyTableBody = document.getElementById('history-table-body');
+            const previewModal = document.getElementById('preview-modal');
+            const closeModalBtn = document.getElementById('close-modal');
+            const modalTestTitle = document.getElementById('modal-test-title');
+            const modalBody = document.getElementById('modal-body');
 
-            // --- FETCH AND DISPLAY TEST HISTORY ---
             async function fetchAndDisplayHistory() {
                 try {
-                    historyTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Loading history...</td></tr>';
+                    historyTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Loading history...</td></tr>';
                     const response = await fetch('/api/student/history', {
                         headers: { 'x-auth-token': token }
                     });
@@ -150,8 +182,7 @@
                     historyTableBody.innerHTML = '';
 
                     if (historyData.length === 0) {
-                        // MODIFIED: Display a more informative message
-                        historyTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">No published test results found. Please check back later.</td></tr>';
+                        historyTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No published test results found. Please check back later.</td></tr>';
                         return;
                     }
 
@@ -166,23 +197,100 @@
                         const dateTaken = new Date(item.submittedAt).toLocaleDateString();
                         const timeTakenFormatted = `${Math.floor(item.timeTaken / 60)}:${String(item.timeTaken % 60).padStart(2, '0')}`;
 
+                        const previewButton = `
+                            <button 
+                                data-result-id="${item.resultId}" 
+                                class="preview-btn font-medium text-indigo-600 hover:text-indigo-900 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                ${!item.allowPreview ? 'disabled' : ''}
+                            >
+                                Preview
+                            </button>
+                        `;
+
                         row.innerHTML = `
                             <td class="px-6 py-4 font-medium text-gray-900">${item.testTitle || 'N/A'}</td>
                             <td class="px-6 py-4">${dateTaken}</td>
                             <td class="px-6 py-4">${timeTakenFormatted} mins</td>
                             <td class="px-6 py-4 font-semibold">${item.score}%</td>
                             <td class="px-6 py-4">${resultBadge}</td>
+                            <td class="px-6 py-4">${previewButton}</td>
                         `;
                         historyTableBody.appendChild(row);
                     });
                 } catch (error) {
                     console.error('Error fetching history:', error);
-                    historyTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-red-500">Could not load your test history.</td></tr>';
+                    historyTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-red-500">Could not load your test history.</td></tr>';
                 }
             }
             await fetchAndDisplayHistory();
 
-            // --- UI INTERACTIVITY ---
+            historyTableBody.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('preview-btn')) {
+                    const resultId = e.target.dataset.resultId;
+                    openPreviewModal(resultId);
+                }
+            });
+
+            async function openPreviewModal(resultId) {
+                modalBody.innerHTML = '<p>Loading preview...</p>';
+                previewModal.classList.remove('hidden');
+                try {
+                    const response = await fetch(`/api/student/test-preview/${resultId}`, {
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!response.ok) {
+                        const err = await response.json();
+                        throw new Error(err.message || 'Could not load preview.');
+                    }
+                    const previewData = await response.json();
+                    modalTestTitle.textContent = `${previewData.testTitle} - Review`;
+                    renderPreviewContent(previewData);
+                } catch (error) {
+                    modalBody.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+                }
+            }
+            
+            function renderPreviewContent(data) {
+                let content = '';
+                data.questions.forEach((q, index) => {
+                    const userAnswer = data.studentAnswers[index];
+                    let answerHtml = '';
+
+                    if (q.type.startsWith('mcq')) {
+                        answerHtml = q.options.map((opt, i) => {
+                            const isUserAnswer = Array.isArray(userAnswer) ? userAnswer.includes(String(i)) : String(userAnswer) === String(i);
+                            const isCorrect = Array.isArray(q.correctAnswers) ? q.correctAnswers.includes(String(i)) : String(q.correctAnswer) === String(i);
+                            
+                            let bgColor = 'bg-gray-100';
+                            if(isUserAnswer && isCorrect) bgColor = 'bg-green-100 border-green-500';
+                            else if(isUserAnswer && !isCorrect) bgColor = 'bg-red-100 border-red-500';
+                            else if(isCorrect) bgColor = 'bg-green-100 border-green-500';
+                            
+                            return `<div class="p-2 rounded border ${bgColor}">${opt}</div>`;
+                        }).join('');
+                    } else { // fill-blank
+                         const isCorrect = String(userAnswer).toLowerCase() === String(q.correctAnswer).toLowerCase();
+                         answerHtml = `
+                            <div class="p-2 rounded border ${isCorrect ? 'bg-green-100 border-green-500' : 'bg-red-100 border-red-500'}">Your Answer: ${userAnswer || '<i>Not Answered</i>'}</div>
+                            ${!isCorrect ? `<div class="p-2 mt-1 rounded border bg-green-100 border-green-500">Correct Answer: ${q.correctAnswer}</div>` : ''}
+                         `;
+                    }
+
+                    content += `
+                        <div class="mb-6 pb-4 border-b">
+                            <p class="font-semibold text-gray-800">${index + 1}. ${q.text}</p>
+                            <div class="mt-3 space-y-2 text-sm">${answerHtml}</div>
+                        </div>
+                    `;
+                });
+                modalBody.innerHTML = content;
+            }
+
+            closeModalBtn.addEventListener('click', () => {
+                previewModal.classList.add('hidden');
+                modalBody.innerHTML = '';
+            });
+
             userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
             logoutButton.addEventListener('click', () => {
                 localStorage.removeItem('token');
