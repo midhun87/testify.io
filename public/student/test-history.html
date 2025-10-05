@@ -30,6 +30,67 @@
         .modal-content {
             transition: transform 0.25s ease;
         }
+
+        /* Print-specific styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #preview-modal, #preview-modal * {
+                visibility: visible;
+            }
+            #preview-modal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: auto;
+                overflow: visible;
+                background: none;
+            }
+            .modal-container {
+                box-shadow: none;
+                border: none;
+                width: 100%;
+                max-width: 100%;
+                border-radius: 0;
+                padding: 0; margin: 0;
+            }
+            .modal-content {
+                padding: 1rem;
+            }
+            .print-hidden {
+                display: none;
+            }
+            .print-visible {
+                display: block !important;
+            }
+            #modal-body {
+                max-height: none;
+                overflow: visible;
+                padding-right: 0;
+            }
+             /* Ensure colors print */
+            .bg-green-100 {
+                background-color: #d1fae5 !important;
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact;
+            }
+            .bg-red-100 {
+                background-color: #fee2e2 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .border-green-500 {
+                border-color: #10b981 !important;
+            }
+            .border-red-500 {
+                border-color: #ef4444 !important;
+            }
+            .border-b {
+                border-bottom-width: 1px !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -135,12 +196,30 @@
     <div id="preview-modal" class="modal-overlay hidden fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full flex items-center justify-center z-50">
         <div class="modal-container bg-white w-11/12 md:max-w-3xl mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
             <div class="modal-content py-4 text-left px-6">
-                <div class="flex justify-between items-center pb-3">
+                <!-- NEW: Header for printing -->
+                <div id="print-header" class="hidden print-visible mb-4">
+                    <div class="flex justify-between items-center border-b pb-4">
+                        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="h-12">
+                        <div class="text-right text-sm">
+                            <p id="user-name-print" class="font-bold"></p>
+                            <p id="user-email-print" class="text-gray-600"></p>
+                            <p id="user-roll-print" class="text-gray-600"></p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Original Header -->
+                <div class="flex justify-between items-center pb-3 print-hidden">
                     <p id="modal-test-title" class="text-2xl font-bold">Test Preview</p>
-                    <div id="close-modal" class="modal-close cursor-pointer z-50">
-                        <svg class="fill-current text-black" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
-                            <path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path>
-                        </svg>
+                    <div class="flex items-center space-x-4">
+                         <button id="print-preview-btn" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300">
+                            <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm7-8a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            Print
+                        </button>
+                        <div id="close-modal" class="modal-close cursor-pointer z-50">
+                            <svg class="fill-current text-black" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+                                <path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path>
+                            </svg>
+                        </div>
                     </div>
                 </div>
                 <div id="modal-body" class="my-5 max-h-[70vh] overflow-y-auto pr-4">
@@ -167,6 +246,7 @@
             const historyTableBody = document.getElementById('history-table-body');
             const previewModal = document.getElementById('preview-modal');
             const closeModalBtn = document.getElementById('close-modal');
+            const printPreviewBtn = document.getElementById('print-preview-btn');
             const modalTestTitle = document.getElementById('modal-test-title');
             const modalBody = document.getElementById('modal-body');
 
@@ -235,16 +315,32 @@
                 modalBody.innerHTML = '<p>Loading preview...</p>';
                 previewModal.classList.remove('hidden');
                 try {
-                    const response = await fetch(`/api/student/test-preview/${resultId}`, {
-                        headers: { 'x-auth-token': token }
-                    });
-                    if (!response.ok) {
-                        const err = await response.json();
+                    // Fetch both preview data and user profile data at the same time
+                    const [previewResponse, profileResponse] = await Promise.all([
+                        fetch(`/api/student/test-preview/${resultId}`, { headers: { 'x-auth-token': token } }),
+                        fetch('/api/student/profile', { headers: { 'x-auth-token': token } })
+                    ]);
+
+                    if (!previewResponse.ok) {
+                        const err = await previewResponse.json();
                         throw new Error(err.message || 'Could not load preview.');
                     }
-                    const previewData = await response.json();
+                     if (!profileResponse.ok) {
+                        throw new Error('Could not load student profile.');
+                    }
+
+                    const previewData = await previewResponse.json();
+                    const profileData = await profileResponse.json();
+                    
+                    // Populate the special print header
+                    document.getElementById('user-name-print').textContent = profileData.fullName || '';
+                    document.getElementById('user-email-print').textContent = profileData.email || '';
+                    document.getElementById('user-roll-print').textContent = `Roll No: ${profileData.rollNumber || 'N/A'}`;
+
+                    // Populate the modal content
                     modalTestTitle.textContent = `${previewData.testTitle} - Review`;
                     renderPreviewContent(previewData);
+
                 } catch (error) {
                     modalBody.innerHTML = `<p class="text-red-500">${error.message}</p>`;
                 }
@@ -269,7 +365,7 @@
                             return `<div class="p-2 rounded border ${bgColor}">${opt}</div>`;
                         }).join('');
                     } else { // fill-blank
-                         const isCorrect = String(userAnswer).toLowerCase() === String(q.correctAnswer).toLowerCase();
+                         const isCorrect = userAnswer && String(userAnswer).toLowerCase() === String(q.correctAnswer).toLowerCase();
                          answerHtml = `
                             <div class="p-2 rounded border ${isCorrect ? 'bg-green-100 border-green-500' : 'bg-red-100 border-red-500'}">Your Answer: ${userAnswer || '<i>Not Answered</i>'}</div>
                             ${!isCorrect ? `<div class="p-2 mt-1 rounded border bg-green-100 border-green-500">Correct Answer: ${q.correctAnswer}</div>` : ''}
@@ -289,6 +385,418 @@
             closeModalBtn.addEventListener('click', () => {
                 previewModal.classList.add('hidden');
                 modalBody.innerHTML = '';
+            });
+
+            printPreviewBtn.addEventListener('click', () => {
+                window.print();
+            });
+
+            userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
+            logoutButton.addEventListener('click', () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login';
+            });
+        });
+    </script>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test History - TESTIFY</title>
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .sidebar-link:hover {
+            background-color: #4338CA;
+        }
+        .sidebar-link.active {
+            background-color: #4F46E5;
+            font-weight: 600;
+        }
+        /* Modal styles */
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+        .modal-active {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        .modal-content {
+            transition: transform 0.25s ease;
+        }
+
+        /* Print-specific styles - UPDATED */
+        @media print {
+            /* Hide everything on the page by default */
+            body > * {
+                display: none;
+            }
+            
+            /* Make only the preview modal and its contents visible */
+            #preview-modal {
+                display: block;
+                visibility: visible;
+                position: static;
+                width: 100%;
+                height: auto;
+                overflow: visible;
+                background: none;
+            }
+            #preview-modal * {
+                visibility: visible;
+            }
+
+            /* CRITICAL FIX: Ensure the modal and its content can expand fully */
+            .modal-container, #modal-body {
+                width: 100%;
+                max-width: 100%;
+                height: auto;
+                max-height: none;
+                overflow: visible;
+                box-shadow: none;
+                border: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            /* Hide elements not meant for printing (like close buttons) */
+            .print-hidden {
+                display: none !important;
+            }
+            /* Show elements meant only for printing (like the header) */
+            .print-visible {
+                display: block !important;
+            }
+
+            /* Ensure colors and borders are printed */
+            .bg-green-100 {
+                background-color: #d1fae5 !important;
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact;
+            }
+            .bg-red-100 {
+                background-color: #fee2e2 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .border-green-500 {
+                border-color: #10b981 !important;
+            }
+            .border-red-500 {
+                border-color: #ef4444 !important;
+            }
+            .border-b {
+                border-bottom-width: 1px !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white print-hidden">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold">TESTIFY</span>
+            </div>
+            <div class="flex flex-col flex-grow p-4">
+                <a href="/student/dashboard" class="sidebar-link  flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <a href="/student/join-meeting" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                    </svg>
+                    <span class="ml-3">Join Meeting</span>
+                </a>
+                <a href="/student/Test" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    <span class="ml-3">Take Test</span>
+                </a>
+                <a href="/student/test-history" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="ml-3">Test History</span>
+                </a>
+                <a href="/student/my-certificates" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span class="ml-3">My Certificates</span>
+                </a>
+                <a href="/student/my-courses" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
+                    <span class="ml-3">My Courses</span>
+                </a>
+                <a href="/student/profile" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"/></svg>
+                    <span class="ml-3">My Profile</span>
+                </a>
+                <a href="/student/compiler" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200">
+                    <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
+                    <span>Code Space</span>
+                </a>
+                <a href="/student/sql-compiler" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200 mt-2">
+                    <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9.75h7.5v7.5h-7.5v-7.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 3.375h17.25v17.25h-17.25v-17.25z" /></svg>
+                    <span>SQL CodeLab</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto print-hidden">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+                <h1 class="text-2xl font-bold text-gray-800">My Test History</h1>
+                <div class="flex items-center">
+                    <div class="relative">
+                        <button id="user-menu-button" class="flex items-center space-x-2">
+                            <span id="user-name" class="font-semibold text-gray-700">Student Name</span>
+                            <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </button>
+                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                            <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Completed Tests</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Test Title</th>
+                                    <th scope="col" class="px-6 py-3">Date Taken</th>
+                                    <th scope="col" class="px-6 py-3">Time Taken</th>
+                                    <th scope="col" class="px-6 py-3">Score</th>
+                                    <th scope="col" class="px-6 py-3">Result</th>
+                                    <th scope="col" class="px-6 py-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body">
+                                <!-- Dynamic data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <p class="mt-4"><Strong>Note:</Strong> The test history will only display results for tests that have been published by the instructor. If you do not see any results, please check back later or contact your instructor for more information.</p>
+            </div>
+            <footer class="bg-white border-t border-gray-200 p-4 mt-auto">
+                <div class="text-center text-sm text-gray-500">
+                    &copy; 2025 TESTIFY. All Rights Reserved.
+                </div>
+            </footer>
+        </div>
+    </div>
+    
+    <!-- Test Preview Modal -->
+    <div id="preview-modal" class="modal-overlay hidden fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full flex items-center justify-center z-50">
+        <div class="modal-container bg-white w-11/12 md:max-w-3xl mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
+            <div class="modal-content py-4 text-left px-6">
+                <!-- Header for printing -->
+                <div id="print-header" class="hidden print-visible mb-6">
+                    <div class="flex justify-between items-center border-b pb-4">
+                        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo" class="h-12">
+                        <div class="text-right text-sm">
+                            <p id="user-name-print" class="font-bold"></p>
+                            <p id="user-email-print" class="text-gray-600"></p>
+                            <p id="user-roll-print" class="text-gray-600"></p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Original Header -->
+                <div class="flex justify-between items-center pb-3 print-hidden">
+                    <p id="modal-test-title" class="text-2xl font-bold">Test Preview</p>
+                    <div class="flex items-center space-x-4">
+                         <button id="print-preview-btn" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-300">
+                             <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm7-8a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                             Print
+                         </button>
+                        <div id="close-modal" class="modal-close cursor-pointer z-50">
+                            <svg class="fill-current text-black" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+                                <path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div id="modal-body" class="my-5 max-h-[70vh] overflow-y-auto pr-4">
+                    <!-- Preview content will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const token = localStorage.getItem('token');
+
+            if (!token || !user || user.role !== 'Student') {
+                window.location.href = '/login';
+                return;
+            }
+            document.getElementById('user-name').textContent = user.fullName;
+            
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userMenu = document.getElementById('user-menu');
+            const logoutButton = document.getElementById('logout-button');
+            const historyTableBody = document.getElementById('history-table-body');
+            const previewModal = document.getElementById('preview-modal');
+            const closeModalBtn = document.getElementById('close-modal');
+            const printPreviewBtn = document.getElementById('print-preview-btn');
+            const modalTestTitle = document.getElementById('modal-test-title');
+            const modalBody = document.getElementById('modal-body');
+
+            async function fetchAndDisplayHistory() {
+                try {
+                    historyTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Loading history...</td></tr>';
+                    const response = await fetch('/api/student/history', {
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch test history');
+                    
+                    const historyData = await response.json();
+                    historyTableBody.innerHTML = '';
+
+                    if (historyData.length === 0) {
+                        historyTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No published test results found. Please check back later.</td></tr>';
+                        return;
+                    }
+
+                    historyData.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.className = 'bg-white border-b hover:bg-gray-50';
+
+                        const resultBadge = item.result === 'Pass'
+                            ? `<span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Pass</span>`
+                            : `<span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Fail</span>`;
+                        
+                        const dateTaken = new Date(item.submittedAt).toLocaleDateString();
+                        const timeTakenFormatted = `${Math.floor(item.timeTaken / 60)}:${String(item.timeTaken % 60).padStart(2, '0')}`;
+
+                        const previewButton = `
+                            <button 
+                                data-result-id="${item.resultId}" 
+                                class="preview-btn font-medium text-indigo-600 hover:text-indigo-900 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                ${!item.allowPreview ? 'disabled' : ''}
+                            >
+                                Preview
+                            </button>
+                        `;
+
+                        row.innerHTML = `
+                            <td class="px-6 py-4 font-medium text-gray-900">${item.testTitle || 'N/A'}</td>
+                            <td class="px-6 py-4">${dateTaken}</td>
+                            <td class="px-6 py-4">${timeTakenFormatted} mins</td>
+                            <td class="px-6 py-4 font-semibold">${item.score}%</td>
+                            <td class="px-6 py-4">${resultBadge}</td>
+                            <td class="px-6 py-4">${previewButton}</td>
+                        `;
+                        historyTableBody.appendChild(row);
+                    });
+                } catch (error) {
+                    console.error('Error fetching history:', error);
+                    historyTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-red-500">Could not load your test history.</td></tr>';
+                }
+            }
+            await fetchAndDisplayHistory();
+
+            historyTableBody.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('preview-btn')) {
+                    const resultId = e.target.dataset.resultId;
+                    openPreviewModal(resultId);
+                }
+            });
+
+            async function openPreviewModal(resultId) {
+                modalBody.innerHTML = '<p>Loading preview...</p>';
+                previewModal.classList.remove('hidden');
+                try {
+                    // Fetch both preview data and user profile data at the same time
+                    const [previewResponse, profileResponse] = await Promise.all([
+                        fetch(`/api/student/test-preview/${resultId}`, { headers: { 'x-auth-token': token } }),
+                        fetch('/api/student/profile', { headers: { 'x-auth-token': token } })
+                    ]);
+
+                    if (!previewResponse.ok) {
+                        const err = await previewResponse.json();
+                        throw new Error(err.message || 'Could not load preview.');
+                    }
+                     if (!profileResponse.ok) {
+                        throw new Error('Could not load student profile.');
+                    }
+
+                    const previewData = await previewResponse.json();
+                    const profileData = await profileResponse.json();
+                    
+                    // Populate the special print header
+                    document.getElementById('user-name-print').textContent = profileData.fullName || '';
+                    document.getElementById('user-email-print').textContent = profileData.email || '';
+                    document.getElementById('user-roll-print').textContent = `Roll No: ${profileData.rollNumber || 'N/A'}`;
+
+                    // Populate the modal content
+                    modalTestTitle.textContent = `${previewData.testTitle} - Review`;
+                    renderPreviewContent(previewData);
+
+                } catch (error) {
+                    modalBody.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+                }
+            }
+            
+            function renderPreviewContent(data) {
+                let content = '';
+                data.questions.forEach((q, index) => {
+                    const userAnswer = data.studentAnswers[index];
+                    let answerHtml = '';
+
+                    if (q.type.startsWith('mcq')) {
+                        answerHtml = q.options.map((opt, i) => {
+                            const isUserAnswer = Array.isArray(userAnswer) ? userAnswer.includes(String(i)) : String(userAnswer) === String(i);
+                            const isCorrect = Array.isArray(q.correctAnswers) ? q.correctAnswers.includes(String(i)) : String(q.correctAnswer) === String(i);
+                            
+                            let bgColor = 'bg-gray-100';
+                            if(isUserAnswer && isCorrect) bgColor = 'bg-green-100 border-green-500';
+                            else if(isUserAnswer && !isCorrect) bgColor = 'bg-red-100 border-red-500';
+                            else if(isCorrect) bgColor = 'bg-green-100 border-green-500';
+                            
+                            return `<div class="p-2 rounded border ${bgColor}">${opt}</div>`;
+                        }).join('');
+                    } else { // fill-blank
+                          const isCorrect = userAnswer && String(userAnswer).toLowerCase() === String(q.correctAnswer).toLowerCase();
+                          answerHtml = `
+                            <div class="p-2 rounded border ${isCorrect ? 'bg-green-100 border-green-500' : 'bg-red-100 border-red-500'}">Your Answer: ${userAnswer || '<i>Not Answered</i>'}</div>
+                            ${!isCorrect ? `<div class="p-2 mt-1 rounded border bg-green-100 border-green-500">Correct Answer: ${q.correctAnswer}</div>` : ''}
+                          `;
+                    }
+
+                    content += `
+                        <div class="mb-6 pb-4 border-b">
+                            <p class="font-semibold text-gray-800">${index + 1}. ${q.text}</p>
+                            <div class="mt-3 space-y-2 text-sm">${answerHtml}</div>
+                        </div>
+                    `;
+                });
+                modalBody.innerHTML = content;
+            }
+
+            closeModalBtn.addEventListener('click', () => {
+                previewModal.classList.add('hidden');
+                modalBody.innerHTML = '';
+            });
+
+            printPreviewBtn.addEventListener('click', () => {
+                window.print();
             });
 
             userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
