@@ -156,31 +156,33 @@
                     const card = document.createElement('div');
                     card.className = 'bg-white shadow-md rounded-lg overflow-hidden';
                     
-                    const educationHTML = `
-                        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-                            ${app.education.tenth.institute ? `<div class="bg-gray-50 p-2 rounded"><strong>10th:</strong> ${app.education.tenth.institute} (${app.education.tenth.score}, ${app.education.tenth.year})</div>` : ''}
-                            ${app.education.twelfth.institute ? `<div class="bg-gray-50 p-2 rounded"><strong>12th:</strong> ${app.education.twelfth.institute} (${app.education.twelfth.score}, ${app.education.twelfth.year})</div>` : ''}
-                            ${app.education.btech.institute ? `<div class="bg-gray-50 p-2 rounded"><strong>B.Tech:</strong> ${app.education.btech.institute} (${app.education.btech.score}, ${app.education.btech.year})</div>` : ''}
-                            ${app.education.higher && app.education.higher.institute ? `<div class="bg-gray-50 p-2 rounded"><strong>Higher:</strong> ${app.education.higher.institute} (${app.education.higher.score}, ${app.education.higher.year})</div>` : ''}
-                        </div>`;
+                    const educationHTML = app.education && Array.isArray(app.education) && app.education.length > 0 ? app.education.map(edu => `
+                        <div class="bg-gray-50 p-3 rounded-lg text-sm">
+                            <p class="font-semibold text-gray-800">${edu.type || 'N/A'}</p>
+                            <p class="text-gray-600">${edu.institute || 'N/A'}</p>
+                            <p class="text-xs text-gray-500">${edu.stream || 'N/A'} - ${edu.score || 'N/A'}</p>
+                            ${edu.certificateUrl ? `<a href="${edu.certificateUrl}" target="_blank" class="text-xs font-medium text-indigo-600 hover:underline mt-1 inline-block">View Certificate</a>` : ''}
+                        </div>
+                    `).join('') : '<p class="text-sm text-gray-500">No education details provided.</p>';
 
-                    const experiencesHTML = app.experiences.map(exp => `
+                    const experiencesHTML = app.experiences && Array.isArray(app.experiences) && app.experiences.length > 0 ? app.experiences.map(exp => `
                         <div class="mt-3 p-3 border rounded-md bg-gray-50">
-                            <p class="font-semibold text-gray-800">${exp.title} at ${exp.company}</p>
-                            <p class="text-xs text-gray-600 mt-1">${exp.description}</p>
-                        </div>`).join('') || '<p class="text-sm text-gray-500">No experience listed.</p>';
+                            <p class="font-semibold text-gray-800">${exp.title || 'N/A'} at ${exp.company || 'N/A'}</p>
+                            <p class="text-xs text-gray-600 mt-1">${exp.description || 'No description.'}</p>
+                            ${exp.certificateUrl ? `<a href="${exp.certificateUrl}" target="_blank" class="text-xs font-medium text-indigo-600 hover:underline mt-2 inline-block">View Experience Certificate</a>` : ''}
+                        </div>`).join('') : '<p class="text-sm text-gray-500">No experience listed.</p>';
                     
                     const linksHTML = `
                         <div class="flex flex-wrap gap-4 mt-4 text-sm">
-                            ${app.links.linkedin ? `<a href="${app.links.linkedin}" target="_blank" class="text-blue-600 hover:underline">LinkedIn</a>` : ''}
-                            ${app.links.github ? `<a href="${app.links.github}" target="_blank" class="text-gray-800 hover:underline">GitHub</a>` : ''}
-                            ${app.links.portfolio ? `<a href="${app.links.portfolio}" target="_blank" class="text-indigo-600 hover:underline">Portfolio</a>` : ''}
+                            ${app.links && app.links.linkedin ? `<a href="${app.links.linkedin}" target="_blank" class="text-blue-600 hover:underline">LinkedIn</a>` : ''}
+                            ${app.links && app.links.github ? `<a href="${app.links.github}" target="_blank" class="text-gray-800 hover:underline">GitHub</a>` : ''}
+                            ${app.links && app.links.portfolio ? `<a href="${app.links.portfolio}" target="_blank" class="text-indigo-600 hover:underline">Portfolio</a>` : ''}
                         </div>`;
 
                     const documentsHTML = `
-                        <div class="flex flex-wrap gap-4 mt-4 text-sm">
-                            <a href="${app.resumeUrl}" target="_blank" class="font-semibold text-green-600 hover:underline">View Resume</a>
-                            ${app.proofsAndCertificatesUrls.map((url, i) => `<a href="${url}" target="_blank" class="text-gray-600 hover:underline">Proof ${i+1}</a>`).join('')}
+                        <div class="flex flex-wrap gap-x-6 gap-y-2 mt-4 text-sm items-center">
+                            ${app.resumeUrl ? `<a href="${app.resumeUrl}" target="_blank" class="font-semibold text-green-600 hover:underline">View Resume</a>` : ''}
+                            ${app.govtId && app.govtId.url ? `<a href="${app.govtId.url}" target="_blank" class="text-gray-600 hover:underline">View ${app.govtId.type || 'Govt. ID'}</a>` : ''}
                         </div>`;
                     
                     const statusOptions = ['Received', 'Under Review', 'Interview', 'Hired', 'Rejected'];
@@ -194,7 +196,7 @@
                         <details>
                             <summary class="p-4 cursor-pointer flex flex-col sm:flex-row items-start sm:items-center justify-between">
                                 <div class="flex items-center space-x-4">
-                                    <img src="${app.passportPhotoUrl}" alt="Photo" class="h-16 w-16 rounded-full object-cover border">
+                                    <img src="${app.passportPhotoUrl || 'https://placehold.co/64x64/e2e8f0/64748b?text=Photo'}" alt="Photo" class="h-16 w-16 rounded-full object-cover border">
                                     <div>
                                         <p class="font-bold text-lg text-gray-900">${app.firstName} ${app.lastName}</p>
                                         <p class="text-sm text-gray-600">${app.email} | ${app.phone}</p>
@@ -212,9 +214,19 @@
                                 </div>
                             </summary>
                             <div class="px-6 pb-6 border-t border-gray-200">
-                                <div class="mt-4"><h4 class="font-semibold text-gray-700">Education</h4>${educationHTML}</div>
-                                <div class="mt-4"><h4 class="font-semibold text-gray-700">Experience & Internships</h4>${experiencesHTML}</div>
-                                <div class="mt-4"><h4 class="font-semibold text-gray-700">Links & Documents</h4>${linksHTML}${documentsHTML}</div>
+                                <div class="mt-4">
+                                    <h4 class="font-semibold text-gray-700">Education</h4>
+                                    <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-3">${educationHTML}</div>
+                                </div>
+                                <div class="mt-6">
+                                    <h4 class="font-semibold text-gray-700">Experience & Internships</h4>
+                                    <div class="mt-2 space-y-3">${experiencesHTML}</div>
+                                </div>
+                                <div class="mt-6">
+                                    <h4 class="font-semibold text-gray-700">Links & Documents</h4>
+                                    ${linksHTML}
+                                    ${documentsHTML}
+                                </div>
                             </div>
                         </details>`;
                     applicationsContainer.appendChild(card);
@@ -265,7 +277,6 @@
                 } catch (error) {
                     console.error('Update Status Error:', error);
                     showFeedback(error.message, 'error');
-                    // Optionally revert the dropdown on failure
                     fetchApplications(); // Refresh to get original state
                 }
             }
@@ -278,4 +289,3 @@
 </script>
 </body>
 </html>
-
