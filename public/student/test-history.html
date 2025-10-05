@@ -31,20 +31,26 @@
             transition: transform 0.25s ease;
         }
 
-        /* Print-specific styles - UPDATED */
+        /* Print-specific styles - REVISED */
         @media print {
-            /* Make only the preview modal and its contents visible */
+            /* Hide everything by default */
+            body > * {
+                display: none !important;
+            }
+            /* Only show the modal */
             #preview-modal {
                 display: block !important;
-                visibility: visible;
-                position: static;
-                width: 100%;
+            }
+
+            /* Reset layout for printing */
+            html, body {
                 height: auto;
                 overflow: visible;
-                background: none;
+                background: #fff;
             }
-            #preview-modal * {
-                visibility: visible;
+            
+            #preview-modal {
+                position: static;
             }
 
             /* CRITICAL FIX: Ensure the modal and its content can expand fully */
@@ -56,8 +62,7 @@
                 overflow: visible;
                 box-shadow: none;
                 border: none;
-                padding: 0;
-                margin: 0;
+                padding: 0; margin: 0;
             }
             .question-block {
                 page-break-inside: avoid;
@@ -110,7 +115,7 @@
 </head>
 <body class="bg-gray-100">
 
-    <div class="flex h-screen bg-gray-100">
+    <div class="flex min-h-screen bg-gray-100">
         <!-- Sidebar -->
         <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white print-hidden">
             <div class="flex items-center justify-center h-20 border-b border-gray-700">
@@ -197,7 +202,10 @@
                         </table>
                     </div>
                 </div>
-                <p class="mt-4"><Strong>Note:</Strong> The test history will only display results for tests that have been published by the instructor. If you do not see any results, please check back later or contact your instructor for more information.</p>
+                 <div class="mt-6 p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-700 rounded-r-lg">
+                    <p class="font-bold">Please Note</p>
+                    <p>The test history will only display results for tests that have been published by the instructor. If you do not see any results, please check back later or contact your instructor for more information.</p>
+                </div>
             </div>
             <footer class="bg-white border-t border-gray-200 p-4 mt-auto">
                 <div class="text-center text-sm text-gray-500">
@@ -307,12 +315,12 @@
                         `;
 
                         row.innerHTML = `
-                            <td class="px-6 py-4 font-medium text-gray-900">${item.testTitle || 'N/A'}</td>
-                            <td class="px-6 py-4">${dateTaken}</td>
-                            <td class="px-6 py-4">${timeTakenFormatted} mins</td>
-                            <td class="px-6 py-4 font-semibold">${item.score}%</td>
-                            <td class="px-6 py-4">${resultBadge}</td>
-                            <td class="px-6 py-4">${previewButton}</td>
+                            <td class="px-6 py-4 font-medium text-gray-900 align-middle">${item.testTitle || 'N/A'}</td>
+                            <td class="px-6 py-4 align-middle">${dateTaken}</td>
+                            <td class="px-6 py-4 align-middle">${timeTakenFormatted} mins</td>
+                            <td class="px-6 py-4 font-semibold align-middle">${item.score}%</td>
+                            <td class="px-6 py-4 align-middle">${resultBadge}</td>
+                            <td class="px-6 py-4 align-middle">${previewButton}</td>
                         `;
                         historyTableBody.appendChild(row);
                     });
