@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Completed - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="w-full max-w-2xl text-center">
+        <div class="bg-white p-10 rounded-2xl shadow-lg">
+             <svg class="w-16 h-16 mx-auto text-green-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Quiz has Ended!</h1>
+            <p class="text-gray-600 mb-6">Thank you for participating. Here are the final scores:</p>
+            <div id="final-leaderboard-container" class="space-y-2 max-h-80 overflow-y-auto text-left">
+                <p class="text-gray-500 text-center">Loading final scores...</p>
+            </div>
+             <button onclick="window.location.href='quiz-join.html'" class="mt-8 px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg shadow-md hover:bg-indigo-700">Join Another Quiz</button>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const finalLeaderboard = JSON.parse(localStorage.getItem('finalLeaderboard'));
+            const studentDetails = JSON.parse(localStorage.getItem('studentDetails'));
+            const container = document.getElementById('final-leaderboard-container');
+
+            if (finalLeaderboard && studentDetails) {
+                displayLeaderboard(container, finalLeaderboard);
+            } else {
+                container.innerHTML = '<p class="text-gray-500 text-center">Could not load final scores.</p>';
+            }
+
+            // Clean up local storage
+            localStorage.removeItem('liveQuizId');
+            localStorage.removeItem('studentDetails');
+            localStorage.removeItem('finalLeaderboard');
+
+            function displayLeaderboard(container, participants) {
+                container.innerHTML = '';
+                 if (participants.length === 0) {
+                     container.innerHTML = '<p class="text-gray-500 text-center">No scores to display.</p>';
+                     return;
+                 }
+                participants.sort((a, b) => b.score - a.score);
+                participants.forEach((p, index) => {
+                    const div = document.createElement('div');
+                    const isCurrentUser = p.fullName === studentDetails.fullName && p.rollNumber === studentDetails.rollNumber;
+                    div.className = `flex justify-between items-center p-3 rounded-lg ${isCurrentUser ? 'bg-indigo-100' : 'bg-gray-100'}`;
+                    div.innerHTML = `
+                        <span class="font-semibold text-gray-800">${index + 1}. ${p.fullName} ${isCurrentUser ? '(You)' : ''}</span>
+                        <span class="font-bold text-indigo-600">${p.score} pts</span>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

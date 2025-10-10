@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz in Progress - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+
+        .progress-bar-fill { transition: width 0.5s ease-in-out; }
+
+        .blurred-waiting-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 10;
+        }
+
+        /* Enhanced Option Styling */
+        .option-label {
+            transition: all 0.2s ease-in-out;
+            border: 2px solid #e5e7eb; /* tailwind gray-200 */
+            background-color: #f9fafb; /* tailwind gray-50 */
+        }
+        .option-label:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-color: #818cf8; /* tailwind indigo-400 */
+        }
+        .peer-checked+.option-label {
+            background-color: #4f46e5; /* tailwind indigo-600 */
+            color: white;
+            border-color: #4338ca; /* tailwind indigo-700 */
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Animation for content fade-in */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 via-indigo-50 to-gray-50 flex flex-col min-h-screen">
+
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm p-4 w-full border-b border-gray-200/80 sticky top-0 z-20">
+        <div class="container mx-auto flex justify-between items-center max-w-4xl">
+            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo" class="h-12 w-auto">
+            <h2 id="quiz-title-header" class="text-lg md:text-xl font-bold text-gray-800 mx-4 text-center truncate">Loading Quiz...</h2>
+            <img id="quiz-logo" src="" alt="Quiz Logo" class="h-12 w-auto hidden">
+        </div>
+    </header>
+
+    <main class="flex-grow flex items-center justify-center p-4">
+        <div id="quiz-container" class="w-full max-w-3xl">
+            <div class="bg-white/70 backdrop-blur-xl p-6 sm:p-8 rounded-2xl shadow-xl border border-gray-200/50 min-h-[400px] flex flex-col justify-center relative">
+                
+                <!-- Blurred Overlay for Waiting -->
+                <div id="blurred-waiting-overlay" class="hidden items-center justify-center rounded-2xl blurred-waiting-overlay">
+                     <div class="text-center fade-in">
+                        <h1 class="text-2xl font-bold text-gray-800">Answer Submitted!</h1>
+                        <p class="text-gray-500 mt-2">Waiting for the next question from the moderator...</p>
+                         <div class="flex justify-center mt-6">
+                            <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                         </div>
+                    </div>
+                </div>
+                
+                <!-- Initial Waiting State -->
+                <div id="waiting-area" class="text-center fade-in">
+                    <h1 class="text-3xl font-bold text-gray-800">Waiting for Moderator</h1>
+                    <p class="text-gray-600 mt-2">The quiz will begin shortly. Please get ready!</p>
+                     <div class="flex justify-center mt-6">
+                        <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                     </div>
+                </div>
+
+                <!-- Question State -->
+                <div id="question-area" class="hidden fade-in">
+                    <div class="flex justify-between items-center mb-2">
+                        <p id="question-counter" class="text-sm font-medium text-indigo-600 bg-indigo-100 px-3 py-1 rounded-full">Question X of Y</p>
+                        <div id="timer" class="text-lg font-bold text-indigo-600 bg-indigo-100 px-4 py-1.5 rounded-lg">00:00</div>
+                    </div>
+                     <div class="w-full bg-gray-200 rounded-full h-1.5 mb-4">
+                        <div id="time-progress-bar" class="bg-indigo-600 h-1.5 rounded-full progress-bar-fill" style="width: 100%"></div>
+                    </div>
+                    <div id="question-image-container" class="my-4 flex justify-center"></div>
+                    <p id="question-text" class="text-2xl font-semibold text-gray-900 mb-6 text-center">Question text goes here...</p>
+                    
+                    <div id="options-container" class="space-y-4"></div>
+                    
+                    <button id="submit-answer-btn" class="w-full py-3 mt-8 bg-indigo-600 text-white font-bold rounded-lg shadow-lg hover:bg-indigo-700 disabled:opacity-50 transition-transform hover:scale-105">Submit Answer</button>
+                </div>
+                
+                <!-- Leaderboard State -->
+                <div id="leaderboard-area" class="hidden fade-in">
+                     <h1 class="text-3xl font-bold text-gray-800 text-center mb-4">Leaderboard</h1>
+                     <div id="leaderboard-content" class="space-y-2 max-h-80 overflow-y-auto p-1"></div>
+                </div>
+                
+                <!-- Paused State -->
+                <div id="paused-area" class="hidden text-center fade-in">
+                     <h1 class="text-2xl font-bold text-gray-800">Quiz Paused</h1>
+                     <p class="text-gray-500 mt-2">The moderator has paused the quiz. Please wait for it to resume.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-transparent p-4">
+        <div class="container mx-auto max-w-3xl flex items-center justify-center text-xs sm:text-sm text-gray-500">
+            <span class="font-bold">QuizCom</span>
+            <span class="mx-2 opacity-50">|</span>
+            <span>A product of EduDevelopers</span>
+            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758718248/EduDevelopers_logo_m1h9db.png" alt="EduDevelopers Logo" class="h-6 ml-2">
+        </div>
+    </footer>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const socket = io();
+            const liveQuizId = localStorage.getItem('liveQuizId');
+            const studentDetails = JSON.parse(localStorage.getItem('studentDetails'));
+
+            if (!liveQuizId || !studentDetails) {
+                window.location.href = 'quiz-join.html';
+                return;
+            }
+
+            const areas = {
+                waiting: document.getElementById('waiting-area'),
+                question: document.getElementById('question-area'),
+                leaderboard: document.getElementById('leaderboard-area'),
+                paused: document.getElementById('paused-area'),
+            };
+            const blurredOverlay = document.getElementById('blurred-waiting-overlay');
+            const quizLogoEl = document.getElementById('quiz-logo');
+            const quizTitleHeaderEl = document.getElementById('quiz-title-header');
+            const questionCounterEl = document.getElementById('question-counter');
+            const questionTextEl = document.getElementById('question-text');
+            const optionsContainer = document.getElementById('options-container');
+            const submitBtn = document.getElementById('submit-answer-btn');
+            const timerEl = document.getElementById('timer');
+            const timeProgressBar = document.getElementById('time-progress-bar');
+            const questionImageContainer = document.getElementById('question-image-container');
+
+            let currentQuestion = null;
+            let currentQuestionIndex = -1;
+            
+            fetch(`/api/quizcom/live/${liveQuizId}/details`)
+                .then(res => res.json())
+                .then(data => {
+                    if(data.logoUrl) {
+                        quizLogoEl.src = data.logoUrl;
+                        quizLogoEl.classList.remove('hidden');
+                    }
+                    if(data.title) {
+                        quizTitleHeaderEl.textContent = data.title;
+                    }
+                });
+
+            socket.emit('join-room', liveQuizId);
+            socket.emit('student-joined', { liveQuizId, studentDetails });
+
+            socket.on('new-question', ({ question, questionIndex: index, totalQuestions }) => {
+                blurredOverlay.classList.add('hidden');
+                currentQuestion = question;
+                currentQuestionIndex = index;
+                displayQuestion(question, index, totalQuestions);
+                showArea('question');
+            });
+            
+            socket.on('question-timer-update', (time) => {
+                timerEl.textContent = `00:${String(time).padStart(2, '0')}`;
+                if (!currentQuestion) return;
+                const totalTime = currentQuestion.time || 30;
+                timeProgressBar.style.width = `${(time / totalTime) * 100}%`;
+            });
+
+            socket.on('quiz-paused', () => showArea('paused'));
+            socket.on('quiz-resumed', () => {
+                blurredOverlay.classList.add('hidden');
+                showArea('question');
+            });
+            
+            socket.on('show-leaderboard', (participants) => {
+                blurredOverlay.classList.add('hidden');
+                displayLeaderboard(document.getElementById('leaderboard-content'), participants);
+                showArea('leaderboard');
+            });
+
+            socket.on('quiz-ended', ({ finalLeaderboard }) => {
+                localStorage.setItem('finalLeaderboard', JSON.stringify(finalLeaderboard));
+                window.location.href = 'quiz-completed.html';
+            });
+            
+            submitBtn.addEventListener('click', () => {
+                let selectedAnswer;
+                if(currentQuestion.type === 'fill-blank'){
+                    selectedAnswer = document.getElementById('blank-answer').value;
+                } else if(currentQuestion.type === 'multiple') {
+                    selectedAnswer = Array.from(document.querySelectorAll(`input[name="option"]:checked`)).map(el => el.value);
+                } else {
+                    const selectedEl = document.querySelector(`input[name="option"]:checked`);
+                    selectedAnswer = selectedEl ? selectedEl.value : null;
+                }
+                
+                if (selectedAnswer !== null && selectedAnswer !== '' && (!Array.isArray(selectedAnswer) || selectedAnswer.length > 0) ) {
+                    socket.emit('student-submit-answer', { 
+                        liveQuizId, 
+                        questionIndex: currentQuestionIndex, 
+                        answer: selectedAnswer
+                    });
+                    blurredOverlay.classList.remove('hidden'); 
+                    blurredOverlay.style.display = 'flex';
+                } else {
+                    alert('Please provide an answer.');
+                }
+            });
+
+            function displayQuestion(question, index, total) {
+                questionCounterEl.textContent = `Question ${index + 1} of ${total}`;
+                questionTextEl.textContent = question.text;
+                questionImageContainer.innerHTML = question.imageUrl ? `<img src="${question.imageUrl}" class="max-h-48 rounded-lg shadow-sm" />` : '';
+                optionsContainer.innerHTML = '';
+                
+                if (question.type === 'blank') {
+                    optionsContainer.innerHTML = `
+                        <div>
+                            <input type="text" id="blank-answer" class="mt-1 block w-full p-4 shadow-sm sm:text-lg border-gray-300 rounded-lg" placeholder="Type your answer here...">
+                        </div>
+                    `;
+                    document.getElementById('blank-answer').addEventListener('input', () => {
+                        submitBtn.disabled = document.getElementById('blank-answer').value.trim() === '';
+                    });
+                } else { 
+                    const inputType = question.type === 'multiple' ? 'checkbox' : 'radio';
+                    question.options.forEach((optionText, i) => {
+                        const optionId = `option-${i}`;
+                        const div = document.createElement('div');
+                        div.innerHTML = `
+                            <input type="${inputType}" name="option" value="${i}" id="${optionId}" class="hidden peer">
+                            <label for="${optionId}" class="option-label block w-full p-4 rounded-lg cursor-pointer text-lg font-medium">
+                               ${optionText}
+                            </label>
+                        `;
+                        optionsContainer.appendChild(div);
+                    });
+                     optionsContainer.addEventListener('change', () => {
+                        const anyChecked = optionsContainer.querySelector('input:checked');
+                        submitBtn.disabled = !anyChecked;
+                    });
+                }
+                
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submit Answer';
+            }
+            
+            function displayLeaderboard(container, participants) {
+                container.innerHTML = '';
+                 if (!participants || participants.length === 0) {
+                     container.innerHTML += '<p class="text-gray-500 text-center">No scores yet.</p>';
+                     return;
+                 }
+                participants.sort((a, b) => b.score - a.score);
+                participants.forEach((p, index) => {
+                    const div = document.createElement('div');
+                    const isCurrentUser = p.email === studentDetails.email;
+                    div.className = `flex justify-between items-center p-3 rounded-lg ${isCurrentUser ? 'bg-indigo-100' : 'bg-gray-100'}`;
+                    div.innerHTML = `
+                        <div class="flex items-center">
+                           <span class="font-bold text-gray-500 w-8 text-center">${index + 1}.</span>
+                           <span class="font-semibold text-gray-800">${p.fullName} ${isCurrentUser ? '<span class="text-xs font-normal text-indigo-600">(You)</span>' : ''}</span>
+                        </div>
+                        <span class="font-bold text-indigo-600">${p.score} pts</span>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
+            function showArea(areaName) {
+                Object.values(areas).forEach(area => area.classList.add('hidden'));
+                areas[areaName].classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
+

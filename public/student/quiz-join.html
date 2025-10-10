@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Quiz - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="w-full max-w-md">
+        <div class="bg-white p-8 rounded-2xl shadow-lg text-center">
+            <img class="h-12 w-auto mx-auto mb-4" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">Join a Quiz</h1>
+            <p class="text-gray-500 mb-6">Enter the 6-digit code provided by your moderator.</p>
+            <form id="join-quiz-form">
+                <input type="text" id="quiz-code" maxlength="6" class="w-full text-center text-3xl tracking-[1em] font-bold p-4 border-2 border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="______" required>
+                <button type="submit" class="mt-6 w-full py-3 bg-indigo-600 text-white font-bold rounded-lg shadow-md hover:bg-indigo-700">Join</button>
+                <p id="error-message" class="text-red-500 text-sm mt-4 h-5"></p>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.getElementById('join-quiz-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const code = document.getElementById('quiz-code').value;
+            const errorMessageEl = document.getElementById('error-message');
+            errorMessageEl.textContent = '';
+
+            if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+                errorMessageEl.textContent = 'Please enter a valid 6-digit code.';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/quizcom/join', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ quizCode: code })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || 'Failed to join the quiz.');
+                }
+
+                localStorage.setItem('liveQuizId', data.liveQuizId);
+                window.location.href = `quiz-start.html`;
+
+            } catch (error) {
+                errorMessageEl.textContent = error.message;
+            }
+        });
+    </script>
+</body>
+</html>
+
