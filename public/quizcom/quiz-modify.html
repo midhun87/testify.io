@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modify Quiz - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        .question-block:not(:last-child) { border-bottom: 1px solid #e5e7eb; padding-bottom: 1.5rem; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold">QuizCom</span>
+            </div>
+             <nav class="flex-grow p-4 overflow-y-auto">
+                <a href="quiz-dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <a href="quiz-create.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    <span class="ml-3">Create Quiz</span>
+                </a>
+                <a href="quiz-library.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    <span class="ml-3">Quiz Library</span>
+                </a>
+                <a href="quiz-history.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span class="ml-3">Quiz History</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+                <h1 class="text-2xl font-bold text-gray-800">Modify Quiz</h1>
+                <div id="user-menu-container"></div>
+            </div>
+
+            <div class="p-6">
+                <form id="modify-quiz-form">
+                     <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4">Quiz Details</h2>
+                        <div>
+                            <label for="quizTitle" class="block text-sm font-medium text-gray-700">Quiz Title</label>
+                            <input type="text" id="quizTitle" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <div class="flex justify-between items-center mb-4">
+                             <h2 class="text-xl font-bold text-gray-800">Questions</h2>
+                             <button type="button" id="add-question-btn" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700">
+                                Add Question
+                            </button>
+                        </div>
+                        <div id="questions-container" class="space-y-6">
+                            <!-- Dynamic questions will be inserted here -->
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 flex justify-between items-center">
+                        <button type="button" id="delete-quiz-btn" class="px-6 py-3 bg-red-600 text-white font-bold rounded-lg shadow-md hover:bg-red-700">
+                            Delete Quiz
+                        </button>
+                        <button type="submit" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700">
+                            Update Quiz
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = localStorage.getItem('token');
+        const urlParams = new URLSearchParams(window.location.search);
+        const quizId = urlParams.get('id');
+        let questionCounter = 0;
+
+        if (!token || !user || user.role !== 'QuizCom Moderator' || !quizId) {
+            window.location.href = 'quiz-moderator-login.html';
+            return;
+        }
+
+        const userMenuContainer = document.getElementById('user-menu-container');
+        userMenuContainer.innerHTML = `
+            <div class="relative">
+                <button id="user-menu-button" class="flex items-center space-x-2">
+                    <span class="font-semibold text-gray-700">${user.fullName}</span>
+                    <svg class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                </button>
+                <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                    <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                </div>
+            </div>`;
+        
+        document.getElementById('user-menu-button').addEventListener('click', () => document.getElementById('user-menu').classList.toggle('hidden'));
+        document.getElementById('logout-button').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = 'quiz-moderator-login.html';
+        });
+
+        const questionsContainer = document.getElementById('questions-container');
+
+        // Fetch the specific quiz data
+        fetch(`/api/quizcom/quizzes/${quizId}`, { 
+            headers: { 'x-auth-token': token } 
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Failed to load quiz data. You may not have permission or the quiz does not exist.');
+            return res.json();
+        })
+        .then(quizData => {
+            document.getElementById('quizTitle').value = quizData.title;
+            questionsContainer.innerHTML = ''; // Clear any placeholders
+            if (quizData.questions && quizData.questions.length > 0) {
+                quizData.questions.forEach(q => addQuestion(q));
+            }
+            attachEventListeners();
+        })
+        .catch(err => {
+            alert(err.message);
+            window.location.href = 'quiz-library.html'; // Redirect if quiz can't be loaded
+        });
+
+        function addQuestion(data = {}) {
+            questionCounter++;
+            const questionId = `q-${questionCounter}`;
+            const questionBlock = document.createElement('div');
+            questionBlock.className = 'question-block bg-white p-6 rounded-xl shadow-md';
+            questionBlock.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <h4 class="text-lg font-bold text-gray-800">Question ${questionCounter}</h4>
+                    <button type="button" class="remove-question-btn text-2xl font-bold text-red-500 hover:text-red-700">&times;</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="${questionId}-type" class="block text-sm font-medium text-gray-700">Type</label>
+                        <select id="${questionId}-type" class="question-type-select mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none" data-question-id="${questionId}">
+                            <option value="single">Single Correct</option>
+                            <option value="multiple">Multiple Correct</option>
+                            <option value="blank">Fill in the Blanks</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="${questionId}-points" class="block text-sm font-medium text-gray-700">Points</label>
+                        <input type="number" id="${questionId}-points" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md" value="${data.points || '10'}">
+                    </div>
+                    <div>
+                        <label for="${questionId}-time" class="block text-sm font-medium text-gray-700">Time (sec)</label>
+                        <input type="number" id="${questionId}-time" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md" value="${data.time || '30'}">
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label for="${questionId}-text" class="block text-sm font-medium text-gray-700">Question Text</label>
+                    <textarea id="${questionId}-text" rows="2" required class="mt-1 block w-full shadow-sm border-gray-300 rounded-md">${data.text || ''}</textarea>
+                </div>
+                 <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700">Image</label>
+                    <input type="file" id="${questionId}-image" accept="image/*" class="image-upload mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                    ${data.imageUrl ? `<img src="${data.imageUrl}" class="mt-2 h-24 w-auto rounded" data-existing-url="${data.imageUrl}">` : ''}
+                </div>
+                <div id="${questionId}-answer-area" class="mt-4"></div>
+            `;
+            questionsContainer.appendChild(questionBlock);
+            
+            const typeSelect = questionBlock.querySelector('.question-type-select');
+            if(data.type) typeSelect.value = data.type;
+            updateAnswerArea(questionId, typeSelect.value, data);
+        }
+        
+        function updateAnswerArea(questionId, type, data = {}) {
+            const answerArea = document.getElementById(`${questionId}-answer-area`);
+            if (!answerArea) return;
+            
+            const inputType = type === 'multiple' ? 'checkbox' : 'radio';
+
+            if (type === 'single' || type === 'multiple') {
+                answerArea.innerHTML = `
+                    <h5 class="text-sm font-medium text-gray-600 mb-2">Options & Correct Answer(s)</h5>
+                    <div id="${questionId}-options-container" class="space-y-2"></div>
+                    <button type="button" class="add-option-btn mt-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800" data-question-id="${questionId}" data-input-type="${inputType}">+ Add Option</button>
+                `;
+                const optionsToRender = (data.options && data.options.length > 0) ? data.options : ['', ''];
+                optionsToRender.forEach((optText, i) => {
+                    let isChecked = false;
+                    if (type === 'single' && data.correctAnswer !== undefined) isChecked = (String(data.correctAnswer) === String(i));
+                    else if (type === 'multiple' && Array.isArray(data.correctAnswers)) isChecked = data.correctAnswers.includes(String(i));
+                    addOption(questionId, inputType, optText, isChecked);
+                });
+            } else { // blank
+                answerArea.innerHTML = `
+                    <div>
+                        <label for="${questionId}-answer" class="block text-sm font-medium text-gray-700">Correct Answer</label>
+                        <input type="text" id="${questionId}-answer" required class="mt-1 block w-full shadow-sm border-gray-300 rounded-md" value="${data.correctAnswer || ''}">
+                    </div>
+                `;
+            }
+        }
+
+        function addOption(questionId, inputType, text = '', isChecked = false) {
+            const optionsContainer = document.getElementById(`${questionId}-options-container`);
+            if (!optionsContainer) return;
+            const optionIndex = optionsContainer.children.length;
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'flex items-center space-x-3';
+            optionDiv.innerHTML = `
+                <input name="${questionId}-correct" type="${inputType}" value="${optionIndex}" class="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500" ${isChecked ? 'checked' : ''}>
+                <input type="text" placeholder="Option ${optionIndex + 1}" required class="option-text flex-grow shadow-sm border-gray-300 rounded-md" value="${text}">
+                <button type="button" class="remove-option-btn text-red-500 font-bold">&times;</button>
+            `;
+            optionsContainer.appendChild(optionDiv);
+        }
+
+        function attachEventListeners() {
+            document.getElementById('add-question-btn').addEventListener('click', () => addQuestion());
+
+            questionsContainer.addEventListener('change', e => {
+                if (e.target.matches('.question-type-select')) {
+                    updateAnswerArea(e.target.dataset.questionId, e.target.value);
+                }
+            });
+
+            questionsContainer.addEventListener('click', e => {
+                if (e.target.matches('.remove-question-btn')) e.target.closest('.question-block').remove();
+                if (e.target.matches('.add-option-btn')) addOption(e.target.dataset.questionId, e.target.dataset.inputType);
+                if (e.target.matches('.remove-option-btn')) e.target.closest('.flex').remove();
+            });
+
+            document.getElementById('delete-quiz-btn').addEventListener('click', async () => {
+                if (confirm('Are you sure you want to delete this quiz? This cannot be undone.')) {
+                    try {
+                        const response = await fetch(`/api/quizcom/quizzes/${quizId}`, { method: 'DELETE', headers: { 'x-auth-token': token }});
+                        if (!response.ok) throw new Error((await response.json()).message);
+                        alert('Quiz deleted.');
+                        window.location.href = 'quiz-library.html';
+                    } catch (error) {
+                        alert('Error: ' + error.message);
+                    }
+                }
+            });
+
+            document.getElementById('modify-quiz-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const questions = [];
+                const questionBlocks = document.querySelectorAll('.question-block');
+                const uploadPromises = [];
+
+                questionBlocks.forEach((qBlock, index) => {
+                    const typeSelect = qBlock.querySelector('.question-type-select');
+                    const questionId = typeSelect.dataset.questionId;
+                    
+                    const imageFile = qBlock.querySelector('.image-upload').files[0];
+                    const existingImage = qBlock.querySelector('img');
+
+                    let questionData = {
+                        type: typeSelect.value,
+                        text: qBlock.querySelector(`#${questionId}-text`).value,
+                        points: parseInt(qBlock.querySelector(`#${questionId}-points`).value),
+                        time: parseInt(qBlock.querySelector(`#${questionId}-time`).value),
+                        imageUrl: existingImage ? existingImage.dataset.existingUrl : null,
+                    };
+
+                    const uploadPromise = new Promise(async (resolve, reject) => {
+                        if (imageFile) {
+                            const formData = new FormData();
+                            formData.append('image', imageFile);
+                            try {
+                                const res = await fetch('/api/upload-image', { method: 'POST', headers: { 'x-auth-token': token }, body: formData });
+                                const data = await res.json();
+                                if (!res.ok) throw new Error(data.message);
+                                questionData.imageUrl = data.imageUrl;
+                            } catch (err) {
+                                return reject(err);
+                            }
+                        }
+                        
+                        if (questionData.type === 'single' || questionData.type === 'multiple') {
+                            questionData.options = Array.from(qBlock.querySelectorAll('.option-text')).map(i => i.value);
+                            if (questionData.type === 'single') {
+                                const correct = qBlock.querySelector(`input[name="${questionId}-correct"]:checked`);
+                                questionData.correctAnswer = correct ? correct.value : null;
+                            } else {
+                                questionData.correctAnswers = Array.from(qBlock.querySelectorAll(`input[name="${questionId}-correct"]:checked`)).map(cb => cb.value);
+                            }
+                        } else { // fill-blank
+                            questionData.correctAnswer = qBlock.querySelector(`#${questionId}-answer`).value;
+                        }
+                        questions[index] = questionData;
+                        resolve();
+                    });
+                    uploadPromises.push(uploadPromise);
+                });
+
+                try {
+                    await Promise.all(uploadPromises);
+                    const payload = { title: document.getElementById('quizTitle').value, questions };
+                    const response = await fetch(`/api/quizcom/quizzes/${quizId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message);
+                    alert('Quiz updated successfully!');
+                    window.location.href = 'quiz-library.html';
+                } catch (error) {
+                    alert(`Error: ${error.message}`);
+                }
+            });
+        }
+    });
+    </script>
+</body>
+</html>
+

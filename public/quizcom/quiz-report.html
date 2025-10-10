@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Report - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- SheetJS library for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold">QuizCom</span>
+            </div>
+            <nav class="flex-grow p-4 overflow-y-auto">
+                <a href="quiz-dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <a href="quiz-create.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                   <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    <span class="ml-3">Create Quiz</span>
+                </a>
+                <a href="quiz-library.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    <span class="ml-3">Quiz Library</span>
+                </a>
+                <a href="quiz-history.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span class="ml-3">Quiz History</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+                <h1 id="report-title" class="text-2xl font-bold text-gray-800">Quiz Report</h1>
+                <div id="user-menu-container"></div>
+            </div>
+
+            <div class="p-6">
+                <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800">Summary</h2>
+                        <button id="download-report-btn" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 flex items-center space-x-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            <span>Download Report</span>
+                        </button>
+                    </div>
+                    <div id="summary-stats" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                        <div>
+                            <p class="text-sm text-gray-500">Date Conducted</p>
+                            <p id="summary-date" class="text-lg font-semibold">-</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Total Participants</p>
+                            <p id="summary-participants" class="text-lg font-semibold">-</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Average Score</p>
+                            <p id="summary-avg-score" class="text-lg font-semibold">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Participant Leaderboard</h2>
+                     <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">College</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Roll No.</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Final Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+             const user = JSON.parse(localStorage.getItem('user'));
+            const token = localStorage.getItem('token');
+            const urlParams = new URLSearchParams(window.location.search);
+            const liveQuizId = urlParams.get('id');
+            let fullReportData = null; // To store data for download
+
+             if (!token || !user || user.role !== 'QuizCom Moderator' || !liveQuizId) {
+                window.location.href = 'quiz-moderator-login.html';
+                return;
+            }
+
+            // User Menu
+            const userMenuContainer = document.getElementById('user-menu-container');
+            userMenuContainer.innerHTML = `
+                <div class="relative">
+                    <button id="user-menu-button" class="flex items-center space-x-2">
+                        <span class="font-semibold text-gray-700">${user.fullName}</span>
+                        <svg class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                        <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                    </div>
+                </div>`;
+            
+            document.getElementById('user-menu-button').addEventListener('click', () => document.getElementById('user-menu').classList.toggle('hidden'));
+            document.getElementById('logout-button').addEventListener('click', () => {
+                localStorage.clear();
+                window.location.href = 'quiz-moderator-login.html';
+            });
+
+            const leaderboardBody = document.getElementById('leaderboard-body');
+            const downloadBtn = document.getElementById('download-report-btn');
+
+            fetch(`/api/quizcom/report/${liveQuizId}`, { headers: { 'x-auth-token': token } })
+                .then(res => {
+                    if(!res.ok) throw new Error('Failed to fetch report data.');
+                    return res.json();
+                })
+                .then(report => {
+                    fullReportData = report; // Store for download
+                    document.getElementById('report-title').textContent = `Report: ${report.title}`;
+                    document.getElementById('summary-date').textContent = new Date(report.createdAt).toLocaleDateString();
+                    document.getElementById('summary-participants').textContent = report.participants.length;
+
+                    const totalScore = report.participants.reduce((sum, p) => sum + p.score, 0);
+                    const avgScore = report.participants.length > 0 ? (totalScore / report.participants.length).toFixed(1) : 0;
+                    document.getElementById('summary-avg-score').textContent = `${avgScore} pts`;
+
+                    leaderboardBody.innerHTML = '';
+                    const sortedParticipants = report.participants.sort((a,b) => b.score - a.score);
+
+                    sortedParticipants.forEach((p, index) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="px-6 py-4 font-bold text-gray-900">${index + 1}</td>
+                            <td class="px-6 py-4 text-gray-800">${p.fullName || 'N/A'}</td>
+                            <td class="px-6 py-4 text-gray-500">${p.email || 'N/A'}</td>
+                            <td class="px-6 py-4 text-gray-500">${p.collegeName || 'N/A'}</td>
+                            <td class="px-6 py-4 text-gray-500">${p.departmentName || 'N/A'}</td>
+                            <td class="px-6 py-4 text-gray-500">${p.rollNumber || 'N/A'}</td>
+                            <td class="px-6 py-4 font-semibold text-indigo-600">${p.score}</td>
+                        `;
+                        leaderboardBody.appendChild(row);
+                    });
+                })
+                .catch(err => {
+                    alert(err.message);
+                    leaderboardBody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-red-500">Could not load report.</td></tr>';
+                });
+
+            downloadBtn.addEventListener('click', () => {
+                if (!fullReportData || !fullReportData.participants || fullReportData.participants.length === 0) {
+                    alert('No data available to download.');
+                    return;
+                }
+
+                // 1. Prepare data for the worksheet
+                const dataToExport = fullReportData.participants
+                    .sort((a, b) => b.score - a.score)
+                    .map((p, index) => ({
+                        'Rank': index + 1,
+                        'Name': p.fullName,
+                        'Email': p.email,
+                        'College': p.collegeName,
+                        'Department': p.departmentName,
+                        'Roll Number': p.rollNumber,
+                        'Score': p.score
+                    }));
+
+                // 2. Create a new worksheet
+                const ws = XLSX.utils.json_to_sheet(dataToExport);
+                
+                // 3. Create a new workbook
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Quiz Report');
+
+                // 4. Trigger the download
+                const fileName = `QuizReport_${fullReportData.title.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+            });
+        });
+    </script>
+</body>
+</html>
+

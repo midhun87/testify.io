@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Quiz - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold">QuizCom</span>
+            </div>
+             <nav class="flex-grow p-4 overflow-y-auto">
+                <a href="quiz-dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <a href="quiz-create.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    <span class="ml-3">Create Quiz</span>
+                </a>
+                <a href="quiz-library.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    <span class="ml-3">Quiz Library</span>
+                </a>
+                <a href="quiz-history.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span class="ml-3">Quiz History</span>
+                </a>
+            </nav>
+        </div>
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+             <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+                <h1 class="text-2xl font-bold text-gray-800">Assign Quiz: <span id="quiz-title-header"></span></h1>
+                <div id="user-menu-container"></div>
+            </div>
+            <div class="p-6">
+                 <form id="assign-quiz-form" class="bg-white p-8 rounded-xl shadow-md">
+                    <div class="mb-6">
+                        <label for="student-emails" class="block text-sm font-medium text-gray-700">Student Email IDs</label>
+                        <textarea id="student-emails" required rows="5" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="Enter student emails, separated by commas..."></textarea>
+                    </div>
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="check-in-time" class="block text-sm font-medium text-gray-700">Check-in Time</label>
+                            <input type="datetime-local" id="check-in-time" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                        </div>
+                        <div>
+                             <label for="start-time" class="block text-sm font-medium text-gray-700">Quiz Start Time</label>
+                            <input type="datetime-local" id="start-time" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                        </div>
+                    </div>
+                     <div class="mt-8 flex justify-end">
+                        <button type="submit" class="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700">Assign Quiz</button>
+                    </div>
+                 </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const token = localStorage.getItem('token');
+            const urlParams = new URLSearchParams(window.location.search);
+            const quizId = urlParams.get('id');
+
+            if (!token || !user || user.role !== 'QuizCom Moderator' || !quizId) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // User Menu
+            const userMenuContainer = document.getElementById('user-menu-container');
+            userMenuContainer.innerHTML = `
+                <div class="relative">
+                    <button id="user-menu-button" class="flex items-center space-x-2">
+                        <span class="font-semibold text-gray-700">${user.fullName}</span>
+                        <svg class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                        <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                    </div>
+                </div>`;
+            
+            document.getElementById('user-menu-button').addEventListener('click', () => document.getElementById('user-menu').classList.toggle('hidden'));
+            document.getElementById('logout-button').addEventListener('click', () => {
+                localStorage.clear();
+                window.location.href = '/login.html';
+            });
+
+            // Fetch quiz title to display in header
+            fetch(`/api/quizcom/quizzes/${quizId}`, { headers: { 'x-auth-token': token } })
+                .then(res => res.json())
+                .then(quiz => {
+                    document.getElementById('quiz-title-header').textContent = quiz.title;
+                })
+                .catch(err => console.error('Failed to load quiz title', err));
+            
+            document.getElementById('assign-quiz-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const emails = document.getElementById('student-emails').value.split(',').map(e => e.trim()).filter(Boolean);
+                const checkInTime = document.getElementById('check-in-time').value;
+                const startTime = document.getElementById('start-time').value;
+
+                if (emails.length === 0) {
+                    alert('Please enter at least one student email.');
+                    return;
+                }
+                
+                if (!checkInTime || !startTime) {
+                    alert('Please set both check-in and start times.');
+                    return;
+                }
+
+                const payload = {
+                    quizId,
+                    emails,
+                    checkInTime,
+                    startTime
+                };
+                
+                try {
+                    const response = await fetch('/api/quizcom/quizzes/assign', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message);
+                    alert('Quiz assigned successfully! Students will receive an email with instructions.');
+                    window.location.href = 'quiz-library.html';
+                } catch (error) {
+                    alert('Error assigning quiz: ' + error.message);
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>

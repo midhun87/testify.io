@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Quiz - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <style> 
+        body { font-family: 'Inter', sans-serif; } 
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        .progress-bar-fill { transition: width 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                 <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold">QuizCom</span>
+            </div>
+            <nav class="flex-grow p-4 overflow-y-auto">
+                <a href="quiz-dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <a href="quiz-create.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                   <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    <span class="ml-3">Create Quiz</span>
+                </a>
+                <a href="quiz-library.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                    <span class="ml-3">Quiz Library</span>
+                </a>
+                <a href="quiz-history.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span class="ml-3">Quiz History</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+                <h1 id="quiz-title" class="text-2xl font-bold text-gray-800">Live Quiz: Loading...</h1>
+                <div id="user-menu-container"></div>
+            </div>
+
+            <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left Column: Controls & Participants -->
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h2 class="text-lg font-bold text-gray-800 mb-4">Quiz Code</h2>
+                        <div id="quiz-code" class="text-4xl font-bold text-center text-indigo-600 tracking-widest bg-gray-100 p-4 rounded-lg">
+                            ------
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h2 class="text-lg font-bold text-gray-800 mb-4">Live Controls</h2>
+                        <div class="space-y-3">
+                            <button id="pause-btn" class="w-full py-3 bg-yellow-500 text-white font-bold rounded-lg shadow-md hover:bg-yellow-600 disabled:opacity-50" disabled>Pause Quiz</button>
+                            <button id="resume-btn" class="w-full py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 hidden">Resume Quiz</button>
+                            <button id="next-question-btn" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700">Start Quiz / Next Question</button>
+                            <button id="show-leaderboard-btn" class="w-full py-3 bg-purple-600 text-white font-bold rounded-lg shadow-md hover:bg-purple-700 disabled:opacity-50" disabled>Show Overall Leaderboard</button>
+                            <button id="end-quiz-btn" class="w-full py-3 bg-red-600 text-white font-bold rounded-lg shadow-md hover:bg-red-700">End Quiz</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h2 class="text-lg font-bold text-gray-800 mb-4">Live Participants (<span id="participant-count">0</span>)</h2>
+                        <ul id="participant-list" class="space-y-2 max-h-48 overflow-y-auto">
+                            <li class="text-gray-500">Waiting for participants to join...</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Right Column: Current Question & Leaderboard -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
+                    <div id="waiting-for-start-view">
+                        <h2 class="text-lg font-bold text-gray-800 mb-4">Waiting for Quiz to Start</h2>
+                        <p class="text-gray-500">Participants will join using the code. Click "Start Quiz" when you're ready.</p>
+                    </div>
+                    
+                    <div id="question-view" class="hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 id="question-number" class="text-lg font-bold text-gray-800">Question X</h2>
+                            <div id="question-timer" class="text-lg font-bold text-indigo-600 bg-indigo-100 px-4 py-2 rounded-lg">00:00</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <p class="text-gray-500 text-sm">Answers Submitted</p>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
+                                <div id="answer-progress-bar" class="bg-blue-600 h-2.5 rounded-full progress-bar-fill" style="width: 0%"></div>
+                            </div>
+                            <p id="answer-progress-text" class="text-sm text-right text-gray-600 mt-1">0/0</p>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <p id="question-text" class="font-semibold text-gray-900 mb-2">Question text will appear here.</p>
+                            <div id="question-options" class="space-y-2 text-sm"></div>
+                        </div>
+
+                        <div id="question-results-view" class="mt-6 hidden">
+                            <h3 class="text-md font-bold text-gray-800 mb-2">Question Results</h3>
+                            <div id="question-leaderboard" class="space-y-2"></div>
+                        </div>
+                    </div>
+                     <div id="leaderboard-view" class="hidden">
+                        <h2 class="text-lg font-bold text-gray-800 mb-4">Overall Leaderboard</h2>
+                        <div id="overall-leaderboard" class="space-y-2"></div>
+                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user'));
+            
+            if (!token || !user || user.role !== 'QuizCom Moderator') {
+                window.location.href = 'quiz-moderator-login.html';
+                return;
+            }
+
+            // User Menu Setup
+            const userMenuContainer = document.getElementById('user-menu-container');
+            userMenuContainer.innerHTML = `<div class="relative"><button id="user-menu-button" class="flex items-center space-x-2"><span class="font-semibold text-gray-700">${user.fullName}</span><svg class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button><div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20"><a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a></div></div>`;
+            document.getElementById('user-menu-button').addEventListener('click', () => document.getElementById('user-menu').classList.toggle('hidden'));
+            document.getElementById('logout-button').addEventListener('click', () => { localStorage.clear(); window.location.href = 'quiz-moderator-login.html'; });
+
+            // UI Elements
+            const quizTitleEl = document.getElementById('quiz-title');
+            const quizCodeEl = document.getElementById('quiz-code');
+            const participantCountEl = document.getElementById('participant-count');
+            const participantListEl = document.getElementById('participant-list');
+            const pauseBtn = document.getElementById('pause-btn');
+            const resumeBtn = document.getElementById('resume-btn');
+            const nextQuestionBtn = document.getElementById('next-question-btn');
+            const showLeaderboardBtn = document.getElementById('show-leaderboard-btn');
+            const endQuizBtn = document.getElementById('end-quiz-btn');
+
+            const waitingView = document.getElementById('waiting-for-start-view');
+            const questionView = document.getElementById('question-view');
+            const leaderboardView = document.getElementById('leaderboard-view');
+            const questionNumberEl = document.getElementById('question-number');
+            const questionTimerEl = document.getElementById('question-timer');
+            const answerProgressBar = document.getElementById('answer-progress-bar');
+            const answerProgressText = document.getElementById('answer-progress-text');
+            const questionTextEl = document.getElementById('question-text');
+            const questionOptionsEl = document.getElementById('question-options');
+            const questionResultsView = document.getElementById('question-results-view');
+            const questionLeaderboardEl = document.getElementById('question-leaderboard');
+            const overallLeaderboardEl = document.getElementById('overall-leaderboard');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const liveQuizId = urlParams.get('id');
+
+            if (!liveQuizId) {
+                quizTitleEl.textContent = "Error: No Live Quiz ID found.";
+                return;
+            }
+
+            const socket = io();
+
+            // --- Socket Connection & Initial Fetch ---
+            socket.on('connect', () => {
+                socket.emit('join-room', liveQuizId);
+            });
+            
+            fetch(`/api/quizcom/live/${liveQuizId}`, { headers: { 'x-auth-token': token } })
+            .then(res => res.ok ? res.json() : Promise.reject('Could not fetch quiz details.'))
+            .then(data => {
+                quizTitleEl.textContent = `Live Quiz: ${data.title}`;
+                quizCodeEl.textContent = data.quizCode;
+                updateParticipantsUI(data.participants || []);
+            })
+            .catch(err => {
+                quizTitleEl.textContent = "Error Loading Quiz";
+                alert(err.message);
+            });
+
+            // --- Button Event Listeners ---
+            pauseBtn.addEventListener('click', () => {
+                socket.emit('moderator-pause-quiz', { liveQuizId });
+                pauseBtn.classList.add('hidden');
+                resumeBtn.classList.remove('hidden');
+            });
+            resumeBtn.addEventListener('click', () => {
+                socket.emit('moderator-resume-quiz', { liveQuizId });
+                resumeBtn.classList.add('hidden');
+                pauseBtn.classList.remove('hidden');
+            });
+            nextQuestionBtn.addEventListener('click', () => {
+                socket.emit('moderator-next-question', { liveQuizId });
+                nextQuestionBtn.disabled = true;
+                nextQuestionBtn.textContent = 'Next Question';
+                pauseBtn.disabled = false;
+                showLeaderboardBtn.disabled = false;
+                leaderboardView.classList.add('hidden');
+                questionResultsView.classList.add('hidden');
+            });
+            showLeaderboardBtn.addEventListener('click', () => {
+                 socket.emit('moderator-show-leaderboard', { liveQuizId });
+                 questionView.classList.add('hidden');
+                 leaderboardView.classList.remove('hidden');
+            });
+            endQuizBtn.addEventListener('click', () => {
+                if(confirm('Are you sure you want to end this quiz for everyone?')) {
+                    socket.emit('moderator-end-quiz', { liveQuizId });
+                }
+            });
+
+            // --- Socket Event Handlers ---
+            socket.on('update-participants', updateParticipantsUI);
+            socket.on('moderator-new-question', handleNewQuestion);
+            socket.on('question-timer-update', (time) => questionTimerEl.textContent = `00:${String(time).padStart(2, '0')}`);
+            socket.on('question-stats-update', updateAnswerStats);
+            socket.on('question-ended', handleQuestionEnd);
+            socket.on('update-leaderboard', (participants) => updateLeaderboardUI(overallLeaderboardEl, participants));
+            socket.on('quiz-ended', ({ finalLeaderboard }) => {
+                alert('The quiz has now ended.');
+                updateLeaderboardUI(overallLeaderboardEl, finalLeaderboard);
+                questionView.classList.add('hidden');
+                leaderboardView.classList.remove('hidden');
+                setTimeout(() => window.location.href = 'quiz-library.html', 10000);
+            });
+
+            // --- UI Update Functions ---
+            function updateParticipantsUI(participants) {
+                participantCountEl.textContent = participants.length;
+                participantListEl.innerHTML = participants.length === 0 
+                    ? '<li class="text-gray-500">Waiting for participants...</li>'
+                    : participants.map(p => `<li class="text-gray-700 bg-gray-50 p-2 rounded">${p.fullName}</li>`).join('');
+            }
+
+            function handleNewQuestion({ question, questionIndex, totalQuestions }) {
+                waitingView.classList.add('hidden');
+                leaderboardView.classList.add('hidden');
+                questionView.classList.remove('hidden');
+                questionResultsView.classList.add('hidden');
+
+                questionNumberEl.textContent = `Question ${questionIndex + 1} of ${totalQuestions}`;
+                questionTextEl.textContent = question.text;
+
+                questionOptionsEl.innerHTML = '';
+                if(question.options) {
+                    question.options.forEach((opt, i) => {
+                        const isCorrect = (question.correctAnswer == i) || (question.correctAnswers && question.correctAnswers.includes(String(i)));
+                        const optionEl = document.createElement('div');
+                        optionEl.className = `p-2 rounded ${isCorrect ? 'bg-green-100 border border-green-400' : 'bg-gray-100'}`;
+                        optionEl.textContent = opt;
+                        questionOptionsEl.appendChild(optionEl);
+                    });
+                }
+            }
+            
+            function updateAnswerStats({ answeredCount, totalCount }) {
+                const percentage = totalCount > 0 ? (answeredCount / totalCount) * 100 : 0;
+                answerProgressBar.style.width = `${percentage}%`;
+                answerProgressText.textContent = `${answeredCount} / ${totalCount}`;
+            }
+
+            function handleQuestionEnd({ questionLeaderboard }) {
+                updateLeaderboardUI(questionLeaderboardEl, questionLeaderboard, "Top performers for this question");
+                questionResultsView.classList.remove('hidden');
+                nextQuestionBtn.disabled = false;
+            }
+
+            function updateLeaderboardUI(container, participants, title) {
+                container.innerHTML = title ? `<h3 class="text-md font-bold text-gray-800 mb-2">${title}</h3>` : '';
+                if (!participants || participants.length === 0) {
+                     container.innerHTML += '<p class="text-gray-500">No scores to display yet.</p>';
+                     return;
+                }
+                
+                participants.sort((a, b) => b.score - a.score);
+
+                participants.forEach((p, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'flex justify-between items-center p-3 rounded-lg bg-gray-100';
+                    div.innerHTML = `
+                        <span class="font-semibold text-gray-800">${index + 1}. ${p.fullName}</span>
+                        <span class="font-bold text-indigo-600">${p.score} pts</span>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+
