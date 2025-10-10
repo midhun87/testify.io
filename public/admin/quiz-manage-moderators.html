@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Moderators - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+         body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- This would be part of the main Admin dashboard -->
+    <div class="p-6">
+         <h1 class="text-2xl font-bold text-gray-800 mb-6">Manage QuizCom Moderators</h1>
+         
+         <!-- Create Moderator Form -->
+         <div class="bg-white p-6 rounded-xl shadow-md mb-8">
+             <h2 class="text-xl font-bold text-gray-800 mb-4">Add New Moderator</h2>
+             <form id="add-moderator-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                 <div>
+                     <label for="fullName" class="block text-sm font-medium text-gray-700">Full Name</label>
+                     <input type="text" id="fullName" required class="mt-1 w-full p-2 border rounded">
+                 </div>
+                 <div>
+                     <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                     <input type="email" id="email" required class="mt-1 w-full p-2 border rounded">
+                 </div>
+                 <div>
+                     <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                     <input type="password" id="password" required class="mt-1 w-full p-2 border rounded">
+                 </div>
+                 <div class="md:col-span-3">
+                    <button type="submit" class="w-full md:w-auto px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700">Create Account</button>
+                 </div>
+             </form>
+         </div>
+
+         <!-- Moderator List -->
+         <div class="bg-white p-6 rounded-xl shadow-md">
+             <h2 class="text-xl font-bold text-gray-800 mb-4">Existing Moderators</h2>
+             <div id="moderator-list" class="space-y-3">
+                 <!-- Moderator items will be loaded here -->
+             </div>
+         </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token'); // Assuming admin token is stored
+            
+            const addForm = document.getElementById('add-moderator-form');
+            const moderatorList = document.getElementById('moderator-list');
+
+            function fetchModerators() {
+                // Fetch and display moderators
+            }
+
+            addForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const fullName = document.getElementById('fullName').value;
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+
+                try {
+                    const response = await fetch('/api/admin/quiz-moderators', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify({ fullName, email, password })
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message);
+                    alert('Moderator created successfully!');
+                    addForm.reset();
+                    fetchModerators(); // Refresh the list
+                } catch(err) {
+                    alert('Error: ' + err.message);
+                }
+            });
+            fetchModerators();
+        });
+    </script>
+</body>
+</html>
