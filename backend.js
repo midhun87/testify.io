@@ -6,7 +6,7 @@ const { DynamoDBDocumentClient, PutCommand, GetCommand, ScanCommand, QueryComman
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
+// const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const multer = require('multer');
@@ -16,17 +16,267 @@ const cloudinary = require('cloudinary').v2;
 const { RekognitionClient, CompareFacesCommand } = require("@aws-sdk/client-rekognition");
 const crypto = require('crypto');
 const SibApiV3Sdk = require('sib-api-v3-sdk');
-
+const { Server } = require("socket.io"); 
+const http = require('http');
 
 const ZOOM_ACCOUNT_ID = process.env.ZOOM_ACCOUNT_ID || 'bq5-fIbESBONjaZAr184uA';
 const ZOOM_CLIENT_ID = process.env.ZOOM_CLIENT_ID || 'CXxbks94RlmD_90vofVqg';
 const ZOOM_CLIENT_SECRET = process.env.ZOOM_CLIENT_SECRET || 'XXoYPmG5z8rSf1J6Fov7iXSminmBRuO9';
 
+//Mails by SES
+
+const { SESv2Client, SendEmailCommand } = require("@aws-sdk/client-sesv2");
+
+const sesClient = new SESv2Client({
+    region: process.env.AWS_REGION || 'ap-south-1',
+    credentials: {
+        accessKeyId: process.env.AWS_SES_ACCESS_KEY_ID || 'AKIAT4YSUMZD755UHGW7',
+        secretAccessKey: process.env.AWS_SES_SECRET_ACCESS_KEY || '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'
+    }
+});
+
+async function sendEmailWithSES(mailOptions) {
+    // The 'to' field can be a string of comma-separated emails or an array. This handles both.
+    const toAddresses = Array.isArray(mailOptions.to)
+        ? mailOptions.to
+        : mailOptions.to.split(',').map(e => e.trim());
+
+    const params = {
+        FromEmailAddress: '"TESTIFY" <testifylearning.help@gmail.com>',
+        Destination: {
+            ToAddresses: toAddresses,
+        },
+        Content: {
+            Simple: {
+                Subject: {
+                    Data: mailOptions.subject,
+                    Charset: 'UTF-8',
+                },
+                Body: {
+                    Html: {
+                        Data: mailOptions.html,
+                        Charset: 'UTF-8',
+                    },
+                },
+            },
+        },
+    };
+
+    try {
+        const command = new SendEmailCommand(params);
+        const data = await sesClient.send(command);
+        console.log('Email sent successfully with SES:', data.MessageId);
+    } catch (error) {
+        console.error('Error sending email with SES:', error);
+    }
+}
+
+
+
+
 
 // --- INITIALIZATION ---
 const app = express();
+const server = http.createServer(app); // FIX: Create the HTTP server
+const io = new Server(server, { cors: { origin: "*" } }); // FIX: Attach socket.io to the server
 const PORT = 3000;
 const JWT_SECRET = 'your-super-secret-key-for-jwt-in-production';
+// In your backend.js file, find the io.on('connection', ...) block
+// and REPLACE the entire block with this new, updated logic.
+// This adds timers, question stats, and better state management.
+
+// =================================================================
+// --- REAL-TIME QUIZCOM LOGIC WITH WEBSOCKETS (UPDATED) ---
+// =================================================================
+const liveQuizTimers = {}; // In-memory store for server-side timers
+
+io.on('connection', (socket) => {
+    console.log('A user connected:', socket.id);
+
+    socket.on('join-room', (liveQuizId) => {
+        socket.join(liveQuizId);
+        console.log(`Socket ${socket.id} joined room ${liveQuizId}`);
+    });
+
+    socket.on('student-joined', async ({ liveQuizId, studentDetails }) => {
+        try {
+            const { Item: liveQuiz } = await docClient.send(new GetCommand({ TableName: "TestifyLiveQuizzes", Key: { liveQuizId } }));
+            if (liveQuiz) {
+                const newParticipant = { ...studentDetails, socketId: socket.id, score: 0 };
+                const updatedParticipants = [...(liveQuiz.participants || []), newParticipant];
+
+                await docClient.send(new UpdateCommand({
+                    TableName: "TestifyLiveQuizzes",
+                    Key: { liveQuizId },
+                    UpdateExpression: "set participants = :p",
+                    ExpressionAttributeValues: { ":p": updatedParticipants }
+                }));
+                io.to(liveQuizId).emit('update-participants', updatedParticipants);
+            }
+        } catch (error) { console.error("Error on student-joined:", error); }
+    });
+
+    socket.on('moderator-next-question', async ({ liveQuizId }) => {
+        try {
+            if (liveQuizTimers[liveQuizId]) { // Clear any existing timer for this quiz
+                clearInterval(liveQuizTimers[liveQuizId].interval);
+                delete liveQuizTimers[liveQuizId];
+            }
+
+            let { Item: liveQuiz } = await docClient.send(new GetCommand({ TableName: "TestifyLiveQuizzes", Key: { liveQuizId } }));
+            if (!liveQuiz) return;
+            
+            const { Item: originalQuiz } = await docClient.send(new GetCommand({ TableName: "TestifyTests", Key: { testId: liveQuiz.originalQuizId } }));
+            if (!originalQuiz) return;
+
+            const nextIndex = liveQuiz.currentQuestionIndex + 1;
+            
+            if (nextIndex < originalQuiz.questions.length) {
+                const question = originalQuiz.questions[nextIndex];
+                
+                await docClient.send(new UpdateCommand({
+                    TableName: "TestifyLiveQuizzes",
+                    Key: { liveQuizId },
+                    UpdateExpression: "set currentQuestionIndex = :idx, #s = :status, answeredBy = :empty",
+                    ExpressionAttributeNames: { "#s": "status" },
+                    ExpressionAttributeValues: { ":idx": nextIndex, ":status": "active", ":empty": [] }
+                }));
+
+                const { correctAnswer, correctAnswers, ...questionForStudent } = question;
+                
+                // Send question to students (without answers)
+                io.to(liveQuizId).emit('new-question', {
+                    question: questionForStudent,
+                    questionIndex: nextIndex,
+                    totalQuestions: originalQuiz.questions.length
+                });
+
+                // Send full question to moderator (with answers)
+                io.to(liveQuizId).emit('moderator-new-question', {
+                     question: question,
+                     questionIndex: nextIndex,
+                     totalQuestions: originalQuiz.questions.length
+                });
+
+                // Start server-side timer
+                let timeLeft = question.time || 30;
+                liveQuizTimers[liveQuizId] = {
+                    interval: setInterval(() => {
+                        timeLeft--;
+                        io.to(liveQuizId).emit('question-timer-update', timeLeft);
+                        if (timeLeft <= 0) {
+                            clearInterval(liveQuizTimers[liveQuizId].interval);
+                            delete liveQuizTimers[liveQuizId];
+                            endQuestionAndShowStats(liveQuizId);
+                        }
+                    }, 1000),
+                    timeout: setTimeout(() => {
+                        // This is a fallback in case interval is not cleared
+                        if(liveQuizTimers[liveQuizId]) {
+                             clearInterval(liveQuizTimers[liveQuizId].interval);
+                             delete liveQuizTimers[liveQuizId];
+                             endQuestionAndShowStats(liveQuizId);
+                        }
+                    }, (timeLeft + 1) * 1000)
+                };
+
+            } else { // Quiz is over
+                io.to(liveQuizId).emit('quiz-ended', { finalLeaderboard: liveQuiz.participants });
+                 await docClient.send(new UpdateCommand({
+                    TableName: "TestifyLiveQuizzes", Key: { liveQuizId },
+                    UpdateExpression: "set #s = :status",
+                    ExpressionAttributeNames: { "#s": "status" },
+                    ExpressionAttributeValues: { ":status": "completed" }
+                }));
+            }
+        } catch (error) { console.error("Next Question Error:", error); }
+    });
+    
+    socket.on('student-submit-answer', async ({ liveQuizId, questionIndex, answer }) => {
+        try {
+            let { Item: liveQuiz } = await docClient.send(new GetCommand({ TableName: "TestifyLiveQuizzes", Key: { liveQuizId } }));
+            const { Item: originalQuiz } = await docClient.send(new GetCommand({ TableName: "TestifyTests", Key: { testId: liveQuiz.originalQuizId } }));
+            
+            if (!liveQuiz.answeredBy || liveQuiz.answeredBy.includes(socket.id)) return; // Already answered
+
+            const question = originalQuiz.questions[questionIndex];
+            let isCorrect = false;
+            if (question.type === 'mcq-single' || question.type === 'fill-blank') {
+                isCorrect = String(answer) === String(question.correctAnswer);
+            } else if (question.type === 'mcq-multiple') {
+                 isCorrect = Array.isArray(answer) && answer.length === question.correctAnswers.length && answer.every(val => question.correctAnswers.includes(String(val)));
+            }
+
+            const participantIndex = liveQuiz.participants.findIndex(p => p.socketId === socket.id);
+            if (isCorrect && participantIndex > -1) {
+                liveQuiz.participants[participantIndex].score += (question.points || 10);
+            }
+            
+            liveQuiz.answeredBy.push(socket.id);
+
+            await docClient.send(new UpdateCommand({
+                TableName: "TestifyLiveQuizzes", Key: { liveQuizId },
+                UpdateExpression: "set participants = :p, answeredBy = :a",
+                ExpressionAttributeValues: { ":p": liveQuiz.participants, ":a": liveQuiz.answeredBy }
+            }));
+            
+            io.to(liveQuizId).emit('question-stats-update', { 
+                answeredCount: liveQuiz.answeredBy.length, 
+                totalCount: liveQuiz.participants.length 
+            });
+
+            // If all participants have answered, end the question early
+            if(liveQuiz.answeredBy.length === liveQuiz.participants.length) {
+                if(liveQuizTimers[liveQuizId]) {
+                    clearInterval(liveQuizTimers[liveQuizId].interval);
+                    clearTimeout(liveQuizTimers[liveQuizId].timeout);
+                    delete liveQuizTimers[liveQuizId];
+                }
+                endQuestionAndShowStats(liveQuizId);
+            }
+            
+        } catch(error) { console.error("Submit Answer Error:", error); }
+    });
+
+    // Other controls
+    socket.on('moderator-pause-quiz', ({ liveQuizId }) => io.to(liveQuizId).emit('quiz-paused'));
+    socket.on('moderator-resume-quiz', ({ liveQuizId }) => io.to(liveQuizId).emit('quiz-resumed'));
+    socket.on('moderator-show-leaderboard', async ({ liveQuizId }) => {
+        const { Item: liveQuiz } = await docClient.send(new GetCommand({ TableName: "TestifyLiveQuizzes", Key: { liveQuizId } }));
+        if(liveQuiz) io.to(liveQuizId).emit('update-leaderboard', liveQuiz.participants);
+    });
+     socket.on('moderator-end-quiz', async ({ liveQuizId }) => {
+        const { Item: liveQuiz } = await docClient.send(new GetCommand({ TableName: "TestifyLiveQuizzes", Key: { liveQuizId } }));
+        if(liveQuiz) {
+            io.to(liveQuizId).emit('quiz-ended', { finalLeaderboard: liveQuiz.participants });
+             await docClient.send(new UpdateCommand({
+                TableName: "TestifyLiveQuizzes", Key: { liveQuizId },
+                UpdateExpression: "set #s = :status",
+                ExpressionAttributeNames: { "#s": "status" },
+                ExpressionAttributeValues: { ":status": "completed" }
+            }));
+        }
+    });
+
+    socket.on('disconnect', () => console.log('User disconnected:', socket.id));
+});
+
+async function endQuestionAndShowStats(liveQuizId) {
+    try {
+        const { Item: liveQuiz } = await docClient.send(new GetCommand({ TableName: "TestifyLiveQuizzes", Key: { liveQuizId } }));
+        if (liveQuiz) {
+            io.to(liveQuizId).emit('question-ended', { questionLeaderboard: liveQuiz.participants });
+            io.to(liveQuizId).emit('update-leaderboard', liveQuiz.participants);
+        }
+    } catch(error) {
+        console.error("End of Question Error:", error);
+    }
+}
+// =================================================================
+// --- END OF REAL-TIME LOGIC ---
+// =================================================================
+
+
 
 // --- AWS DYNAMODB CLIENT SETUP ---
 const client = new DynamoDBClient({
@@ -37,34 +287,6 @@ const client = new DynamoDBClient({
     }
 });
 const docClient = DynamoDBDocumentClient.from(client);
-
-// --- NODEMAILER TRANSPORTER SETUP ---
-// --- NODEMAILER TRANSPORTER SETUP ---
-let defaultClient = SibApiV3Sdk.ApiClient.instance;
-
-// Configure API key authorization: api-key
-let apiKey = defaultClient.authentications['api-key'];
-// IMPORTANT: Store this in an environment variable (e.g., BREVO_API_KEY) on Render
-apiKey.apiKey = process.env.BREVO_API_KEY || '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';
-
-// How to use it to send mail:
-async function sendEmailWithBrevo(mailOptions) {
-    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-
-    sendSmtpEmail.subject = mailOptions.subject;
-    sendSmtpEmail.htmlContent = mailOptions.html;
-    sendSmtpEmail.sender = { name: 'TESTIFY', email: 'testifylearning.help@gmail.com' }; // Must be a verified sender
-    sendSmtpEmail.to = [{ email: mailOptions.to }];
-
-    try {
-        await apiInstance.sendTransacEmail(sendSmtpEmail);
-        console.log('Email sent successfully with Brevo');
-    } catch (error) {
-        console.error('Error sending email with Brevo:', error);
-    }
-}
-
 
 // --- CLOUDINARY CONFIG ---
 cloudinary.config({
@@ -184,6 +406,38 @@ app.use('/moderator', express.static(path.join(__dirname, 'public/moderator')));
 // =================================================================
 
 
+// const authMiddleware = async (req, res, next) => {
+//     const token = req.header('x-auth-token');
+//     if (!token) {
+//         return res.status(401).json({ message: 'No token, authorization denied' });
+//     }
+//     try {
+//         const decoded = jwt.verify(token, JWT_SECRET);
+//         req.user = decoded.user;
+
+//         const { Item } = await docClient.send(new GetCommand({
+//             TableName: "TestifyUsers",
+//             Key: { email: req.user.email }
+//         }));
+
+//         if (!Item) {
+//             return res.status(404).json({ message: 'User not found.' });
+//         }
+
+//         if (Item.isBlocked) {
+//             return res.status(403).json({ message: 'Your account has been blocked by the administrator.' });
+//         }
+
+//         if (Item.role === 'Moderator') {
+//             req.user.assignedColleges = Item.assignedColleges || [];
+//         }
+
+
+//         next();
+//     } catch (e) {
+//         res.status(401).json({ message: 'Token is not valid' });
+//     }
+// };
 const authMiddleware = async (req, res, next) => {
     const token = req.header('x-auth-token');
     if (!token) {
@@ -193,30 +447,32 @@ const authMiddleware = async (req, res, next) => {
         const decoded = jwt.verify(token, JWT_SECRET);
         req.user = decoded.user;
 
-        const { Item } = await docClient.send(new GetCommand({
-            TableName: "TestifyUsers",
-            Key: { email: req.user.email }
-        }));
+        // For internal users, verify they exist and are not blocked.
+        // For external hiring candidates (isExternal: true), this check is skipped.
+        if (!req.user.isExternal) {
+            const { Item } = await docClient.send(new GetCommand({
+                TableName: "TestifyUsers",
+                Key: { email: req.user.email }
+            }));
 
-        if (!Item) {
-            return res.status(404).json({ message: 'User not found.' });
+            if (!Item) {
+                return res.status(404).json({ message: 'User not found.' });
+            }
+
+            if (Item.isBlocked) {
+                return res.status(403).json({ message: 'Your account has been blocked by the administrator.' });
+            }
+
+            if (Item.role === 'Moderator') {
+                req.user.assignedColleges = Item.assignedColleges || [];
+            }
         }
 
-        if (Item.isBlocked) {
-            return res.status(403).json({ message: 'Your account has been blocked by the administrator.' });
-        }
-
-        if (Item.role === 'Moderator') {
-            req.user.assignedColleges = Item.assignedColleges || [];
-        }
-
-
-        next();
+        next(); // Allows the request to proceed for all valid tokens.
     } catch (e) {
         res.status(401).json({ message: 'Token is not valid' });
     }
 };
-
 // const authMiddleware = async (req, res, next) => {
 //     const token = req.header('x-auth-token');
 //     if (!token) {
@@ -259,15 +515,73 @@ const authMiddleware = async (req, res, next) => {
 //     next();
 // };
 
+const quizModeratorAuth = (req, res, next) => {
+    if (req.user.role !== 'QuizCom Moderator') {
+        return res.status(403).json({ message: 'Access denied. QuizCom Moderator role required.' });
+    }
+    next();
+};
+//=================================================================
+//--- OTP IMPLEMENTATION ---
+//=================================================================
+//In-memory store for OTPs. In a real application, use a database with TTL.
+const otpStore = {};
 
+// UPDATED ENDPOINT: Send OTP to user's email, no more new tabs.
+app.post('/api/send-otp', async (req, res) => {
+    // The mobile number is collected on the frontend but not used for OTP.
+    // We only need the email for this new flow.
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required.' });
+    }
 
-// =================================================================
-// --- OTP IMPLEMENTATION ---
-// =================================================================
-// In-memory store for OTPs. In a real application, use a database with TTL.
+    try {
+        // Check if user already exists
+        const existingUser = await docClient.send(new GetCommand({ TableName: "TestifyUsers", Key: { email: email.toLowerCase() } }));
+        if (existingUser.Item) {
+            return res.status(400).json({ message: 'An account with this email already exists.' });
+        }
+
+        // Generate a 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        // Set OTP to expire in 5 minutes
+        const expirationTime = Date.now() + 5 * 60 * 1000;
+
+        // Store the OTP and its expiration time
+        otpStore[email.toLowerCase()] = { otp, expirationTime };
+        console.log(`Generated OTP for ${email}: ${otp}`); // For debugging
+
+        // Email content
+        const mailOptions = {
+            to: email,
+            subject: 'Your TESTIFY Verification Code',
+            html: `
+                <div style="font-family: Arial, sans-serif; text-align: center; color: #333; padding: 20px;">
+                    <img src="[https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png](https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png)" alt="Testify Logo" style="height: 50px; margin-bottom: 20px;">
+                    <h2>Verify Your Account</h2>
+                    <p>Here is your One-Time Password (OTP) to complete your account creation.</p>
+                    <p style="font-size: 28px; font-weight: bold; letter-spacing: 4px; color: #4F46E5; background-color: #f0f0f0; padding: 15px; border-radius: 8px; display: inline-block;">
+                        ${otp}
+                    </p>
+                    <p style="margin-top: 20px;">This OTP is valid for 5 minutes. Please do not share it with anyone.</p>
+                </div>
+            `
+        };
+
+        // Send the email (using the existing SES function in your code)
+        await sendEmailWithSES(mailOptions);
+
+        res.status(200).json({ message: 'OTP sent successfully. Please check your email.' });
+
+    } catch (error) {
+        console.error("Send OTP Error:", error);
+        res.status(500).json({ message: 'Server error sending OTP. Please try again.' });
+    }
+});
+
 // const otpStore = {};
 
-// // NEW ENDPOINT: Send OTP to user's email
 // app.post('/api/send-otp', async (req, res) => {
 //     const { email } = req.body;
 //     if (!email) {
@@ -281,159 +595,52 @@ const authMiddleware = async (req, res, next) => {
 //         }
 
 //         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-//         const expirationTime = Date.now() + 5 * 60 * 1000; // 5 minutes from now
+//         const expirationTime = Date.now() + 5 * 60 * 1000; // 5 minutes
+//         const verificationToken = uuidv4();
 
-//         otpStore[email.toLowerCase()] = { otp, expirationTime };
+//         otpStore[email.toLowerCase()] = { otp, expirationTime, verificationToken };
 //         console.log(`Generated OTP for ${email}: ${otp}`);
 
-//         const mailOptions = {
-//     from: '"TESTIFY" <testifylearning.help@gmail.com>',
-//     to: email,
-//     subject: 'TESTIFY Account Verification',
-//     html: `<!DOCTYPE html>
-// <html lang="en">
-// <head>
-//     <meta charset="UTF-8" />
-//     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-//     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-//     <title>Account Verification</title>
-//     <style>
-//         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-//         body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
-//         a { text-decoration: none; }
-//         @media screen and (max-width: 600px) {
-//             .content-width {
-//                 width: 90% !important;
-//             }
-//         }
-//     </style>
-// </head>
-// <body style="background-color: #f3f4f6; margin: 0; padding: 0;">
-//     <!-- Preheader text for inbox preview -->
-//     <span style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
-//         Your verification code is here.
-//     </span>
-//     <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
-//         <tr>
-//             <td align="center" style="padding: 40px 20px;">
-//                 <!-- Main Card -->
-//                 <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
-//                     <!-- Header -->
-//                     <tr>
-//                         <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
-//                             <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" 
-//                                  alt="Testify Logo" style="height: 50px; width: auto;">
-//                         </td>
-//                     </tr>
-                    
-//                     <!-- Content Body -->
-//                     <tr>
-//                         <td align="center" style="padding: 40px; text-align: center;">
-//                              <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">Verify Your Account</h1>
-//                              <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 30px; line-height: 1.7;">
-//                                  Here is your One-Time Password (OTP) to complete your account creation.
-//                              </p>
-//                              <div style="background-color: #f3f4f6; border-radius: 8px; padding: 20px 25px; display: inline-block;">
-//                                  <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 32px; font-weight: 700; color: #111827; margin: 0; letter-spacing: 5px;">
-//                                      ${otp}
-//                                  </p>
-//                              </div>
-//                              <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
-//                                  This OTP is valid for 5 minutes. For your security, please do not share it with anyone.
-//                              </p>
-//                         </td>
-//                     </tr>
-                    
-//                     <!-- Footer -->
-//                     <tr>
-//                         <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
-//                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
-//                                 &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
-//                             </p>
-//                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
-//                                 Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
-//                             </p>
-//                         </td>
-//                     </tr>
-//                 </table>
-//             </td>
-//         </tr>
-//     </table>
-// </body>
-// </html>`
-// };
+//         // Construct the verification link that will be opened in a new tab
+//         const verificationLink = `/verify-otp.html?token=${verificationToken}`;
 
+//         // Send the link back to the frontend instead of sending an email
+//         res.status(200).json({ 
+//             message: 'Verification token generated.',
+//             verificationLink: verificationLink 
+//         });
 
-//        await sendEmailWithBrevo(mailOptions);
-
-//         res.status(200).json({ message: 'OTP sent successfully. Please check your email.' });
 //     } catch (error) {
 //         console.error("Send OTP Error:", error);
-//         res.status(500).json({ message: 'Server error sending OTP. Please try again.' });
+//         res.status(500).json({ message: 'Server error generating verification code. Please try again.' });
 //     }
 // });
 
-const otpStore = {};
+// // Endpoint to get OTP using the secure token from the verification page
+// app.post('/api/get-otp-by-token', (req, res) => {
+//     const { token } = req.body;
+//     if (!token) {
+//         return res.status(400).json({ message: 'Verification token is missing.' });
+//     }
 
-app.post('/api/send-otp', async (req, res) => {
-    const { email } = req.body;
-    if (!email) {
-        return res.status(400).json({ message: 'Email is required.' });
-    }
+//     const email = Object.keys(otpStore).find(key => otpStore[key].verificationToken === token);
 
-    try {
-        const existingUser = await docClient.send(new GetCommand({ TableName: "TestifyUsers", Key: { email: email.toLowerCase() } }));
-        if (existingUser.Item) {
-            return res.status(400).json({ message: 'User with this email already exists.' });
-        }
+//     if (!email) {
+//         return res.status(404).json({ message: 'This verification link is invalid or has already been used.' });
+//     }
 
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expirationTime = Date.now() + 5 * 60 * 1000; // 5 minutes
-        const verificationToken = uuidv4();
+//     const otpData = otpStore[email];
 
-        otpStore[email.toLowerCase()] = { otp, expirationTime, verificationToken };
-        console.log(`Generated OTP for ${email}: ${otp}`);
-
-        // Construct the verification link that will be opened in a new tab
-        const verificationLink = `/verify-otp.html?token=${verificationToken}`;
-
-        // Send the link back to the frontend instead of sending an email
-        res.status(200).json({ 
-            message: 'Verification token generated.',
-            verificationLink: verificationLink 
-        });
-
-    } catch (error) {
-        console.error("Send OTP Error:", error);
-        res.status(500).json({ message: 'Server error generating verification code. Please try again.' });
-    }
-});
-
-// Endpoint to get OTP using the secure token from the verification page
-app.post('/api/get-otp-by-token', (req, res) => {
-    const { token } = req.body;
-    if (!token) {
-        return res.status(400).json({ message: 'Verification token is missing.' });
-    }
-
-    const email = Object.keys(otpStore).find(key => otpStore[key].verificationToken === token);
-
-    if (!email) {
-        return res.status(404).json({ message: 'This verification link is invalid or has already been used.' });
-    }
-
-    const otpData = otpStore[email];
-
-    if (Date.now() > otpData.expirationTime) {
-        delete otpStore[email];
-        return res.status(400).json({ message: 'This verification link has expired.' });
-    }
+//     if (Date.now() > otpData.expirationTime) {
+//         delete otpStore[email];
+//         return res.status(400).json({ message: 'This verification link has expired.' });
+//     }
     
-    res.json({ otp: otpData.otp });
+//     res.json({ otp: otpData.otp });
     
-    // Invalidate the token after use
-    delete otpStore[email];
-});
+//     // Invalidate the token after use
+//     delete otpStore[email];
+// });
 
 
 // =================================================================
@@ -948,7 +1155,7 @@ async function issueCertificateAutomatically(testId, studentEmail) {
 
 
 
-       await sendEmailWithBrevo(mailOptions);
+       await sendEmailWithSES(mailOptions);
         console.log(`Successfully auto-issued certificate to ${studentEmail} for test ${testTitle}`);
 
     } catch (error) {
@@ -970,23 +1177,47 @@ app.get('/', (req, res) => {
 // =================================================================
 
 app.post('/api/signup', async (req, res) => {
-    // This endpoint now expects all the fields from the new signup form
-    const { fullName, email, mobile, college, department, year, rollNumber, password } = req.body;
-    
-    // Validate that all required fields are present
+    // Now also expecting 'otp' from the form
+    const { otp, fullName, email, mobile, college, department, year, rollNumber, password } = req.body;
+
+    if (!otp) {
+        return res.status(400).json({ message: 'Verification code is required.' });
+    }
+
+    // --- OTP Verification Logic ---
+    const emailLower = email.toLowerCase();
+    const storedOtpData = otpStore[emailLower];
+
+    if (!storedOtpData) {
+        return res.status(400).json({ message: 'Invalid or expired verification code. Please request a new one.' });
+    }
+    if (storedOtpData.otp !== otp) {
+        return res.status(400).json({ message: 'The verification code is incorrect.' });
+    }
+    if (Date.now() > storedOtpData.expirationTime) {
+        delete otpStore[emailLower]; // Clean up expired OTP
+        return res.status(400).json({ message: 'Verification code has expired. Please request a new one.' });
+    }
+    // --- End of OTP Verification ---
+
+    // Validate that all other required fields are present
     if (!fullName || !email || !mobile || !college || !department || !year || !rollNumber || !password) {
         return res.status(400).json({ message: 'Please fill all fields.' });
     }
 
     try {
-        // Check if a user with the same email already exists
-        const existingUser = await docClient.send(new GetCommand({ 
-            TableName: "TestifyUsers", 
-            Key: { email: email.toLowerCase() } 
+        // Check if a user with the same email already exists (double-check)
+        const existingUser = await docClient.send(new GetCommand({
+            TableName: "TestifyUsers",
+            Key: { email: emailLower }
         }));
         if (existingUser.Item) {
+            delete otpStore[emailLower]; // Clean up OTP
             return res.status(400).json({ message: 'User with this email already exists.' });
         }
+
+        // OTP is valid, so we can delete it now
+        delete otpStore[emailLower];
 
         // Hash the password for security
         const salt = await bcrypt.genSalt(10);
@@ -994,7 +1225,7 @@ app.post('/api/signup', async (req, res) => {
 
         // Create the new user object
         const newUser = {
-            email: email.toLowerCase(),
+            email: emailLower,
             fullName,
             mobile,
             college,
@@ -1002,14 +1233,14 @@ app.post('/api/signup', async (req, res) => {
             department,
             rollNumber,
             password: hashedPassword,
-            role: "Student", // Default role for signup
+            role: "Student",
             isBlocked: false
         };
 
         // Save the new user to the database
         await docClient.send(new PutCommand({ TableName: "TestifyUsers", Item: newUser }));
-        
-        res.status(201).json({ message: 'Account created successfully! Please log in.' });
+
+        res.status(201).json({ message: 'Account created successfully! Redirecting to login...' });
 
     } catch (error) {
         console.error("Signup Error:", error);
@@ -1290,7 +1521,7 @@ app.post('/api/assign-test', authMiddleware, adminOrModeratorAuth, async (req, r
     };
     // Your email sending logic would go here
 
-           await sendEmailWithBrevo(mailOptions);
+           await sendEmailWithSES(mailOptions);
         }
         res.status(200).json({ message: 'Test assigned successfully!' });
     } catch (error) {
@@ -1365,7 +1596,14 @@ app.get('/api/admin/dashboard-data', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Access denied.' });
 
     try {
-        const { Items: tests } = await docClient.send(new ScanCommand({ TableName: "TestifyTests" }));
+        // --- FIX APPLIED HERE ---
+        // We now filter the scan to only include items that are tests.
+        // Meetings have an "isMeeting" attribute, so we select items where that attribute does not exist.
+        const { Items: tests } = await docClient.send(new ScanCommand({ 
+            TableName: "TestifyTests",
+            FilterExpression: "attribute_not_exists(isMeeting)"
+        }));
+
         const { Items: students } = await docClient.send(new ScanCommand({ TableName: "TestifyUsers", FilterExpression: "#role = :student", ExpressionAttributeNames: {"#role": "role"}, ExpressionAttributeValues: {":student": "Student"} }));
         const { Items: results } = await docClient.send(new ScanCommand({ TableName: "TestifyResults" }));
 
@@ -1661,7 +1899,7 @@ app.post('/api/admin/assign-course', authMiddleware, adminOrModeratorAuth, async
     // You would add your email sending logic here, e.g., transporter.sendMail(mailOptions);
 
 
-           await sendEmailWithBrevo(mailOptions);
+           await sendEmailWithSES(mailOptions);
         }
 
         res.status(200).json({ message: `Course assigned to ${studentsToAssign.length} students successfully!` });
@@ -1890,7 +2128,7 @@ app.post('/api/student/courses/progress', authMiddleware, async (req, res) => {
 </html>`
 };
 
-               await sendEmailWithBrevo(mailOptions);
+               await sendEmailWithSES(mailOptions);
             }
             res.json({ message: 'Progress updated. Course complete and final test assigned!' });
         } else {
@@ -2433,7 +2671,7 @@ app.post('/api/admin/issue-certificates', authMiddleware, async (req, res) => {
 };
 
 
-           await sendEmailWithBrevo(mailOptions);
+           await sendEmailWithSES(mailOptions);
         }
         res.status(200).json({ message: `Successfully issued ${passedStudents.length} certificates.` });
 
@@ -3881,7 +4119,7 @@ const mailOptions = {
 
 
 
-       await sendEmailWithBrevo(mailOptions);
+       await sendEmailWithSES(mailOptions);
         res.status(200).json({ message: 'Password reset link sent to your email.' });
 
     } catch (error) {
@@ -5299,7 +5537,7 @@ if (studentEmails.length > 0) {
 </body>
 </html>`
     };
-               await sendEmailWithBrevo(mailOptions);
+               await sendEmailWithSES(mailOptions);
             }
         }
         
@@ -5429,7 +5667,7 @@ app.post('/api/admin/contests', authMiddleware, async (req, res) => {
                     subject: `New Coding Contest Assigned: ${title}`,
                     html: `<p>Hello,</p><p>A new coding contest, "<b>${title}</b>", has been assigned to you. Please log in to your TESTIFY dashboard to participate.</p><p>Best regards,<br/>The TESTIFY Team</p>`
                 };
-               await sendEmailWithBrevo(mailOptions);
+               await sendEmailWithSES(mailOptions);
             }
         }
 
@@ -5874,7 +6112,7 @@ app.post('/api/admin/issue-course-certificates', authMiddleware, async (req, res
             };
             
             // FIX: Added the missing line to actually send the email.
-           await sendEmailWithBrevo(mailOptions);
+           await sendEmailWithSES(mailOptions);
         }
         res.status(200).json({ message: `Successfully issued ${studentEmails.length} certificates.` });
     } catch (error) {
@@ -6361,7 +6599,7 @@ app.post('/api/careers/send-view-otp', async (req, res) => {
             `
         };
 
-       await sendEmailWithBrevo(mailOptions);
+       await sendEmailWithSES(mailOptions);
         res.status(200).json({ message: 'A verification code has been sent to your email.' });
 
     } catch (error) {
@@ -6673,7 +6911,7 @@ app.post('/api/assign-fullscreen-test', authMiddleware, adminOrModeratorAuth, as
 </body>
 </html>`
             };
-           await sendEmailWithBrevo(mailOptions);
+           await sendEmailWithSES(mailOptions);
         }
         res.status(200).json({ message: 'Full Screen Test assigned successfully!' });
     } catch (error) {
@@ -6916,7 +7154,7 @@ app.post('/api/meetings/schedule', authMiddleware, adminOrModeratorAuth, async (
                 subject: `Invitation: ${title}`,
                 html: `<p>You have been invited to a meeting: <strong>${title}</strong>.</p><p>It is scheduled for ${new Date(startTime).toLocaleString()}. Please check your dashboard to join.</p>`
             };
-           await sendEmailWithBrevo(mailOptions);
+           await sendEmailWithSES(mailOptions);
         }
         res.status(201).json({ message: 'Zoom meeting scheduled and assigned successfully!', meeting: newMeeting });
     } catch (error) {
@@ -7254,12 +7492,858 @@ app.get('/api/student/test-preview/:resultId', authMiddleware, async (req, res) 
         res.status(500).json({ message: 'Server error fetching test preview.' });
     }
 });
+// const authMiddleware = async (req, res, next) => {
+//     const token = req.header('x-auth-token');
+//     if (!token) {
+//         return res.status(401).json({ message: 'No token, authorization denied' });
+//     }
+//     try {
+//         const decoded = jwt.verify(token, JWT_SECRET);
+//         req.user = decoded.user;
 
+//         // For internal users, verify they exist and are not blocked.
+//         // For external hiring candidates (isExternal: true), this check is skipped.
+//         if (!req.user.isExternal) {
+//             const { Item } = await docClient.send(new GetCommand({
+//                 TableName: "TestifyUsers",
+//                 Key: { email: req.user.email }
+//             }));
 
+//             if (!Item) {
+//                 return res.status(404).json({ message: 'User not found.' });
+//             }
 
-// --- SERVER START ---
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+//             if (Item.isBlocked) {
+//                 return res.status(403).json({ message: 'Your account has been blocked by the administrator.' });
+//             }
+
+//             if (Item.role === 'Moderator') {
+//                 req.user.assignedColleges = Item.assignedColleges || [];
+//             }
+//         }
+
+//         next(); // Allows the request to proceed for all valid tokens.
+//     } catch (e) {
+//         res.status(401).json({ message: 'Token is not valid' });
+//     }
+// };
+// =================================================================
+// --- HIRE WITH US FEATURE ENDPOINTS ---
+// =================================================================
+
+// ADMIN: Create a new Hiring Moderator
+app.post('/api/admin/hiring-moderators', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    const { fullName, email, password } = req.body;
+    if (!fullName || !email || !password) {
+        return res.status(400).json({ message: 'Please provide full name, email, and password.' });
+    }
+
+    try {
+        const existingUser = await docClient.send(new GetCommand({ TableName: "TestifyUsers", Key: { email: email.toLowerCase() } }));
+        if (existingUser.Item) {
+            return res.status(400).json({ message: 'User with this email already exists.' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const newModerator = {
+            email: email.toLowerCase(),
+            fullName,
+            password: hashedPassword,
+            role: "Hiring Moderator", // New Role
+            isBlocked: false
+        };
+
+        await docClient.send(new PutCommand({ TableName: "TestifyUsers", Item: newModerator }));
+        res.status(201).json({ message: 'Hiring Moderator account created successfully!' });
+    } catch (error) {
+        console.error("Create Hiring Moderator Error:", error);
+        res.status(500).json({ message: 'Server error during hiring moderator creation.' });
+    }
 });
 
+// HIRING MODERATOR: Create a new Test
+app.post('/api/hiring/tests', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator' && req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    
+    // Sections are part of the questions array
+    const { testTitle, duration, totalMarks, passingPercentage, sections } = req.body;
+    const testId = `hire_${uuidv4()}`;
+
+    const newTest = {
+        testId,
+        title: testTitle,
+        duration,
+        totalMarks,
+        passingPercentage,
+        sections, // e.g., [{ title: "Section A", questions: [...] }]
+        createdBy: req.user.email,
+        testType: 'hiring',
+        createdAt: new Date().toISOString()
+    };
+
+    try {
+        await docClient.send(new PutCommand({ TableName: "TestifyTests", Item: newTest }));
+        res.status(201).json({ message: 'Hiring test created successfully!', test: newTest });
+    } catch (error) {
+        console.error("Create Hiring Test Error:", error);
+        res.status(500).json({ message: 'Server error creating hiring test.' });
+    }
+});
+
+
+// NEW ENDPOINT TO FETCH HIRING TESTS
+app.get('/api/hiring/tests', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyTests",
+            FilterExpression: "testType = :type AND createdBy = :creator",
+            ExpressionAttributeValues: {
+                ":type": "hiring",
+                ":creator": req.user.email
+            }
+        }));
+        res.json(Items);
+    } catch (error) {
+        console.error("Get Hiring Tests Error:", error);
+        res.status(500).json({ message: 'Server error fetching hiring tests.' });
+    }
+});
+
+
+// HIRING: Assign a test to external candidates
+app.post('/api/hiring/assign-test', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    const { testId, candidateEmails, startTime, endTime } = req.body;
+
+    try {
+        const { Item: test } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests",
+            Key: { testId }
+        }));
+
+        if (!test) {
+            return res.status(404).json({ message: "Test not found." });
+        }
+        const testName = test.title;
+
+        for (const email of candidateEmails) {
+            const assignmentId = uuidv4();
+            const payload = { 
+                user: { 
+                    email: email, 
+                    testId: testId, 
+                    assignmentId: assignmentId,
+                    isExternal: true 
+                } 
+            };
+            
+            const testToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+            const testLink = `${req.protocol}://${req.get('host')}/student/hiring-test.html?token=${testToken}`;
+
+            await docClient.send(new PutCommand({
+                TableName: "TestifyAssignments",
+                Item: { 
+                    assignmentId, 
+                    testId, 
+                    studentEmail: email, 
+                    assignedBy: req.user.email,
+                    startTime,
+                    endTime,
+                    testToken,
+                    assignedAt: new Date().toISOString() 
+                }
+            }));
+            
+            const mailOptions = {
+                to: [email],
+                subject: `Invitation to take the test: ${testName}`,
+                html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Test Invitation</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; }
+        @media screen and (max-width: 600px) {
+            .content-width {
+                width: 90% !important;
+            }
+        }
+    </style>
+</head>
+<body style="background-color: #f3f4f6; margin: 0; padding: 0;">
+    <!-- Preheader text for inbox preview -->
+    <span style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        You have been invited to take a test.
+    </span>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <!-- Main Card -->
+                <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
+                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" 
+                                 alt="Testify Logo" style="height: 50px; width: auto;">
+                        </td>
+                    </tr>
+                    
+                    <!-- Content Body -->
+                    <tr>
+                        <td align="center" style="padding: 40px; text-align: center;">
+                             <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">Test Invitation</h1>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 20px; line-height: 1.7;">
+                                 You have been invited to take the test: <strong>${testName}</strong>.
+                             </p>
+                             <div style="background-color: #f9fafb; border-radius: 8px; padding: 15px 20px; margin-bottom: 30px; border: 1px solid #e5e7eb; text-align: left;">
+                                <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #4b5563; margin: 0 0 8px;"><b>Start Time:</b> ${new Date(startTime).toLocaleString()}</p>
+                                <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #4b5563; margin: 0;"><b>End Time:</b> ${new Date(endTime).toLocaleString()}</p>
+                             </div>
+                             <a href="${testLink}" 
+                                target="_blank"
+                                style="display: inline-block; padding: 15px 35px; font-family: 'Poppins', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #3b82f6; border-radius: 8px; text-decoration: none;">
+                                 Start Test
+                             </a>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
+                                 Please ensure you complete the test within the specified window. Good luck!
+                             </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
+                                &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
+                            </p>
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
+                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+            };
+           await sendEmailWithSES(mailOptions);
+        }
+        res.status(200).json({ message: `Test assigned successfully to ${candidateEmails.length} candidates!` });
+    } catch (error) {
+        console.error("Assign Hiring Test Error:", error);
+        res.status(500).json({ message: 'Server error assigning test.' });
+    }
+});
+
+
+// HIRING MODERATOR: Get Test History
+app.get('/api/hiring/test-history', authMiddleware, async (req, res) => {
+    // This route is for Hiring Moderators to see the results of tests they've created.
+    if (req.user.role !== 'Hiring Moderator' && req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    
+    try {
+        // Step 1: Fetch all tests that were created by the logged-in hiring moderator.
+        const { Items: tests } = await docClient.send(new ScanCommand({ 
+            TableName: "TestifyTests",
+            FilterExpression: "createdBy = :email AND testType = :type",
+            ExpressionAttributeValues: {
+                ":email": req.user.email,
+                ":type": "hiring"
+            }
+        }));
+
+        const testIds = tests.map(t => t.testId);
+        if (testIds.length === 0) {
+            // If the moderator has no tests, return an empty array.
+            return res.json([]);
+        }
+
+        // Step 2: Fetch all results that correspond to this moderator's tests.
+        // This is more efficient than scanning the entire results table.
+        const filterExpression = testIds.map((_, i) => `:tid${i}`).join(', ');
+        const expressionAttributeValues = {};
+        testIds.forEach((id, i) => expressionAttributeValues[`:tid${i}`] = id);
+
+        const { Items: results } = await docClient.send(new ScanCommand({
+            TableName: "TestifyResults",
+            FilterExpression: `testId IN (${filterExpression})`,
+            ExpressionAttributeValues: expressionAttributeValues
+        }));
+
+        // Step 3: Aggregate the data. For each test, calculate the number of attempts, passes, and fails.
+        const history = tests.map(test => {
+            const relevantResults = results.filter(r => r.testId === test.testId);
+            const passedCount = relevantResults.filter(r => r.result === 'Pass').length;
+            const failedCount = relevantResults.length - passedCount;
+            
+            return {
+                testId: test.testId,
+                title: test.title,
+                attempted: relevantResults.length,
+                passed: passedCount, // Added for convenience on the frontend
+                failed: failedCount, // Added for convenience on the frontend
+                results: relevantResults // Keep the full results for detailed view
+            };
+        });
+
+        res.json(history);
+    } catch (error) {
+        console.error("Get Hiring Test History Error:", error);
+        res.status(500).json({ message: 'Server error fetching history.' });
+    }
+});
+
+
+// EXTERNAL CANDIDATE: Get test details using token
+app.get('/api/public/test-details', authMiddleware, async (req, res) => {
+    // This endpoint is called when a candidate clicks the test link.
+    if (!req.user.isExternal) {
+        return res.status(403).json({ message: 'Access denied for this resource.' });
+    }
+    try {
+        const { testId, email, assignmentId } = req.user;
+
+        // Verify the assignment is still valid (not expired, etc.)
+        const { Item: assignment } = await docClient.send(new GetCommand({
+            TableName: "TestifyAssignments",
+            Key: { assignmentId }
+        }));
+        if (!assignment || assignment.studentEmail !== email || new Date() > new Date(assignment.endTime) || new Date() < new Date(assignment.startTime)) {
+            return res.status(403).json({ message: 'This test link is invalid, expired, or not yet active.' });
+        }
+
+        // --- FIX APPLIED HERE ---
+        // Check if a result already exists FOR THIS SPECIFIC INVITATION (assignmentId).
+        // This allows a new invitation for the same test to work.
+        const { Items: existingResults } = await docClient.send(new ScanCommand({
+            TableName: "TestifyResults",
+            FilterExpression: "assignmentId = :aid",
+            ExpressionAttributeValues: { ":aid": assignmentId }
+        }));
+
+        if (existingResults && existingResults.length > 0) {
+            // If a result is found for this assignmentId, block access.
+            return res.status(403).json({ message: 'This test link has already been used. Only one attempt per invitation is allowed.' });
+        }
+
+
+        // If no submission is found, fetch and return the test details.
+        const { Item: test } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests",
+            Key: { testId }
+        }));
+
+        if (!test) {
+            return res.status(404).json({ message: 'Test not found.' });
+        }
+        res.json(test);
+    } catch (error) {
+        console.error("Public Test Details Error:", error);
+        res.status(500).json({ message: 'Server error fetching test details.' });
+    }
+});
+
+
+// EXTERNAL CANDIDATE: Submit Test
+app.post('/api/public/submit-test', authMiddleware, async (req, res) => {
+    if (!req.user.isExternal) {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    
+    // **MODIFIED**: Destructure new fields from request body
+    const { answers, timeTaken, violationReason, fullName, rollNumber, collegeName } = req.body;
+    const { testId, email, assignmentId } = req.user;
+    const resultId = uuidv4();
+
+    try {
+        const { Item: test } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests",
+            Key: { testId }
+        }));
+        if (!test) return res.status(404).json({ message: "Test not found." });
+
+        let marksScored = 0;
+        const allQuestions = test.sections.flatMap(s => s.questions);
+        
+        const studentAnswers = Array.isArray(answers) ? answers : [];
+
+        allQuestions.forEach((question, index) => {
+            const studentAnswer = studentAnswers[index];
+            if (studentAnswer === null || studentAnswer === undefined || studentAnswer === '') return;
+            
+            if (String(studentAnswer).trim() === String(question.correctAnswer).trim()) {
+                marksScored += parseInt(question.marks, 10);
+            }
+        });
+
+        const percentageScore = test.totalMarks > 0 ? Math.round((marksScored / test.totalMarks) * 100) : 0;
+        const result = percentageScore >= test.passingPercentage ? "Pass" : "Fail";
+
+        const newResult = {
+            resultId, 
+            testId, 
+            assignmentId,
+            candidateEmail: email,
+            // **MODIFIED**: Add new candidate details to the result object
+            fullName,
+            rollNumber,
+            collegeName,
+            testTitle: test.title, 
+            answers: studentAnswers, 
+            timeTaken, 
+            score: percentageScore, 
+            result,
+            submittedAt: new Date().toISOString(), 
+            violationReason: violationReason || null,
+        };
+    
+        await docClient.send(new PutCommand({ TableName: "TestifyResults", Item: newResult }));
+        
+        res.status(201).json({ message: 'Test submitted successfully!' });
+
+    } catch (error) {
+        console.error("Public Submit Test Error:", error);
+        res.status(500).json({ message: 'Server error submitting test.' });
+    }
+});
+
+
+
+// HIRING MODERATOR: Add a new college to their list
+app.post('/api/hiring/colleges', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { collegeName } = req.body;
+    if (!collegeName) {
+        return res.status(400).json({ message: 'College name is required.' });
+    }
+    const collegeId = `hcollege_${uuidv4()}`;
+    const newCollege = {
+        collegeId,
+        collegeName,
+        createdBy: req.user.email // Link college to the moderator
+    };
+    try {
+        // For simplicity, using TestifyColleges table. In a larger app, a dedicated table might be better.
+        await docClient.send(new PutCommand({ TableName: "TestifyColleges", Item: newCollege }));
+        res.status(201).json({ message: 'College added successfully.' });
+    } catch (error) {
+        console.error("Add Hiring College Error:", error);
+        res.status(500).json({ message: 'Server error adding college.' });
+    }
+});
+
+// HIRING MODERATOR: Get their list of colleges
+app.get('/api/hiring/colleges', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyColleges",
+            FilterExpression: "createdBy = :creator",
+            ExpressionAttributeValues: { ":creator": req.user.email }
+        }));
+        res.json(Items);
+    } catch (error) {
+        console.error("Get Hiring Colleges Error:", error);
+        res.status(500).json({ message: 'Server error fetching colleges.' });
+    }
+});
+
+// HIRING MODERATOR: Delete a college from their list
+app.delete('/api/hiring/colleges/:collegeId', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { collegeId } = req.params;
+    try {
+        // Security check: ensure the moderator owns this college entry
+        const { Item } = await docClient.send(new GetCommand({ TableName: "TestifyColleges", Key: { collegeId } }));
+        if (!Item || Item.createdBy !== req.user.email) {
+            return res.status(403).json({ message: 'You do not have permission to delete this college.' });
+        }
+        await docClient.send(new DeleteCommand({ TableName: "TestifyColleges", Key: { collegeId } }));
+        res.json({ message: 'College deleted successfully.' });
+    } catch (error) {
+        console.error("Delete Hiring College Error:", error);
+        res.status(500).json({ message: 'Server error deleting college.' });
+    }
+});
+
+
+// PUBLIC: Get colleges for a specific test (for the student dropdown)
+app.get('/api/public/colleges/:testId', async (req, res) => {
+    const { testId } = req.params;
+    try {
+        const { Item: test } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests",
+            Key: { testId }
+        }));
+        if (!test || !test.createdBy) {
+            return res.status(404).json({ message: 'Test creator not found.' });
+        }
+
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyColleges",
+            FilterExpression: "createdBy = :creator",
+            ExpressionAttributeValues: { ":creator": test.createdBy }
+        }));
+        res.json(Items);
+    } catch (error) {
+        console.error("Get Public Colleges Error:", error);
+        res.status(500).json({ message: 'Server error fetching public colleges.' });
+    }
+});
+
+app.post('/api/quizcom/quizzes/start', authMiddleware, quizModeratorAuth, async (req, res) => {
+    const { quizId } = req.body;
+    try {
+        const { Item: originalQuiz } = await docClient.send(new GetCommand({ TableName: "TestifyTests", Key: { testId: quizId }}));
+        if (!originalQuiz) return res.status(404).json({ message: "Original quiz not found." });
+
+        const liveQuizId = `live_${uuidv4()}`;
+        const quizCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        const newLiveQuiz = {
+            liveQuizId,
+            originalQuizId: quizId,
+            title: originalQuiz.title,
+            logoUrl: originalQuiz.logoUrl, // <-- ADD THIS LINE
+            quizCode,
+            status: 'waiting',
+            currentQuestionIndex: -1,
+            participants: [],
+            moderator: req.user.email,
+            createdAt: new Date().toISOString()
+        };
+        await docClient.send(new PutCommand({ TableName: "TestifyLiveQuizzes", Item: newLiveQuiz }));
+        res.status(201).json({ message: 'Quiz started!', liveQuizId, quizCode });
+    } catch (error) {
+        console.error("Start Quiz Error:", error);
+        res.status(500).json({ message: 'Server error starting quiz.' });
+    }
+});
+
+// Get Live Quiz Details (for moderator view)
+app.get('/api/quizcom/live/:id', authMiddleware, quizModeratorAuth, async (req, res) => {
+    try {
+        const { Item } = await docClient.send(new GetCommand({ TableName: "TestifyLiveQuizzes", Key: { liveQuizId: req.params.id }}));
+        if (!Item || Item.moderator !== req.user.email) return res.status(404).json({ message: 'Live quiz session not found or access denied.' });
+        res.json(Item);
+    } catch (error) {
+        console.error("Get Live Quiz Details Error:", error);
+        res.status(500).json({ message: 'Server error fetching live quiz details.' });
+    }
+});
+
+
+// Join a quiz lobby
+app.post('/api/quizcom/join', async (req, res) => {
+    const { quizCode } = req.body;
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyLiveQuizzes",
+            FilterExpression: "quizCode = :code AND #status IN (:s1, :s2)",
+            ExpressionAttributeNames: { "#status": "status" },
+            ExpressionAttributeValues: { ":code": quizCode, ":s1": "waiting", ":s2": "scheduled" }
+        }));
+        if (!Items || Items.length === 0) return res.status(404).json({ message: "Invalid or inactive quiz code." });
+        res.json({ message: "Quiz found! Please enter your details.", liveQuizId: Items[0].liveQuizId });
+    } catch (error) {
+        console.error("Join Quiz Error:", error);
+        res.status(500).json({ message: 'Server error joining quiz.' });
+    }
+});
+
+app.get('/api/quizcom/history', authMiddleware, quizModeratorAuth, async (req, res) => {
+    try {
+        const { Items: liveQuizzes } = await docClient.send(new ScanCommand({
+            TableName: "TestifyLiveQuizzes",
+            FilterExpression: "moderator = :moderator AND #s = :status",
+            ExpressionAttributeNames: { "#s": "status" },
+            ExpressionAttributeValues: { 
+                ":moderator": req.user.email,
+                ":status": "completed"
+            }
+        }));
+
+        const history = liveQuizzes.map(quiz => {
+            const totalScore = quiz.participants.reduce((acc, p) => acc + p.score, 0);
+            const averageScore = quiz.participants.length > 0 ? Math.round(totalScore / quiz.participants.length) : 0;
+            return {
+                liveQuizId: quiz.liveQuizId,
+                title: quiz.title,
+                conductedOn: quiz.createdAt,
+                participantCount: quiz.participants.length,
+                averageScore
+            };
+        });
+        
+        history.sort((a,b) => new Date(b.conductedOn) - new Date(a.conductedOn));
+
+        res.json(history);
+    } catch (error) {
+        console.error("Get Quiz History Error:", error);
+        res.status(500).json({ message: 'Server error fetching quiz history.' });
+    }
+});
+
+app.get('/api/quizcom/dashboard-stats', authMiddleware, quizModeratorAuth, async (req, res) => {
+    try {
+        // Fetch quizzes created by the moderator
+        const { Items: createdQuizzes } = await docClient.send(new ScanCommand({
+            TableName: "TestifyTests",
+            FilterExpression: "testType = :type AND createdBy = :creator",
+            ExpressionAttributeValues: { ":type": "quizcom", ":creator": req.user.email }
+        }));
+
+        // Fetch live quiz sessions started by the moderator
+        const { Items: liveQuizzes } = await docClient.send(new ScanCommand({
+            TableName: "TestifyLiveQuizzes",
+            FilterExpression: "moderator = :moderator",
+            ExpressionAttributeValues: { ":moderator": req.user.email }
+        }));
+
+        const totalParticipants = liveQuizzes.reduce((acc, quiz) => acc + (quiz.participants ? quiz.participants.length : 0), 0);
+        const activeLiveQuizzes = liveQuizzes.filter(q => q.status === 'waiting' || q.status === 'active').length;
+        const completedQuizzes = liveQuizzes.filter(q => q.status === 'completed').length;
+
+       res.json({
+            totalQuizzes: createdQuizzes.length,
+            liveQuizzes: activeLiveQuizzes,
+            totalParticipants,
+            completedQuizzes
+        });
+    } catch (error) {
+        console.error("Get Dashboard Stats Error:", error);
+        res.status(500).json({ message: 'Server error fetching dashboard stats.' });
+    }
+});
+
+app.post('/api/quizcom/quizzes', authMiddleware, quizModeratorAuth, async (req, res) => {
+    const { title, questions, logoUrl } = req.body; // <-- ADD logoUrl here
+    const testId = `quizcom_${uuidv4()}`;
+
+    const newQuiz = {
+        testId,
+        title,
+        logoUrl, // <-- ADD THIS LINE
+        questions,
+        testType: 'quizcom',
+        createdBy: req.user.email,
+        createdAt: new Date().toISOString()
+    };
+
+    try {
+        await docClient.send(new PutCommand({ TableName: "TestifyTests", Item: newQuiz }));
+        res.status(201).json({ message: 'Quiz created successfully!', quiz: newQuiz });
+    } catch (error) {
+        console.error("Create QuizCom Error:", error);
+        res.status(500).json({ message: 'Server error creating quiz.' });
+    }
+});
+
+app.get('/api/quizcom/quizzes', authMiddleware, quizModeratorAuth, async (req, res) => {
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyTests",
+            FilterExpression: "testType = :type AND createdBy = :creator",
+            ExpressionAttributeValues: { ":type": "quizcom", ":creator": req.user.email }
+        }));
+        res.json(Items || []);
+    } catch (error) {
+        console.error("Get Quizzes Error:", error);
+        res.status(500).json({ message: 'Server error fetching quizzes.' });
+    }
+});
+app.get('/api/quizcom/quizzes/:id', authMiddleware, quizModeratorAuth, async (req, res) => {
+    try {
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests",
+            Key: { testId: req.params.id }
+        }));
+        
+        // Security check: Ensure the quiz belongs to the logged-in moderator
+        if (Item && Item.createdBy === req.user.email) {
+            res.json(Item);
+        } else {
+            res.status(404).json({ message: 'Quiz not found or you do not have permission to access it.' });
+        }
+    } catch (error) {
+        console.error("Get Single Quiz Error:", error);
+        res.status(500).json({ message: 'Server error fetching quiz.' });
+    }
+});
+
+// PUT: Update a quiz
+app.put('/api/quizcom/quizzes/:id', authMiddleware, quizModeratorAuth, async (req, res) => {
+    const { title, questions } = req.body;
+    const { id } = req.params;
+
+    try {
+        // First, verify the moderator owns this quiz
+        const { Item: existingQuiz } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests",
+            Key: { testId: id }
+        }));
+        if (!existingQuiz || existingQuiz.createdBy !== req.user.email) {
+            return res.status(403).json({ message: 'You do not have permission to modify this quiz.' });
+        }
+
+        const updatedQuiz = {
+            ...existingQuiz,
+            title,
+            questions
+        };
+
+        await docClient.send(new PutCommand({ TableName: "TestifyTests", Item: updatedQuiz }));
+        res.status(200).json({ message: 'Quiz updated successfully!', quiz: updatedQuiz });
+    } catch (error) {
+        console.error("Update Quiz Error:", error);
+        res.status(500).json({ message: 'Server error updating quiz.' });
+    }
+});
+
+app.delete('/api/quizcom/quizzes/:id', authMiddleware, quizModeratorAuth, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { Item: existingQuiz } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests",
+            Key: { testId: id }
+        }));
+        if (!existingQuiz || existingQuiz.createdBy !== req.user.email) {
+            return res.status(403).json({ message: 'You do not have permission to delete this quiz.' });
+        }
+
+        await docClient.send(new DeleteCommand({ TableName: "TestifyTests", Key: { testId: id } }));
+        res.status(200).json({ message: 'Quiz deleted successfully.' });
+    } catch (error) {
+        console.error("Delete Quiz Error:", error);
+        res.status(500).json({ message: 'Server error deleting quiz.' });
+    }
+});
+
+app.post('/api/upload-image', authMiddleware, upload.single('image'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: 'No image file uploaded.' });
+    }
+    try {
+        const b64 = Buffer.from(req.file.buffer).toString("base64");
+        let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+        const result = await cloudinary.uploader.upload(dataURI, {
+            folder: "quiz_images"
+        });
+        res.json({ message: 'Image uploaded successfully.', imageUrl: result.secure_url });
+    } catch (error) {
+        console.error("Image Upload Error:", error);
+        res.status(500).json({ message: 'Server error uploading image.' });
+    }
+});
+
+app.post('/api/quizcom/quizzes/assign', authMiddleware, quizModeratorAuth, async (req, res) => {
+    const { quizId, emails, checkInTime, startTime } = req.body;
+    
+    // This is a placeholder for the logic. You would typically:
+    // 1. Save the assignment details to a new 'TestifyQuizAssignments' table.
+    // 2. Create unique links/tokens for each student.
+    // 3. Email the links to the students.
+    
+    console.log('Assigning quiz:', { quizId, emails, checkInTime, startTime });
+    
+    // For now, we'll just return a success message.
+    res.status(200).json({ message: 'Quiz assigned successfully (logic to be implemented).' });
+});
+
+// =================================================================
+// --- END HIRE WITH US ---
+// =================================================================
+
+app.get('/api/quizcom/report/:id', authMiddleware, quizModeratorAuth, async (req, res) => {
+    try {
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: "TestifyLiveQuizzes",
+            Key: { liveQuizId: req.params.id }
+        }));
+        
+        // Security check: ensure the report being accessed belongs to the logged-in moderator
+        if (Item && Item.moderator === req.user.email) {
+            res.json(Item);
+        } else {
+            res.status(404).json({ message: 'Quiz report not found or you do not have permission to access it.' });
+        }
+    } catch (error) {
+        console.error("Get Quiz Report Error:", error);
+        res.status(500).json({ message: 'Server error fetching quiz report.' });
+    }
+});
+
+app.post('/api/quizcom/join-by-code', async (req, res) => {
+    const { quizCode } = req.body;
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyLiveQuizzes",
+            FilterExpression: "quizCode = :code AND #status IN (:s1, :s2)",
+            ExpressionAttributeNames: { "#status": "status" },
+            ExpressionAttributeValues: { ":code": quizCode, ":s1": "waiting", ":s2": "scheduled" }
+        }));
+        if (!Items || Items.length === 0) {
+            return res.status(404).json({ message: "Invalid or inactive quiz code." });
+        }
+        res.json({ liveQuizId: Items[0].liveQuizId });
+    } catch (error) {
+        console.error("Join By Code Error:", error);
+        res.status(500).json({ message: 'Server error joining quiz.' });
+    }
+});
+
+app.get('/api/quizcom/live/:id/details', async (req, res) => {
+    try {
+        const { Item } = await docClient.send(new GetCommand({ 
+            TableName: "TestifyLiveQuizzes", 
+            Key: { liveQuizId: req.params.id }
+        }));
+        
+        if (Item) {
+            // Send only public-safe data
+            res.json({ 
+                title: Item.title,
+                logoUrl: Item.logoUrl 
+            });
+        } else {
+            res.status(404).json({ message: 'Live quiz not found.' });
+        }
+    } catch (error) {
+        console.error("Get Live Quiz Public Details Error:", error);
+        res.status(500).json({ message: 'Server error fetching quiz details.' });
+    }
+});
+
+server.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
 
