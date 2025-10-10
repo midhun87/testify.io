@@ -108,6 +108,7 @@
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="features.html" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">Features</a>
                     <a href="about.html" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">How It Works</a>
+                    <a href="/student/quiz-join.html" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">Join Quiz</a>
                     <a href="verify-certificate.html" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">Verify Certificate</a>
                     <a href="contact.html" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">Contact</a>
                 </div>
@@ -135,6 +136,7 @@
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-slate-200">
                 <a href="features.html" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Features</a>
                 <a href="about.html" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">How It Works</a>
+                <a href="/student/quiz-join.html" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Join Quiz</a>
                 <a href="verify-certificate.html" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Verify Certificate</a>
                 <a href="contact.html" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Contact</a>
             </div>
@@ -301,7 +303,7 @@
             </button>
             <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757066742/Gemini_Generated_Image_njiwz6njiwz6njiw_1_zziakv.png" alt="Promotional Flyer for Free Tests" class="rounded-2xl shadow-lg">
            <p class="mt-4 p-3 bg-violet-50 text-violet-800 rounded-xl font-semibold text-center text-sm sm:text-base">
-               <strong>Code, Compile, Conquer:</strong> Your Interview Journey Starts Here.
+                <strong>Code, Compile, Conquer:</strong> Your Interview Journey Starts Here.
            </p>
         </div>
     </div>
@@ -371,28 +373,28 @@
                 const API_URL = '/api/impact-stats'; 
                 
                  return fetch(API_URL)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        return {
-                            institutions: parseInt(String(data.institutions).replace(/[^0-9]/g, ''), 10) || 0,
-                            exams: parseInt(String(data.exams).replace(/[^0-9]/g, ''), 10) || 0,
-                            uptime: parseFloat(data.uptime) || 0
-                        };
-                    })
-                    .catch(error => {
-                        console.error('Error fetching impact stats:', error);
-                        // Fallback to default values if the API fails
-                        return {
-                            institutions: 500,
-                            exams: 2000000,
-                            uptime: 99.9
-                        };
-                    });
+                     .then(response => {
+                         if (!response.ok) {
+                             throw new Error('Network response was not ok');
+                         }
+                         return response.json();
+                     })
+                     .then(data => {
+                         return {
+                             institutions: parseInt(String(data.institutions).replace(/[^0-9]/g, ''), 10) || 0,
+                             exams: parseInt(String(data.exams).replace(/[^0-9]/g, ''), 10) || 0,
+                             uptime: parseFloat(data.uptime) || 0
+                         };
+                     })
+                     .catch(error => {
+                         console.error('Error fetching impact stats:', error);
+                         // Fallback to default values if the API fails
+                         return {
+                             institutions: 500,
+                             exams: 2000000,
+                             uptime: 99.9
+                         };
+                     });
             }
 
             // --- Animate Impact Stats ---
@@ -469,4 +471,3 @@
 
 </body>
 </html>
-
