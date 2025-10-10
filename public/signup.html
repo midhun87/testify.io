@@ -87,14 +87,17 @@
 
                     <!-- Second Step: Full Signup Form (Initially hidden) -->
                     <form id="signup-form" class="hidden">
+                        <!-- These hidden inputs will hold the verified email and mobile to be sent with the final form -->
                         <input type="hidden" id="email-final" name="email">
                         <input type="hidden" id="mobile-final" name="mobile">
                         
                         <!-- OTP Input Field -->
                         <div class="mb-5">
-                            <label for="otp" class="block mb-2 text-sm font-medium text-gray-700">Enter OTP from the new tab</label>
-                            <input type="text" id="otp" name="otp" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition">
-                            <a href="#" id="resend-otp" class="text-sm text-indigo-600 hover:underline mt-2 inline-block">Get new code</a>
+                            <!-- MODIFIED: Updated label text -->
+                            <label for="otp" class="block mb-2 text-sm font-medium text-gray-700">Enter OTP from your Email</label>
+                            <p class="text-xs text-gray-500 mb-2">Please check your spam/junk folder if you don't see the email.</p>
+                            <input type="text" id="otp" name="otp" required class="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="6-digit code">
+                            <a href="#" id="resend-otp" class="text-sm text-indigo-600 hover:underline mt-2 inline-block">Resend Code</a>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
                             <!-- Full Name -->
@@ -177,7 +180,7 @@
             const departmentSelect = document.getElementById('department');
             const otpStepDiv = document.getElementById('otp-step');
             const signupForm = document.getElementById('signup-form');
-            const getOtpBtn = document.getElementById('get-otp-btn'); // Changed ID
+            const getOtpBtn = document.getElementById('get-otp-btn');
             const resendOtpLink = document.getElementById('resend-otp');
             const messageDiv = document.getElementById('message');
             const emailOtpInput = document.getElementById('email-otp');
@@ -186,8 +189,8 @@
             const mobileFinalInput = document.getElementById('mobile-final');
             const emailFinalInputDisplay = document.getElementById('email');
             const mobileFinalInputDisplay = document.getElementById('mobile');
-            const getOtpText = document.getElementById('get-otp-text'); // Changed ID
-            const getOtpSpinner = document.getElementById('get-otp-spinner'); // Changed ID
+            const getOtpText = document.getElementById('get-otp-text');
+            const getOtpSpinner = document.getElementById('get-otp-spinner');
             const termsCheckbox = document.getElementById('terms');
             
             async function fetchAndPopulateColleges() {
@@ -257,6 +260,7 @@
                 fetchAndPopulateDepartments()
             ]);
 
+            // MODIFIED: This function now sends OTP to email and switches the view on the same page.
             async function handleGetOtp() {
                 const email = emailOtpInput.value.trim();
                 const mobile = mobileOtpInput.value.trim();
@@ -267,42 +271,46 @@
                 }
 
                 if (!email || !mobile) {
-                    showMessage('Please enter your email and mobile number.', false);
+                    showMessage('Please enter both your email and mobile number.', false);
                     return;
                 }
                 
                 getOtpBtn.disabled = true;
-                getOtpText.textContent = 'Generating...';
+                getOtpText.textContent = 'Sending...';
                 getOtpSpinner.classList.remove('hidden');
 
                 try {
                     const response = await fetch('/api/send-otp', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
+                        // The backend now only needs the email to send the OTP.
                         body: JSON.stringify({ email, mobile })
                     });
 
                     const result = await response.json();
                     
-                    if (response.ok && result.verificationLink) {
-                        // Open the verification page in a new tab
-                        window.open(result.verificationLink, '_blank');
+                    if (response.ok) {
+                        // Success! OTP has been sent.
+                        showMessage("Verification code sent to your email. Please enter it below to continue.", true);
                         
-                        showMessage("Verification page opened in a new tab. Please copy the code and enter it below.", true);
+                        // Hide the first step and show the main signup form.
                         otpStepDiv.classList.add('hidden');
                         signupForm.classList.remove('hidden');
                         
+                        // Populate the readonly fields in the main form with the user's input.
                         emailFinalInput.value = email;
                         mobileFinalInput.value = mobile;
                         emailFinalInputDisplay.value = email;
                         mobileFinalInputDisplay.value = mobile;
                     } else {
-                        showMessage(result.message || 'Failed to generate verification link.', false);
+                        // Show errors from the backend (e.g., user already exists).
+                        showMessage(result.message || 'Failed to send verification code.', false);
                     }
                 } catch (error) {
                     console.error('Get OTP Fetch Error:', error);
                     showMessage('An error occurred. Please try again.', false);
                 } finally {
+                    // Re-enable the button regardless of outcome.
                     getOtpBtn.disabled = false;
                     getOtpText.textContent = 'Get Verification Code';
                     getOtpSpinner.classList.add('hidden');
@@ -310,15 +318,28 @@
             }
 
             getOtpBtn.addEventListener('click', handleGetOtp);
-            resendOtpLink.addEventListener('click', (e) => {
+            
+            // MODIFIED: Resend link now provides user feedback while re-sending.
+            resendOtpLink.addEventListener('click', async (e) => {
                 e.preventDefault();
-                handleGetOtp(); // Re-run the same logic to open a new tab with a new code
+                const originalText = resendOtpLink.textContent;
+                resendOtpLink.textContent = 'Sending...';
+                resendOtpLink.style.pointerEvents = 'none'; // Temporarily disable link
+                await handleGetOtp(); // This will show a new success/error message
+                resendOtpLink.textContent = originalText;
+                resendOtpLink.style.pointerEvents = 'auto'; // Re-enable link
             });
 
             // Handle full signup form submission
             signupForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                const submitButton = signupForm.querySelector('button[type="submit"]');
+                const originalButtonText = submitButton.textContent;
+                submitButton.disabled = true;
+                submitButton.textContent = 'Creating Account...';
+
                 const formData = new FormData(signupForm);
+                // The hidden email/mobile inputs are now included automatically.
                 const data = Object.fromEntries(formData.entries());
 
                 try {
@@ -331,6 +352,7 @@
 
                     showMessage(result.message, response.ok);
                     if (response.ok) {
+                        // Redirect to login after a short delay on success
                         setTimeout(() => {
                             window.location.href = '/login.html';
                         }, 2000);
@@ -338,6 +360,9 @@
                 } catch (error) {
                     console.error('Signup Fetch Error:', error);
                     showMessage('An unexpected error occurred.', false);
+                } finally {
+                    submitButton.disabled = false;
+                    submitButton.textContent = originalButtonText;
                 }
             });
         });

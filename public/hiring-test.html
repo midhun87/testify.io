@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hiring Test - TESTIFY</title>
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        #test-environment.fullscreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;
+            overflow: hidden; background-color: #f9fafb;
+        }
+        .palette-btn {
+            border: 2px solid #D1D5DB; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        .palette-btn.active {
+            background-color: #4F46E5; color: white; font-weight: bold; border-color: #3730A3;
+            transform: scale(1.05); box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.5);
+        }
+        .palette-btn.answered { background-color: #10B981; color: white; border-color: #059669; }
+        .palette-btn.marked { background-color: #8B5CF6; color: white; border-color: #7C3AED; }
+        .palette-btn.answered.marked { background-color: #7C3AED; border-color: #6D28D9; }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 10000;
+        }
+        .modal-container {
+            background-color: white; padding: 2rem; border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            max-width: 90%; width: 550px; animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        .custom-radio:checked + .option-box {
+            border-color: #4F46E5; background-color: #EEF2FF; box-shadow: 0 0 0 3px #C7D2FE;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Main content area: loading/error states -->
+    <div id="main-content" class="min-h-screen flex items-center justify-center p-4">
+         <div id="message-container" class="text-center">
+            <div id="loader" class="flex flex-col items-center">
+                <svg class="animate-spin h-10 w-10 text-indigo-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="text-xl font-semibold text-gray-700">Validating your test link...</p>
+            </div>
+            <div id="error-message" class="hidden">
+                 <h2 class="text-2xl font-bold text-red-600">Access Denied</h2>
+                 <p class="text-gray-600 mt-2"></p>
+            </div>
+         </div>
+    </div>
+
+    <!-- Test Environment (Initially Hidden) -->
+    <div id="test-environment" class="hidden">
+        <header class="flex items-center justify-between h-20 bg-white border-b border-gray-300 px-6 fixed top-0 left-0 w-full z-20 shadow-xl">
+            <div class="flex items-center">
+                <img class="h-12 w-auto" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo">
+                <h1 id="test-title" class="ml-4 text-xl font-extrabold text-indigo-700">Test Title</h1>
+            </div>
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center bg-red-100 border-2 border-red-200 rounded-lg px-4 py-1.5 shadow-inner">
+                    <span class="text-sm font-bold text-red-800 mr-3 uppercase tracking-wider">Time Left</span>
+                    <div id="timer" class="text-2xl font-extrabold text-red-600" style="font-variant-numeric: tabular-nums;">00:00</div>
+                </div>
+                <button id="submit-test-btn" class="px-6 py-2.5 bg-red-600 text-white font-bold rounded-xl shadow-lg hover:bg-red-700 transition-colors transform hover:scale-[1.02]">
+                    Submit Test
+                </button>
+            </div>
+        </header>
+
+        <div class="pt-20 flex" style="height: 100vh;">
+            <div class="flex-1 p-8 overflow-y-auto">
+                 <div id="question-header" class="mb-4">
+                    <h2 id="section-title" class="text-2xl font-bold text-gray-800"></h2>
+                    <p id="question-counter" class="text-lg font-semibold text-indigo-600"></p>
+                </div>
+                <div id="question-content" class="bg-white p-8 rounded-2xl shadow-xl border border-gray-200"></div>
+                <div class="mt-8 flex justify-between items-center bg-white p-4 rounded-xl shadow-md border border-gray-100">
+                    <button id="prev-btn" class="px-6 py-2 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400 disabled:opacity-50 transition-colors">Previous</button>
+                    <button id="next-btn" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors">Next</button>
+                </div>
+            </div>
+            <aside class="w-72 bg-gray-50 border-l border-gray-200 p-6 flex flex-col space-y-6 flex-shrink-0 overflow-y-auto" id="palette-container">
+                <!-- Question palette will be dynamically generated here -->
+            </aside>
+        </div>
+    </div>
+
+    <!-- Modals (pre-test, confirmation, etc.) -->
+    <div id="pre-test-modal" class="modal-overlay hidden">
+        <div class="modal-container">
+             <h2 class="text-2xl font-bold text-gray-800 text-center">Test Instructions</h2>
+             <ul class="list-disc list-inside mt-4 space-y-1.5 text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border">
+                <li>This test must be taken in full-screen mode.</li>
+                <li>Do not exit full-screen mode or switch to another tab/application.</li>
+                <li>Any violation will result in an automatic submission of your test.</li>
+            </ul>
+            <div class="mt-8 flex justify-end">
+                <button id="pre-test-confirm-btn" class="px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700">Start Test</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="modal-container text-center">
+            <p id="modal-message" class="text-gray-700 text-xl font-semibold mt-4"></p>
+            <div class="mt-8 flex justify-center space-x-4">
+                <button id="modal-cancel-btn" class="px-6 py-2.5 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300">Cancel</button>
+                <button id="modal-confirm-btn" class="px-6 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        const mainContent = document.getElementById('main-content');
+        const testEnvironment = document.getElementById('test-environment');
+        const loader = document.getElementById('loader');
+        const errorMessageDiv = document.getElementById('error-message');
+        const confirmModal = document.getElementById('confirm-modal');
+        const modalMessage = document.getElementById('modal-message');
+        const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+        const modalCancelBtn = document.getElementById('modal-cancel-btn');
+        const preTestModal = document.getElementById('pre-test-modal');
+        const preTestConfirmBtn = document.getElementById('pre-test-confirm-btn');
+
+        let currentTest = null;
+        let allQuestions = [];
+        let currentQuestionIndex = 0;
+        let studentAnswers = [];
+        let timerInterval;
+        let timeTaken = 0;
+        let isSubmitting = false;
+
+        if (!token) {
+            showError('No test token provided. This link is invalid.');
+            return;
+        }
+
+        function showError(message) {
+            loader.classList.add('hidden');
+            errorMessageDiv.classList.remove('hidden');
+            errorMessageDiv.querySelector('p').textContent = message;
+        }
+
+        async function fetchTestDetails() {
+            try {
+                const response = await fetch('/api/public/test-details', {
+                    headers: { 'x-auth-token': token }
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || 'Failed to load test.');
+                }
+                currentTest = data;
+                // Flatten questions and add section info
+                allQuestions = currentTest.sections.flatMap((section, sectionIndex) => 
+                    section.questions.map(q => ({...q, sectionTitle: section.title, sectionIndex}))
+                );
+                studentAnswers = new Array(allQuestions.length).fill(null);
+                preTestModal.classList.remove('hidden');
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        preTestConfirmBtn.addEventListener('click', () => {
+            preTestModal.classList.add('hidden');
+            startTest();
+        });
+
+        function startTest() {
+            enterFullScreen();
+            mainContent.classList.add('hidden');
+            testEnvironment.classList.remove('hidden');
+            testEnvironment.classList.add('fullscreen');
+            document.getElementById('test-title').textContent = currentTest.title;
+            startTimer(currentTest.duration * 60);
+            renderQuestion();
+            renderPalette();
+            document.addEventListener('fullscreenchange', handleFullScreenChange);
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+        }
+
+        function renderQuestion() {
+            const question = allQuestions[currentQuestionIndex];
+            document.getElementById('section-title').textContent = `Section: ${question.sectionTitle}`;
+            document.getElementById('question-counter').textContent = `Question ${currentQuestionIndex + 1} of ${allQuestions.length}`;
+            
+            const questionContent = document.getElementById('question-content');
+            const savedAnswer = studentAnswers[currentQuestionIndex];
+            
+            let answerHtml = '';
+            if (question.type.startsWith('mcq')) {
+                const inputType = question.type === 'mcq-single' ? 'radio' : 'checkbox';
+                answerHtml = question.options.map((opt, i) => `
+                    <label class="block"><input type="${inputType}" name="option" value="${i}" class="mr-2" ${savedAnswer == i ? 'checked' : ''}> ${opt}</label>
+                `).join('');
+            } else { // fill-blank
+                answerHtml = `<input type="text" class="border p-2 w-full" value="${savedAnswer || ''}">`;
+            }
+
+            questionContent.innerHTML = `<p class="text-xl mb-4">${question.text}</p><div>${answerHtml}</div>`;
+            updateNavButtons();
+            updatePalette();
+        }
+
+        function renderPalette() {
+            const paletteContainer = document.getElementById('palette-container');
+            paletteContainer.innerHTML = '';
+            currentTest.sections.forEach((section, sectionIndex) => {
+                const sectionDiv = document.createElement('div');
+                sectionDiv.innerHTML = `<h3 class="font-bold text-lg mb-2">${section.title}</h3>`;
+                const grid = document.createElement('div');
+                grid.className = 'grid grid-cols-5 gap-2';
+                
+                allQuestions.forEach((q, i) => {
+                    if (q.sectionIndex === sectionIndex) {
+                        const btn = document.createElement('button');
+                        btn.textContent = i + 1;
+                        btn.className = 'palette-btn h-10 w-10 flex items-center justify-center rounded-lg';
+                        btn.onclick = () => { saveAnswer(); currentQuestionIndex = i; renderQuestion(); };
+                        grid.appendChild(btn);
+                    }
+                });
+                sectionDiv.appendChild(grid);
+                paletteContainer.appendChild(sectionDiv);
+            });
+             updatePalette();
+        }
+        
+        function updatePalette() {
+             document.querySelectorAll('.palette-btn').forEach((btn) => {
+                const i = parseInt(btn.textContent) - 1;
+                btn.classList.remove('active', 'answered');
+                if (studentAnswers[i] !== null) btn.classList.add('answered');
+                if (i === currentQuestionIndex) btn.classList.add('active');
+            });
+        }
+        
+        function updateNavButtons() {
+            document.getElementById('prev-btn').disabled = currentQuestionIndex === 0;
+            document.getElementById('next-btn').disabled = currentQuestionIndex === allQuestions.length - 1;
+        }
+
+        function saveAnswer() {
+            const question = allQuestions[currentQuestionIndex];
+            if (question.type.startsWith('mcq')) {
+                 const selected = document.querySelector('#question-content input[name="option"]:checked');
+                 studentAnswers[currentQuestionIndex] = selected ? selected.value : null;
+            } else {
+                 const input = document.querySelector('#question-content input[type="text"]');
+                 studentAnswers[currentQuestionIndex] = input ? input.value : null;
+            }
+        }
+        
+        document.getElementById('next-btn').addEventListener('click', () => {
+            saveAnswer();
+            if (currentQuestionIndex < allQuestions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion();
+            }
+        });
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            saveAnswer();
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                renderQuestion();
+            }
+        });
+         document.getElementById('submit-test-btn').addEventListener('click', async () => {
+             const confirm = await showModal('Are you sure you want to submit the test?');
+             if(confirm) performSubmission();
+         });
+        
+        function enterFullScreen() {
+            document.documentElement.requestFullscreen().catch(err => console.error(err));
+        }
+
+        function handleFullScreenChange() {
+            if (!document.fullscreenElement && !isSubmitting) forceSubmitTest('Exited Full-Screen Mode');
+        }
+
+        function handleVisibilityChange() {
+            if (document.hidden && !isSubmitting) forceSubmitTest('Switched to Another Tab/Window');
+        }
+        
+        function startTimer(duration) {
+            let timer = duration;
+            const timerDisplay = document.getElementById('timer');
+            timerInterval = setInterval(() => {
+                timeTaken++;
+                timer--;
+                let minutes = Math.floor(timer / 60);
+                let seconds = timer % 60;
+                timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                if (timer <= 0) forceSubmitTest('Time is up!');
+            }, 1000);
+        }
+
+        async function forceSubmitTest(reason) {
+            if (isSubmitting) return;
+            isSubmitting = true;
+            await showModal(`Violation: ${reason}. Submitting test automatically.`);
+            performSubmission(reason);
+        }
+
+        async function performSubmission(violationReason = null) {
+            if (isSubmitting && !violationReason) return;
+            isSubmitting = true;
+            saveAnswer();
+            clearInterval(timerInterval);
+
+            const payload = { answers: studentAnswers, timeTaken, violationReason };
+
+            modalMessage.textContent = "Submitting...";
+            confirmModal.classList.remove('hidden');
+            modalCancelBtn.classList.add('hidden');
+            modalConfirmBtn.classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/public/submit-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                modalMessage.textContent = result.message || 'Submission complete.';
+            } catch (error) {
+                 modalMessage.textContent = 'Submission failed: ' + error.message;
+            } finally {
+                if (document.fullscreenElement) document.exitFullscreen();
+                 setTimeout(() => window.location.href = '/login.html', 3000); // Redirect away
+            }
+        }
+        
+        function showModal(message) {
+            return new Promise(resolve => {
+                modalMessage.textContent = message;
+                confirmModal.classList.remove('hidden');
+                modalConfirmBtn.onclick = () => { confirmModal.classList.add('hidden'); resolve(true); };
+                modalCancelBtn.onclick = () => { confirmModal.classList.add('hidden'); resolve(false); };
+            });
+        }
+
+        fetchTestDetails();
+    });
+    </script>
+</body>
+</html>
