@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Hiring Test - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        #ai-loader { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
+            </div>
+            <nav class="flex-grow p-4 overflow-y-auto">
+                <a href="hiring-dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <a href="hiring-create-test.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    <span class="ml-3">Create Test</span>
+                </a>
+                <a href="hiring-assign-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <span class="ml-3">Assign Test</span>
+                </a>
+                <a href="hiring-test-history.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span class="ml-3">Test History</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+                <h1 class="text-2xl font-bold text-gray-800">Create Hiring Test</h1>
+                <div id="user-menu-container"></div>
+            </div>
+
+            <div class="p-6">
+                <form id="create-test-form">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border-2 border-dashed border-indigo-200 mb-6">
+                        <h2 class="text-xl font-semibold text-gray-700 mb-2">Generate with AI</h2>
+                        <p class="text-sm text-gray-500 mb-4">Upload a PDF with questions and answers, and our AI will structure the test for you.</p>
+                        <div class="flex items-center space-x-4">
+                            <input type="file" id="pdf-upload" accept=".pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                            <button type="button" id="analyze-pdf-btn" class="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-sm hover:bg-indigo-700 whitespace-nowrap">Analyze PDF</button>
+                        </div>
+                         <div id="ai-loader" class="mt-4 flex items-center text-gray-600">
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span>AI is reading and structuring your test... please wait.</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4">Test Details</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div>
+                                <label for="testTitle" class="block text-sm font-medium text-gray-700">Test Title</label>
+                                <input type="text" id="testTitle" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label for="duration" class="block text-sm font-medium text-gray-700">Duration (Minutes)</label>
+                                <input type="number" id="duration" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                             <div>
+                                <label for="totalMarks" class="block text-sm font-medium text-gray-700">Total Marks</label>
+                                <input type="number" id="totalMarks" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label for="passingPercentage" class="block text-sm font-medium text-gray-700">Passing Percentage (%)</label>
+                                <input type="number" id="passingPercentage" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <div class="flex justify-between items-center mb-4">
+                             <h2 class="text-xl font-bold text-gray-800">Sections & Questions</h2>
+                             <button type="button" id="add-section-btn" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                Add Section
+                            </button>
+                        </div>
+                        <div id="sections-container" class="space-y-6">
+                            <!-- Dynamic sections will be inserted here -->
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 flex justify-end">
+                        <button type="submit" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                            Create Test
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const token = localStorage.getItem('token');
+
+            if (!token || !user || user.role !== 'Hiring Moderator') {
+                window.location.href = 'hiring-moderator-login.html';
+                return;
+            }
+
+            const userMenuContainer = document.getElementById('user-menu-container');
+            userMenuContainer.innerHTML = `
+                <div class="relative">
+                    <button id="user-menu-button" class="flex items-center space-x-2">
+                        <span id="user-name" class="font-semibold text-gray-700">${user.fullName}</span>
+                        <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                        <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                    </div>
+                </div>`;
+            
+            document.getElementById('user-menu-button').addEventListener('click', () => {
+                document.getElementById('user-menu').classList.toggle('hidden');
+            });
+            document.getElementById('logout-button').addEventListener('click', () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'hiring-moderator-login.html';
+            });
+
+            const sectionsContainer = document.getElementById('sections-container');
+            let sectionCounter = 0;
+
+            document.getElementById('add-section-btn').addEventListener('click', () => addSection());
+
+            function addSection(sectionData = {}) {
+                sectionCounter++;
+                const sectionId = `section-${sectionCounter}`;
+                const sectionBlock = document.createElement('div');
+                sectionBlock.id = sectionId;
+                sectionBlock.className = 'section-block bg-white p-6 rounded-xl shadow-md border';
+                sectionBlock.innerHTML = `
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex-grow mr-4">
+                            <label for="${sectionId}-title" class="sr-only">Section Title</label>
+                            <input type="text" id="${sectionId}-title" placeholder="Enter Section Title (e.g., Section A: Aptitude)" value="${sectionData.title || ''}" class="text-lg font-bold text-gray-800 w-full border-b-2 focus:border-indigo-500 outline-none" required>
+                        </div>
+                        <button type="button" class="remove-section-btn text-2xl font-bold text-red-500 hover:text-red-700">&times;</button>
+                    </div>
+                    <div class="questions-container space-y-4"></div>
+                    <button type="button" class="add-question-btn mt-4 text-sm font-semibold text-indigo-600 hover:text-indigo-800">+ Add Question to this Section</button>
+                `;
+                
+                if (sectionData.questions && Array.isArray(sectionData.questions)) {
+                    const questionsContainer = sectionBlock.querySelector('.questions-container');
+                    sectionData.questions.forEach(questionData => {
+                        addQuestion(questionsContainer, questionData);
+                    });
+                }
+
+                sectionsContainer.appendChild(sectionBlock);
+            }
+
+            sectionsContainer.addEventListener('click', e => {
+                if (e.target.classList.contains('add-question-btn')) {
+                    addQuestion(e.target.previousElementSibling);
+                }
+                if (e.target.classList.contains('remove-section-btn')) {
+                    e.target.closest('.section-block').remove();
+                }
+                 if (e.target.closest('.remove-question-btn')) {
+                    e.target.closest('.question-block').remove();
+                }
+                 if (e.target.closest('.add-option-btn')) {
+                    const button = e.target.closest('.add-option-btn');
+                    addOption(button.dataset.questionId, button.dataset.inputType);
+                }
+            });
+            
+             sectionsContainer.addEventListener('change', (e) => {
+                if (e.target.matches('.question-type-select')) {
+                    updateAnswerArea(e.target.dataset.questionId, e.target.value);
+                }
+            });
+
+            function addQuestion(questionsContainer, data = {}) {
+                const questionCounter = questionsContainer.children.length + 1;
+                const questionId = `${questionsContainer.closest('.section-block').id}-q-${questionCounter}`;
+                const questionBlock = document.createElement('div');
+                questionBlock.className = 'question-block bg-gray-50 p-4 rounded-lg border';
+                questionBlock.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-semibold text-gray-700">Question ${questionCounter}</h4>
+                         <button type="button" class="remove-question-btn text-xl font-bold text-red-400 hover:text-red-600">&times;</button>
+                    </div>
+                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label for="${questionId}-type" class="block text-sm font-medium text-gray-700">Type</label>
+                            <select id="${questionId}-type" class="question-type-select mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" data-question-id="${questionId}">
+                                <option value="mcq-single">Single Correct</option>
+                                <option value="mcq-multiple">Multiple Correct</option>
+                                <option value="fill-blank">Fill in the Blanks</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="${questionId}-marks" class="block text-sm font-medium text-gray-700">Marks</label>
+                            <input type="number" id="${questionId}-marks" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" value="${data.marks || ''}">
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <label for="${questionId}-text" class="block text-sm font-medium text-gray-700">Question Text</label>
+                        <textarea id="${questionId}-text" rows="2" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">${data.text || ''}</textarea>
+                    </div>
+                    <div id="${questionId}-answer-area" class="mt-2"></div>
+                `;
+                questionsContainer.appendChild(questionBlock);
+                const typeSelect = questionBlock.querySelector('.question-type-select');
+                if(data.type) typeSelect.value = data.type;
+                updateAnswerArea(questionId, typeSelect.value, data);
+            }
+            
+            function updateAnswerArea(questionId, type, data={}) {
+                 const answerArea = document.getElementById(`${questionId}-answer-area`);
+                if (!answerArea) return;
+                const inputType = type === 'mcq-single' ? 'radio' : 'checkbox';
+                
+                if (type.startsWith('mcq')) {
+                    answerArea.innerHTML = `
+                        <h5 class="text-sm font-medium text-gray-600 mb-1">Options & Correct Answer(s)</h5>
+                        <div id="${questionId}-options-container" class="space-y-1"></div>
+                        <button type="button" class="add-option-btn mt-1 text-xs font-semibold text-indigo-500 hover:text-indigo-700" data-question-id="${questionId}" data-input-type="${inputType}">+ Add Option</button>
+                    `;
+                    
+                    // *** ROBUST OPTION RENDERING ***
+                    let optionsToRender = data.options;
+                    // If options are not a non-empty array, default to two blank options.
+                    if (!Array.isArray(optionsToRender) || optionsToRender.length === 0) {
+                        optionsToRender = ['', '']; 
+                    }
+
+                    optionsToRender.forEach((optText, i) => {
+                        let isChecked = false;
+                        // Check for single correct answer
+                        if (type === 'mcq-single' && data.correctAnswer !== null && data.correctAnswer !== undefined) {
+                            isChecked = (String(data.correctAnswer) === String(i));
+                        } 
+                        // Check for multiple correct answers
+                        else if (type === 'mcq-multiple' && Array.isArray(data.correctAnswers)) {
+                            isChecked = data.correctAnswers.includes(String(i));
+                        }
+                        addOption(questionId, inputType, optText, isChecked);
+                    });
+
+                } else { // fill-blank
+                    answerArea.innerHTML = `
+                        <div>
+                            <label for="${questionId}-answer" class="block text-sm font-medium text-gray-700">Correct Answer</label>
+                            <input type="text" id="${questionId}-answer" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" value="${data.correctAnswer || ''}">
+                        </div>
+                    `;
+                }
+            }
+
+            function addOption(questionId, inputType, text = '', isChecked = false) {
+                const optionsContainer = document.getElementById(`${questionId}-options-container`);
+                if (!optionsContainer) return;
+                const optionIndex = optionsContainer.children.length;
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'flex items-center space-x-2';
+                optionDiv.innerHTML = `
+                    <input name="${questionId}-correct" type="${inputType}" value="${optionIndex}" class="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500" ${isChecked ? 'checked' : ''}>
+                    <input type="text" placeholder="Option ${optionIndex + 1}" required class="flex-grow shadow-sm sm:text-sm border-gray-300 rounded-md" value="${text}">
+                `;
+                optionsContainer.appendChild(optionDiv);
+            }
+
+            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js`;
+            document.getElementById('analyze-pdf-btn').addEventListener('click', async () => {
+                const file = document.getElementById('pdf-upload').files[0];
+                if (!file) return alert('Please select a PDF file.');
+                document.getElementById('ai-loader').style.display = 'flex';
+                
+                const fileReader = new FileReader();
+                fileReader.onload = async (event) => {
+                    try {
+                        const typedarray = new Uint8Array(event.target.result);
+                        const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                        let fullText = '';
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContent = await page.getTextContent();
+                            fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+                        }
+                        
+                        const response = await fetch('/api/hiring/generate-test-from-pdf', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                            body: JSON.stringify({ text: fullText })
+                        });
+
+                        if (!response.ok) throw new Error((await response.json()).message);
+                        populateTestFormWithAIData(await response.json());
+                    } catch (err) {
+                        alert(`AI Error: ${err.message}`);
+                    } finally {
+                        document.getElementById('ai-loader').style.display = 'none';
+                    }
+                };
+                fileReader.readAsArrayBuffer(file);
+            });
+
+             function populateTestFormWithAIData(data) {
+                document.getElementById('testTitle').value = data.testTitle || '';
+                document.getElementById('duration').value = data.duration || '';
+                document.getElementById('totalMarks').value = data.totalMarks || '';
+                document.getElementById('passingPercentage').value = data.passingPercentage || '';
+                
+                sectionsContainer.innerHTML = '';
+                sectionCounter = 0;
+                
+                if (data.sections && data.sections.length > 0) {
+                    data.sections.forEach(section => addSection(section));
+                } else if (data.questions && data.questions.length > 0) {
+                    // Handle case where AI returns flat question list
+                    addSection({ title: 'Main Section', questions: data.questions });
+                }
+            }
+
+
+            document.getElementById('create-test-form').addEventListener('submit', async e => {
+                e.preventDefault();
+                
+                const sections = [];
+                document.querySelectorAll('.section-block').forEach(secBlock => {
+                    const sectionTitle = secBlock.querySelector('input[id$="-title"]').value;
+                    const questions = [];
+                    secBlock.querySelectorAll('.question-block').forEach(qBlock => {
+                        const questionId = qBlock.querySelector('.question-type-select').id.replace('-type', '');
+                        const type = document.getElementById(`${questionId}-type`).value;
+                        const text = document.getElementById(`${questionId}-text`).value;
+                        const marks = parseInt(document.getElementById(`${questionId}-marks`).value);
+                        let questionData = { type, text, marks };
+
+                        if (type.startsWith('mcq')) {
+                            questionData.options = Array.from(qBlock.querySelectorAll('input[type="text"]')).map(i => i.value);
+                            if (type === 'mcq-single') {
+                                const correct = qBlock.querySelector(`input[name="${questionId}-correct"]:checked`);
+                                questionData.correctAnswer = correct ? correct.value : null;
+                            } else {
+                                questionData.correctAnswers = Array.from(qBlock.querySelectorAll(`input[name="${questionId}-correct"]:checked`)).map(cb => cb.value);
+                            }
+                        } else {
+                            questionData.correctAnswer = qBlock.querySelector('input[id$="-answer"]').value;
+                        }
+                        questions.push(questionData);
+                    });
+                    sections.push({ title: sectionTitle, questions });
+                });
+
+                const payload = {
+                    testTitle: document.getElementById('testTitle').value,
+                    duration: parseInt(document.getElementById('duration').value),
+                    totalMarks: parseInt(document.getElementById('totalMarks').value),
+                    passingPercentage: parseInt(document.getElementById('passingPercentage').value),
+                    sections
+                };
+
+                try {
+                    const response = await fetch('/api/hiring/tests', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message);
+                    alert('Hiring test created successfully!');
+                    window.location.href = 'hiring-dashboard.html';
+                } catch (error) {
+                    alert(`Error: ${error.message}`);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+

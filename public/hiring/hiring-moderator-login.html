@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hiring Moderator Login - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="w-full max-w-md">
+        <div class="bg-white shadow-2xl rounded-2xl px-8 pt-10 pb-8 mb-4">
+            <div class="text-center mb-8">
+                <img class="h-12 w-auto mx-auto" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <h1 class="text-3xl font-extrabold text-gray-800 mt-4">Hiring Moderator Login</h1>
+                <p class="text-gray-500 mt-2">Access your hiring dashboard.</p>
+            </div>
+            <form id="login-form">
+                <div class="mb-6">
+                    <label for="email" class="block text-gray-700 text-sm font-bold mb-2">
+                        Email Address
+                    </label>
+                    <input id="email" name="email" type="email" required
+                        class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        placeholder="you@company.com">
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block text-gray-700 text-sm font-bold mb-2">
+                        Password
+                    </label>
+                    <input id="password" name="password" type="password" required
+                        class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        placeholder="******************">
+                </div>
+                <div class="flex items-center justify-between">
+                    <button id="login-btn"
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline transition-colors duration-200"
+                        type="submit">
+                        Sign In
+                    </button>
+                </div>
+            </form>
+            <div id="error-message" class="text-center mt-4 text-red-500 font-semibold"></div>
+        </div>
+        <p class="text-center text-gray-500 text-xs">
+            &copy;2024 TESTIFY. All rights reserved.
+        </p>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('error-message');
+            const loginBtn = document.getElementById('login-btn');
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing In...';
+            errorMessage.textContent = '';
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // IMPORTANT: Check if the logged-in user is a Hiring Moderator
+                    if (data.user && data.user.role === 'Hiring Moderator') {
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        window.location.href = 'hiring-dashboard.html';
+                    } else {
+                         errorMessage.textContent = 'Access Denied. Only Hiring Moderators can log in here.';
+                    }
+                } else {
+                    errorMessage.textContent = data.message || 'An error occurred.';
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorMessage.textContent = 'Could not connect to the server.';
+            } finally {
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Sign In';
+            }
+        });
+    </script>
+</body>
+</html>

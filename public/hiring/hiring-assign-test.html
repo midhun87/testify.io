@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Hiring Test - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
+            </div>
+            <nav class="flex-grow p-4 overflow-y-auto">
+                <a href="hiring-dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <a href="hiring-create-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    <span class="ml-3">Create Test</span>
+                </a>
+                <a href="hiring-assign-test.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <span class="ml-3">Assign Test</span>
+                </a>
+                <a href="hiring-test-history.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span class="ml-3">Test History</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+                <h1 class="text-2xl font-bold text-gray-800">Assign Test to Candidates</h1>
+                <div id="user-menu-container"></div>
+            </div>
+
+            <div class="p-6">
+                <div class="max-w-4xl mx-auto">
+                    <form id="assign-test-form" class="bg-white p-8 rounded-xl shadow-md space-y-6">
+                        <div>
+                            <label for="test-select" class="block text-sm font-medium text-gray-700">Select Test</label>
+                            <select id="test-select" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
+                        </div>
+                        
+                        <div>
+                            <label for="candidate-emails" class="block text-sm font-medium text-gray-700">Candidate Emails</label>
+                            <textarea id="candidate-emails" rows="6" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="Paste email addresses here, one per line or separated by commas."></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="start-time" class="block text-sm font-medium text-gray-700">Attempt Window Start</label>
+                                <input type="datetime-local" id="start-time" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="end-time" class="block text-sm font-medium text-gray-700">Attempt Window End</label>
+                                <input type="datetime-local" id="end-time" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-4">
+                             <button type="submit" id="submit-btn" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Send Invitations
+                            </button>
+                        </div>
+                    </form>
+                    <div id="message" class="mt-4 text-center"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+     <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const token = localStorage.getItem('token');
+
+            if (!token || !user || user.role !== 'Hiring Moderator') {
+                window.location.href = 'hiring-moderator-login.html';
+                return;
+            }
+            
+            const userMenuContainer = document.getElementById('user-menu-container');
+            userMenuContainer.innerHTML = `
+                <div class="relative">
+                    <button id="user-menu-button" class="flex items-center space-x-2">
+                        <span class="font-semibold text-gray-700">${user.fullName}</span>
+                        <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                    <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                        <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                    </div>
+                </div>`;
+            
+            document.getElementById('user-menu-button').addEventListener('click', () => {
+                document.getElementById('user-menu').classList.toggle('hidden');
+            });
+            document.getElementById('logout-button').addEventListener('click', () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'hiring-moderator-login.html';
+            });
+
+            const testSelect = document.getElementById('test-select');
+            const form = document.getElementById('assign-test-form');
+            const messageDiv = document.getElementById('message');
+            const submitBtn = document.getElementById('submit-btn');
+
+            // Fetch tests created by this moderator
+            try {
+                const response = await fetch('/api/hiring/tests', {
+                    headers: { 'x-auth-token': token }
+                });
+                if (!response.ok) throw new Error('Could not fetch tests.');
+                const tests = await response.json();
+                
+                if (tests.length === 0) {
+                    testSelect.innerHTML = '<option disabled selected>No tests found. Please create one first.</option>';
+                    submitBtn.disabled = true;
+                } else {
+                    testSelect.innerHTML = '<option disabled selected value="">-- Select a test to assign --</option>';
+                    tests.forEach(test => {
+                        const option = document.createElement('option');
+                        option.value = test.testId;
+                        option.textContent = test.title;
+                        testSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                 testSelect.innerHTML = `<option disabled selected>Error loading tests: ${error.message}</option>`;
+                 submitBtn.disabled = true;
+            }
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                messageDiv.textContent = '';
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Assigning...';
+
+                const testId = testSelect.value;
+                const emailsText = document.getElementById('candidate-emails').value;
+                const startTime = document.getElementById('start-time').value;
+                const endTime = document.getElementById('end-time').value;
+                
+                // Parse emails (split by new line, comma, or space)
+                const candidateEmails = emailsText.split(/[\n, ]+/).map(email => email.trim()).filter(email => email);
+
+                if (!testId || candidateEmails.length === 0 || !startTime || !endTime) {
+                    messageDiv.textContent = 'Please fill all fields correctly.';
+                    messageDiv.className = 'mt-4 text-center text-red-600 font-semibold';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Send Invitations';
+                    return;
+                }
+
+                const payload = {
+                    testId,
+                    candidateEmails,
+                    startTime,
+                    endTime
+                };
+
+                try {
+                    const response = await fetch('/api/hiring/assign-test', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-auth-token': token
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message);
+
+                    messageDiv.textContent = result.message;
+                    messageDiv.className = 'mt-4 text-center text-green-600 font-semibold';
+                    form.reset();
+                    testSelect.selectedIndex = 0; // Reset dropdown
+
+                } catch (error) {
+                    messageDiv.textContent = `Error: ${error.message}`;
+                    messageDiv.className = 'mt-4 text-center text-red-600 font-semibold';
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Send Invitations';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+

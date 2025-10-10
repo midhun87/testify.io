@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test History & Responses - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000; opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
+        }
+        .modal-overlay.visible { opacity: 1; pointer-events: auto; }
+        .modal-container {
+            background-color: white; border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+            width: 90%; max-width: 7xl; max-height: 90vh;
+            transform: scale(0.95); transition: transform 0.3s ease;
+            display: flex; flex-direction: column;
+        }
+        .modal-overlay.visible .modal-container { transform: scale(1); }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
+            </div>
+            <nav class="flex-grow p-4 overflow-y-auto">
+                <a href="hiring-dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    <span class="ml-3">Dashboard</span>
+                </a>
+                <a href="hiring-create-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    <span class="ml-3">Create Test</span>
+                </a>
+                <a href="hiring-assign-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <span class="ml-3">Assign Test</span>
+                </a>
+                <a href="hiring-test-history.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span class="ml-3">Test History</span>
+                </a>
+                 <a href="hiring-manage-colleges.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
+                    <span class="ml-3">Manage Colleges</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+                <h1 class="text-2xl font-bold text-gray-800">Test History & Responses</h1>
+                <div id="user-menu-container"></div>
+            </div>
+
+            <div class="p-6">
+                <!-- Filters Section -->
+                <div class="mb-6 bg-white p-4 rounded-xl shadow-md flex items-center space-x-4">
+                    <div>
+                        <label for="filter-by-test" class="block text-sm font-medium text-gray-700">Filter by Test</label>
+                        <select id="filter-by-test" class="mt-1 block w-64 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="all">All Tests</option>
+                        </select>
+                    </div>
+                    <div class="pt-5">
+                        <button id="clear-filters-btn" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Clear
+                        </button>
+                    </div>
+                </div>
+
+                <div id="history-container" class="bg-white p-8 rounded-xl shadow-md">
+                    <div id="message-area" class="text-center"></div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 hidden" id="history-table">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Title</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attempts</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Passed</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Failed</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="history-table-body">
+                                <!-- Rows will be inserted here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Modal -->
+    <div id="results-modal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h2 id="modal-title" class="text-xl font-bold text-gray-800">Test Results</h2>
+                <button id="modal-close-btn" class="p-2 rounded-full hover:bg-gray-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto">
+                 <div id="modal-content" class="text-center"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = localStorage.getItem('token');
+
+        if (!token || !user || user.role !== 'Hiring Moderator') {
+            window.location.href = 'hiring-moderator-login.html';
+            return;
+        }
+
+        // --- Standard User Menu & Logout ---
+        const userMenuContainer = document.getElementById('user-menu-container');
+        userMenuContainer.innerHTML = `
+            <div class="relative">
+                <button id="user-menu-button" class="flex items-center space-x-2">
+                    <span class="font-semibold text-gray-700">${user.fullName}</span>
+                    <svg class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                </button>
+                <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                    <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                </div>
+            </div>`;
+        document.getElementById('user-menu-button').addEventListener('click', () => {
+            document.getElementById('user-menu').classList.toggle('hidden');
+        });
+        document.getElementById('logout-button').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = 'hiring-moderator-login.html';
+        });
+
+        const messageArea = document.getElementById('message-area');
+        const historyTable = document.getElementById('history-table');
+        const historyTableBody = document.getElementById('history-table-body');
+        let allTestsData = [];
+        
+        // --- Filter Elements ---
+        const filterByTestSelect = document.getElementById('filter-by-test');
+        const clearFiltersBtn = document.getElementById('clear-filters-btn');
+
+        // --- Modal Elements ---
+        const resultsModal = document.getElementById('results-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalContent = document.getElementById('modal-content');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+
+        modalCloseBtn.addEventListener('click', () => resultsModal.classList.remove('visible'));
+        resultsModal.addEventListener('click', (e) => {
+            if (e.target === resultsModal) resultsModal.classList.remove('visible');
+        });
+
+        // --- Data Fetching and Rendering ---
+        const fetchHistory = async () => {
+            messageArea.innerHTML = `<p class="text-gray-600">Loading history...</p>`;
+            try {
+                const response = await fetch('/api/hiring/test-history', {
+                    headers: { 'x-auth-token': token }
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.message || 'Failed to fetch data.');
+                }
+                allTestsData = await response.json();
+                populateTestFilter(allTestsData);
+                renderTable(); // Initial render with all data
+            } catch (error) {
+                messageArea.innerHTML = `<p class="text-red-600 font-semibold">Error: ${error.message}</p>`;
+            }
+        };
+
+        const populateTestFilter = (data) => {
+            filterByTestSelect.innerHTML = '<option value="all">All Tests</option>'; // Reset
+            data.forEach(test => {
+                const option = document.createElement('option');
+                option.value = test.testId;
+                option.textContent = test.title;
+                filterByTestSelect.appendChild(option);
+            });
+        };
+        
+        const renderTable = () => {
+            const selectedTestId = filterByTestSelect.value;
+            const filteredData = selectedTestId === 'all' 
+                ? allTestsData 
+                : allTestsData.filter(test => test.testId === selectedTestId);
+
+            if (filteredData.length === 0) {
+                messageArea.innerHTML = `<p class="text-gray-600">No test history found for the selected filter.</p>`;
+                historyTable.classList.add('hidden');
+                return;
+            }
+            
+            messageArea.innerHTML = '';
+            historyTable.classList.remove('hidden');
+            historyTableBody.innerHTML = '';
+
+            filteredData.forEach((test, index) => {
+                const row = document.createElement('tr');
+                row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${test.title}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${test.attempted}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-bold">${test.passed}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-bold">${test.failed}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button data-testid="${test.testId}" class="view-results-btn text-indigo-600 hover:text-indigo-900">View Details</button>
+                    </td>
+                `;
+                historyTableBody.appendChild(row);
+            });
+            
+            document.querySelectorAll('.view-results-btn').forEach(btn => {
+                btn.addEventListener('click', showResultsModal);
+            });
+        };
+
+        const showResultsModal = (event) => {
+            const testId = event.target.dataset.testid;
+            const testData = allTestsData.find(t => t.testId === testId);
+            if (!testData) return;
+
+            modalTitle.textContent = `Results for "${testData.title}"`;
+            
+            const renderModalContent = (statusFilter = 'all', scoreFilter = 'all') => {
+                 const filteredResults = testData.results.filter(res => {
+                    const statusMatch = (statusFilter === 'all') || (res.result.toLowerCase() === statusFilter);
+                    
+                    const score = parseInt(res.score, 10);
+                    let scoreMatch = false;
+                    switch(scoreFilter) {
+                        case 'high': scoreMatch = score >= 80; break;
+                        case 'medium': scoreMatch = score >= 50 && score < 80; break;
+                        case 'low': scoreMatch = score < 50; break;
+                        default: scoreMatch = true; // 'all'
+                    }
+                    
+                    return statusMatch && scoreMatch;
+                });
+                
+                if (filteredResults.length === 0) {
+                    modalContent.innerHTML = `
+                        <div class="mb-4 flex justify-end">
+                            ${getModalFiltersHTML(statusFilter, scoreFilter)}
+                        </div>
+                        <p class="text-gray-500 p-4">No candidates found for the selected filters.</p>
+                    `;
+                } else {
+                     modalContent.innerHTML = `
+                        <div class="mb-4 flex justify-end">
+                            ${getModalFiltersHTML(statusFilter, scoreFilter)}
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Candidate Name</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Roll Number</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">College</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Score (%)</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Result</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Submitted At</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    ${filteredResults.map(res => `
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${res.fullName || 'N/A'}</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${res.rollNumber || 'N/A'}</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${res.collegeName || 'N/A'}</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${res.candidateEmail}</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-bold ${res.result === 'Pass' ? 'text-green-600' : 'text-red-600'}">${res.score}</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold ${res.result === 'Pass' ? 'text-green-600' : 'text-red-600'}">${res.result}</td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${new Date(res.submittedAt).toLocaleString()}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+                 // Re-add event listeners after re-rendering
+                document.getElementById('modal-status-filter').addEventListener('change', () => {
+                    const newStatus = document.getElementById('modal-status-filter').value;
+                    const currentScore = document.getElementById('modal-score-filter').value;
+                    renderModalContent(newStatus, currentScore);
+                });
+                document.getElementById('modal-score-filter').addEventListener('change', () => {
+                    const newScore = document.getElementById('modal-score-filter').value;
+                    const currentStatus = document.getElementById('modal-status-filter').value;
+                    renderModalContent(currentStatus, newScore);
+                });
+            };
+            
+            const getModalFiltersHTML = (currentStatus, currentScore) => {
+                return `
+                    <div class="flex items-center space-x-4">
+                        <div>
+                            <label for="modal-status-filter" class="text-sm font-medium text-gray-700 mr-2">Filter by Status:</label>
+                            <select id="modal-status-filter" class="w-40 py-1 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="all" ${currentStatus === 'all' ? 'selected' : ''}>All</option>
+                                <option value="pass" ${currentStatus === 'pass' ? 'selected' : ''}>Passed</option>
+                                <option value="fail" ${currentStatus === 'fail' ? 'selected' : ''}>Failed</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="modal-score-filter" class="text-sm font-medium text-gray-700 mr-2">Filter by Score:</label>
+                            <select id="modal-score-filter" class="w-40 py-1 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="all" ${currentScore === 'all' ? 'selected' : ''}>All Scores</option>
+                                <option value="high" ${currentScore === 'high' ? 'selected' : ''}>&gt;= 80%</option>
+                                <option value="medium" ${currentScore === 'medium' ? 'selected' : ''}>50% - 79%</option>
+                                <option value="low" ${currentScore === 'low' ? 'selected' : ''}>&lt; 50%</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            };
+
+            renderModalContent(); // Initial render
+            resultsModal.classList.add('visible');
+        };
+        
+        // --- Event Listeners for Filters ---
+        filterByTestSelect.addEventListener('change', renderTable);
+        clearFiltersBtn.addEventListener('click', () => {
+            filterByTestSelect.value = 'all';
+            renderTable();
+        });
+
+        // --- Initial Fetch ---
+        fetchHistory();
+    });
+    </script>
+</body>
+</html>
+
