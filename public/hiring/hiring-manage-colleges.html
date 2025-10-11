@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Colleges - TESTIFY</title>
+    <title>Manage Colleges - HIRE WITH US</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-        <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
 
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -20,30 +20,11 @@
         <!-- Sidebar -->
         <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
             <div class="flex items-center justify-center h-20 border-b border-gray-700">
-                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo">
                 <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
             </div>
-            <nav class="flex-grow p-4 overflow-y-auto">
-                <a href="hiring-dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    <span class="ml-3">Dashboard</span>
-                </a>
-                <a href="hiring-create-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                    <span class="ml-3">Create Test</span>
-                </a>
-                <a href="hiring-assign-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    <span class="ml-3">Assign Test</span>
-                </a>
-                <a href="hiring-test-history.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <span class="ml-3">Test History</span>
-                </a>
-                <a href="hiring-manage-colleges.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"></path></svg>
-                    <span class="ml-3">Manage Colleges</span>
-                </a>
+            <nav class="flex-grow p-4 overflow-y-auto" id="sidebar-nav">
+                <!-- Links will be injected by common.js -->
             </nav>
         </div>
 
@@ -62,7 +43,7 @@
                         <form id="add-college-form" class="space-y-4">
                             <div>
                                 <label for="college-name" class="block text-sm font-medium text-gray-700">College Name</label>
-                                <input type="text" id="college-name" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                                <input type="text" id="college-name" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                             <div class="flex justify-end">
                                 <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
@@ -78,6 +59,7 @@
                         <h2 class="text-xl font-bold text-gray-800 mb-4">Your College List</h2>
                         <div id="college-list-container" class="space-y-3 h-96 overflow-y-auto">
                            <!-- Colleges will be loaded here -->
+                           <div class="text-center p-4 text-gray-500">Loading colleges...</div>
                         </div>
                     </div>
                 </div>
@@ -85,35 +67,11 @@
         </div>
     </div>
 
-     <script>
+    <script src="common.js"></script>
+    <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            const user = JSON.parse(localStorage.getItem('user'));
+            initializePage('Manage Colleges');
             const token = localStorage.getItem('token');
-
-            if (!token || !user || user.role !== 'Hiring Moderator') {
-                window.location.href = 'hiring-moderator-login.html';
-                return;
-            }
-            
-            // Standard user menu setup
-            const userMenuContainer = document.getElementById('user-menu-container');
-            userMenuContainer.innerHTML = `
-                <div class="relative">
-                    <button id="user-menu-button" class="flex items-center space-x-2">
-                        <span class="font-semibold text-gray-700">${user.fullName}</span>
-                        <svg class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                    </button>
-                    <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                        <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
-                    </div>
-                </div>`;
-            document.getElementById('user-menu-button').addEventListener('click', () => {
-                document.getElementById('user-menu').classList.toggle('hidden');
-            });
-            document.getElementById('logout-button').addEventListener('click', () => {
-                localStorage.clear();
-                window.location.href = 'hiring-moderator-login.html';
-            });
 
             const addCollegeForm = document.getElementById('add-college-form');
             const formMessage = document.getElementById('form-message');
@@ -129,7 +87,7 @@
                     
                     collegeListContainer.innerHTML = '';
                     if (colleges.length === 0) {
-                        collegeListContainer.innerHTML = '<p class="text-gray-500">You haven\'t added any colleges yet.</p>';
+                        collegeListContainer.innerHTML = '<p class="text-gray-500 text-center p-4">You haven\'t added any colleges yet.</p>';
                     } else {
                         colleges.forEach(college => {
                             const div = document.createElement('div');
@@ -148,7 +106,7 @@
                         });
                     }
                 } catch (error) {
-                    collegeListContainer.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+                    collegeListContainer.innerHTML = `<p class="text-red-500 text-center p-4">${error.message}</p>`;
                 }
             };
 
@@ -178,7 +136,9 @@
 
             async function handleDeleteCollege(e) {
                 const collegeId = e.currentTarget.dataset.id;
-                if (!confirm('Are you sure you want to delete this college?')) return;
+                // Using a custom modal/confirm dialog would be better in a real app,
+                // but window.confirm is used here for simplicity as per original file.
+                if (!window.confirm('Are you sure you want to delete this college?')) return;
 
                 try {
                     const response = await fetch(`/api/hiring/colleges/${collegeId}`, {

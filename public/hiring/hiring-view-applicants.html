@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Applicants - HIRE WITH US</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        /* Styles for the new details modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000; opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
+        }
+        .modal-overlay.visible { opacity: 1; pointer-events: auto; }
+        .modal-container {
+            background-color: white; border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+            width: 90%; max-width: 4xl; max-height: 90vh;
+            transform: scale(0.95); transition: transform 0.3s ease;
+            display: flex; flex-direction: column;
+        }
+        .modal-overlay.visible .modal-container { transform: scale(1); }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen bg-gray-100">
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo">
+                <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
+            </div>
+            <nav class="flex-grow p-4 overflow-y-auto" id="sidebar-nav"></nav>
+        </div>
+
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+                <h1 id="page-title" class="text-2xl font-bold text-gray-800">Loading Applicants...</h1>
+                <div id="user-menu-container"></div>
+            </div>
+
+            <div class="p-6">
+                <div class="bg-white p-4 rounded-xl shadow-md mb-6">
+                    <div class="flex justify-between items-center">
+                         <div class="flex items-center space-x-4">
+                            <input type="number" id="score-filter" placeholder="Min CGPA (e.g., 7.5)" step="0.1" class="shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            <button id="apply-filter-btn" class="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300">Apply Filter</button>
+                         </div>
+                         <div>
+                            <button id="update-status-btn" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 disabled:bg-gray-400" disabled>Update Status</button>
+                         </div>
+                    </div>
+                </div>
+
+                <div id="applicants-container" class="bg-white p-6 rounded-xl shadow-md">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200" id="applicants-table">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3"><input type="checkbox" id="select-all-checkbox"></th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">College</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CGPA</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Applied On</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="applicants-tbody" class="bg-white divide-y divide-gray-200"></tbody>
+                        </table>
+                    </div>
+                    <div id="message-area" class="text-center mt-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Applicant Details Modal -->
+    <div id="details-modal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h2 id="modal-title" class="text-xl font-bold text-gray-800">Applicant Details</h2>
+                <button id="modal-close-btn" class="p-2 rounded-full hover:bg-gray-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="modal-content" class="p-6 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'hiring-moderator-login.html';
+                return;
+            }
+
+            initializePage('Manage Jobs');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const jobId = urlParams.get('jobId');
+
+            const pageTitle = document.getElementById('page-title');
+            const applicantsTbody = document.getElementById('applicants-tbody');
+            const messageArea = document.getElementById('message-area');
+            const selectAllCheckbox = document.getElementById('select-all-checkbox');
+            const updateStatusBtn = document.getElementById('update-status-btn');
+            
+            const detailsModal = document.getElementById('details-modal');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+
+            let allApplicants = [];
+
+            if (!jobId || jobId === 'undefined') {
+                pageTitle.textContent = "Error: Invalid or missing Job ID.";
+                messageArea.innerHTML = `<p class="text-red-500 font-semibold">Could not load applicants because the Job ID is missing from the URL. Please go back to the Manage Jobs page and try again.</p>`;
+                return;
+            }
+
+            const fetchApplicants = async () => {
+                 messageArea.innerHTML = '<p class="text-gray-600">Loading applicants...</p>';
+                 try {
+                    const response = await fetch(`/api/hiring/jobs/${jobId}/applications`, {
+                        headers: { 'x-auth-token': token }
+                    });
+
+                    if (!response.ok) {
+                         const err = await response.json();
+                         throw new Error(err.message || 'Could not fetch applicants.');
+                    }
+                    const data = await response.json();
+                    
+                    allApplicants = data.applications || [];
+                    pageTitle.textContent = `Applicants for "${data.jobTitle}"`;
+                    renderTable(allApplicants);
+                 } catch(error) {
+                    messageArea.innerHTML = `<p class="text-red-500 font-semibold">Error: ${error.message}</p>`;
+                 }
+            };
+            
+            const renderTable = (applicants) => {
+                applicantsTbody.innerHTML = '';
+                if (!applicants || applicants.length === 0) {
+                     messageArea.innerHTML = '<p class="text-gray-600">No applicants yet for this job.</p>';
+                     return;
+                }
+                messageArea.innerHTML = '';
+                
+                applicantsTbody.innerHTML = applicants.map(app => {
+                    const name = `${app.firstName} ${app.lastName}`;
+                    const college = app.education && app.education.length > 0 ? app.education[0].institute : 'N/A';
+                    const cgpa = app.education && app.education.length > 0 ? app.education[0].score : 'N/A';
+                    
+                    return `
+                        <tr data-cgpa="${parseFloat(cgpa) || 0}">
+                            <td class="px-6 py-4"><input type="checkbox" class="applicant-checkbox" value="${app.applicationId}"></td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.email}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${college}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${cgpa}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.status || 'Applied'}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(app.appliedAt).toLocaleDateString()}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button class="view-details-btn text-indigo-600 hover:text-indigo-900" data-applicant-id="${app.applicationId}">View Details</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            };
+
+            const showDetailsModal = (applicantId) => {
+                const applicant = allApplicants.find(app => app.applicationId === applicantId);
+                if (!applicant) return;
+
+                modalTitle.textContent = `Details for ${applicant.firstName} ${applicant.lastName}`;
+                
+                let educationHTML = 'Not provided';
+                if (applicant.education && applicant.education.length > 0) {
+                    educationHTML = applicant.education.map(edu => `
+                        <div class="p-3 bg-gray-50 rounded-md mb-2">
+                            <p><strong>${edu.type}</strong> - ${edu.institute}</p>
+                            <p class="text-sm text-gray-600">Stream: ${edu.stream} | Score: ${edu.score}</p>
+                            ${edu.certificateUrl ? `<a href="${edu.certificateUrl}" target="_blank" class="text-sm text-indigo-600">View Certificate</a>` : ''}
+                        </div>
+                    `).join('');
+                }
+
+                let experienceHTML = 'Not provided';
+                if (applicant.experiences && applicant.experiences.length > 0) {
+                    experienceHTML = applicant.experiences.map(exp => `
+                        <div class="p-3 bg-gray-50 rounded-md mb-2">
+                            <p><strong>${exp.title}</strong> at ${exp.company}</p>
+                            <p class="text-sm text-gray-600">${exp.description}</p>
+                            ${exp.certificateUrl ? `<a href="${exp.certificateUrl}" target="_blank" class="text-sm text-indigo-600">View Certificate</a>` : ''}
+                        </div>
+                    `).join('');
+                }
+
+                modalContent.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-1">
+                            <img src="${applicant.passportPhotoUrl}" alt="Passport Photo" class="w-40 h-40 object-cover rounded-lg shadow-md mx-auto">
+                        </div>
+                        <div class="md:col-span-2 space-y-4">
+                            <div><h4 class="font-semibold text-gray-700">Phone</h4><p>${applicant.phone}</p></div>
+                            <div>
+                                <h4 class="font-semibold text-gray-700">Documents</h4>
+                                <div class="flex space-x-4 mt-1">
+                                    <a href="${applicant.resumeUrl}" target="_blank" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">View Resume</a>
+                                    ${applicant.govtId && applicant.govtId.url ? `<a href="${applicant.govtId.url}" target="_blank" class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">View ID (${applicant.govtId.type || 'N/A'})</a>` : ''}
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-700">Links</h4>
+                                <div class="flex space-x-4 mt-1">
+                                    ${applicant.links.linkedin ? `<a href="${applicant.links.linkedin}" target="_blank" class="text-indigo-600">LinkedIn</a>` : ''}
+                                    ${applicant.links.github ? `<a href="${applicant.links.github}" target="_blank" class="text-indigo-600">GitHub</a>` : ''}
+                                    ${applicant.links.portfolio ? `<a href="${applicant.links.portfolio}" target="_blank" class="text-indigo-600">Portfolio</a>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 border-t pt-4">
+                        <h4 class="font-semibold text-lg text-gray-800 mb-2">Education</h4>
+                        ${educationHTML}
+                    </div>
+                    <div class="mt-6 border-t pt-4">
+                        <h4 class="font-semibold text-lg text-gray-800 mb-2">Experience</h4>
+                        ${experienceHTML}
+                    </div>
+                `;
+                detailsModal.classList.add('visible');
+            };
+
+            // *** FIX: Use event delegation for more reliable click handling ***
+            applicantsTbody.addEventListener('click', (event) => {
+                if (event.target && event.target.classList.contains('view-details-btn')) {
+                    showDetailsModal(event.target.dataset.applicantId);
+                }
+            });
+
+            modalCloseBtn.addEventListener('click', () => detailsModal.classList.remove('visible'));
+            detailsModal.addEventListener('click', (e) => {
+                if (e.target === detailsModal) detailsModal.classList.remove('visible');
+            });
+
+            document.getElementById('apply-filter-btn').addEventListener('click', () => {
+                const minCgpa = parseFloat(document.getElementById('score-filter').value);
+                if (isNaN(minCgpa)) {
+                    renderTable(allApplicants); // Reset filter if input is invalid
+                    return;
+                }
+                const filtered = allApplicants.filter(app => {
+                    const cgpa = app.education && app.education.length > 0 ? parseFloat(app.education[0].score) : 0;
+                    return !isNaN(cgpa) && cgpa >= minCgpa;
+                });
+                renderTable(filtered);
+            });
+            
+            selectAllCheckbox.addEventListener('change', (e) => {
+                document.querySelectorAll('.applicant-checkbox').forEach(cb => {
+                    cb.checked = e.target.checked;
+                });
+                updateStatusBtn.disabled = !e.target.checked;
+            });
+            
+            applicantsTbody.addEventListener('change', () => {
+                 const selected = document.querySelectorAll('.applicant-checkbox:checked').length;
+                 updateStatusBtn.disabled = selected === 0;
+            });
+            
+            updateStatusBtn.addEventListener('click', async () => {
+                const newStatus = prompt("Enter the new status for the selected applicants (e.g., Round 2, Shortlisted):");
+                if (!newStatus || newStatus.trim() === '') return;
+
+                const selectedIds = Array.from(document.querySelectorAll('.applicant-checkbox:checked')).map(cb => cb.value);
+                
+                const sendEmail = confirm("Do you want to send an email notification to these applicants?");
+                let emailDetails = null;
+                if (sendEmail) {
+                    const subject = prompt("Enter email subject:");
+                    const body = prompt("Enter email body (HTML is supported):");
+                    if (subject && body) {
+                        emailDetails = { send: true, subject, body };
+                    }
+                }
+
+                try {
+                    const response = await fetch('/api/hiring/update-applicants-status', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify({ applicationIds: selectedIds, newStatus, emailDetails })
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message);
+
+                    alert(result.message);
+                    fetchApplicants();
+                } catch(error) {
+                    alert(`Error: ${error.message}`);
+                }
+            });
+
+            fetchApplicants();
+        });
+    </script>
+</body>
+</html>
+

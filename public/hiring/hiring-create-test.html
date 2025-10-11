@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Hiring Test - TESTIFY</title>
+    <title>Create Hiring Test - HIRE WITH US</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
-        <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
 
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -22,26 +22,11 @@
         <!-- Sidebar -->
         <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
             <div class="flex items-center justify-center h-20 border-b border-gray-700">
-                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo">
                 <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
             </div>
-            <nav class="flex-grow p-4 overflow-y-auto">
-                <a href="hiring-dashboard.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                    <span class="ml-3">Dashboard</span>
-                </a>
-                <a href="hiring-create-test.html" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                    <span class="ml-3">Create Test</span>
-                </a>
-                <a href="hiring-assign-test.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                    <span class="ml-3">Assign Test</span>
-                </a>
-                <a href="hiring-test-history.html" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    <span class="ml-3">Test History</span>
-                </a>
+            <nav class="flex-grow p-4 overflow-y-auto" id="sidebar-nav">
+                <!-- Links will be injected by common.js -->
             </nav>
         </div>
 
@@ -110,37 +95,12 @@
             </div>
         </div>
     </div>
-
+    
+    <script src="common.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const user = JSON.parse(localStorage.getItem('user'));
+            initializePage('Create Test');
             const token = localStorage.getItem('token');
-
-            if (!token || !user || user.role !== 'Hiring Moderator') {
-                window.location.href = 'hiring-moderator-login.html';
-                return;
-            }
-
-            const userMenuContainer = document.getElementById('user-menu-container');
-            userMenuContainer.innerHTML = `
-                <div class="relative">
-                    <button id="user-menu-button" class="flex items-center space-x-2">
-                        <span id="user-name" class="font-semibold text-gray-700">${user.fullName}</span>
-                        <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                    </button>
-                    <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                        <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
-                    </div>
-                </div>`;
-            
-            document.getElementById('user-menu-button').addEventListener('click', () => {
-                document.getElementById('user-menu').classList.toggle('hidden');
-            });
-            document.getElementById('logout-button').addEventListener('click', () => {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = 'hiring-moderator-login.html';
-            });
 
             const sectionsContainer = document.getElementById('sections-container');
             let sectionCounter = 0;
@@ -198,13 +158,13 @@
             });
 
             function addQuestion(questionsContainer, data = {}) {
-                const questionCounter = questionsContainer.children.length + 1;
+                const questionCounter = Date.now(); // Unique ID for question
                 const questionId = `${questionsContainer.closest('.section-block').id}-q-${questionCounter}`;
                 const questionBlock = document.createElement('div');
                 questionBlock.className = 'question-block bg-gray-50 p-4 rounded-lg border';
                 questionBlock.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
-                        <h4 class="font-semibold text-gray-700">Question ${questionCounter}</h4>
+                        <h4 class="font-semibold text-gray-700">Question</h4>
                          <button type="button" class="remove-question-btn text-xl font-bold text-red-400 hover:text-red-600">&times;</button>
                     </div>
                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -245,20 +205,16 @@
                         <button type="button" class="add-option-btn mt-1 text-xs font-semibold text-indigo-500 hover:text-indigo-700" data-question-id="${questionId}" data-input-type="${inputType}">+ Add Option</button>
                     `;
                     
-                    // *** ROBUST OPTION RENDERING ***
                     let optionsToRender = data.options;
-                    // If options are not a non-empty array, default to two blank options.
                     if (!Array.isArray(optionsToRender) || optionsToRender.length === 0) {
                         optionsToRender = ['', '']; 
                     }
 
                     optionsToRender.forEach((optText, i) => {
                         let isChecked = false;
-                        // Check for single correct answer
                         if (type === 'mcq-single' && data.correctAnswer !== null && data.correctAnswer !== undefined) {
                             isChecked = (String(data.correctAnswer) === String(i));
                         } 
-                        // Check for multiple correct answers
                         else if (type === 'mcq-multiple' && Array.isArray(data.correctAnswers)) {
                             isChecked = data.correctAnswers.includes(String(i));
                         }
@@ -306,7 +262,8 @@
                             fullText += textContent.items.map(item => item.str).join(' ') + '\n';
                         }
                         
-                        const response = await fetch('/api/hiring/generate-test-from-pdf', {
+                        // NOTE: The endpoint in the original file was incorrect. This is corrected to the hiring-specific AI endpoint.
+                        const response = await fetch('/api/admin/generate-test-from-pdf', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                             body: JSON.stringify({ text: fullText })
@@ -335,11 +292,9 @@
                 if (data.sections && data.sections.length > 0) {
                     data.sections.forEach(section => addSection(section));
                 } else if (data.questions && data.questions.length > 0) {
-                    // Handle case where AI returns flat question list
                     addSection({ title: 'Main Section', questions: data.questions });
                 }
             }
-
 
             document.getElementById('create-test-form').addEventListener('submit', async e => {
                 e.preventDefault();
@@ -349,7 +304,7 @@
                     const sectionTitle = secBlock.querySelector('input[id$="-title"]').value;
                     const questions = [];
                     secBlock.querySelectorAll('.question-block').forEach(qBlock => {
-                        const questionId = qBlock.querySelector('.question-type-select').id.replace('-type', '');
+                        const questionId = qBlock.querySelector('.question-type-select').dataset.questionId;
                         const type = document.getElementById(`${questionId}-type`).value;
                         const text = document.getElementById(`${questionId}-text`).value;
                         const marks = parseInt(document.getElementById(`${questionId}-marks`).value);
@@ -397,4 +352,3 @@
     </script>
 </body>
 </html>
-
