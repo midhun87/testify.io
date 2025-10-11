@@ -88,7 +88,7 @@ const JWT_SECRET = 'your-super-secret-key-for-jwt-in-production';
 // =================================================================
 // --- REAL-TIME QUIZCOM LOGIC WITH WEBSOCKETS (UPDATED) ---
 // =================================================================
-const liveQuizTimers = {}; // In-memory store for server-side timers
+const liveQuizData = {}; // In-memory store for timers and question start times
 
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
@@ -102,8 +102,17 @@ io.on('connection', (socket) => {
         try {
             const { Item: liveQuiz } = await docClient.send(new GetCommand({ TableName: "TestifyLiveQuizzes", Key: { liveQuizId } }));
             if (liveQuiz) {
-                const newParticipant = { ...studentDetails, socketId: socket.id, score: 0 };
-                const updatedParticipants = [...(liveQuiz.participants || []), newParticipant];
+                let updatedParticipants = [...(liveQuiz.participants || [])];
+                const existingParticipantIndex = updatedParticipants.findIndex(p => p.email === studentDetails.email);
+
+                if (existingParticipantIndex > -1) {
+                    // User is reconnecting, just update their socketId
+                    updatedParticipants[existingParticipantIndex].socketId = socket.id;
+                } else {
+                    // New user is joining
+                    const newParticipant = { ...studentDetails, socketId: socket.id, score: 0 };
+                    updatedParticipants.push(newParticipant);
+                }
 
                 await docClient.send(new UpdateCommand({
                     TableName: "TestifyLiveQuizzes",
@@ -111,6 +120,7 @@ io.on('connection', (socket) => {
                     UpdateExpression: "set participants = :p",
                     ExpressionAttributeValues: { ":p": updatedParticipants }
                 }));
+                // Broadcast the updated list to everyone in the room (moderator and students)
                 io.to(liveQuizId).emit('update-participants', updatedParticipants);
             }
         } catch (error) { console.error("Error on student-joined:", error); }
@@ -118,9 +128,9 @@ io.on('connection', (socket) => {
 
     socket.on('moderator-next-question', async ({ liveQuizId }) => {
         try {
-            if (liveQuizTimers[liveQuizId]) { // Clear any existing timer for this quiz
-                clearInterval(liveQuizTimers[liveQuizId].interval);
-                delete liveQuizTimers[liveQuizId];
+            // Clear any existing timer for this quiz
+            if (liveQuizData[liveQuizId] && liveQuizData[liveQuizId].interval) {
+                clearInterval(liveQuizData[liveQuizId].interval);
             }
 
             let { Item: liveQuiz } = await docClient.send(new GetCommand({ TableName: "TestifyLiveQuizzes", Key: { liveQuizId } }));
@@ -133,7 +143,11 @@ io.on('connection', (socket) => {
             
             if (nextIndex < originalQuiz.questions.length) {
                 const question = originalQuiz.questions[nextIndex];
+                const questionStartTime = Date.now();
                 
+                // Store question start time in memory
+                liveQuizData[liveQuizId] = { ...liveQuizData[liveQuizId], questionStartTime };
+
                 await docClient.send(new UpdateCommand({
                     TableName: "TestifyLiveQuizzes",
                     Key: { liveQuizId },
@@ -144,43 +158,30 @@ io.on('connection', (socket) => {
 
                 const { correctAnswer, correctAnswers, ...questionForStudent } = question;
                 
-                // Send question to students (without answers)
                 io.to(liveQuizId).emit('new-question', {
                     question: questionForStudent,
                     questionIndex: nextIndex,
                     totalQuestions: originalQuiz.questions.length
                 });
 
-                // Send full question to moderator (with answers)
                 io.to(liveQuizId).emit('moderator-new-question', {
                      question: question,
                      questionIndex: nextIndex,
                      totalQuestions: originalQuiz.questions.length
                 });
 
-                // Start server-side timer
                 let timeLeft = question.time || 30;
-                liveQuizTimers[liveQuizId] = {
-                    interval: setInterval(() => {
-                        timeLeft--;
-                        io.to(liveQuizId).emit('question-timer-update', timeLeft);
-                        if (timeLeft <= 0) {
-                            clearInterval(liveQuizTimers[liveQuizId].interval);
-                            delete liveQuizTimers[liveQuizId];
-                            endQuestionAndShowStats(liveQuizId);
-                        }
-                    }, 1000),
-                    timeout: setTimeout(() => {
-                        // This is a fallback in case interval is not cleared
-                        if(liveQuizTimers[liveQuizId]) {
-                             clearInterval(liveQuizTimers[liveQuizId].interval);
-                             delete liveQuizTimers[liveQuizId];
-                             endQuestionAndShowStats(liveQuizId);
-                        }
-                    }, (timeLeft + 1) * 1000)
-                };
+                liveQuizData[liveQuizId].interval = setInterval(() => {
+                    timeLeft--;
+                    io.to(liveQuizId).emit('question-timer-update', timeLeft);
+                    if (timeLeft <= 0) {
+                        clearInterval(liveQuizData[liveQuizId].interval);
+                        endQuestionAndShowStats(liveQuizId);
+                    }
+                }, 1000);
 
-            } else { // Quiz is over
+            } else {
+                // Quiz is over
                 io.to(liveQuizId).emit('quiz-ended', { finalLeaderboard: liveQuiz.participants });
                  await docClient.send(new UpdateCommand({
                     TableName: "TestifyLiveQuizzes", Key: { liveQuizId },
@@ -197,22 +198,39 @@ io.on('connection', (socket) => {
             let { Item: liveQuiz } = await docClient.send(new GetCommand({ TableName: "TestifyLiveQuizzes", Key: { liveQuizId } }));
             const { Item: originalQuiz } = await docClient.send(new GetCommand({ TableName: "TestifyTests", Key: { testId: liveQuiz.originalQuizId } }));
             
-            if (!liveQuiz.answeredBy || liveQuiz.answeredBy.includes(socket.id)) return; // Already answered
+            const participantIndex = liveQuiz.participants.findIndex(p => p.socketId === socket.id);
+            if (participantIndex === -1) return; // Participant not found
 
+            const participantEmail = liveQuiz.participants[participantIndex].email;
+            if (liveQuiz.answeredBy && liveQuiz.answeredBy.some(a => a.email === participantEmail)) return; // Already answered
+
+            const submissionTime = Date.now();
             const question = originalQuiz.questions[questionIndex];
             let isCorrect = false;
-            if (question.type === 'mcq-single' || question.type === 'fill-blank') {
-                isCorrect = String(answer) === String(question.correctAnswer);
-            } else if (question.type === 'mcq-multiple') {
-                 isCorrect = Array.isArray(answer) && answer.length === question.correctAnswers.length && answer.every(val => question.correctAnswers.includes(String(val)));
+
+            if (question.type === 'single' || question.type === 'blank') {
+                isCorrect = String(answer).trim().toLowerCase() === String(question.correctAnswer).trim().toLowerCase();
+            } else if (question.type === 'multiple') {
+                 const correctSet = new Set(question.correctAnswers.map(String));
+                 const answerSet = new Set(answer.map(String));
+                 isCorrect = correctSet.size === answerSet.size && [...correctSet].every(val => answerSet.has(val));
             }
 
-            const participantIndex = liveQuiz.participants.findIndex(p => p.socketId === socket.id);
-            if (isCorrect && participantIndex > -1) {
-                liveQuiz.participants[participantIndex].score += (question.points || 10);
+            if (isCorrect) {
+                const questionStartTime = liveQuizData[liveQuizId]?.questionStartTime || (submissionTime - 1000);
+                const timeTaken = (submissionTime - questionStartTime) / 1000; // in seconds
+                const totalTime = question.time || 30;
+                
+                // Fastest Finger First Scoring Logic
+                const basePoints = question.points || 10;
+                // Bonus is proportional to time remaining, max bonus is equal to base points
+                const timeBonus = Math.max(0, (totalTime - timeTaken) / totalTime);
+                const pointsAwarded = basePoints + Math.round(basePoints * timeBonus);
+
+                liveQuiz.participants[participantIndex].score += pointsAwarded;
             }
             
-            liveQuiz.answeredBy.push(socket.id);
+            liveQuiz.answeredBy.push({ email: participantEmail, submissionTime, isCorrect });
 
             await docClient.send(new UpdateCommand({
                 TableName: "TestifyLiveQuizzes", Key: { liveQuizId },
@@ -225,12 +243,9 @@ io.on('connection', (socket) => {
                 totalCount: liveQuiz.participants.length 
             });
 
-            // If all participants have answered, end the question early
             if(liveQuiz.answeredBy.length === liveQuiz.participants.length) {
-                if(liveQuizTimers[liveQuizId]) {
-                    clearInterval(liveQuizTimers[liveQuizId].interval);
-                    clearTimeout(liveQuizTimers[liveQuizId].timeout);
-                    delete liveQuizTimers[liveQuizId];
+                if(liveQuizData[liveQuizId] && liveQuizData[liveQuizId].interval) {
+                    clearInterval(liveQuizData[liveQuizId].interval);
                 }
                 endQuestionAndShowStats(liveQuizId);
             }
@@ -238,7 +253,7 @@ io.on('connection', (socket) => {
         } catch(error) { console.error("Submit Answer Error:", error); }
     });
 
-    // Other controls
+    // Other controls...
     socket.on('moderator-pause-quiz', ({ liveQuizId }) => io.to(liveQuizId).emit('quiz-paused'));
     socket.on('moderator-resume-quiz', ({ liveQuizId }) => io.to(liveQuizId).emit('quiz-resumed'));
     socket.on('moderator-show-leaderboard', async ({ liveQuizId }) => {
@@ -265,8 +280,25 @@ async function endQuestionAndShowStats(liveQuizId) {
     try {
         const { Item: liveQuiz } = await docClient.send(new GetCommand({ TableName: "TestifyLiveQuizzes", Key: { liveQuizId } }));
         if (liveQuiz) {
-            io.to(liveQuizId).emit('question-ended', { questionLeaderboard: liveQuiz.participants });
-            io.to(liveQuizId).emit('update-leaderboard', liveQuiz.participants);
+            let fastestCorrect = null;
+            const correctAnswers = (liveQuiz.answeredBy || []).filter(a => a.isCorrect);
+            if(correctAnswers.length > 0) {
+                correctAnswers.sort((a,b) => a.submissionTime - b.submissionTime);
+                const fastestEmail = correctAnswers[0].email;
+                const fastestParticipant = liveQuiz.participants.find(p => p.email === fastestEmail);
+                if (fastestParticipant) {
+                    const timeTaken = (correctAnswers[0].submissionTime - (liveQuizData[liveQuizId]?.questionStartTime || 0)) / 1000;
+                    fastestCorrect = {
+                        fullName: fastestParticipant.fullName,
+                        time: timeTaken.toFixed(2)
+                    };
+                }
+            }
+            
+            io.to(liveQuizId).emit('question-ended', { 
+                questionLeaderboard: liveQuiz.participants,
+                fastestCorrectAnswer: fastestCorrect
+            });
         }
     } catch(error) {
         console.error("End of Question Error:", error);
@@ -6333,7 +6365,12 @@ app.post('/api/careers/apply/:jobId',
         }
 
         try {
-            const { Item: job } = await docClient.send(new GetCommand({ TableName: "TestifyJobs", Key: { jobId } }));
+            // *** FIX: Corrected the table name and the primary key to find the job ***
+            const { Item: job } = await docClient.send(new GetCommand({ 
+                TableName: "TestifyTests", 
+                Key: { testId: jobId } 
+            }));
+
             if (!job) {
                 return res.status(404).json({ message: 'Job opening not found.' });
             }
@@ -6342,7 +6379,6 @@ app.post('/api/careers/apply/:jobId',
             const uploadToCloudinary = async (file) => {
                 const b64 = Buffer.from(file.buffer).toString("base64");
                 const dataURI = `data:${file.mimetype};base64,${b64}`;
-                // *** FIX: Explicitly set resource_type to "auto" for proper file handling ***
                 return await cloudinary.uploader.upload(dataURI, {
                     folder: "job_applications",
                     resource_type: "auto"
@@ -8342,6 +8378,921 @@ app.get('/api/quizcom/live/:id/details', async (req, res) => {
         res.status(500).json({ message: 'Server error fetching quiz details.' });
     }
 });
+
+// =================================================================
+// --- NEW JOB & APPLICATION ROUTES FOR HIRING MODERATOR ---
+// =================================================================
+
+// Note: Using TestifyUsers table to store jobs and applications to avoid creating new tables as requested.
+// We will use a `recordType` attribute to distinguish between users, jobs, and applications.
+
+const HIRING_TABLE = "TestifyUsers"; // Using a single table for this feature
+
+// HIRING MODERATOR: Create a new Job Posting
+app.post('/api/hiring/jobs', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    // --- FIX IS HERE ---
+    // Changed 'jd' to 'description' to match the frontend payload
+    const { title, description, eligibleColleges, applicationDeadline, hiringTimeline } = req.body;
+    if (!title || !description || !eligibleColleges || !applicationDeadline || !hiringTimeline) {
+        return res.status(400).json({ message: 'All fields are required to create a job.' });
+    }
+
+    const jobId = `job_${uuidv4()}`;
+    const newJob = {
+        testId: jobId,
+        testType: 'job',
+        title,
+        description: description, // Use the correct variable here as well
+        eligibleColleges,
+        applicationDeadline,
+        hiringTimeline,
+        createdBy: req.user.email,
+        createdAt: new Date().toISOString()
+    };
+
+    try {
+        await docClient.send(new PutCommand({ TableName: "TestifyTests", Item: newJob }));
+        res.status(201).json({ message: 'Job created successfully!', job: newJob });
+    } catch (error) {
+        console.error("Create Job Error:", error);
+        res.status(500).json({ message: 'Server error creating job.' });
+    }
+});
+// HIRING MODERATOR: Get all jobs they have created
+app.get('/api/hiring/jobs', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyTests",
+            FilterExpression: "createdBy = :creator AND testType = :type",
+            ExpressionAttributeValues: {
+                ":creator": req.user.email,
+                ":type": "job"
+            }
+        }));
+        // For consistency, let's rename 'testId' to 'jobId' in the response
+        const jobs = Items.map(job => ({ ...job, jobId: job.testId }));
+        res.json(jobs);
+    } catch (error) {
+        console.error("Get Hiring Jobs Error:", error);
+        res.status(500).json({ message: 'Server error fetching jobs.' });
+    }
+});
+
+// PUBLIC: Get all open job listings
+app.get('/api/public/jobs', async (req, res) => {
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: HIRING_TABLE,
+            FilterExpression: "recordType = :type AND applicationDeadline > :now",
+            ExpressionAttributeValues: { ":type": "JOB", ":now": new Date().toISOString() }
+        }));
+        res.json(Items);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error fetching jobs.' });
+    }
+});
+
+// PUBLIC: Get details for a single job
+// app.get('/api/public/jobs/:jobId', async (req, res) => {
+//     try {
+//         const { Item } = await docClient.send(new GetCommand({
+//             TableName: HIRING_TABLE,
+//             Key: { email: req.params.jobId }
+//         }));
+//         if (Item && Item.recordType === 'JOB') {
+//             res.json(Item);
+//         } else {
+//             res.status(404).json({ message: 'Job not found.' });
+//         }
+//     } catch (error) {
+//         res.status(500).json({ message: 'Server error fetching job details.' });
+//     }
+// });
+
+// PUBLIC: Apply for a job
+app.post('/api/public/apply/:jobId',
+    upload.any(), // Use upload.any() to accept all files with dynamic names
+    async (req, res) => {
+        const { jobId } = req.params;
+        const {
+            firstName, lastName, email, phone,
+            education, // This is now a JSON string
+            experiences, // This is also a JSON string
+            linkedinUrl, githubUrl, portfolioUrl,
+            govtIdType // New field for Government ID type
+        } = req.body;
+
+        if (!firstName || !lastName || !email || !phone) {
+            return res.status(400).json({ message: 'Personal details are required.' });
+        }
+
+        try {
+            const { Item: job } = await docClient.send(new GetCommand({ TableName: "TestifyTests", Key: { testId: jobId } }));
+            if (!job) {
+                return res.status(404).json({ message: 'Job opening not found.' });
+            }
+             if (new Date(job.applicationDeadline) < new Date()) {
+                return res.status(400).json({ message: 'The application deadline has passed.' });
+            }
+
+            const uploadToCloudinary = async (file) => {
+                const b64 = Buffer.from(file.buffer).toString("base64");
+                const dataURI = `data:${file.mimetype};base64,${b64}`;
+                return await cloudinary.uploader.upload(dataURI, {
+                    folder: "job_applications",
+                    resource_type: "auto"
+                });
+            };
+
+            const files = req.files;
+            let passportPhotoUrl, resumeUrl, govtIdUrl;
+            const educationCertificates = {};
+            const experienceCertificates = {};
+
+            for (const file of files) {
+                const result = await uploadToCloudinary(file);
+                if (file.fieldname === 'passportPhoto') {
+                    passportPhotoUrl = result.secure_url;
+                } else if (file.fieldname === 'resume') {
+                    resumeUrl = result.secure_url;
+                } else if (file.fieldname === 'govtId') {
+                    govtIdUrl = result.secure_url;
+                } else if (file.fieldname.startsWith('education_certificate_')) {
+                    const index = file.fieldname.split('_')[2];
+                    educationCertificates[index] = result.secure_url;
+                } else if (file.fieldname.startsWith('experience_certificate_')) {
+                    const index = file.fieldname.split('_')[2];
+                    experienceCertificates[index] = result.secure_url;
+                }
+            }
+
+            if (!passportPhotoUrl || !resumeUrl) {
+                return res.status(400).json({ message: 'Passport photo and resume are mandatory.' });
+            }
+
+            const educationData = JSON.parse(education || '[]').map((edu, index) => ({
+                ...edu,
+                certificateUrl: educationCertificates[index] || null
+            }));
+
+            const experienceData = JSON.parse(experiences || '[]').map((exp, index) => ({
+                ...exp,
+                certificateUrl: experienceCertificates[index] || null
+            }));
+
+            const applicationId = `app_${uuidv4()}`;
+            const newApplication = {
+                applicationId,
+                jobId,
+                jobTitle: job.title,
+                firstName, lastName, email, phone,
+                passportPhotoUrl,
+                resumeUrl,
+                govtId: {
+                    type: govtIdType,
+                    url: govtIdUrl || null
+                },
+                education: educationData,
+                experiences: experienceData,
+                links: {
+                    linkedin: linkedinUrl,
+                    github: githubUrl,
+                    portfolio: portfolioUrl
+                },
+                status: 'Applied',
+                appliedAt: new Date().toISOString()
+            };
+
+            await docClient.send(new PutCommand({ TableName: "TestifyApplications", Item: newApplication }));
+
+            res.status(201).json({ message: 'Application submitted successfully! We will be in touch.' });
+
+        } catch (error) {
+            console.error("Apply Job Error:", error);
+            res.status(500).json({ message: 'Server error submitting application.' });
+        }
+    }
+);
+
+// HIRING MODERATOR: Get applications for a specific job
+app.get('/api/hiring/jobs/:jobId/applications', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { jobId } = req.params;
+
+    try {
+        // 1. Get the job details to verify ownership and get the title
+        const { Item: job } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests",
+            Key: { testId: jobId }
+        }));
+
+        if (!job || job.testType !== 'job' || job.createdBy !== req.user.email) {
+            return res.status(403).json({ message: "You don't have permission to view these applicants or the job does not exist." });
+        }
+
+        // *** FIX: Changed to query the correct 'TestifyApplications' table ***
+        const { Items: applications } = await docClient.send(new ScanCommand({
+            TableName: "TestifyApplications", // Correct table
+            FilterExpression: "jobId = :jid",
+            ExpressionAttributeValues: { ":jid": jobId }
+        }));
+
+        // Map the application data to the format the frontend expects
+        const formattedApplications = applications.map(app => ({
+            resultId: app.applicationId, // The frontend expects resultId
+            applicantEmail: app.email,
+            applicationData: { // Nesting the data as the frontend expects
+                name: `${app.firstName} ${app.lastName}`,
+                college: app.education[0]?.institute || 'N/A', // Example, might need adjustment
+                cgpa: app.education[0]?.score || 'N/A' // Example, might need adjustment
+            },
+            status: app.status,
+            appliedAt: app.appliedAt
+        }));
+
+        res.json({
+            jobTitle: job.title,
+            applications: formattedApplications
+        });
+    } catch (error) {
+        console.error("Get Hiring Applications Error:", error);
+        res.status(500).json({ message: 'Server error fetching applications.' });
+    }
+});
+
+
+// HIRING MODERATOR: Bulk update application status and send email
+app.post('/api/hiring/applications/update-status', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') return res.status(403).json({ message: 'Access denied.' });
+
+    const { applicationIds, newStatus, emailDetails } = req.body;
+
+    try {
+        let emailsToSend = [];
+        for (const appId of applicationIds) {
+            const { Item: application } = await docClient.send(new GetCommand({ TableName: HIRING_TABLE, Key: { email: appId }}));
+            
+            await docClient.send(new UpdateCommand({
+                TableName: HIRING_TABLE,
+                Key: { email: appId },
+                UpdateExpression: "set #s = :newStatus",
+                ExpressionAttributeNames: { "#s": "status" },
+                ExpressionAttributeValues: { ":newStatus": newStatus }
+            }));
+            if (application) emailsToSend.push(application.applicantEmail);
+        }
+
+        if (emailDetails && emailsToSend.length > 0) {
+            const mailOptions = {
+                to: emailsToSend,
+                subject: emailDetails.subject,
+                html: emailDetails.body
+            };
+           await sendEmailWithSES(mailOptions);
+        }
+        res.json({ message: `Successfully updated ${applicationIds.length} applicants to "${newStatus}".` });
+
+    } catch (error) {
+        console.error("Update Status Error:", error);
+        res.status(500).json({ message: 'Server error updating status.' });
+    }
+});
+
+
+// PUBLIC: Send OTP for checking application status
+app.post('/api/public/check-status/send-otp', async (req, res) => {
+    const { email } = req.body;
+    // (Using the existing otpStore from your main file)
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    otpStore[email.toLowerCase()] = { otp, expirationTime: Date.now() + 5 * 60 * 1000 };
+
+    const mailOptions = {
+        to: email,
+        subject: 'Your Application Status Verification Code',
+        html: `<p>Your code is: <b>${otp}</b>. It expires in 5 minutes.</p>`
+    };
+    try {
+       await sendEmailWithSES(mailOptions);
+        res.json({ message: 'Verification code sent to your email.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to send OTP.' });
+    }
+});
+
+// PUBLIC: Verify OTP and get application statuses
+app.post('/api/public/check-status/verify-otp', async (req, res) => {
+    const { email, otp } = req.body;
+    const emailLower = email.toLowerCase();
+    
+    const storedOtp = otpStore[emailLower];
+    if (!storedOtp || storedOtp.otp !== otp || Date.now() > storedOtp.expirationTime) {
+        return res.status(400).json({ message: 'Invalid or expired code.' });
+    }
+    delete otpStore[emailLower]; // Use OTP once
+
+    try {
+         const { Items } = await docClient.send(new ScanCommand({
+            TableName: HIRING_TABLE,
+            FilterExpression: "recordType = :type AND applicantEmail = :email",
+            ExpressionAttributeValues: { ":type": "APPLICATION", ":email": email }
+        }));
+        
+        // To get job titles, we need to fetch the corresponding jobs
+        const jobIds = [...new Set(Items.map(item => item.jobId))];
+        const jobKeys = jobIds.map(jobId => ({ email: jobId }));
+        let jobs = [];
+        if (jobKeys.length > 0) {
+            const { Responses } = await docClient.send(new BatchGetCommand({ RequestItems: { [HIRING_TABLE]: { Keys: jobKeys } } }));
+            jobs = Responses[HIRING_TABLE];
+        }
+        const jobTitleMap = new Map(jobs.map(job => [job.email, job.title]));
+
+        const results = Items.map(app => ({
+            jobTitle: jobTitleMap.get(app.jobId) || 'Unknown Job',
+            status: app.status,
+            appliedAt: app.appliedAt
+        }));
+
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching application status.' });
+    }
+});
+
+app.get('/api/hiring/dashboard-data', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        // 1. Get all jobs created by the moderator
+        const { Items: jobs } = await docClient.send(new ScanCommand({
+            TableName: "TestifyTests",
+            FilterExpression: "createdBy = :creator AND testType = :type",
+            ExpressionAttributeValues: { ":creator": req.user.email, ":type": "job" }
+        }));
+
+        if (jobs.length === 0) {
+            return res.json({
+                stats: { totalJobs: 0, totalApplicants: 0, totalShortlisted: 0, totalInProgress: 0 },
+                applicantsByJob: { labels: [], counts: [] },
+                statusDistribution: { labels: [], counts: [] }
+            });
+        }
+
+        // 2. Get all applications for those jobs
+        const jobIds = jobs.map(j => j.testId);
+        const filterExpression = jobIds.map((_, i) => `:jid${i}`).join(', ');
+        const expressionAttributeValues = jobIds.reduce((acc, id, i) => ({ ...acc, [`:jid${i}`]: id }), {});
+
+        const { Items: applications } = await docClient.send(new ScanCommand({
+            TableName: "TestifyResults",
+            FilterExpression: `testId IN (${filterExpression})`,
+            ExpressionAttributeValues: expressionAttributeValues
+        }));
+        
+        // 3. Calculate Stats
+        const totalJobs = jobs.length;
+        const totalApplicants = applications.length;
+        const totalShortlisted = applications.filter(a => a.status === 'Shortlisted').length;
+        const totalInProgress = applications.filter(a => a.status && (a.status.includes('Round') || a.status === 'In Progress')).length;
+        
+        // 4. Calculate Chart Data: Applicants by Job
+        const jobTitleMap = new Map(jobs.map(j => [j.testId, j.title]));
+        const applicantsByJobCounts = applications.reduce((acc, app) => {
+            const title = jobTitleMap.get(app.testId) || 'Unknown Job';
+            acc[title] = (acc[title] || 0) + 1;
+            return acc;
+        }, {});
+        
+        // 5. Calculate Chart Data: Status Distribution
+        const statusCounts = applications.reduce((acc, app) => {
+            const status = app.status || 'Applied';
+            acc[status] = (acc[status] || 0) + 1;
+            return acc;
+        }, {});
+
+        res.json({
+            stats: { totalJobs, totalApplicants, totalShortlisted, totalInProgress },
+            applicantsByJob: {
+                labels: Object.keys(applicantsByJobCounts),
+                counts: Object.values(applicantsByJobCounts)
+            },
+            statusDistribution: {
+                labels: Object.keys(statusCounts),
+                counts: Object.values(statusCounts)
+            }
+        });
+
+    } catch (error) {
+        console.error("Get Dashboard Data Error:", error);
+        res.status(500).json({ message: 'Server error fetching dashboard data.' });
+    }
+});
+
+app.get('/api/public/jobs/:jobId', async (req, res) => {
+    try {
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests", // Jobs are in the TestifyTests table
+            Key: { testId: req.params.jobId } // The primary key is 'testId'
+        }));
+
+        // Check if the item exists and is a job posting
+        if (Item && Item.testType === 'job') {
+            // Also check if the application deadline has passed
+            if (new Date(Item.applicationDeadline) < new Date()) {
+                return res.status(404).json({ message: 'Error: Job not found or has expired.' });
+            }
+            // Return the full job details
+            res.json({ ...Item, jobId: Item.testId }); // Map testId to jobId for consistency
+        } else {
+            res.status(404).json({ message: 'Error: Job not found or has expired.' });
+        }
+    } catch (error) {
+        console.error("Get Single Public Job Error:", error);
+        res.status(500).json({ message: 'Server error fetching job details.' });
+    }
+});
+app.get('/api/public/jobs/by-moderator/:moderatorId', async (req, res) => {
+    const { moderatorId } = req.params;
+    try {
+        // Fetch the moderator's name for the page title
+        const { Item: moderator } = await docClient.send(new GetCommand({
+            TableName: "TestifyUsers",
+            Key: { email: moderatorId }
+        }));
+
+        const moderatorName = moderator ? moderator.fullName : "Company";
+
+        // Fetch all open jobs for this moderator
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyTests",
+            FilterExpression: "createdBy = :creator AND testType = :type AND applicationDeadline > :now",
+            ExpressionAttributeValues: {
+                ":creator": moderatorId,
+                ":type": "job",
+                ":now": new Date().toISOString()
+            }
+        }));
+
+        // Sort by creation date, newest first
+        if (Items) {
+            Items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        }
+
+        const jobs = Items ? Items.map(job => ({ ...job, jobId: job.testId })) : [];
+        
+        res.json({ jobs, moderatorName });
+    } catch (error) {
+        console.error("Get Public Jobs Error:", error);
+        res.status(500).json({ message: 'Server error fetching jobs.' });
+    }
+});
+
+
+
+// ** NEW ENDPOINT **
+// HIRING MODERATOR: Update an existing job posting
+app.put('/api/hiring/jobs/:jobId', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { jobId } = req.params;
+    const { title, jd, eligibleColleges, applicationDeadline, hiringTimeline } = req.body;
+
+    try {
+        // First, verify the moderator owns this job
+        const { Item: existingJob } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests",
+            Key: { testId: jobId }
+        }));
+
+        if (!existingJob || existingJob.createdBy !== req.user.email) {
+            return res.status(403).json({ message: 'You do not have permission to modify this job.' });
+        }
+        
+        const updateExpression = "set title = :t, description = :d, eligibleColleges = :ec, applicationDeadline = :ad, hiringTimeline = :ht";
+        const expressionAttributeValues = {
+            ":t": title,
+            ":d": jd,
+            ":ec": eligibleColleges,
+            ":ad": applicationDeadline,
+            ":ht": hiringTimeline
+        };
+
+        await docClient.send(new UpdateCommand({
+            TableName: "TestifyTests",
+            Key: { testId: jobId },
+            UpdateExpression: updateExpression,
+            ExpressionAttributeValues: expressionAttributeValues,
+        }));
+
+        res.status(200).json({ message: 'Job updated successfully!' });
+    } catch (error) {
+        console.error("Update Job Error:", error);
+        res.status(500).json({ message: 'Server error updating job.' });
+    }
+});
+
+
+// ** NEW ENDPOINT **
+// HIRING MODERATOR: Get all applicants for a specific job
+app.get('/api/hiring/applicants/:jobId', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { jobId } = req.params;
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyResults",
+            FilterExpression: "testId = :jobId", // Applications are stored with jobId in testId field
+            ExpressionAttributeValues: { ":jobId": jobId }
+        }));
+        res.json(Items);
+    } catch (error) {
+        console.error("Get Applicants Error:", error);
+        res.status(500).json({ message: 'Server error fetching applicants.' });
+    }
+});
+
+// ** NEW ENDPOINT **
+// HIRING MODERATOR: Update status for multiple applicants and optionally send email
+app.post('/api/hiring/update-applicants-status', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    
+    const { applicationIds, newStatus, emailDetails } = req.body;
+
+    if (!applicationIds || applicationIds.length === 0 || !newStatus) {
+        return res.status(400).json({ message: 'Application IDs and a new status are required.' });
+    }
+
+    try {
+        // Batch update statuses
+        for (const appId of applicationIds) {
+            await docClient.send(new UpdateCommand({
+                TableName: "TestifyApplications", // FIX: Applications are in TestifyApplications table
+                Key: { applicationId: appId }, // FIX: The primary key is applicationId
+                UpdateExpression: "set #st = :s",
+                ExpressionAttributeNames: { "#st": "status" },
+                ExpressionAttributeValues: { ":s": newStatus }
+            }));
+        }
+
+        // Handle optional email sending
+        if (emailDetails && emailDetails.send) {
+            // Fetch the applications to get candidate emails
+            const keys = applicationIds.map(id => ({ applicationId: id })); // FIX: Use correct primary key
+            const { Responses } = await docClient.send(new BatchGetCommand({
+                RequestItems: { "TestifyApplications": { Keys: keys } } // FIX: Fetch from correct table
+            }));
+            
+            const applications = Responses.TestifyApplications || [];
+            const emails = applications.map(app => app.email); // FIX: Field is 'email'
+            
+            if (emails.length > 0) {
+                const mailOptions = {
+                    to: emails,
+                    subject: emailDetails.subject,
+                    html: emailDetails.body
+                };
+                await sendEmailWithSES(mailOptions);
+            }
+        }
+
+        res.status(200).json({ message: `Successfully updated ${applicationIds.length} applicants to "${newStatus}".` });
+
+    } catch (error) {
+        console.error("Update Applicant Status Error:", error);
+        res.status(500).json({ message: 'Server error updating applicant status.' });
+    }
+});
+app.post('/api/hiring/update-applicants-status', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    
+    const { applicationIds, newStatus, emailDetails } = req.body;
+
+    if (!applicationIds || applicationIds.length === 0 || !newStatus) {
+        return res.status(400).json({ message: 'Application IDs and a new status are required.' });
+    }
+
+    try {
+        // Batch update statuses
+        for (const appId of applicationIds) {
+            await docClient.send(new UpdateCommand({
+                TableName: "TestifyResults",
+                Key: { resultId: appId }, // Applications are in TestifyResults, keyed by resultId
+                UpdateExpression: "set #st = :s",
+                ExpressionAttributeNames: { "#st": "status" },
+                ExpressionAttributeValues: { ":s": newStatus }
+            }));
+        }
+
+        // Handle optional email sending
+        if (emailDetails && emailDetails.send) {
+            // Fetch the applications to get candidate emails
+            const keys = applicationIds.map(id => ({ resultId: id }));
+            const { Responses } = await docClient.send(new BatchGetCommand({
+                RequestItems: { "TestifyResults": { Keys: keys } }
+            }));
+            
+            const applications = Responses.TestifyResults || [];
+            const emails = applications.map(app => app.candidateEmail);
+            
+            if (emails.length > 0) {
+                const mailOptions = {
+                    to: emails,
+                    subject: emailDetails.subject,
+                    html: emailDetails.body
+                };
+                await sendEmailWithSES(mailOptions);
+            }
+        }
+
+        res.status(200).json({ message: `Successfully updated ${applicationIds.length} applicants to "${newStatus}".` });
+
+    } catch (error) {
+        console.error("Update Applicant Status Error:", error);
+        res.status(500).json({ message: 'Server error updating applicant status.' });
+    }
+});
+
+app.post('/api/public/applications/send-otp', async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ message: 'Email is required.' });
+    }
+    const emailLower = email.toLowerCase();
+
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyResults",
+            FilterExpression: "candidateEmail = :email",
+            ExpressionAttributeValues: { ":email": emailLower }
+        }));
+
+        if (!Items || Items.length === 0) {
+            return res.status(404).json({ message: 'No applications found for this email address.' });
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expirationTime = Date.now() + 5 * 60 * 1000; 
+
+        otpStore[emailLower] = { otp, expirationTime };
+        console.log(`Generated application view OTP for ${email}: ${otp}`);
+
+        const mailOptions = {
+            to: email,
+            subject: 'Your Application Status Verification Code',
+            html: `<p>Your verification code is: <b>${otp}</b>. It expires in 5 minutes.</p>`
+        };
+
+       await sendEmailWithSES(mailOptions);
+        res.status(200).json({ message: 'A verification code has been sent to your email.' });
+
+    } catch (error) {
+        console.error("Send App Status OTP Error:", error);
+        res.status(500).json({ message: 'Server error. Please try again later.' });
+    }
+});
+
+// PUBLIC: Verify OTP and fetch all applications for that email.
+app.post('/api/public/applications/verify-otp', async (req, res) => {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+        return res.status(400).json({ message: 'Email and verification code are required.' });
+    }
+    const emailLower = email.toLowerCase();
+
+    const storedOtpData = otpStore[emailLower];
+    if (!storedOtpData || storedOtpData.otp !== otp || Date.now() > storedOtpData.expirationTime) {
+        return res.status(400).json({ message: 'Invalid or expired verification code.' });
+    }
+
+    try {
+        delete otpStore[emailLower];
+
+        const { Items: applications } = await docClient.send(new ScanCommand({
+            TableName: "TestifyResults",
+            FilterExpression: "candidateEmail = :email",
+            ExpressionAttributeValues: { ":email": emailLower }
+        }));
+
+        if (!applications || applications.length === 0) {
+            return res.json([]);
+        }
+
+        const jobIds = [...new Set(applications.map(app => app.testId))];
+        const keys = jobIds.map(jobId => ({ testId: jobId }));
+        
+        const { Responses } = await docClient.send(new BatchGetCommand({
+            RequestItems: { "TestifyTests": { Keys: keys } }
+        }));
+        
+        const jobs = Responses.TestifyTests || [];
+        const jobInfoMap = new Map(jobs.map(j => [j.testId, { title: j.title, deadline: j.applicationDeadline }]));
+
+        const enrichedApplications = applications.map(app => ({
+            ...app,
+            jobTitle: jobInfoMap.get(app.testId)?.title || 'Unknown Job',
+            jobDeadline: jobInfoMap.get(app.testId)?.deadline || null
+        }));
+
+        enrichedApplications.sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt));
+        
+        res.status(200).json(enrichedApplications);
+
+    } catch (error) {
+        console.error("Verify OTP & Fetch Apps Error:", error);
+        res.status(500).json({ message: 'Server error fetching applications.' });
+    }
+});
+
+// PUBLIC: Get a single application's details for editing
+app.get('/api/public/application/:resultId', async (req, res) => {
+    const { resultId } = req.params;
+    try {
+        const { Item: application } = await docClient.send(new GetCommand({
+            TableName: "TestifyResults",
+            Key: { resultId }
+        }));
+
+        if (!application) {
+            return res.status(404).json({ message: "Application not found." });
+        }
+
+        const { Item: job } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests",
+            Key: { testId: application.testId }
+        }));
+
+        if (!job) {
+             return res.status(404).json({ message: "Associated job not found." });
+        }
+        
+        if (new Date() > new Date(job.applicationDeadline)) {
+            return res.status(403).json({ message: "The application deadline has passed. This application can no longer be edited." });
+        }
+        
+        res.json({ ...application, jobTitle: job.title });
+
+    } catch (error) {
+        console.error("Get Single Application Error:", error);
+        res.status(500).json({ message: 'Server error fetching application.' });
+    }
+});
+
+// PUBLIC: Update an application before the deadline
+app.put('/api/public/application/:resultId', async (req, res) => {
+    const { resultId } = req.params;
+    const { applicationData, rollNumber } = req.body;
+
+    try {
+        const { Item: application } = await docClient.send(new GetCommand({
+            TableName: "TestifyResults",
+            Key: { resultId }
+        }));
+
+        if (!application) {
+            return res.status(404).json({ message: "Application not found." });
+        }
+
+        const { Item: job } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests",
+            Key: { testId: application.testId }
+        }));
+
+        if (!job || new Date() > new Date(job.applicationDeadline)) {
+            return res.status(403).json({ message: "The application deadline has passed." });
+        }
+
+        await docClient.send(new UpdateCommand({
+            TableName: "TestifyResults",
+            Key: { resultId },
+            UpdateExpression: "set applicationData = :ad, rollNumber = :rn",
+            ExpressionAttributeValues: {
+                ":ad": applicationData,
+                ":rn": rollNumber
+            }
+        }));
+
+        res.status(200).json({ message: 'Your application has been updated successfully!' });
+
+    } catch (error) {
+        console.error("Update Application Error:", error);
+        res.status(500).json({ message: 'Server error updating application.' });
+    }
+});
+
+// Add this new endpoint to your backend.js file.
+// It allows QuizCom Moderators to generate a quiz structure from text or a PDF file using AI.
+
+app.post('/api/quizcom/generate-from-text', authMiddleware, quizModeratorAuth, upload.single('file'), async (req, res) => {
+    let text = req.body.text;
+
+    try {
+        // If a file is uploaded, extract text from it (assuming PDF)
+        if (req.file) {
+            if (req.file.mimetype === 'application/pdf') {
+                const data = await pdf(req.file.buffer);
+                text = data.text;
+            } else {
+                return res.status(400).json({ message: 'Unsupported file type. Please upload a PDF.' });
+            }
+        }
+
+        if (!text) {
+            return res.status(400).json({ message: 'No text or file provided to generate the quiz.' });
+        }
+
+        // Use the Gemini API to generate the quiz content
+        const fetch = (await import('node-fetch')).default;
+
+        const prompt = `Based on the following text, create a complete, structured JSON object for a quiz. The JSON must have a 'title' (string) and an array of 'questions'. Each question object in the array must have:
+- 'text' (string): The question text.
+- 'type' (string): Can be 'single', 'multiple', or 'blank'.
+- 'points' (number): Default to 10 if not specified.
+- 'time' (number): Time in seconds, default to 30.
+- 'options' (array of strings): For 'single' and 'multiple' choice types.
+- 'correctAnswer' (string): For 'single' choice (the index of the correct option, e.g., "0") and 'blank' (the exact answer string).
+- 'correctAnswers' (array of strings): For 'multiple' choice (an array of the indices of correct options, e.g., ["0", "2"]).
+Here is the text to analyze:\n\n${text}`;
+
+        const schema = {
+            type: "OBJECT",
+            properties: {
+                "title": { "type": "STRING" },
+                "questions": {
+                    "type": "ARRAY",
+                    "items": {
+                        "type": "OBJECT",
+                        "properties": {
+                            "text": { "type": "STRING" },
+                            "type": { "type": "STRING", "enum": ["single", "multiple", "blank"] },
+                            "points": { "type": "NUMBER" },
+                            "time": { "type": "NUMBER" },
+                            "options": { "type": "ARRAY", "items": { "type": "STRING" } },
+                            "correctAnswer": { "type": "STRING" },
+                            "correctAnswers": { "type": "ARRAY", "items": { "type": "STRING" } }
+                        },
+                        "required": ["text", "type"]
+                    }
+                }
+            },
+            required: ["title", "questions"]
+        };
+
+        const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyAR_X4MZ75vxwV7OTU3dabFRcVe4SxWpb8'; // It's better to use environment variables
+        if (!apiKey) {
+            return res.status(500).json({ message: "GEMINI_API_KEY is not configured on the server." });
+        }
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: schema
+            }
+        };
+
+        const apiResponse = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!apiResponse.ok) {
+            const errorBody = await apiResponse.text();
+            console.error("Gemini API Error:", errorBody);
+            throw new Error(`AI API call failed with status: ${apiResponse.status}`);
+        }
+
+        const result = await apiResponse.json();
+        const jsonText = result.candidates[0].content.parts[0].text;
+        const structuredQuiz = JSON.parse(jsonText);
+
+        res.json(structuredQuiz);
+
+    } catch (error) {
+        console.error('Error in AI quiz generation backend:', error);
+        res.status(500).json({ message: 'Failed to generate quiz from AI.' });
+    }
+});
+
+
+
 
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
