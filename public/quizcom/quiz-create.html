@@ -6,16 +6,29 @@
     <title>Create Quiz - TESTIFY</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-            <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/QuizCom_u5wzcp.png">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/QuizCom_u5wzcp.png">
 
     <style>
         body { font-family: 'Inter', sans-serif; }
         .sidebar-link:hover { background-color: #4338CA; }
         .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
         .question-block:not(:last-child) { border-bottom: 1px solid #e5e7eb; padding-bottom: 1.5rem; }
+        #ai-loader {
+            border-color: #4f46e5;
+            border-top-color: transparent;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
+
+    <!-- AI Generation Modal -->
+    <div id="ai-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-xl text-center">
+            <div id="ai-loader" class="w-16 h-16 border-4 rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-lg font-semibold text-gray-700">Generating your quiz with AI...</p>
+            <p class="text-sm text-gray-500">This might take a moment. Please wait.</p>
+        </div>
+    </div>
 
     <div class="flex h-screen bg-gray-100">
         <!-- Sidebar -->
@@ -52,6 +65,31 @@
             </div>
 
             <div class="p-6">
+                <!-- AI Generation Section -->
+                <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                        Generate with AI
+                    </h2>
+                    <p class="text-sm text-gray-500 mb-4">Paste text content or upload a PDF to automatically generate quiz questions.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="ai-text-input" class="block text-sm font-medium text-gray-700">Paste Text</label>
+                            <textarea id="ai-text-input" rows="5" class="mt-1 block w-full shadow-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" placeholder="Paste your article, notes, or any text here..."></textarea>
+                        </div>
+                        <div>
+                            <label for="ai-file-input" class="block text-sm font-medium text-gray-700">Or Upload PDF</label>
+                            <input type="file" id="ai-file-input" accept=".pdf" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                        </div>
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <button type="button" id="ai-generate-btn" class="px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center">
+                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            Generate Quiz
+                        </button>
+                    </div>
+                </div>
+
                 <form id="create-quiz-form">
                     <div class="bg-white p-6 rounded-xl shadow-md">
                         <h2 class="text-xl font-bold text-gray-800 mb-4">Quiz Details</h2>
@@ -89,247 +127,310 @@
         </div>
     </div>
 
-    <script>document.addEventListener('DOMContentLoaded', () => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const token = localStorage.getItem('token');
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = localStorage.getItem('token');
 
-    if (!token || !user || user.role !== 'QuizCom Moderator') {
-        window.location.href = 'quiz-moderator-login.html';
-        return;
-    }
+        if (!token || !user || user.role !== 'QuizCom Moderator') {
+            window.location.href = 'quiz-moderator-login.html';
+            return;
+        }
 
-    const userMenuContainer = document.getElementById('user-menu-container');
-    userMenuContainer.innerHTML = `
-        <div class="relative">
-            <button id="user-menu-button" class="flex items-center space-x-2">
-                <span class="font-semibold text-gray-700">${user.fullName}</span>
-                <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-            </button>
-            <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
-            </div>
-        </div>`;
-    
-    document.getElementById('user-menu-button').addEventListener('click', () => {
-        document.getElementById('user-menu').classList.toggle('hidden');
-    });
-    document.getElementById('logout-button').addEventListener('click', () => {
-        localStorage.clear();
-        window.location.href = 'quiz-moderator-login.html';
-    });
-    
-    const questionsContainer = document.getElementById('questions-container');
-    let questionCounter = 0;
-
-    document.getElementById('add-question-btn').addEventListener('click', () => addQuestion());
-
-    function addQuestion(data = {}) {
-        questionCounter++;
-        const questionId = `q-${questionCounter}`;
-        const questionBlock = document.createElement('div');
-        questionBlock.className = 'question-block bg-white p-6 rounded-xl shadow-md';
-        questionBlock.innerHTML = `
-            <div class="flex justify-between items-start mb-4">
-                <h4 class="text-lg font-bold text-gray-800">Question ${questionCounter}</h4>
-                <button type="button" class="remove-question-btn text-2xl font-bold text-red-500 hover:text-red-700">&times;</button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label for="${questionId}-type" class="block text-sm font-medium text-gray-700">Type</label>
-                    <select id="${questionId}-type" class="question-type-select mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none" data-question-id="${questionId}">
-                        <option value="single">Single Correct</option>
-                        <option value="multiple">Multiple Correct</option>
-                        <option value="blank">Fill in the Blanks</option>
-                    </select>
+        // User menu setup
+        const userMenuContainer = document.getElementById('user-menu-container');
+        userMenuContainer.innerHTML = `
+            <div class="relative">
+                <button id="user-menu-button" class="flex items-center space-x-2">
+                    <span class="font-semibold text-gray-700">${user.fullName}</span>
+                    <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                </button>
+                <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+                    <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
                 </div>
-                <div>
-                    <label for="${questionId}-points" class="block text-sm font-medium text-gray-700">Points</label>
-                    <input type="number" id="${questionId}-points" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md" value="${data.points || '10'}">
-                </div>
-                 <div>
-                    <label for="${questionId}-time" class="block text-sm font-medium text-gray-700">Time (sec)</label>
-                    <input type="number" id="${questionId}-time" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md" value="${data.time || '30'}">
-                </div>
-            </div>
-            <div class="mt-4">
-                <label for="${questionId}-text" class="block text-sm font-medium text-gray-700">Question Text</label>
-                <textarea id="${questionId}-text" rows="2" required class="mt-1 block w-full shadow-sm border-gray-300 rounded-md">${data.text || ''}</textarea>
-            </div>
-             <div class="mt-4">
-                <label for="${questionId}-image" class="block text-sm font-medium text-gray-700">Image (Optional)</label>
-                <input type="file" id="${questionId}-image" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-            </div>
-            <div id="${questionId}-answer-area" class="mt-4"></div>
-        `;
-        questionsContainer.appendChild(questionBlock);
+            </div>`;
         
-        const typeSelect = questionBlock.querySelector('.question-type-select');
-        if(data.type) typeSelect.value = data.type;
-        updateAnswerArea(questionId, typeSelect.value, data);
-    }
-    
-    questionsContainer.addEventListener('change', (e) => {
-        if (e.target.matches('.question-type-select')) {
-            updateAnswerArea(e.target.dataset.questionId, e.target.value);
-        }
-    });
-    
-    questionsContainer.addEventListener('click', e => {
-        if (e.target.closest('.remove-question-btn')) {
-            e.target.closest('.question-block').remove();
-        }
-        if (e.target.closest('.add-option-btn')) {
-            const button = e.target.closest('.add-option-btn');
-            addOption(button.dataset.questionId, button.dataset.inputType);
-        }
-         if (e.target.closest('.remove-option-btn')) {
-            e.target.closest('.flex').remove();
-        }
-    });
-
-    function updateAnswerArea(questionId, type, data = {}) {
-        const answerArea = document.getElementById(`${questionId}-answer-area`);
-        if (!answerArea) return;
+        document.getElementById('user-menu-button').addEventListener('click', () => {
+            document.getElementById('user-menu').classList.toggle('hidden');
+        });
+        document.getElementById('logout-button').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = 'quiz-moderator-login.html';
+        });
         
-        const inputType = type === 'multiple' ? 'checkbox' : 'radio';
+        const questionsContainer = document.getElementById('questions-container');
+        let questionCounter = 0;
 
-        if (type === 'single' || type === 'multiple') {
-            answerArea.innerHTML = `
-                <h5 class="text-sm font-medium text-gray-600 mb-2">Options & Correct Answer(s)</h5>
-                <div id="${questionId}-options-container" class="space-y-2"></div>
-                <button type="button" class="add-option-btn mt-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800" data-question-id="${questionId}" data-input-type="${inputType}">+ Add Option</button>
+        document.getElementById('add-question-btn').addEventListener('click', () => addQuestion());
+
+        function addQuestion(data = {}) {
+            questionCounter++;
+            const questionId = `q-${questionCounter}`;
+            const questionBlock = document.createElement('div');
+            questionBlock.className = 'question-block bg-white p-6 rounded-xl shadow-md';
+            questionBlock.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <h4 class="text-lg font-bold text-gray-800">Question ${questionCounter}</h4>
+                    <button type="button" class="remove-question-btn text-2xl font-bold text-red-500 hover:text-red-700">&times;</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="${questionId}-type" class="block text-sm font-medium text-gray-700">Type</label>
+                        <select id="${questionId}-type" class="question-type-select mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none" data-question-id="${questionId}">
+                            <option value="single">Single Correct</option>
+                            <option value="multiple">Multiple Correct</option>
+                            <option value="blank">Fill in the Blanks</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="${questionId}-points" class="block text-sm font-medium text-gray-700">Points</label>
+                        <input type="number" id="${questionId}-points" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md" value="${data.points || '10'}">
+                    </div>
+                     <div>
+                        <label for="${questionId}-time" class="block text-sm font-medium text-gray-700">Time (sec)</label>
+                        <input type="number" id="${questionId}-time" required class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md" value="${data.time || '30'}">
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label for="${questionId}-text" class="block text-sm font-medium text-gray-700">Question Text</label>
+                    <textarea id="${questionId}-text" rows="2" required class="mt-1 block w-full shadow-sm border-gray-300 rounded-md">${data.text || ''}</textarea>
+                </div>
+                 <div class="mt-4">
+                    <label for="${questionId}-image" class="block text-sm font-medium text-gray-700">Image (Optional)</label>
+                    <input type="file" id="${questionId}-image" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                </div>
+                <div id="${questionId}-answer-area" class="mt-4"></div>
             `;
-            const optionsToRender = (data.options && data.options.length > 0) ? data.options : ['', ''];
-            optionsToRender.forEach((optText, i) => {
-                let isChecked = false;
-                if (type === 'single' && data.correctAnswer !== undefined) {
-                    isChecked = (String(data.correctAnswer) === String(i));
-                } else if (type === 'multiple' && Array.isArray(data.correctAnswers)) {
-                    isChecked = data.correctAnswers.includes(String(i));
-                }
-                addOption(questionId, inputType, optText, isChecked);
-            });
-        } else { // blank
-            answerArea.innerHTML = `
-                <div>
-                    <label for="${questionId}-answer" class="block text-sm font-medium text-gray-700">Correct Answer</label>
-                    <input type="text" id="${questionId}-answer" required class="mt-1 block w-full shadow-sm border-gray-300 rounded-md" value="${data.correctAnswer || ''}">
-                </div>
-            `;
+            questionsContainer.appendChild(questionBlock);
+            
+            const typeSelect = questionBlock.querySelector('.question-type-select');
+            if(data.type) typeSelect.value = data.type;
+            updateAnswerArea(questionId, typeSelect.value, data);
         }
-    }
-
-    function addOption(questionId, inputType, text = '', isChecked = false) {
-        const optionsContainer = document.getElementById(`${questionId}-options-container`);
-        if (!optionsContainer) return;
-        const optionIndex = optionsContainer.children.length;
-        const optionDiv = document.createElement('div');
-        optionDiv.className = 'flex items-center space-x-3';
-        optionDiv.innerHTML = `
-            <input name="${questionId}-correct" type="${inputType}" value="${optionIndex}" class="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500" ${isChecked ? 'checked' : ''}>
-            <input type="text" placeholder="Option ${optionIndex + 1}" required class="flex-grow shadow-sm border-gray-300 rounded-md" value="${text}">
-            <button type="button" class="remove-option-btn text-red-500 font-bold text-lg">&times;</button>
-        `;
-        optionsContainer.appendChild(optionDiv);
-    }
-    
-    document.getElementById('create-quiz-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
         
-        const questions = [];
-        const uploadPromises = [];
+        questionsContainer.addEventListener('change', (e) => {
+            if (e.target.matches('.question-type-select')) {
+                updateAnswerArea(e.target.dataset.questionId, e.target.value);
+            }
+        });
         
-        // Handle Quiz Logo Upload
-        const quizLogoFile = document.getElementById('quiz-logo').files[0];
-        let logoUrl = null;
-
-        if (quizLogoFile) {
-            const logoFormData = new FormData();
-            logoFormData.append('image', quizLogoFile);
-            const logoUploadPromise = fetch('/api/upload-image', {
-                method: 'POST',
-                headers: { 'x-auth-token': token },
-                body: logoFormData
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(!data.imageUrl) throw new Error('Logo upload failed.');
-                logoUrl = data.imageUrl;
-            });
-            uploadPromises.push(logoUploadPromise);
-        }
-
-        document.querySelectorAll('.question-block').forEach((qBlock) => {
-            const select = qBlock.querySelector('.question-type-select');
-            if (select) {
-                const originalId = select.dataset.questionId;
-                const type = select.value;
-                const text = qBlock.querySelector(`#${originalId}-text`).value;
-                const points = parseInt(qBlock.querySelector(`#${originalId}-points`).value, 10);
-                const time = parseInt(qBlock.querySelector(`#${originalId}-time`).value, 10);
-                const imageFile = qBlock.querySelector(`#${originalId}-image`).files[0];
-
-                let questionData = { type, text, points, time, imageUrl: null };
-
-                if (imageFile) {
-                    const formData = new FormData();
-                    formData.append('image', imageFile);
-                    
-                    const uploadPromise = fetch('/api/upload-image', {
-                        method: 'POST',
-                        headers: { 'x-auth-token': token },
-                        body: formData
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if(!data.imageUrl) throw new Error('Image upload failed.');
-                        questionData.imageUrl = data.imageUrl;
-                    });
-                    uploadPromises.push(uploadPromise);
-                }
-                
-                if (type === 'single' || type === 'multiple') {
-                    const textInputs = Array.from(qBlock.querySelectorAll('input[type="text"]'));
-                    questionData.options = textInputs.map(i => i.value);
-
-                    if (type === 'single') {
-                        const correct = qBlock.querySelector(`input[name="${originalId}-correct"]:checked`);
-                        questionData.correctAnswer = correct ? correct.value : null;
-                    } else { // multiple
-                        questionData.correctAnswers = Array.from(qBlock.querySelectorAll(`input[name="${originalId}-correct"]:checked`)).map(cb => cb.value);
-                    }
-                } else { // blank
-                    questionData.correctAnswer = qBlock.querySelector('input[id$="-answer"]').value;
-                }
-                questions.push(questionData);
+        questionsContainer.addEventListener('click', e => {
+            if (e.target.closest('.remove-question-btn')) {
+                e.target.closest('.question-block').remove();
+                // Renumber questions
+                document.querySelectorAll('.question-block h4').forEach((h4, index) => {
+                    h4.textContent = `Question ${index + 1}`;
+                });
+                questionCounter = document.querySelectorAll('.question-block').length;
+            }
+            if (e.target.closest('.add-option-btn')) {
+                const button = e.target.closest('.add-option-btn');
+                addOption(button.dataset.questionId, button.dataset.inputType);
+            }
+             if (e.target.closest('.remove-option-btn')) {
+                e.target.closest('.flex').remove();
             }
         });
 
-        try {
-            await Promise.all(uploadPromises);
+        function updateAnswerArea(questionId, type, data = {}) {
+            const answerArea = document.getElementById(`${questionId}-answer-area`);
+            if (!answerArea) return;
+            
+            const inputType = type === 'multiple' ? 'checkbox' : 'radio';
 
-            const payload = {
-                title: document.getElementById('quizTitle').value,
-                logoUrl: logoUrl,
-                questions
-            };
+            if (type === 'single' || type === 'multiple') {
+                answerArea.innerHTML = `
+                    <h5 class="text-sm font-medium text-gray-600 mb-2">Options & Correct Answer(s)</h5>
+                    <div id="${questionId}-options-container" class="space-y-2"></div>
+                    <button type="button" class="add-option-btn mt-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800" data-question-id="${questionId}" data-input-type="${inputType}">+ Add Option</button>
+                `;
+                const optionsToRender = (data.options && data.options.length > 0) ? data.options : ['', ''];
+                optionsToRender.forEach((optText, i) => {
+                    let isChecked = false;
+                    if (type === 'single' && data.correctAnswer !== undefined) {
+                        isChecked = (String(data.correctAnswer) === String(i));
+                    } else if (type === 'multiple' && Array.isArray(data.correctAnswers)) {
+                        isChecked = data.correctAnswers.includes(String(i));
+                    }
+                    addOption(questionId, inputType, optText, isChecked);
+                });
+            } else { // blank
+                answerArea.innerHTML = `
+                    <div>
+                        <label for="${questionId}-answer" class="block text-sm font-medium text-gray-700">Correct Answer</label>
+                        <input type="text" id="${questionId}-answer" required class="mt-1 block w-full shadow-sm border-gray-300 rounded-md" value="${data.correctAnswer || ''}">
+                    </div>
+                `;
+            }
+        }
 
-            const response = await fetch('/api/quizcom/quizzes', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                body: JSON.stringify(payload)
+        function addOption(questionId, inputType, text = '', isChecked = false) {
+            const optionsContainer = document.getElementById(`${questionId}-options-container`);
+            if (!optionsContainer) return;
+            const optionIndex = optionsContainer.children.length;
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'flex items-center space-x-3';
+            optionDiv.innerHTML = `
+                <input name="${questionId}-correct" type="${inputType}" value="${optionIndex}" class="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500" ${isChecked ? 'checked' : ''}>
+                <input type="text" placeholder="Option ${optionIndex + 1}" required class="flex-grow shadow-sm border-gray-300 rounded-md" value="${text}">
+                <button type="button" class="remove-option-btn text-red-500 font-bold text-lg">&times;</button>
+            `;
+            optionsContainer.appendChild(optionDiv);
+        }
+        
+        // --- AI GENERATION LOGIC ---
+        const aiGenerateBtn = document.getElementById('ai-generate-btn');
+        const aiModal = document.getElementById('ai-modal');
+
+        aiGenerateBtn.addEventListener('click', async () => {
+            const textInput = document.getElementById('ai-text-input').value;
+            const fileInput = document.getElementById('ai-file-input').files[0];
+
+            if (!textInput && !fileInput) {
+                alert('Please paste some text or upload a PDF file to generate a quiz.');
+                return;
+            }
+
+            aiModal.classList.remove('hidden');
+            const formData = new FormData();
+            if (textInput) {
+                formData.append('text', textInput);
+            }
+            if (fileInput) {
+                formData.append('file', fileInput);
+            }
+            
+            try {
+                const response = await fetch('/api/quizcom/generate-from-text', {
+                    method: 'POST',
+                    headers: { 'x-auth-token': token },
+                    body: formData
+                });
+                
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to generate quiz.');
+                }
+
+                // Populate the form with AI-generated data
+                document.getElementById('quizTitle').value = result.title || '';
+                questionsContainer.innerHTML = ''; // Clear existing questions
+                questionCounter = 0;
+                if (result.questions && Array.isArray(result.questions)) {
+                    result.questions.forEach(qData => addQuestion(qData));
+                }
+                
+            } catch (error) {
+                console.error('AI Generation Error:', error);
+                alert(`Error generating quiz: ${error.message}`);
+            } finally {
+                aiModal.classList.add('hidden');
+            }
+        });
+
+
+        // --- FORM SUBMISSION LOGIC ---
+        document.getElementById('create-quiz-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const questions = [];
+            const uploadPromises = [];
+            
+            // Handle Quiz Logo Upload
+            const quizLogoFile = document.getElementById('quiz-logo').files[0];
+            let logoUrl = null;
+
+            if (quizLogoFile) {
+                const logoFormData = new FormData();
+                logoFormData.append('image', quizLogoFile);
+                const logoUploadPromise = fetch('/api/upload-image', {
+                    method: 'POST',
+                    headers: { 'x-auth-token': token },
+                    body: logoFormData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(!data.imageUrl) throw new Error('Logo upload failed.');
+                    logoUrl = data.imageUrl;
+                });
+                uploadPromises.push(logoUploadPromise);
+            }
+
+            document.querySelectorAll('.question-block').forEach((qBlock) => {
+                const select = qBlock.querySelector('.question-type-select');
+                if (select) {
+                    const originalId = select.dataset.questionId;
+                    const type = select.value;
+                    const text = qBlock.querySelector(`#${originalId}-text`).value;
+                    const points = parseInt(qBlock.querySelector(`#${originalId}-points`).value, 10);
+                    const time = parseInt(qBlock.querySelector(`#${originalId}-time`).value, 10);
+                    const imageFile = qBlock.querySelector(`#${originalId}-image`).files[0];
+
+                    let questionData = { type, text, points, time, imageUrl: null };
+
+                    if (imageFile) {
+                        const formData = new FormData();
+                        formData.append('image', imageFile);
+                        
+                        const uploadPromise = fetch('/api/upload-image', {
+                            method: 'POST',
+                            headers: { 'x-auth-token': token },
+                            body: formData
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if(!data.imageUrl) throw new Error('Image upload failed.');
+                            questionData.imageUrl = data.imageUrl;
+                        });
+                        uploadPromises.push(uploadPromise);
+                    }
+                    
+                    if (type === 'single' || type === 'multiple') {
+                        const textInputs = Array.from(qBlock.querySelectorAll(`#${originalId}-options-container input[type="text"]`));
+                        questionData.options = textInputs.map(i => i.value);
+
+                        if (type === 'single') {
+                            const correct = qBlock.querySelector(`input[name="${originalId}-correct"]:checked`);
+                            questionData.correctAnswer = correct ? correct.value : null;
+                        } else { // multiple
+                            questionData.correctAnswers = Array.from(qBlock.querySelectorAll(`input[name="${originalId}-correct"]:checked`)).map(cb => cb.value);
+                        }
+                    } else { // blank
+                        questionData.correctAnswer = qBlock.querySelector('input[id$="-answer"]').value;
+                    }
+                    questions.push(questionData);
+                }
             });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.message);
-            alert('Quiz created successfully!');
-            window.location.href = 'quiz-library.html';
-        } catch (error) {
-            alert(`Error: ${error.message}`);
+
+            try {
+                await Promise.all(uploadPromises);
+
+                const payload = {
+                    title: document.getElementById('quizTitle').value,
+                    logoUrl: logoUrl,
+                    questions
+                };
+
+                const response = await fetch('/api/quizcom/quizzes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message);
+                alert('Quiz created successfully!');
+                window.location.href = 'quiz-library.html';
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        });
+
+        // Add one empty question block to start
+        if (questionsContainer.children.length === 0) {
+            addQuestion();
         }
     });
-    addQuestion();
-});
-</script>
+    </script>
 </body>
 </html>
-

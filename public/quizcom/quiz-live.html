@@ -6,8 +6,7 @@
     <title>Live Quiz - TESTIFY</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-        <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/QuizCom_u5wzcp.png">
-
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/QuizCom_u5wzcp.png">
     <script src="/socket.io/socket.io.js"></script>
     <style> 
         body { font-family: 'Inter', sans-serif; } 
@@ -52,7 +51,6 @@
             </div>
 
             <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Left Column: Controls & Participants -->
                 <div class="lg:col-span-1 space-y-6">
                     <div class="bg-white p-6 rounded-xl shadow-md">
                         <h2 class="text-lg font-bold text-gray-800 mb-4">Quiz Code</h2>
@@ -64,8 +62,6 @@
                     <div class="bg-white p-6 rounded-xl shadow-md">
                         <h2 class="text-lg font-bold text-gray-800 mb-4">Live Controls</h2>
                         <div class="space-y-3">
-                            <button id="pause-btn" class="w-full py-3 bg-yellow-500 text-white font-bold rounded-lg shadow-md hover:bg-yellow-600 disabled:opacity-50" disabled>Pause Quiz</button>
-                            <button id="resume-btn" class="w-full py-3 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 hidden">Resume Quiz</button>
                             <button id="next-question-btn" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700">Start Quiz / Next Question</button>
                             <button id="show-leaderboard-btn" class="w-full py-3 bg-purple-600 text-white font-bold rounded-lg shadow-md hover:bg-purple-700 disabled:opacity-50" disabled>Show Overall Leaderboard</button>
                             <button id="end-quiz-btn" class="w-full py-3 bg-red-600 text-white font-bold rounded-lg shadow-md hover:bg-red-700">End Quiz</button>
@@ -74,26 +70,25 @@
 
                     <div class="bg-white p-6 rounded-xl shadow-md">
                         <h2 class="text-lg font-bold text-gray-800 mb-4">Live Participants (<span id="participant-count">0</span>)</h2>
-                        <ul id="participant-list" class="space-y-2 max-h-48 overflow-y-auto">
+                        <ul id="participant-list" class="space-y-2 max-h-60 overflow-y-auto">
                             <li class="text-gray-500">Waiting for participants to join...</li>
                         </ul>
                     </div>
                 </div>
 
-                <!-- Right Column: Current Question & Leaderboard -->
                 <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-md">
                     <div id="waiting-for-start-view">
-                        <h2 class="text-lg font-bold text-gray-800 mb-4">Waiting for Quiz to Start</h2>
-                        <p class="text-gray-500">Participants will join using the code. Click "Start Quiz" when you're ready.</p>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Waiting for Quiz to Start</h2>
+                        <p class="text-gray-500">Participants will join using the code above. Click "Start Quiz" when you're ready.</p>
                     </div>
                     
                     <div id="question-view" class="hidden">
                         <div class="flex justify-between items-center mb-4">
-                            <h2 id="question-number" class="text-lg font-bold text-gray-800">Question X</h2>
-                            <div id="question-timer" class="text-lg font-bold text-indigo-600 bg-indigo-100 px-4 py-2 rounded-lg">00:00</div>
+                            <h2 id="question-number" class="text-xl font-bold text-gray-800">Question X</h2>
+                            <div id="question-timer" class="text-xl font-bold text-indigo-600 bg-indigo-100 px-4 py-2 rounded-lg">00:00</div>
                         </div>
 
-                        <div class="mb-4">
+                        <div class="mb-6">
                             <p class="text-gray-500 text-sm">Answers Submitted</p>
                             <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1">
                                 <div id="answer-progress-bar" class="bg-blue-600 h-2.5 rounded-full progress-bar-fill" style="width: 0%"></div>
@@ -101,18 +96,19 @@
                             <p id="answer-progress-text" class="text-sm text-right text-gray-600 mt-1">0/0</p>
                         </div>
                         
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <p id="question-text" class="font-semibold text-gray-900 mb-2">Question text will appear here.</p>
-                            <div id="question-options" class="space-y-2 text-sm"></div>
+                        <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                            <p id="question-text" class="text-xl font-semibold text-gray-900 mb-4">Question text will appear here.</p>
+                            <div id="question-options" class="space-y-3"></div>
                         </div>
 
                         <div id="question-results-view" class="mt-6 hidden">
-                            <h3 class="text-md font-bold text-gray-800 mb-2">Question Results</h3>
+                            <div id="fastest-answer-banner" class="hidden text-center mb-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg"></div>
+                            <h3 class="text-lg font-bold text-gray-800 mb-2">Question Leaderboard</h3>
                             <div id="question-leaderboard" class="space-y-2"></div>
                         </div>
                     </div>
                      <div id="leaderboard-view" class="hidden">
-                        <h2 class="text-lg font-bold text-gray-800 mb-4">Overall Leaderboard</h2>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Overall Leaderboard</h2>
                         <div id="overall-leaderboard" class="space-y-2"></div>
                      </div>
                 </div>
@@ -136,13 +132,10 @@
             document.getElementById('user-menu-button').addEventListener('click', () => document.getElementById('user-menu').classList.toggle('hidden'));
             document.getElementById('logout-button').addEventListener('click', () => { localStorage.clear(); window.location.href = 'quiz-moderator-login.html'; });
 
-            // UI Elements
             const quizTitleEl = document.getElementById('quiz-title');
             const quizCodeEl = document.getElementById('quiz-code');
             const participantCountEl = document.getElementById('participant-count');
             const participantListEl = document.getElementById('participant-list');
-            const pauseBtn = document.getElementById('pause-btn');
-            const resumeBtn = document.getElementById('resume-btn');
             const nextQuestionBtn = document.getElementById('next-question-btn');
             const showLeaderboardBtn = document.getElementById('show-leaderboard-btn');
             const endQuizBtn = document.getElementById('end-quiz-btn');
@@ -159,6 +152,7 @@
             const questionResultsView = document.getElementById('question-results-view');
             const questionLeaderboardEl = document.getElementById('question-leaderboard');
             const overallLeaderboardEl = document.getElementById('overall-leaderboard');
+            const fastestAnswerBanner = document.getElementById('fastest-answer-banner');
 
             const urlParams = new URLSearchParams(window.location.search);
             const liveQuizId = urlParams.get('id');
@@ -170,7 +164,6 @@
 
             const socket = io();
 
-            // --- Socket Connection & Initial Fetch ---
             socket.on('connect', () => {
                 socket.emit('join-room', liveQuizId);
             });
@@ -187,22 +180,9 @@
                 alert(err.message);
             });
 
-            // --- Button Event Listeners ---
-            pauseBtn.addEventListener('click', () => {
-                socket.emit('moderator-pause-quiz', { liveQuizId });
-                pauseBtn.classList.add('hidden');
-                resumeBtn.classList.remove('hidden');
-            });
-            resumeBtn.addEventListener('click', () => {
-                socket.emit('moderator-resume-quiz', { liveQuizId });
-                resumeBtn.classList.add('hidden');
-                pauseBtn.classList.remove('hidden');
-            });
             nextQuestionBtn.addEventListener('click', () => {
                 socket.emit('moderator-next-question', { liveQuizId });
                 nextQuestionBtn.disabled = true;
-                nextQuestionBtn.textContent = 'Next Question';
-                pauseBtn.disabled = false;
                 showLeaderboardBtn.disabled = false;
                 leaderboardView.classList.add('hidden');
                 questionResultsView.classList.add('hidden');
@@ -218,7 +198,6 @@
                 }
             });
 
-            // --- Socket Event Handlers ---
             socket.on('update-participants', updateParticipantsUI);
             socket.on('moderator-new-question', handleNewQuestion);
             socket.on('question-timer-update', (time) => questionTimerEl.textContent = `00:${String(time).padStart(2, '0')}`);
@@ -233,12 +212,13 @@
                 setTimeout(() => window.location.href = 'quiz-library.html', 10000);
             });
 
-            // --- UI Update Functions ---
             function updateParticipantsUI(participants) {
                 participantCountEl.textContent = participants.length;
-                participantListEl.innerHTML = participants.length === 0 
-                    ? '<li class="text-gray-500">Waiting for participants...</li>'
-                    : participants.map(p => `<li class="text-gray-700 bg-gray-50 p-2 rounded">${p.fullName}</li>`).join('');
+                if (participants.length === 0) {
+                    participantListEl.innerHTML = '<li class="text-gray-500">Waiting for participants...</li>';
+                } else {
+                    participantListEl.innerHTML = participants.map(p => `<li class="text-gray-700 bg-gray-50 p-2 rounded">${p.fullName}</li>`).join('');
+                }
             }
 
             function handleNewQuestion({ question, questionIndex, totalQuestions }) {
@@ -246,7 +226,9 @@
                 leaderboardView.classList.add('hidden');
                 questionView.classList.remove('hidden');
                 questionResultsView.classList.add('hidden');
+                fastestAnswerBanner.classList.add('hidden');
 
+                nextQuestionBtn.textContent = 'Next Question';
                 questionNumberEl.textContent = `Question ${questionIndex + 1} of ${totalQuestions}`;
                 questionTextEl.textContent = question.text;
 
@@ -254,12 +236,14 @@
                 if(question.options) {
                     question.options.forEach((opt, i) => {
                         const isCorrect = (question.correctAnswer == i) || (question.correctAnswers && question.correctAnswers.includes(String(i)));
-                        const optionEl = document.createElement('div');
-                        optionEl.className = `p-2 rounded ${isCorrect ? 'bg-green-100 border border-green-400' : 'bg-gray-100'}`;
-                        optionEl.textContent = opt;
-                        questionOptionsEl.appendChild(optionEl);
+                        questionOptionsEl.innerHTML += `
+                            <div class="p-3 rounded-lg ${isCorrect ? 'bg-green-100 border border-green-400 font-bold' : 'bg-gray-100'}">
+                                ${opt}
+                            </div>
+                        `;
                     });
                 }
+                updateAnswerStats({ answeredCount: 0, totalCount: parseInt(participantCountEl.textContent, 10) });
             }
             
             function updateAnswerStats({ answeredCount, totalCount }) {
@@ -268,33 +252,35 @@
                 answerProgressText.textContent = `${answeredCount} / ${totalCount}`;
             }
 
-            function handleQuestionEnd({ questionLeaderboard }) {
-                updateLeaderboardUI(questionLeaderboardEl, questionLeaderboard, "Top performers for this question");
+            function handleQuestionEnd({ questionLeaderboard, fastestCorrectAnswer }) {
+                updateLeaderboardUI(questionLeaderboardEl, questionLeaderboard);
+                
+                if(fastestCorrectAnswer) {
+                    fastestAnswerBanner.innerHTML = `⚡️ <strong>Fastest Correct Answer:</strong> ${fastestCorrectAnswer.fullName} (${fastestCorrectAnswer.time}s)`;
+                    fastestAnswerBanner.classList.remove('hidden');
+                }
+
                 questionResultsView.classList.remove('hidden');
                 nextQuestionBtn.disabled = false;
             }
 
-            function updateLeaderboardUI(container, participants, title) {
-                container.innerHTML = title ? `<h3 class="text-md font-bold text-gray-800 mb-2">${title}</h3>` : '';
+            function updateLeaderboardUI(container, participants) {
+                container.innerHTML = '';
                 if (!participants || participants.length === 0) {
-                     container.innerHTML += '<p class="text-gray-500">No scores to display yet.</p>';
+                     container.innerHTML = '<p class="text-gray-500">No scores to display yet.</p>';
                      return;
                 }
                 
                 participants.sort((a, b) => b.score - a.score);
 
-                participants.forEach((p, index) => {
-                    const div = document.createElement('div');
-                    div.className = 'flex justify-between items-center p-3 rounded-lg bg-gray-100';
-                    div.innerHTML = `
+                container.innerHTML = participants.map((p, index) => `
+                    <div class="flex justify-between items-center p-3 rounded-lg ${index === 0 ? 'bg-yellow-100' : 'bg-gray-100'}">
                         <span class="font-semibold text-gray-800">${index + 1}. ${p.fullName}</span>
                         <span class="font-bold text-indigo-600">${p.score} pts</span>
-                    `;
-                    container.appendChild(div);
-                });
+                    </div>
+                `).join('');
             }
         });
     </script>
 </body>
 </html>
-
