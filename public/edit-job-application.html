@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Your Application - HIRE WITH US</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="container mx-auto px-4 py-12">
+        <div class="max-w-2xl mx-auto">
+            <div class="text-center mb-8">
+                <img class="h-12 w-auto mx-auto" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="HIRE WITH US Logo">
+                <h1 id="page-title" class="text-3xl font-extrabold text-gray-800 mt-4">Edit Your Application</h1>
+            </div>
+
+            <div id="form-container" class="bg-white shadow-xl rounded-2xl p-8 hidden">
+                <form id="edit-form" class="space-y-6">
+                    <div>
+                        <label for="fullName" class="block text-sm font-medium text-gray-700">Full Name</label>
+                        <input type="text" id="fullName" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3">
+                    </div>
+                    <div>
+                        <label for="collegeName" class="block text-sm font-medium text-gray-700">College Name</label>
+                        <input type="text" id="collegeName" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3">
+                    </div>
+                    <div>
+                        <label for="rollNumber" class="block text-sm font-medium text-gray-700">Roll Number / University ID</label>
+                        <input type="text" id="rollNumber" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3">
+                    </div>
+                     <div>
+                        <label for="cgpa" class="block text-sm font-medium text-gray-700">CGPA (out of 10)</label>
+                        <input type="number" id="cgpa" step="0.01" min="0" max="10" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3">
+                    </div>
+
+                    <div class="pt-4">
+                        <button type="submit" id="update-btn" class="w-full inline-flex justify-center py-3 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                            Update Application
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div id="message-area" class="mt-4 text-center p-8 bg-white rounded-2xl shadow-xl"></div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const params = new URLSearchParams(window.location.search);
+        const applicationId = params.get('applicationId');
+
+        const formContainer = document.getElementById('form-container');
+        const messageArea = document.getElementById('message-area');
+        const updateBtn = document.getElementById('update-btn');
+        const editForm = document.getElementById('edit-form');
+        const pageTitle = document.getElementById('page-title');
+
+        const fullNameInput = document.getElementById('fullName');
+        const collegeNameInput = document.getElementById('collegeName');
+        const rollNumberInput = document.getElementById('rollNumber');
+        const cgpaInput = document.getElementById('cgpa');
+
+        if (!applicationId) {
+            messageArea.innerHTML = '<p class="text-red-600 font-semibold">Error: No application ID specified.</p>';
+            return;
+        }
+
+        messageArea.innerHTML = '<p class="text-gray-600">Loading your application details...</p>';
+
+        try {
+            const response = await fetch(`/api/public/application/${applicationId}`);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message);
+
+            // Populate the form
+            pageTitle.textContent = `Edit Application for "${data.jobTitle}"`;
+            fullNameInput.value = data.applicationData.name || '';
+            collegeNameInput.value = data.applicationData.college || '';
+            rollNumberInput.value = data.rollNumber || ''; // Assuming rollNumber is top-level
+            cgpaInput.value = data.applicationData.cgpa || '';
+
+            messageArea.classList.add('hidden');
+            formContainer.classList.remove('hidden');
+
+        } catch (error) {
+            formContainer.classList.add('hidden');
+            messageArea.innerHTML = `<p class="text-red-600 font-semibold">Error: ${error.message}</p>`;
+        }
+
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            updateBtn.disabled = true;
+            updateBtn.textContent = 'Updating...';
+
+            const payload = {
+                applicationData: {
+                    name: fullNameInput.value,
+                    college: collegeNameInput.value,
+                    cgpa: parseFloat(cgpaInput.value)
+                },
+                rollNumber: rollNumberInput.value
+            };
+
+            try {
+                const response = await fetch(`/api/public/application/${applicationId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message);
+
+                formContainer.classList.add('hidden');
+                messageArea.classList.remove('hidden');
+                messageArea.innerHTML = `<p class="text-green-600 font-semibold">${result.message}</p>`;
+
+            } catch (error) {
+                alert(`Error: ${error.message}`); // Simple alert for submission error
+            } finally {
+                updateBtn.disabled = false;
+                updateBtn.textContent = 'Update Application';
+            }
+        });
+    });
+    </script>
+</body>
+</html>

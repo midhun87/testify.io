@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Jobs - HIRE WITH US</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo">
+                <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
+            </div>
+            <nav class="flex-grow p-4 overflow-y-auto" id="sidebar-nav">
+                <!-- Links will be injected here -->
+            </nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+                <h1 class="text-2xl font-bold text-gray-800">Your Job Postings</h1>
+                 <a href="hiring-create-job.html" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                    Create New Job
+                </a>
+                <div id="user-menu-container"></div>
+            </div>
+
+            <div class="p-6">
+                <div id="jobs-container" class="space-y-6">
+                    <!-- Job cards will be loaded here -->
+                </div>
+                 <div id="message-area" class="text-center mt-8"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            initializePage('Manage Jobs');
+            const token = localStorage.getItem('token');
+            const jobsContainer = document.getElementById('jobs-container');
+            const messageArea = document.getElementById('message-area');
+
+            messageArea.innerHTML = '<p class="text-gray-600">Loading your jobs...</p>';
+
+            try {
+                const response = await fetch('/api/hiring/jobs', {
+                    headers: { 'x-auth-token': token }
+                });
+                if (!response.ok) throw new Error('Could not fetch jobs.');
+
+                const jobs = await response.json();
+
+                if (jobs.length === 0) {
+                     messageArea.innerHTML = '<div class="text-center py-10"><h3 class="text-lg font-semibold text-gray-700">No jobs found</h3><p class="text-gray-500 mt-2">You have not created any jobs yet. Get started by creating one now.</p><a href="hiring-create-job.html" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">Create a Job</a></div>';
+                     return;
+                }
+                
+                messageArea.innerHTML = '';
+                // Sort jobs by most recent first
+                jobs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                
+                jobs.forEach(job => {
+                    const jobCard = document.createElement('div');
+                    jobCard.className = 'bg-white p-6 rounded-xl shadow-md transition hover:shadow-lg';
+                    // Use job.email as the ID since that's the PK in the backend for jobs
+                    const jobId = job.email; 
+                    
+                    jobCard.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h2 class="text-xl font-bold text-gray-800">${job.title}</h2>
+                                <p class="text-sm text-gray-500">Created on: ${new Date(job.createdAt).toLocaleDateString()}</p>
+                            </div>
+                             <a href="hiring-view-applicants.html?jobId=${jobId}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                                View Applicants
+                            </a>
+                        </div>
+                        <div class="mt-4 border-t pt-4">
+                            <p class="text-sm text-gray-600"><strong>Deadline:</strong> ${new Date(job.applicationDeadline).toLocaleString()}</p>
+                             <p class="text-sm text-gray-600 mt-2"><strong>Eligible Colleges:</strong> ${job.eligibleColleges.join(', ')}</p>
+                        </div>
+                    `;
+                    jobsContainer.appendChild(jobCard);
+                });
+
+            } catch (error) {
+                messageArea.innerHTML = `<p class="text-red-600 font-semibold">Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
+

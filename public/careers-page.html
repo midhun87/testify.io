@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Current Openings - HIRE WITH US</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* For a smooth max-height transition */
+        .max-h-screen { max-height: 100vh; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto py-5 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+            <div class="flex items-center">
+                <img class="h-10 w-auto" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="Hire With Us Logo">
+                <h1 id="company-name" class="ml-4 text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">Current Job Openings</h1>
+            </div>
+        </div>
+    </header>
+
+    <main class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div id="jobs-container" class="space-y-8">
+                
+                <div id="loading-state" class="text-center py-16">
+                    <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="mt-4 text-lg font-medium text-gray-700">Loading open positions...</p>
+                </div>
+                
+                <div id="error-state" class="hidden text-center py-16 bg-white rounded-lg shadow-sm"></div>
+                
+                <div id="no-jobs-state" class="hidden text-center py-16 bg-white rounded-lg shadow-sm">
+                     <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    <h3 class="mt-4 text-lg font-semibold text-gray-900">No Open Positions</h3>
+                    <p class="mt-2 text-sm text-gray-500">There are currently no job openings available. Please check back later.</p>
+                </div>
+
+            </div>
+        </div>
+    </main>
+    
+    <footer class="bg-white border-t border-gray-200">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
+            &copy; 2025 HIRE WITH US. All rights reserved.
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const jobsContainer = document.getElementById('jobs-container');
+            const loadingState = document.getElementById('loading-state');
+            const errorState = document.getElementById('error-state');
+            const noJobsState = document.getElementById('no-jobs-state');
+            const companyNameEl = document.getElementById('company-name');
+
+            const params = new URLSearchParams(window.location.search);
+            const moderatorId = params.get('moderatorId');
+
+            if (!moderatorId) {
+                loadingState.style.display = 'none';
+                errorState.classList.remove('hidden');
+                errorState.innerHTML = `
+                    <svg class="mx-auto h-12 w-12 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                    </svg>
+                    <h3 class="mt-4 text-lg font-semibold text-red-800">Invalid URL</h3>
+                    <p class="mt-2 text-sm text-red-600">Moderator ID not provided. Please use the link supplied to you.</p>
+                `;
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/public/jobs/by-moderator/${moderatorId}`);
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.message || 'Could not load job openings.');
+                }
+                const data = await response.json();
+                const { jobs, moderatorName } = data;
+                
+                loadingState.style.display = 'none';
+                
+                if (moderatorName) {
+                    companyNameEl.textContent = `${moderatorName}'s Openings`;
+                    document.title = `${moderatorName}'s Openings - HIRE WITH US`
+                }
+
+                if (jobs.length === 0) {
+                    noJobsState.classList.remove('hidden');
+                } else {
+                    jobs.forEach(job => {
+                        const jobCard = document.createElement('div');
+                        jobCard.className = 'bg-white shadow-lg rounded-xl overflow-hidden';
+                        jobCard.innerHTML = `
+                            <div class="p-6 sm:p-8">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                    <h2 class="text-2xl font-bold text-gray-900">${job.title || 'Job Title Not Available'}</h2>
+                                </div>
+                                <div class="mt-3 flex items-center space-x-4 text-sm text-gray-500">
+                                    <div class="flex items-center">
+                                         <svg class="h-5 w-5 mr-1.5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.69 18.933l.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 00.281-.14c.186-.1.4-.27.6-.53l4.507-5.009a1 1 0 00-1.414-1.414l-4.507 5.009a.75.75 0 01-1.052.048l-1.952-1.637a1 1 0 00-1.328 1.495l1.952 1.637a2.25 2.25 0 003.156-.145z" clip-rule="evenodd" /></svg>
+                                        <span>${job.location || 'Remote'}</span>
+                                    </div>
+                                </div>
+                                
+                                <div id="description-wrapper-${job.jobId}">
+                                    <div id="description-${job.jobId}" class="mt-4 prose prose-indigo max-w-none text-gray-600 max-h-24 overflow-hidden relative transition-all duration-500 ease-in-out">
+                                        ${job.description}
+                                        <div class="description-fade absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-white to-transparent"></div>
+                                    </div>
+                                    <div id="toggle-container-${job.jobId}" class="mt-2"></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-gray-50 px-6 sm:px-8 py-4 flex flex-col sm:flex-row items-center justify-between">
+                                <div class="flex items-center text-sm text-red-600 font-semibold mb-3 sm:mb-0">
+                                    <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18M-4.5 12h22.5" /></svg>
+                                    <span>Closes: ${new Date(job.applicationDeadline).toLocaleDateString()}</span>
+                                </div>
+                                <a href="job-application.html?jobId=${job.jobId}" class="inline-flex items-center px-6 py-2.5 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full sm:w-auto justify-center">
+                                    View & Apply
+                                </a>
+                            </div>
+                        `;
+                        jobsContainer.appendChild(jobCard);
+
+                        // *** NEW SCRIPT FOR DESCRIPTION TOGGLE ***
+                        const descriptionDiv = document.getElementById(`description-${job.jobId}`);
+                        const toggleContainer = document.getElementById(`toggle-container-${job.jobId}`);
+                        const gradientFade = descriptionDiv.querySelector('.description-fade');
+
+                        // Check if the content is taller than its collapsed height
+                        if (descriptionDiv.scrollHeight > descriptionDiv.clientHeight) {
+                            const toggleButton = document.createElement('button');
+                            toggleButton.className = 'flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-800 focus:outline-none';
+                            toggleButton.innerHTML = `
+                                <span class="button-text">Show more</span>
+                                <svg class="toggle-arrow ml-1 h-5 w-5 transition-transform duration-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            `;
+                            toggleContainer.appendChild(toggleButton);
+
+                            toggleButton.addEventListener('click', () => {
+                                const isCollapsed = descriptionDiv.classList.contains('max-h-24');
+                                const buttonText = toggleButton.querySelector('.button-text');
+                                const arrowIcon = toggleButton.querySelector('.toggle-arrow');
+
+                                if (isCollapsed) {
+                                    descriptionDiv.classList.remove('max-h-24');
+                                    descriptionDiv.classList.add('max-h-screen');
+                                    gradientFade.style.display = 'none';
+                                    buttonText.textContent = 'Show less';
+                                    arrowIcon.classList.add('rotate-180');
+                                } else {
+                                    descriptionDiv.classList.add('max-h-24');
+                                    descriptionDiv.classList.remove('max-h-screen');
+                                    gradientFade.style.display = 'block';
+                                    buttonText.textContent = 'Show more';
+                                    arrowIcon.classList.remove('rotate-180');
+                                }
+                            });
+                        } else {
+                            // If content is not overflowing, remove the fade effect
+                            gradientFade.style.display = 'none';
+                        }
+                    });
+                }
+
+            } catch (error) {
+                loadingState.style.display = 'none';
+                errorState.classList.remove('hidden');
+                errorState.innerHTML = `<p class="text-red-600 font-semibold">Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

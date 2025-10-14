@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Certificate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700;900&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Lato', sans-serif; }
+        #certificate-container {
+            width: 1000px;
+            height: 707px;
+            position: relative;
+            color: #333;
+            overflow: hidden;
+        }
+        #cert-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+        }
+        .cert-content {
+            position: relative; z-index: 2; width: 100%; height: 100%; display: flex;
+            flex-direction: column; justify-content: center; align-items: center;
+            padding: 50px; text-align: center;
+        }
+        .positioned-image {
+            position: absolute;
+            z-index: 3;
+        }
+    </style>
+</head>
+<body class="bg-gray-200 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div id="main-content" class="text-center hidden">
+        <div id="certificate-wrapper" class="bg-white p-2 shadow-2xl rounded-lg">
+            <div id="certificate-container">
+                 <img id="cert-bg" src="" alt="Certificate Background">
+                 <div class="cert-content">
+                    <!-- Dynamic text content will be placed here -->
+                 </div>
+                 <!-- Positioned images will be added here -->
+            </div>
+        </div>
+        <button id="download-btn" class="mt-8 bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-colors">
+            Download Certificate (PNG)
+        </button>
+    </div>
+
+    <div id="message-container" class="text-center p-8 bg-white rounded-lg shadow-md"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const mainContent = document.getElementById('main-content');
+            const messageContainer = document.getElementById('message-container');
+            const certificateContainer = document.getElementById('certificate-container');
+            const certBg = document.getElementById('cert-bg');
+            const downloadBtn = document.getElementById('download-btn');
+
+            const showMessage = (message, isError = false) => {
+                mainContent.classList.add('hidden');
+                messageContainer.classList.remove('hidden');
+                messageContainer.innerHTML = `<p class="${isError ? 'text-red-500' : 'text-gray-700'} text-xl">${message}</p>`;
+            };
+
+            const params = new URLSearchParams(window.location.search);
+            const certificateId = params.get('id');
+
+            if (!certificateId) {
+                showMessage('No certificate ID provided.', true);
+                return;
+            }
+            
+            showMessage('Loading certificate...');
+
+            try {
+                // This endpoint is public and doesn't need a token
+                const response = await fetch(`/api/public/certificate/${certificateId}`);
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Certificate not found.');
+                }
+                const data = await response.json();
+                
+                document.title = `Certificate for ${data.studentName}`;
+                
+                // Use a default background for the single template
+                certBg.src = 'https://i.imgur.com/T0I1S9D.png';
+
+                // Render positioned images
+                if(data.customImages && data.customImages.length > 0) {
+                    data.customImages.forEach(imgData => {
+                        const img = document.createElement('img');
+                        img.src = imgData.url;
+                        img.className = 'positioned-image';
+                        img.style.left = `${imgData.x}px`;
+                        img.style.top = `${imgData.y}px`;
+                        img.style.height = `${imgData.height}px`;
+                        img.style.width = 'auto';
+                        certificateContainer.appendChild(img);
+                    });
+                }
+
+                // Render text content
+                const contentHTML = `
+                    <p class="text-2xl" style="font-family: 'Lato', sans-serif;">Certificate of Achievement</p>
+                    <p class="text-xl mt-4">This certificate is proudly presented to</p>
+                    <h1 class="text-6xl my-6" style="font-family: 'Merriweather', serif; font-weight: 900;">${data.studentName}</h1>
+                    <p class="text-lg">for successfully participating in</p>
+                    <h2 class="text-3xl font-bold my-4" style="font-family: 'Merriweather', serif;">${data.eventName}</h2>
+                    <div class="flex-grow"></div>
+                    <div class="w-full flex justify-between items-end mt-12">
+                        <div class="text-left"><p class="font-bold border-t-2 border-gray-700 pt-1">Date: ${data.eventDate}</p></div>
+                        <div class="text-right"><p class="font-bold border-t-2 border-gray-700 pt-1">Roll No: ${data.rollNumber}</p></div>
+                    </div>
+                `;
+                certificateContainer.querySelector('.cert-content').innerHTML = contentHTML;
+
+                messageContainer.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, true);
+            }
+            
+            downloadBtn.addEventListener('click', () => {
+                 html2canvas(document.getElementById('certificate-container'), { scale: 2 }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `Certificate-${certificateId}.png`;
+                    link.href = canvas.toDataURL();
+                    link.click();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+

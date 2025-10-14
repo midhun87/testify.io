@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Application Status - HIRE WITH US</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-2xl">
+        <div class="bg-white shadow-2xl rounded-2xl p-8">
+            <div class="text-center mb-8">
+                 <h1 class="text-3xl font-extrabold text-gray-800">Check Your Application Status</h1>
+            </div>
+
+            <!-- Step 1: Email Input -->
+            <div id="email-step">
+                <p class="text-gray-600 mb-4 text-center">Enter the email address you used to apply to receive a verification code.</p>
+                <div class="space-y-4">
+                    <input id="email-input" type="email" placeholder="you@example.com" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                    <button id="send-otp-btn" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700">Send Code</button>
+                </div>
+            </div>
+
+            <!-- Step 2: OTP Input -->
+            <div id="otp-step" class="hidden">
+                 <p class="text-gray-600 mb-4 text-center">A code was sent to <b id="email-display"></b>. Please enter it below.</p>
+                 <div class="space-y-4">
+                    <input id="otp-input" type="text" placeholder="123456" class="w-full px-4 py-3 border border-gray-300 rounded-lg text-center tracking-[0.5em]">
+                    <button id="verify-otp-btn" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700">Verify & View Status</button>
+                 </div>
+            </div>
+
+            <div id="message" class="mt-4 text-center"></div>
+        </div>
+        
+        <!-- Status Display Area -->
+        <div id="status-container" class="mt-8"></div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const emailStep = document.getElementById('email-step');
+        const otpStep = document.getElementById('otp-step');
+        const sendOtpBtn = document.getElementById('send-otp-btn');
+        const verifyOtpBtn = document.getElementById('verify-otp-btn');
+        const messageDiv = document.getElementById('message');
+        const statusContainer = document.getElementById('status-container');
+        
+        sendOtpBtn.addEventListener('click', async () => {
+            const email = document.getElementById('email-input').value;
+            if (!email) {
+                messageDiv.className = 'text-red-600';
+                messageDiv.textContent = 'Please enter an email address.';
+                return;
+            }
+
+            sendOtpBtn.disabled = true;
+            sendOtpBtn.textContent = 'Sending...';
+            messageDiv.textContent = '';
+
+            try {
+                // FIX: Corrected API endpoint for the "Hiring" status check flow
+                const response = await fetch('/api/public/check-status/send-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message);
+
+                messageDiv.className = 'text-green-600';
+                messageDiv.textContent = result.message;
+                document.getElementById('email-display').textContent = email;
+                emailStep.classList.add('hidden');
+                otpStep.classList.remove('hidden');
+
+            } catch (error) {
+                 messageDiv.className = 'text-red-600';
+                 messageDiv.textContent = `Error: ${error.message}`;
+            } finally {
+                sendOtpBtn.disabled = false;
+                sendOtpBtn.textContent = 'Send Code';
+            }
+        });
+
+        verifyOtpBtn.addEventListener('click', async () => {
+            const email = document.getElementById('email-input').value;
+            const otp = document.getElementById('otp-input').value;
+            
+            verifyOtpBtn.disabled = true;
+            verifyOtpBtn.textContent = 'Verifying...';
+            messageDiv.textContent = '';
+            
+            try {
+                // FIX: Corrected API endpoint for the "Hiring" status check flow
+                const response = await fetch('/api/public/check-status/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, otp })
+                });
+                const applications = await response.json();
+                if (!response.ok) throw new Error(applications.message);
+
+                otpStep.parentElement.classList.add('hidden'); // Hide the main card
+                messageDiv.textContent = '';
+                
+                if (applications.length === 0) {
+                    statusContainer.innerHTML = '<p class="text-center text-gray-600">No applications found for this email.</p>';
+                } else {
+                    statusContainer.innerHTML = applications.map(app => {
+                        const deadline = new Date(app.jobDeadline);
+                        const isEditable = new Date() < deadline;
+
+                        const statusClasses = {
+                            'Applied': 'bg-blue-100 text-blue-800',
+                            'Shortlisted': 'bg-yellow-100 text-yellow-800',
+                            'Hired': 'bg-green-100 text-green-800',
+                            'Rejected': 'bg-red-100 text-red-800'
+                        };
+                        const statusClass = statusClasses[app.status] || 'bg-gray-100 text-gray-800';
+
+                        return `
+                        <div class="bg-white shadow-lg rounded-xl overflow-hidden mb-6">
+                            <div class="p-6">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="text-xl font-bold text-gray-900">${app.jobTitle}</h3>
+                                        <p class="text-sm text-gray-500 mt-1">Applied on: ${new Date(app.appliedAt).toLocaleDateString()}</p>
+                                    </div>
+                                    <span class="px-3 py-1 text-xs font-semibold rounded-full ${statusClass}">
+                                        ${app.status}
+                                    </span>
+                                </div>
+                                 <div class="mt-4 border-t pt-4 flex justify-between items-center">
+                                     <p class="text-sm text-gray-600">Status: <span class="font-bold">${app.status}</span></p>
+                                     <a href="edit-application.html?applicationId=${app.applicationId}" 
+                                       class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${isEditable ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-400 cursor-not-allowed'}"
+                                       ${!isEditable ? 'onclick="return false;"' : ''}>
+                                        Edit Application
+                                    </a>
+                                </div>
+                                ${!isEditable ? `<p class="text-xs text-red-500 text-right mt-2">Editing is closed as the application deadline of ${deadline.toLocaleDateString()} has passed.</p>` : ''}
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+                }
+
+            } catch (error) {
+                messageDiv.className = 'text-red-600';
+                messageDiv.textContent = `Error: ${error.message}`;
+            } finally {
+                verifyOtpBtn.disabled = false;
+                verifyOtpBtn.textContent = 'Verify & View Status';
+            }
+        });
+    });
+    </script>
+</body>
+</html>
+
