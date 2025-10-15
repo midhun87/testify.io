@@ -181,6 +181,34 @@
                 }).join('');
             };
 
+            // *** FIX STARTS HERE ***
+            // This more robust function handles multiple types of incorrect Cloudinary URLs
+            // for non-image files like PDFs to prevent 404 errors.
+            const getCorrectDocumentUrl = (url) => {
+                if (!url || typeof url !== 'string') return '#';
+                
+                const isNonImageAsset = url.toLowerCase().endsWith('.pdf');
+
+                if (isNonImageAsset) {
+                    // Case 1: The URL was incorrectly stored with '/raw/' but the asset is an 'image' type.
+                    // This is indicated by the 404 error. We change it to an image URL with a flag
+                    // that forces it to be served as a file attachment.
+                    if (url.includes('/raw/upload/')) {
+                        return url.replace('/raw/upload/', '/image/upload/fl_attachment/');
+                    }
+                    
+                    // Case 2: The URL is an 'image' URL but needs the attachment flag
+                    // to prevent the browser from trying to render the PDF as a picture.
+                    if (url.includes('/image/upload/') && !url.includes('fl_attachment')) {
+                         return url.replace('/image/upload/', '/image/upload/fl_attachment/');
+                    }
+                }
+                
+                // For all other cases (actual images, correctly formed URLs), return the URL as is.
+                return url;
+            };
+            // *** FIX ENDS HERE ***
+
             const showDetailsModal = (applicantId) => {
                 const applicant = allApplicants.find(app => app.applicationId === applicantId);
                 if (!applicant) return;
@@ -193,7 +221,7 @@
                         <div class="p-3 bg-gray-50 rounded-md mb-2">
                             <p><strong>${edu.type}</strong> - ${edu.institute}</p>
                             <p class="text-sm text-gray-600">Stream: ${edu.stream} | Score: ${edu.score}</p>
-                            ${edu.certificateUrl ? `<a href="${edu.certificateUrl}" target="_blank" class="text-sm text-indigo-600">View Certificate</a>` : ''}
+                            ${edu.certificateUrl ? `<a href="${getCorrectDocumentUrl(edu.certificateUrl)}" target="_blank" class="text-sm text-indigo-600">View Certificate</a>` : ''}
                         </div>
                     `).join('');
                 }
@@ -204,7 +232,7 @@
                         <div class="p-3 bg-gray-50 rounded-md mb-2">
                             <p><strong>${exp.title}</strong> at ${exp.company}</p>
                             <p class="text-sm text-gray-600">${exp.description}</p>
-                            ${exp.certificateUrl ? `<a href="${exp.certificateUrl}" target="_blank" class="text-sm text-indigo-600">View Certificate</a>` : ''}
+                            ${exp.certificateUrl ? `<a href="${getCorrectDocumentUrl(exp.certificateUrl)}" target="_blank" class="text-sm text-indigo-600">View Certificate</a>` : ''}
                         </div>
                     `).join('');
                 }
@@ -219,8 +247,8 @@
                             <div>
                                 <h4 class="font-semibold text-gray-700">Documents</h4>
                                 <div class="flex space-x-4 mt-1">
-                                    <a href="${applicant.resumeUrl}" target="_blank" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">View Resume</a>
-                                    ${applicant.govtId && applicant.govtId.url ? `<a href="${applicant.govtId.url}" target="_blank" class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">View ID (${applicant.govtId.type || 'N/A'})</a>` : ''}
+                                    <a href="${getCorrectDocumentUrl(applicant.resumeUrl)}" target="_blank" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">View Resume</a>
+                                    ${applicant.govtId && applicant.govtId.url ? `<a href="${getCorrectDocumentUrl(applicant.govtId.url)}" target="_blank" class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">View ID (${applicant.govtId.type || 'N/A'})</a>` : ''}
                                 </div>
                             </div>
                             <div>
@@ -244,8 +272,7 @@
                 `;
                 detailsModal.classList.add('visible');
             };
-
-            // *** FIX: Use event delegation for more reliable click handling ***
+            
             applicantsTbody.addEventListener('click', (event) => {
                 if (event.target && event.target.classList.contains('view-details-btn')) {
                     showDetailsModal(event.target.dataset.applicantId);

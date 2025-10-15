@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Coding Test - HIRE WITH US</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        .problem-card { transition: all 0.2s ease-in-out; }
+        .problem-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .problem-card.selected { border-color: #4F46E5; background-color: #EEF2FF; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+             <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo">
+                <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
+            </div>
+            <nav class="flex-grow p-4 overflow-y-auto" id="sidebar-nav"></nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+                <h1 class="text-2xl font-bold text-gray-800">Create New Coding Test</h1>
+                <div id="user-menu-container"></div>
+            </div>
+
+            <div class="p-6">
+                <form id="create-coding-test-form" class="space-y-6">
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="testTitle" class="block text-sm font-medium text-gray-700">Test Title</label>
+                                <input type="text" id="testTitle" required class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm">
+                            </div>
+                            <div>
+                                <label for="duration" class="block text-sm font-medium text-gray-700">Duration (Minutes)</label>
+                                <input type="number" id="duration" required class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4">Select Problems for the Test</h2>
+                        <div id="problem-selection-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Problems will be loaded here -->
+                        </div>
+                        <div id="problems-loader" class="text-center py-8">Loading problems...</div>
+                    </div>
+                    
+                    <div class="flex justify-end items-center pt-4">
+                        <div class="text-right mr-6">
+                            <p class="text-sm text-gray-500">Total Marks</p>
+                            <p id="total-marks-display" class="text-2xl font-bold text-indigo-600">0</p>
+                        </div>
+                        <button type="submit" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700">
+                            Create Coding Test
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const hiringSidebarLinks = [
+                { href: "hiring-dashboard.html", text: "Dashboard" },
+                { href: "hiring-create-job.html", text: "Create Job" },
+                { href: "hiring-jobs.html", text: "Manage Jobs" },
+                { href: "hiring-create-test.html", text: "Create Aptitude Test" },
+                 { href: "hiring-create-problem.html", text: "Manage Coding Problems"},
+                 { href: "hiring-create-coding-test.html", text: "Create Coding Test"},
+                { href: "hiring-assign-test.html", text: "Assign Test" },
+                { href: "hiring-test-history.html", text: "Test History" },
+            ];
+            initializePage('Create Coding Test');
+
+            const token = localStorage.getItem('token');
+            const problemContainer = document.getElementById('problem-selection-container');
+            const problemsLoader = document.getElementById('problems-loader');
+            const totalMarksDisplay = document.getElementById('total-marks-display');
+            let allProblems = [];
+
+            const fetchProblems = async () => {
+                try {
+                    const response = await fetch('/api/hiring/coding-problems', { headers: { 'x-auth-token': token } });
+                    allProblems = await response.json();
+                    renderProblems(allProblems);
+                } catch (error) {
+                    problemContainer.innerHTML = `<p class="text-red-500 col-span-full">Failed to load problems.</p>`;
+                } finally {
+                    problemsLoader.style.display = 'none';
+                }
+            };
+
+            const renderProblems = (problems) => {
+                if (problems.length === 0) {
+                    problemContainer.innerHTML = `<p class="text-gray-500 col-span-full">No coding problems found. Please create some first.</p>`;
+                    return;
+                }
+                problemContainer.innerHTML = problems.map(p => `
+                    <div class="problem-card border rounded-lg p-4 cursor-pointer" data-problem-id="${p.id}">
+                        <h3 class="font-bold text-md text-gray-800">${p.title}</h3>
+                        <p class="text-sm text-gray-600">${p.difficulty} - <span class="font-semibold">${p.score} Points</span></p>
+                    </div>
+                `).join('');
+            };
+
+            const updateTotalMarks = () => {
+                let total = 0;
+                document.querySelectorAll('.problem-card.selected').forEach(card => {
+                    const problem = allProblems.find(p => p.id === card.dataset.problemId);
+                    if (problem) total += (problem.score || 0);
+                });
+                totalMarksDisplay.textContent = total;
+            };
+
+            problemContainer.addEventListener('click', (e) => {
+                const card = e.target.closest('.problem-card');
+                if (card) {
+                    card.classList.toggle('selected');
+                    updateTotalMarks();
+                }
+            });
+
+            document.getElementById('create-coding-test-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const selectedProblemIds = Array.from(document.querySelectorAll('.problem-card.selected')).map(card => card.dataset.problemId);
+                const selectedProblems = allProblems.filter(p => selectedProblemIds.includes(p.id));
+
+                if (selectedProblems.length === 0) {
+                    alert('Please select at least one problem for the test.');
+                    return;
+                }
+
+                const payload = {
+                    testTitle: document.getElementById('testTitle').value,
+                    duration: document.getElementById('duration').value,
+                    problems: selectedProblems
+                };
+
+                try {
+                    await fetch('/api/hiring/coding-tests', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify(payload)
+                    });
+                    alert('Coding test created successfully!');
+                    window.location.href = 'hiring-dashboard.html';
+                } catch (error) {
+                    alert(`Error creating test: ${error.message}`);
+                }
+            });
+
+            fetchProblems();
+        });
+    </script>
+</body>
+</html>

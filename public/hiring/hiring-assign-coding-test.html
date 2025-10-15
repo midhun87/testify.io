@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Coding Test - HIRE WITH US</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo">
+                <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
+            </div>
+            <nav class="flex-grow p-4 overflow-y-auto" id="sidebar-nav"></nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+                <h1 class="text-2xl font-bold text-gray-800">Assign Coding Test</h1>
+                <div id="user-menu-container"></div>
+            </div>
+
+            <div class="p-6">
+                 <div class="max-w-4xl mx-auto">
+                    <form id="assign-test-form" class="bg-white p-8 rounded-xl shadow-md space-y-6">
+                        <div>
+                            <label for="test-select" class="block text-sm font-medium text-gray-700">Select Coding Test</label>
+                            <select id="test-select" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
+                        </div>
+                        
+                        <div>
+                            <label for="candidate-emails" class="block text-sm font-medium text-gray-700">Candidate Emails</label>
+                            <textarea id="candidate-emails" rows="6" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="Paste email addresses here, one per line or separated by commas."></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="start-time" class="block text-sm font-medium text-gray-700">Attempt Window Start</label>
+                                <input type="datetime-local" id="start-time" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="end-time" class="block text-sm font-medium text-gray-700">Attempt Window End</label>
+                                <input type="datetime-local" id="end-time" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-4">
+                             <button type="submit" id="submit-btn" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Send Invitations
+                            </button>
+                        </div>
+                    </form>
+                    <div id="message" class="mt-4 text-center"></div>
+                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+             const hiringSidebarLinks = [
+                { href: "hiring-dashboard.html", text: "Dashboard" },
+                { href: "hiring-create-job.html", text: "Create Job" },
+                { href: "hiring-jobs.html", text: "Manage Jobs" },
+                { href: "hiring-create-test.html", text: "Create Aptitude Test" },
+                 { href: "hiring-create-problem.html", text: "Manage Coding Problems"},
+                 { href: "hiring-create-coding-test.html", text: "Create Coding Test"},
+                { href: "hiring-assign-test.html", text: "Assign Test" },
+                { href: "hiring-test-history.html", text: "Test History" },
+            ];
+            initializePage('Assign Test');
+            const token = localStorage.getItem('token');
+            const form = document.getElementById('assign-test-form');
+            const testSelect = document.getElementById('test-select');
+            const submitBtn = document.getElementById('submit-btn');
+            const messageDiv = document.getElementById('message');
+
+            const fetchCodingTests = async () => {
+                try {
+                    const response = await fetch('/api/hiring/tests?type=coding', { // Assuming an API to fetch only coding tests
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!response.ok) throw new Error('Could not fetch coding tests.');
+                    const tests = await response.json();
+                    
+                    if (tests.length === 0) {
+                        testSelect.innerHTML = '<option disabled selected>No coding tests found. Please create one first.</option>';
+                        submitBtn.disabled = true;
+                    } else {
+                        testSelect.innerHTML = '<option disabled selected value="">-- Select a coding test --</option>';
+                        tests.filter(t => t.testType === 'hiring_coding').forEach(test => {
+                            const option = document.createElement('option');
+                            option.value = test.testId;
+                            option.textContent = test.title;
+                            testSelect.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                     testSelect.innerHTML = `<option disabled selected>Error loading tests</option>`;
+                     submitBtn.disabled = true;
+                }
+            };
+            
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                messageDiv.textContent = '';
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Assigning...';
+
+                const testId = testSelect.value;
+                const emailsText = document.getElementById('candidate-emails').value;
+                const startTime = document.getElementById('start-time').value;
+                const endTime = document.getElementById('end-time').value;
+                
+                const candidateEmails = emailsText.split(/[\n, ]+/).map(email => email.trim()).filter(email => email);
+                
+                if (!testId || candidateEmails.length === 0 || !startTime || !endTime) {
+                    messageDiv.textContent = 'Please fill all fields correctly.';
+                    messageDiv.className = 'text-red-600';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Send Invitations';
+                    return;
+                }
+
+                 const payload = { testId, candidateEmails, startTime, endTime };
+
+                try {
+                    const response = await fetch('/api/hiring/assign-test', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message);
+                    messageDiv.textContent = result.message;
+                    messageDiv.className = 'text-green-600';
+                    form.reset();
+                } catch (error) {
+                    messageDiv.textContent = `Error: ${error.message}`;
+                    messageDiv.className = 'text-red-600';
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Send Invitations';
+                }
+            });
+
+            fetchCodingTests();
+        });
+    </script>
+</body>
+</html>
+
