@@ -7899,9 +7899,7 @@ app.post('/api/hiring/assign-test', authMiddleware, async (req, res) => {
         }));
         if (!test) return res.status(404).json({ message: "Test not found." });
         
-        // *** FIX: Determine the correct link based on the test type ***
-        const testLink = `https://www.testify-lac.com/student/${pageName}?token=${testToken}`;
-
+        const pageName = test.testType === 'hiring_coding' ? 'hiring-coding-test.html' : 'hiring-test.html';
 
         for (const email of candidateEmails) {
             const assignmentId = uuidv4();
@@ -7915,10 +7913,8 @@ app.post('/api/hiring/assign-test', authMiddleware, async (req, res) => {
             };
             
             const testToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
-            // Use the determined page name to build the correct link
-            // const testLink = `${req.protocol}://${req.get('host')}/student/${pageName}?token=${testToken}`;
+            // This is the critical fix: Using the production domain for the link
             const testLink = `https://www.testify-lac.com/student/${pageName}?token=${testToken}`;
-
 
             await docClient.send(new PutCommand({
                 TableName: "TestifyAssignments",
@@ -7931,71 +7927,7 @@ app.post('/api/hiring/assign-test', authMiddleware, async (req, res) => {
            const mailOptions = {
                 to: [email],
                 subject: `Invitation: ${test.title} Assessment`,
-                html: `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Test Invitation</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-        body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
-        a { text-decoration: none; }
-        @media screen and (max-width: 600px) {
-            .content-width { width: 90% !important; }
-        }
-    </style>
-</head>
-<body style="background-color: #f3f4f6; margin: 0; padding: 0;">
-    <span style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
-        You've been invited to take an assessment.
-    </span>
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
-        <tr>
-            <td align="center" style="padding: 40px 20px;">
-                <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
-                    <tr>
-                        <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
-                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo" style="height: 50px; width: auto;">
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="padding: 40px; text-align: center;">
-                             <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">Assessment Invitation</h1>
-                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 20px; line-height: 1.7;">
-                                 You have been invited to take the "<b>${test.title}</b>" assessment.
-                             </p>
-                             <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 30px; text-align: left;">
-                                <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #4b5563; margin: 0 0 10px;"><b>Start Time:</b> ${new Date(startTime).toLocaleString()}</p>
-                                <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #4b5563; margin: 0;"><b>End Time:</b> ${new Date(endTime).toLocaleString()}</p>
-                             </div>
-                             <a href="${testLink}" 
-                                target="_blank"
-                                style="display: inline-block; padding: 15px 35px; font-family: 'Poppins', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #4338ca; border-radius: 8px; text-decoration: none;">
-                                 Start Assessment
-                             </a>
-                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
-                                 Please ensure you complete the assessment within the specified time window. Good luck!
-                             </p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
-                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
-                                &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
-                            </p>
-                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
-                                This is an automated message. Please do not reply.
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>`
+                html: `<p>You have been invited to take the "<b>${test.title}</b>" assessment.</p><p><b>Start Time:</b> ${new Date(startTime).toLocaleString()}</p><p><b>End Time:</b> ${new Date(endTime).toLocaleString()}</p><p>Please use the following link to start the assessment: <a href="${testLink}">${testLink}</a></p><p>Good luck!</p>`
             };
            await sendEmailWithSES(mailOptions);
         }
@@ -9859,6 +9791,7 @@ app.get('/api/public/certificate/:id', async (req, res) => {
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
 
 
 
