@@ -7938,7 +7938,9 @@ app.post('/api/hiring/assign-test', authMiddleware, async (req, res) => {
             
             const testToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
             // Use the determined page name to build the correct link
-            const testLink = `${req.protocol}://${req.get('host')}/student/${pageName}?token=${testToken}`;
+            // const testLink = `${req.protocol}://${req.get('host')}/student/${pageName}?token=${testToken}`;
+            const testLink = `https://www.testify-lac.com/student/${pageName}?token=${testToken}`;
+
 
             await docClient.send(new PutCommand({
                 TableName: "TestifyAssignments",
@@ -9879,4 +9881,5 @@ app.get('/api/public/certificate/:id', async (req, res) => {
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
 
