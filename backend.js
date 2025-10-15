@@ -42,7 +42,7 @@ async function sendEmailWithSES(mailOptions) {
         : mailOptions.to.split(',').map(e => e.trim());
 
     const params = {
-        FromEmailAddress: '"TESTIFY" <testifylearning.help@gmail.com>',
+        FromEmailAddress: '"TESTIFY" <support@testify-lac.com>',
         Destination: {
             ToAddresses: toAddresses,
         },
@@ -1109,7 +1109,7 @@ async function issueCertificateAutomatically(testId, studentEmail) {
         }));
 
        const mailOptions = {
-    from: '"TESTIFY" <testifylearning.help@gmail.com>',
+    from: '"TESTIFY" <support@testify-lac.com>',
     to: result.studentEmail,
     subject: `Congratulations! You've earned a certificate for ${testTitle}`,
     html: `<!DOCTYPE html>
@@ -1173,7 +1173,7 @@ async function issueCertificateAutomatically(testId, studentEmail) {
                                 &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
                             </p>
                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
-                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                                Houston, TX, USA | <a href="mailto:support@testify-lac.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
                             </p>
                         </td>
                     </tr>
@@ -1476,7 +1476,7 @@ app.post('/api/assign-test', authMiddleware, adminOrModeratorAuth, async (req, r
         // Send email notifications
         if (sendEmail && studentsToNotify.length > 0) {
     const mailOptions = {
-        from: '"TESTIFY" <testifylearning.help@gmail.com>',
+        from: '"TESTIFY" <support@testify-lac.com>',
         to: studentsToNotify.join(','),
         subject: `New Test Assigned: ${testName}`,
         html: `<!DOCTYPE html>
@@ -1540,7 +1540,7 @@ app.post('/api/assign-test', authMiddleware, adminOrModeratorAuth, async (req, r
                                 &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
                             </p>
                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
-                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                                Houston, TX, USA | <a href="mailto:support@testify-lac.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
                             </p>
                         </td>
                     </tr>
@@ -1853,7 +1853,7 @@ app.post('/api/admin/assign-course', authMiddleware, adminOrModeratorAuth, async
     const loginLink = `${appBaseUrl}/login`; // Or your specific dashboard URL
 
     const mailOptions = {
-        from: '"TESTIFY" <testifylearning.help@gmail.com>',
+        from: '"TESTIFY" <support@testify-lac.com>',
         to: studentEmails.join(','),
         subject: `New Course Assigned: ${course.title}`,
         html: `<!DOCTYPE html>
@@ -1917,7 +1917,7 @@ app.post('/api/admin/assign-course', authMiddleware, adminOrModeratorAuth, async
                                 &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
                             </p>
                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
-                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                                Houston, TX, USA | <a href="mailto:support@testify-lac.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
                             </p>
                         </td>
                     </tr>
@@ -2084,7 +2084,7 @@ app.post('/api/student/courses/progress', authMiddleware, async (req, res) => {
                 }));
                 
                 const mailOptions = {
-    from: '"TESTIFY" <testifylearning.help@gmail.com>',
+    from: '"TESTIFY" <support@testify-lac.com>',
     to: studentEmail,
     subject: `Final Test Unlocked for ${course.title}`,
     html: `<!DOCTYPE html>
@@ -2148,7 +2148,7 @@ app.post('/api/student/courses/progress', authMiddleware, async (req, res) => {
                                 &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
                             </p>
                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
-                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                                Houston, TX, USA | <a href="mailto:support@testify-lac.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
                             </p>
                         </td>
                     </tr>
@@ -2626,7 +2626,7 @@ app.post('/api/admin/issue-certificates', authMiddleware, async (req, res) => {
             }));
 
             const mailOptions = {
-    from: '"TESTIFY" <testifylearning.help@gmail.com>',
+    from: '"TESTIFY" <support@testify-lac.com>',
     to: result.studentEmail,
     subject: `Congratulations! You've earned a certificate for ${testTitle}`,
     html: `<!DOCTYPE html>
@@ -2690,7 +2690,7 @@ app.post('/api/admin/issue-certificates', authMiddleware, async (req, res) => {
                                 &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
                             </p>
                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
-                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                                Houston, TX, USA | <a href="mailto:support@testify-lac.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
                             </p>
                         </td>
                     </tr>
@@ -4072,7 +4072,7 @@ app.post('/api/forgot-password', async (req, res) => {
 const resetLink = `${appBaseUrl}/reset-password.html?token=${resetToken}&email=${email}`;
 
 const mailOptions = {
-    from: '"TESTIFY" <testifylearning.help@gmail.com>',
+    from: '"TESTIFY" <support@testify-lac.com>',
     to: email,
     subject: 'Password Reset Request',
     html: `<!DOCTYPE html>
@@ -4136,7 +4136,7 @@ const mailOptions = {
                                 &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
                             </p>
                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
-                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                                Houston, TX, USA | <a href="mailto:support@testify-lac.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
                             </p>
                         </td>
                     </tr>
@@ -5494,7 +5494,7 @@ app.post('/api/admin/contests', authMiddleware, async (req, res) => {
            const studentEmails = students.map(s => s.email);
 if (studentEmails.length > 0) {
     const mailOptions = {
-        from: '"TESTIFY" <testifylearning.help@gmail.com>',
+        from: '"TESTIFY" <support@testify-lac.com>',
         to: studentEmails.join(','),
         subject: `New Coding Contest Assigned: ${title}`,
         html: `<!DOCTYPE html>
@@ -5558,7 +5558,7 @@ if (studentEmails.length > 0) {
                                 &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
                             </p>
                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
-                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                                Houston, TX, USA | <a href="mailto:support@testify-lac.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
                             </p>
                         </td>
                     </tr>
@@ -5694,7 +5694,7 @@ app.post('/api/admin/contests', authMiddleware, async (req, res) => {
             const studentEmails = students.map(s => s.email);
             if (studentEmails.length > 0) {
                 const mailOptions = {
-                    from: '"TESTIFY" <testifylearning.help@gmail.com>',
+                    from: '"TESTIFY" <support@testify-lac.com>',
                     to: studentEmails.join(','),
                     subject: `New Coding Contest Assigned: ${title}`,
                     html: `<p>Hello,</p><p>A new coding contest, "<b>${title}</b>", has been assigned to you. Please log in to your TESTIFY dashboard to participate.</p><p>Best regards,<br/>The TESTIFY Team</p>`
@@ -6067,7 +6067,7 @@ app.post('/api/admin/issue-course-certificates', authMiddleware, async (req, res
             
             // This is the mailOptions object from your certificateNotificationEmail.js file
             const mailOptions = {
-                from: '"TESTIFY" <testifylearning.help@gmail.com>',
+                from: '"TESTIFY" <support@testify-lac.com>',
                 to: email,
                 subject: `Congratulations! You've earned a certificate for ${courseTitle}`,
                 html: `<!DOCTYPE html>
@@ -6131,7 +6131,7 @@ app.post('/api/admin/issue-course-certificates', authMiddleware, async (req, res
                                 &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
                             </p>
                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
-                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                                Houston, TX, USA | <a href="mailto:support@testify-lac.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
                             </p>
                         </td>
                     </tr>
@@ -6622,7 +6622,7 @@ app.post('/api/careers/send-view-otp', async (req, res) => {
 
         // Send the OTP via email
         const mailOptions = {
-            from: '"TESTIFY" <testifylearning.help@gmail.com>',
+            from: '"TESTIFY" <support@testify-lac.com>',
             to: email,
             subject: 'Your Application Status Verification Code',
             html: `
@@ -6680,18 +6680,23 @@ app.post('/api/careers/verify-view-otp', async (req, res) => {
 
         // Fetch job details to get the application deadline for the "Edit" button logic
         const jobIds = [...new Set(applications.map(app => app.jobId))];
-        const keys = jobIds.map(jobId => ({ jobId }));
+        // FIX: The primary key for jobs in TestifyTests is 'testId'
+        const keys = jobIds.map(jobId => ({ testId: jobId }));
         
         const { Responses } = await docClient.send(new BatchGetCommand({
-            RequestItems: { "TestifyJobs": { Keys: keys } }
+            // FIX: Jobs are stored in the 'TestifyTests' table
+            RequestItems: { "TestifyTests": { Keys: keys } }
         }));
         
-        const jobs = Responses.TestifyJobs || [];
-        const jobDeadlineMap = new Map(jobs.map(j => [j.jobId, j.applicationDeadline]));
+        // FIX: Read the response from the correct table name
+        const jobs = Responses.TestifyTests || [];
+        // FIX: Map using 'testId' as the key from the job object
+        const jobDeadlineMap = new Map(jobs.map(j => [j.testId, j.applicationDeadline]));
 
         // Enrich application data with the deadline
         const enrichedApplications = applications.map(app => ({
             ...app,
+            // The lookup key 'app.jobId' is correct here as it matches the 'testId' in the map
             jobDeadline: jobDeadlineMap.get(app.jobId) || null
         }));
 
@@ -6704,6 +6709,127 @@ app.post('/api/careers/verify-view-otp', async (req, res) => {
         res.status(500).json({ message: 'Server error fetching applications.' });
     }
 });
+
+app.get('/api/public/hiring-application/:applicationId', async (req, res) => {
+    const { applicationId } = req.params;
+    try {
+        // 1. Fetch the application from the correct table, TestifyApplications
+        const { Item: application } = await docClient.send(new GetCommand({
+            TableName: "TestifyApplications",
+            Key: { applicationId }
+        }));
+
+        if (!application) {
+            return res.status(404).json({ message: "Application not found." });
+        }
+
+        // 2. Fetch the associated job to check the deadline and get the title
+        const { Item: job } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests",
+            Key: { testId: application.jobId } 
+        }));
+
+        if (!job) {
+             return res.status(404).json({ message: "Associated job not found." });
+        }
+        
+        // 3. Check if the deadline has passed (for display purposes on the frontend)
+        const isEditable = new Date() < new Date(job.applicationDeadline);
+        
+        // 4. Send back the application data along with job title and editable status
+        res.json({ ...application, jobTitle: job.title, isEditable });
+
+    } catch (error) {
+        console.error("Get Single Hiring Application Error:", error);
+        res.status(500).json({ message: 'Server error fetching application.' });
+    }
+});
+
+app.post('/api/hiring/coding-problems', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { title, description, difficulty, score, inputFormat, outputFormat, constraints, example, testCases } = req.body;
+    if (!title || !description || !difficulty || !score || !testCases || testCases.length === 0) {
+        return res.status(400).json({ message: 'Missing required problem fields.' });
+    }
+
+    const problemId = `hire_problem_${uuidv4()}`;
+    const newProblem = {
+        id: problemId,
+        recordType: 'HIRING_PROBLEM', // Special identifier
+        createdBy: req.user.email,
+        title, description, difficulty, score, inputFormat, outputFormat, constraints, example, testCases,
+        createdAt: new Date().toISOString()
+    };
+
+    try {
+        await docClient.send(new PutCommand({ TableName: "TestifyCodeLab", Item: newProblem }));
+        res.status(201).json({ message: 'Coding problem created successfully!', problem: newProblem });
+    } catch (error) {
+        console.error("Create Hiring Coding Problem Error:", error);
+        res.status(500).json({ message: 'Server error creating problem.' });
+    }
+});
+
+// Get all coding problems created by the hiring moderator
+app.get('/api/hiring/coding-problems', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyCodeLab",
+            FilterExpression: "recordType = :type AND createdBy = :creator",
+            ExpressionAttributeValues: {
+                ":type": "HIRING_PROBLEM",
+                ":creator": req.user.email
+            }
+        }));
+        res.json(Items || []);
+    } catch (error) {
+        console.error("Get Hiring Coding Problems Error:", error);
+        res.status(500).json({ message: 'Server error fetching problems.' });
+    }
+});
+
+// --- HIRING MODERATOR: CODING TEST MANAGEMENT ---
+
+// Create a new hiring coding test (which is a collection of problems)
+app.post('/api/hiring/coding-tests', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { testTitle, duration, problems } = req.body;
+    if (!testTitle || !duration || !problems || problems.length === 0) {
+        return res.status(400).json({ message: 'Test title, duration, and at least one problem are required.' });
+    }
+
+    const testId = `hire_coding_test_${uuidv4()}`;
+    const totalMarks = problems.reduce((sum, prob) => sum + (prob.score || 0), 0);
+
+    const newTest = {
+        testId: testId,
+        testType: 'hiring_coding', // Special identifier
+        title: testTitle,
+        duration: parseInt(duration, 10),
+        totalMarks,
+        problems, // Array of problem objects selected by the moderator
+        createdBy: req.user.email,
+        createdAt: new Date().toISOString()
+    };
+
+    try {
+        await docClient.send(new PutCommand({ TableName: "TestifyTests", Item: newTest }));
+        res.status(201).json({ message: 'Coding test created successfully!', test: newTest });
+    } catch (error) {
+        console.error("Create Hiring Coding Test Error:", error);
+        res.status(500).json({ message: 'Server error creating coding test.' });
+    }
+});
+
+
+
 // =================================================================
 // --- END OF CAREERS ROUTES ---
 // =================================================================
@@ -6885,7 +7011,7 @@ app.post('/api/assign-fullscreen-test', authMiddleware, adminOrModeratorAuth, as
         // Send email notifications
         if (sendEmail && studentsToNotify.length > 0) {
             const mailOptions = {
-                from: '"TESTIFY" <testifylearning.help@gmail.com>',
+                from: '"TESTIFY" <support@testify-lac.com>',
                 to: studentsToNotify.join(','),
                 subject: `New Full Screen Test Assigned: ${testName}`,
                 html: `<!DOCTYPE html>
@@ -6936,7 +7062,7 @@ app.post('/api/assign-fullscreen-test', authMiddleware, adminOrModeratorAuth, as
                                 &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
                             </p>
                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
-                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
+                                Houston, TX, USA | <a href="mailto:support@testify-lac.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
                             </p>
                         </td>
                     </tr>
@@ -7185,7 +7311,7 @@ app.post('/api/meetings/schedule', authMiddleware, adminOrModeratorAuth, async (
         }
         if (sendEmail && targetAttendees.length > 0) {
             const mailOptions = {
-                from: '"TESTIFY" <testifylearning.help@gmail.com>',
+                from: '"TESTIFY" <support@testify-lac.com>',
                 to: targetAttendees.join(','),
                 subject: `Invitation: ${title}`,
                 html: `<p>You have been invited to a meeting: <strong>${title}</strong>.</p><p>It is scheduled for ${new Date(startTime).toLocaleString()}. Please check your dashboard to join.</p>`
@@ -7637,15 +7763,27 @@ app.post('/api/hiring/tests', authMiddleware, async (req, res) => {
 
 // NEW ENDPOINT TO FETCH HIRING TESTS
 app.get('/api/hiring/tests', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'Hiring Moderator') {
+    if (req.user.role !== 'Hiring Moderator' && req.user.role !== 'Admin') {
         return res.status(403).json({ message: 'Access denied.' });
     }
+    
+    // Check for a query from the frontend to specify the test type
+    const typeQuery = req.query.type; 
+    
+    // Determine the database testType to filter by
+    let dbTestType;
+    if (typeQuery === 'coding') {
+        dbTestType = 'hiring_coding'; // Map 'coding' from URL to 'hiring_coding' in DB
+    } else {
+        dbTestType = 'hiring'; // Default to aptitude tests for the original page
+    }
+
     try {
         const { Items } = await docClient.send(new ScanCommand({
             TableName: "TestifyTests",
             FilterExpression: "testType = :type AND createdBy = :creator",
             ExpressionAttributeValues: {
-                ":type": "hiring",
+                ":type": dbTestType, // Use the determined DB type
                 ":creator": req.user.email
             }
         }));
@@ -7655,6 +7793,118 @@ app.get('/api/hiring/tests', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Server error fetching hiring tests.' });
     }
 });
+app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
+    if (!req.user.isExternal) {
+        return res.status(403).json({ message: 'Access denied for this resource.' });
+    }
+    const { testId, submissions, candidateDetails } = req.body; // <-- Receive candidateDetails
+    const studentEmail = req.user.email;
+    try {
+        const { Item: test } = await docClient.send(new GetCommand({
+            TableName: "TestifyTests",
+            Key: { testId }
+        }));
+        if (!test) return res.status(404).json({ message: "Test not found." });
+
+        const problemIdsFromTest = test.problems.map(p => p.id || p.problemId).filter(Boolean);
+        const problemsAreIncomplete = test.problems.some(p => !p.title || !p.score);
+        let problemDetailsMap = new Map();
+
+        if (problemsAreIncomplete && problemIdsFromTest.length > 0) {
+            const keys = problemIdsFromTest.map(id => ({ id }));
+            const { Responses } = await docClient.send(new BatchGetCommand({
+                RequestItems: { "TestifyCodeLab": { Keys: keys } }
+            }));
+            const fullProblems = Responses.TestifyCodeLab || [];
+            fullProblems.forEach(p => problemDetailsMap.set(p.id, p));
+        } else {
+            test.problems.forEach(p => problemDetailsMap.set(p.id, p));
+        }
+
+        let totalScore = 0;
+        const detailedSubmissions = [];
+
+        for (const sub of submissions) {
+            const problem = problemDetailsMap.get(sub.problemId);
+            if (!problem || !problem.testCases || problem.testCases.length === 0) continue;
+
+            let passedCases = 0;
+            for (const tc of problem.testCases) {
+                try {
+                    const compileResponse = await fetch('http://localhost:3000/api/compile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': req.header('x-auth-token') },
+                        body: JSON.stringify({ language: sub.language, code: sub.code, input: tc.input }),
+                    });
+                    if (compileResponse.ok) {
+                        const compileResult = await compileResponse.json();
+                        const actual = (compileResult.output || '').trim().replace(/\s+/g, ' ');
+                        const expected = (tc.expected || '').trim().replace(/\s+/g, ' ');
+                        if (actual === expected) passedCases++;
+                    }
+                } catch(e){
+                    console.error("Inner compile error during submission:", e);
+                }
+            }
+
+            const problemScore = Math.round((passedCases / problem.testCases.length) * (problem.score || 0));
+            totalScore += problemScore;
+
+            detailedSubmissions.push({
+                ...sub,
+                problemTitle: problem.title,
+                score: problem.score || 0,
+                calculatedScore: problemScore,
+                passedCases,
+                totalCases: problem.testCases.length
+            });
+        }
+        
+        const submissionId = `hcs_${uuidv4()}`;
+        const newSubmission = {
+            resultId: submissionId,
+            testType: 'hiring_coding',
+            testId,
+            testTitle: test.title,
+            candidateEmail: studentEmail,
+            submissions: detailedSubmissions,
+            score: totalScore,
+            totalMarks: test.totalMarks,
+            submittedAt: new Date().toISOString(),
+            // --- ADDED: Save candidate details with the submission ---
+            fullName: candidateDetails.fullName,
+            rollNumber: candidateDetails.rollNumber,
+            collegeName: candidateDetails.collegeName,
+            department: candidateDetails.department,
+            profileImageUrl: candidateDetails.profileImageUrl
+        };
+
+        await docClient.send(new PutCommand({ TableName: "TestifyResults", Item: newSubmission }));
+        res.status(201).json({ message: 'Test submitted successfully!' });
+    } catch (error) {
+        console.error("Submit Coding Test Error:", error);
+        res.status(500).json({ message: 'Server error submitting test.' });
+    }
+});
+
+
+app.post('/api/public/upload-image', async (req, res) => {
+    const { imageData } = req.body;
+    if (!imageData) {
+        return res.status(400).json({ message: 'No image data provided.' });
+    }
+    try {
+        const result = await cloudinary.uploader.upload(imageData, {
+            folder: "hiring_test_captures" // Store in a specific folder
+        });
+        res.json({ imageUrl: result.secure_url });
+    } catch (error) {
+        console.error("Public Image Upload Error:", error);
+        res.status(500).json({ message: 'Server error uploading image.' });
+    }
+});
+
+
 
 
 // HIRING: Assign a test to external candidates
@@ -7670,11 +7920,10 @@ app.post('/api/hiring/assign-test', authMiddleware, async (req, res) => {
             TableName: "TestifyTests",
             Key: { testId }
         }));
-
-        if (!test) {
-            return res.status(404).json({ message: "Test not found." });
-        }
-        const testName = test.title;
+        if (!test) return res.status(404).json({ message: "Test not found." });
+        
+        // *** FIX: Determine the correct link based on the test type ***
+        const pageName = test.testType === 'hiring_coding' ? 'hiring-coding-test.html' : 'hiring-test.html';
 
         for (const email of candidateEmails) {
             const assignmentId = uuidv4();
@@ -7688,100 +7937,21 @@ app.post('/api/hiring/assign-test', authMiddleware, async (req, res) => {
             };
             
             const testToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
-            const testLink = `${req.protocol}://${req.get('host')}/student/hiring-test.html?token=${testToken}`;
+            // Use the determined page name to build the correct link
+            const testLink = `${req.protocol}://${req.get('host')}/student/${pageName}?token=${testToken}`;
 
             await docClient.send(new PutCommand({
                 TableName: "TestifyAssignments",
                 Item: { 
-                    assignmentId, 
-                    testId, 
-                    studentEmail: email, 
-                    assignedBy: req.user.email,
-                    startTime,
-                    endTime,
-                    testToken,
-                    assignedAt: new Date().toISOString() 
+                    assignmentId, testId, studentEmail: email, assignedBy: req.user.email,
+                    startTime, endTime, testToken, assignedAt: new Date().toISOString() 
                 }
             }));
             
             const mailOptions = {
                 to: [email],
-                subject: `Invitation to take the test: ${testName}`,
-                html: `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Test Invitation</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-        body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
-        a { text-decoration: none; }
-        @media screen and (max-width: 600px) {
-            .content-width {
-                width: 90% !important;
-            }
-        }
-    </style>
-</head>
-<body style="background-color: #f3f4f6; margin: 0; padding: 0;">
-    <!-- Preheader text for inbox preview -->
-    <span style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
-        You have been invited to take a test.
-    </span>
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
-        <tr>
-            <td align="center" style="padding: 40px 20px;">
-                <!-- Main Card -->
-                <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
-                    <!-- Header -->
-                    <tr>
-                        <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
-                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" 
-                                 alt="Testify Logo" style="height: 50px; width: auto;">
-                        </td>
-                    </tr>
-                    
-                    <!-- Content Body -->
-                    <tr>
-                        <td align="center" style="padding: 40px; text-align: center;">
-                             <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">Test Invitation</h1>
-                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 20px; line-height: 1.7;">
-                                 You have been invited to take the test: <strong>${testName}</strong>.
-                             </p>
-                             <div style="background-color: #f9fafb; border-radius: 8px; padding: 15px 20px; margin-bottom: 30px; border: 1px solid #e5e7eb; text-align: left;">
-                                <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #4b5563; margin: 0 0 8px;"><b>Start Time:</b> ${new Date(startTime).toLocaleString()}</p>
-                                <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #4b5563; margin: 0;"><b>End Time:</b> ${new Date(endTime).toLocaleString()}</p>
-                             </div>
-                             <a href="${testLink}" 
-                                target="_blank"
-                                style="display: inline-block; padding: 15px 35px; font-family: 'Poppins', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #3b82f6; border-radius: 8px; text-decoration: none;">
-                                 Start Test
-                             </a>
-                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
-                                 Please ensure you complete the test within the specified window. Good luck!
-                             </p>
-                        </td>
-                    </tr>
-                    
-                    <!-- Footer -->
-                    <tr>
-                        <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
-                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
-                                &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
-                            </p>
-                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
-                                Houston, TX, USA | <a href="mailto:testifylearning.help@gmail.com" style="color: #3b82f6; text-decoration: underline;">Contact Us</a>
-                            </p>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>`
+                subject: `Invitation to take the test: ${test.title}`,
+                html: `<p>You are invited to take the test: <strong>${test.title}</strong>.</p><p>Please use the following link to start your test between ${new Date(startTime).toLocaleString()} and ${new Date(endTime).toLocaleString()}.</p><p><a href="${testLink}">Start Test</a></p>`
             };
            await sendEmailWithSES(mailOptions);
         }
@@ -7791,6 +7961,139 @@ app.post('/api/hiring/assign-test', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Server error assigning test.' });
     }
 });
+
+app.get('/api/hiring/coding-test-results', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const { Items: tests } = await docClient.send(new ScanCommand({
+            TableName: "TestifyTests",
+            FilterExpression: "createdBy = :creator AND testType = :type",
+            ExpressionAttributeValues: { ":creator": req.user.email, ":type": "hiring_coding" }
+        }));
+        if (!tests || tests.length === 0) return res.json([]);
+
+        const moderatorTestIds = new Set(tests.map(t => t.testId));
+        const testTitleMap = new Map(tests.map(t => [t.testId, t.title]));
+
+        const { Items: allCodingResults } = await docClient.send(new ScanCommand({
+            TableName: "TestifyResults",
+            FilterExpression: "testType = :type",
+            ExpressionAttributeValues: { ":type": "hiring_coding" }
+        }));
+        
+        const results = allCodingResults.filter(r => moderatorTestIds.has(r.testId));
+        const enrichedResults = results.map(r => ({ ...r, testTitle: testTitleMap.get(r.testId) || 'Unknown Test' }));
+        enrichedResults.sort((a,b)=> new Date(b.submittedAt) - new Date(a.submittedAt));
+        res.json(enrichedResults);
+    } catch (error) {
+        console.error("Get Coding Test Results Error:", error);
+        res.status(500).json({ message: 'Server error fetching results.' });
+    }
+});
+
+
+app.post('/api/hiring/generate-problem-from-pdf', authMiddleware, async (req, res) => {
+    // Security check for Hiring Moderator role
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    const { text } = req.body;
+    if (!text) {
+        return res.status(400).json({ message: 'No text provided to generate problem.' });
+    }
+
+    try {
+        const prompt = `Based on the following text from a coding problem document, create a structured JSON object representing the problem. The JSON must adhere strictly to the provided schema. Analyze the text to fill in all fields as accurately as possible. The 'example' field should contain both the input and output. The 'testCases' array must contain at least two distinct test cases extracted or inferred from the text.
+
+Here is the text:\n\n${text}`;
+
+        const schema = {
+            type: "OBJECT",
+            properties: {
+                "title": { "type": "STRING" },
+                "description": { "type": "STRING" },
+                "difficulty": { "type": "STRING", "enum": ["Easy", "Medium", "Hard"] },
+                 "score": { "type": "NUMBER" },
+                "inputFormat": { "type": "STRING" },
+                "outputFormat": { "type": "STRING" },
+                "constraints": { "type": "STRING" },
+                "example": { "type": "STRING" },
+                "testCases": {
+                    "type": "ARRAY",
+                    "items": {
+                        "type": "OBJECT",
+                        "properties": {
+                            "input": { "type": "STRING" },
+                            "expected": { "type": "STRING" }
+                        },
+                        "required": ["input", "expected"]
+                    }
+                }
+            },
+            required: ["title", "description", "difficulty", "score", "testCases"]
+        };
+
+        const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyAR_X4MZ75vxwV7OTU3dabFRcVe4SxWpb8';
+        if (!apiKey) {
+             return res.status(500).json({ message: 'Gemini API key is not configured on the server.' });
+        }
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: schema
+            }
+        };
+
+        const apiResponse = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!apiResponse.ok) {
+            const errorBody = await apiResponse.text();
+            console.error("Hiring Gemini API Error:", errorBody);
+            throw new Error(`AI API call failed with status: ${apiResponse.status}`);
+        }
+
+        const result = await apiResponse.json();
+        const jsonText = result.candidates[0].content.parts[0].text;
+        const structuredProblem = JSON.parse(jsonText);
+
+        res.json(structuredProblem);
+
+    } catch (error) {
+        console.error('Error in AI problem generation for hiring:', error);
+        res.status(500).json({ message: 'Failed to generate problem using AI.' });
+    }
+});
+
+app.get('/api/hiring/test-results/:resultId', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { resultId } = req.params;
+    try {
+        const { Item: result } = await docClient.send(new GetCommand({ TableName: "TestifyResults", Key: { resultId } }));
+        if (!result) return res.status(404).json({ message: 'Result not found.' });
+        
+        const { Item: test } = await docClient.send(new GetCommand({ TableName: "TestifyTests", Key: { testId: result.testId } }));
+        if (!test || test.createdBy !== req.user.email) {
+            return res.status(403).json({ message: 'You do not have permission to view this result.' });
+        }
+        res.json(result);
+    } catch (error) {
+        console.error("Get Single Test Result Error:", error);
+        res.status(500).json({ message: 'Server error fetching result details.' });
+    }
+});
+
 
 
 // HIRING MODERATOR: Get Test History
@@ -8583,45 +8886,41 @@ app.post('/api/public/apply/:jobId',
 
 // HIRING MODERATOR: Get applications for a specific job
 app.get('/api/hiring/jobs/:jobId/applications', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'Hiring Moderator') {
+    // This endpoint now correctly fetches and returns applications for a specific job.
+    // It is accessible by Hiring Moderators and Admins.
+    if (req.user.role !== 'Hiring Moderator' && req.user.role !== 'Admin') {
         return res.status(403).json({ message: 'Access denied.' });
     }
     const { jobId } = req.params;
 
     try {
-        // 1. Get the job details to verify ownership and get the title
+        // 1. Get the job details to verify ownership and get the job title.
         const { Item: job } = await docClient.send(new GetCommand({
-            TableName: "TestifyTests",
+            TableName: "TestifyTests", // Jobs are stored in the TestifyTests table
             Key: { testId: jobId }
         }));
 
-        if (!job || job.testType !== 'job' || job.createdBy !== req.user.email) {
-            return res.status(403).json({ message: "You don't have permission to view these applicants or the job does not exist." });
+        // 2. Security Check: Ensure the job exists and the user has permission to view it.
+        // Admins can view any, while Hiring Moderators can only view jobs they created.
+        if (!job || job.testType !== 'job') {
+            return res.status(404).json({ message: "Job not found." });
+        }
+        if (req.user.role === 'Hiring Moderator' && job.createdBy !== req.user.email) {
+            return res.status(403).json({ message: "You don't have permission to view these applicants." });
         }
 
-        // *** FIX: Changed to query the correct 'TestifyApplications' table ***
+        // 3. Fetch all applications for this job from the 'TestifyApplications' table.
         const { Items: applications } = await docClient.send(new ScanCommand({
-            TableName: "TestifyApplications", // Correct table
+            TableName: "TestifyApplications",
             FilterExpression: "jobId = :jid",
             ExpressionAttributeValues: { ":jid": jobId }
         }));
 
-        // Map the application data to the format the frontend expects
-        const formattedApplications = applications.map(app => ({
-            resultId: app.applicationId, // The frontend expects resultId
-            applicantEmail: app.email,
-            applicationData: { // Nesting the data as the frontend expects
-                name: `${app.firstName} ${app.lastName}`,
-                college: app.education[0]?.institute || 'N/A', // Example, might need adjustment
-                cgpa: app.education[0]?.score || 'N/A' // Example, might need adjustment
-            },
-            status: app.status,
-            appliedAt: app.appliedAt
-        }));
-
+        // 4. Send the raw application data back to the frontend.
+        // The frontend page is designed to handle this data structure directly.
         res.json({
             jobTitle: job.title,
-            applications: formattedApplications
+            applications: applications || [] // Send the applications directly without reformatting
         });
     } catch (error) {
         console.error("Get Hiring Applications Error:", error);
@@ -9291,6 +9590,225 @@ Here is the text to analyze:\n\n${text}`;
     }
 });
 
+
+// =================================================================
+// --- CERTIFICATE MODERATOR MANAGEMENT & ROUTES (NEW) ---
+// =================================================================
+
+// New authorization middleware for this specific role
+const certificateModeratorAuth = (req, res, next) => {
+    if (req.user.role !== 'Certificate Moderator' && req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied. Certificate Moderator or Admin role required.' });
+    }
+    next();
+};
+
+// ADMIN: Create a new certificate moderator account
+app.post('/api/admin/certificate-moderators', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { fullName, email, password } = req.body;
+    if (!fullName || !email || !password) {
+        return res.status(400).json({ message: 'Full name, email, and password are required.' });
+    }
+    try {
+        const existingUser = await docClient.send(new GetCommand({ TableName: "TestifyUsers", Key: { email: email.toLowerCase() } }));
+        if (existingUser.Item) {
+            return res.status(400).json({ message: 'An account with this email already exists.' });
+        }
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        const newModerator = {
+            email: email.toLowerCase(),
+            fullName,
+            password: hashedPassword,
+            role: "Certificate Moderator",
+            isBlocked: false
+        };
+        await docClient.send(new PutCommand({ TableName: "TestifyUsers", Item: newModerator }));
+        res.status(201).json({ message: 'Certificate Moderator account created successfully!' });
+    } catch (error) {
+        console.error("Create Certificate Moderator Error:", error);
+        res.status(500).json({ message: 'Server error during account creation.' });
+    }
+});
+
+// ADMIN: Get all certificate moderators
+app.get('/api/admin/certificate-moderators', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Access denied.' });
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyUsers",
+            FilterExpression: "#role = :role",
+            ExpressionAttributeNames: { "#role": "role" },
+            ExpressionAttributeValues: { ":role": "Certificate Moderator" }
+        }));
+        res.json(Items.map(({ password, ...rest }) => rest)); // Exclude password from response
+    } catch (error) {
+        console.error("Get Certificate Moderators Error:", error);
+        res.status(500).json({ message: 'Server error fetching accounts.' });
+    }
+});
+
+// ADMIN: Delete a certificate moderator account
+app.delete('/api/admin/certificate-moderators/:email', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') return res.status(403).json({ message: 'Access denied.' });
+    try {
+        await docClient.send(new DeleteCommand({ TableName: "TestifyUsers", Key: { email: req.params.email } }));
+        res.json({ message: 'Account deleted successfully.' });
+    } catch (error) {
+        console.error("Delete Certificate Moderator Error:", error);
+        res.status(500).json({ message: 'Server error deleting account.' });
+    }
+});
+
+
+// IMPORTANT: The following endpoints REPLACE your existing certificate routes.
+// Please remove the old ones from backend.js to avoid conflicts.
+
+// CERT MODERATOR: Upload custom images
+app.post('/api/certificate-moderator/upload-images', authMiddleware, certificateModeratorAuth, upload.array('images', 5), async (req, res) => {
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ message: 'No image files uploaded.' });
+    }
+    try {
+        const uploadPromises = req.files.map(file => {
+            const b64 = Buffer.from(file.buffer).toString("base64");
+            const dataURI = "data:" + file.mimetype + ";base64," + b64;
+            return cloudinary.uploader.upload(dataURI, { folder: "certificate_assets" });
+        });
+        const results = await Promise.all(uploadPromises);
+        const imageUrls = results.map(result => result.secure_url);
+        res.json({ message: 'Images uploaded successfully.', imageUrls });
+    } catch (error) {
+        console.error("Cert Image Upload Error:", error);
+        res.status(500).json({ message: 'Server error uploading images.' });
+    }
+});
+
+
+// CERT MODERATOR: Issue certificates (with image positions)
+app.post('/api/certificate-moderator/issue-certificates', authMiddleware, certificateModeratorAuth, upload.single('studentDataSheet'), async (req, res) => {
+    // customImages is now a JSON string of objects: '[{"url":"...", "x":100, "y":200}]'
+    const { customImages } = req.body;
+    const templateId = 'template_default'; // Using a single template as requested
+
+    if (!req.file) {
+        return res.status(400).json({ message: "Student data Excel sheet is required." });
+    }
+
+    try {
+        const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+        const sheetName = workbook.SheetNames[0];
+        const studentData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+        const issuanceBatchId = `batch_${uuidv4()}`;
+        const imageDetails = customImages ? JSON.parse(customImages) : [];
+        let issuedCount = 0;
+
+        for (const student of studentData) {
+            const studentEmail = student['Mail ID'];
+            const studentName = student['Name of Student'];
+            const eventName = student['Name of Event'];
+            const rollNumber = student['Roll Number'];
+            const eventDate = student['Date of Event Conducted'];
+
+            if (!studentEmail || !studentName || !eventName) continue;
+
+            const certificateId = uuidv4();
+            const certificateItem = {
+                issuanceBatchId,
+                studentEmail: studentEmail.trim(),
+                certificateId,
+                templateId,
+                studentName: studentName.trim(),
+                eventName: eventName.trim(),
+                rollNumber: String(rollNumber).trim(),
+                eventDate: String(eventDate).trim(),
+                customImages: imageDetails, // Save array of objects with positions
+                issuedBy: req.user.email,
+                issuedAt: new Date().toISOString()
+            };
+
+            await docClient.send(new PutCommand({
+                TableName: "TestifyCertificateIssuance",
+                Item: certificateItem
+            }));
+
+            const certificateLink = `https://testify-io-ai.onrender.com/view-certificate.html?id=${certificateId}`;
+            const mailOptions = {
+                to: studentEmail,
+                subject: `Your Certificate for ${eventName}`,
+                html: `<p>Congratulations, ${studentName}! Your certificate for ${eventName} is ready. View it here: <a href="${certificateLink}">${certificateLink}</a></p>`
+            };
+            
+            await sendEmailWithSES(mailOptions);
+            issuedCount++;
+        }
+
+        res.json({ message: `Process complete. Successfully issued ${issuedCount} certificates.` });
+    } catch (error) {
+        console.error("Issue Certificates Error:", error);
+        res.status(500).json({ message: 'An unexpected error occurred.' });
+    }
+});
+
+
+// CERT MODERATOR: Get issuance history
+app.get('/api/certificate-moderator/issuance-history', authMiddleware, certificateModeratorAuth, async (req, res) => {
+    try {
+        // Fetch only batches created by the current moderator
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyCertificateIssuance",
+            FilterExpression: "issuedBy = :email",
+            ExpressionAttributeValues: { ":email": req.user.email }
+        }));
+        
+        const batches = (Items || []).reduce((acc, cert) => {
+            if (!acc[cert.issuanceBatchId]) {
+                acc[cert.issuanceBatchId] = {
+                    batchId: cert.issuanceBatchId,
+                    issuedAt: cert.issuedAt,
+                    eventName: cert.eventName,
+                    studentCount: 0
+                };
+            }
+            acc[cert.issuanceBatchId].studentCount++;
+            return acc;
+        }, {});
+
+        const historyList = Object.values(batches).sort((a, b) => new Date(b.issuedAt) - new Date(a.issuedAt));
+        res.json(historyList);
+    } catch (error) {
+        console.error("Get Issuance History Error:", error);
+        res.status(500).json({ message: 'Server error fetching history.' });
+    }
+});
+
+// PUBLIC Endpoint to fetch data for a single certificate page.
+app.get('/api/public/certificate/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { Items } = await docClient.send(new QueryCommand({
+            TableName: "TestifyCertificateIssuance",
+            IndexName: "CertificateIdIndex",
+            KeyConditionExpression: "certificateId = :cid",
+            ExpressionAttributeValues: { ":cid": id }
+        }));
+
+        if (!Items || Items.length === 0) {
+            return res.status(404).json({ message: "Certificate not found. The ID may be invalid." });
+        }
+        
+        // Return the first (and only) item found
+        res.json(Items[0]);
+
+    } catch (error) {
+        console.error("Get Public Certificate Error:", error);
+        res.status(500).json({ message: 'Server error retrieving certificate.' });
+    }
+});
 
 
 
