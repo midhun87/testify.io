@@ -1,46 +1,89 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  
-  <!-- Main Public Pages -->
+
+  <!-- Main Marketing & High-Priority Pages -->
   <url>
     <loc>https://www.testify-lac.com/index.html</loc>
+    <lastmod>2025-10-16</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>1.00</priority>
   </url>
   <url>
-    <loc>https://www.testify-lac.com/login.html</loc>
+    <loc>https://www.testify-lac.com/features.html</loc>
+    <lastmod>2025-10-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://www.testify-lac.com/pricing.html</loc>
+    <lastmod>2025-10-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.90</priority>
+  </url>
+  <url>
+    <loc>https://www.testify-lac.com/blog.html</loc>
+    <lastmod>2025-10-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Secondary Informational Pages -->
+  <url>
+    <loc>https://www.testify-lac.com/about.html</loc>
+    <lastmod>2025-10-16</lastmod>
+    <changefreq>yearly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
-    <loc>https://www.testify-lac.com/signup.html</loc>
+    <loc>https://www.testify-lac.com/contact.html</loc>
+    <lastmod>2025-10-16</lastmod>
+    <changefreq>yearly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
     <loc>https://www.testify-lac.com/careers.html</loc>
+    <lastmod>2025-10-16</lastmod>
+    <changefreq>monthly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
-    <loc>https://www.testify-lac.com/verify-certificate.html</loc>
+    <loc>https://www.testify-lac.com/hiring/hiring-moderator.html</loc>
+    <lastmod>2025-10-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
+  </url>
+  <url>
+    <loc>https://www.testify-lac.com/faqs.html</loc>
+    <lastmod>2025-10-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+
+  <!-- Utility & Legal Pages -->
+  <url>
+    <loc>https://www.testify-lac.com/join-quiz.html</loc>
+    <lastmod>2025-10-16</lastmod>
+    <changefreq>daily</changefreq>
     <priority>0.70</priority>
   </url>
-
-  <!-- Key Student Pages -->
   <url>
-    <loc>https://www.testify-lac.com/student/dashboard.html</loc>
+    <loc>https://www.testify-lac.com/verify-certificate.html</loc>
+    <lastmod>2025-10-16</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.70</priority>
+  </url>
+  <url>
+    <loc>https://www.testify-lac.com/privacy-policy.html</loc>
+    <lastmod>2025-10-16</lastmod>
+    <changefreq>yearly</changefreq>
     <priority>0.60</priority>
   </url>
   <url>
-    <loc>https://www.testify-lac.com/student/Test.html</loc>
+    <loc>https://www.testify-lac.com/terms-of-service.html</loc>
+    <lastmod>2025-10-16</lastmod>
+    <changefreq>yearly</changefreq>
     <priority>0.60</priority>
-  </url>
-   <url>
-    <loc>https://www.testify-lac.com/student/take-fullscreen-test.html</loc>
-    <priority>0.60</priority>
-  </url>
-
-  <!-- Key Admin Pages -->
-  <url>
-    <loc>https://www.testify-lac.com/admin/dashboard.html</loc>
-    <priority>0.50</priority>
   </url>
 
 </urlset>
+
