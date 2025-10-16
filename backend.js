@@ -8138,21 +8138,40 @@ app.get('/api/public/test-details', authMiddleware, async (req, res) => {
     if (!req.user.isExternal) {
         return res.status(403).json({ message: 'Access denied for this resource.' });
     }
+
     try {
         const { testId, email, assignmentId } = req.user;
 
-        // Verify the assignment is still valid (not expired, etc.)
+        // 1. Verify the assignment record exists in the database.
         const { Item: assignment } = await docClient.send(new GetCommand({
             TableName: "TestifyAssignments",
             Key: { assignmentId }
         }));
-        if (!assignment || assignment.studentEmail !== email || new Date() > new Date(assignment.endTime) || new Date() < new Date(assignment.startTime)) {
-            return res.status(403).json({ message: 'This test link is invalid, expired, or not yet active.' });
+
+        if (!assignment) {
+            return res.status(403).json({ message: 'Assignment not found. This test link may be incorrect or has been revoked.' });
         }
 
-        // --- FIX APPLIED HERE ---
-        // Check if a result already exists FOR THIS SPECIFIC INVITATION (assignmentId).
-        // This allows a new invitation for the same test to work.
+        // 2. Verify the email in the token matches the email in the assignment record.
+        if (assignment.studentEmail !== email) {
+            return res.status(403).json({ message: 'This test link is not assigned to your email address.' });
+        }
+
+        // 3. Verify the current time is within the allowed start and end window.
+        const now = new Date();
+        const startTime = new Date(assignment.startTime);
+        const endTime = new Date(assignment.endTime);
+
+        if (now < startTime) {
+            return res.status(403).json({ message: `This test is not yet active. It will be available on ${startTime.toLocaleString()}.` });
+        }
+
+        if (now > endTime) {
+            return res.status(403).json({ message: `This test link has expired. The deadline was ${endTime.toLocaleString()}.` });
+        }
+
+        // 4. Check if a result has already been submitted for this specific invitation (assignmentId).
+        // This prevents a candidate from using the same link to take the test multiple times.
         const { Items: existingResults } = await docClient.send(new ScanCommand({
             TableName: "TestifyResults",
             FilterExpression: "assignmentId = :aid",
@@ -8160,21 +8179,22 @@ app.get('/api/public/test-details', authMiddleware, async (req, res) => {
         }));
 
         if (existingResults && existingResults.length > 0) {
-            // If a result is found for this assignmentId, block access.
             return res.status(403).json({ message: 'This test link has already been used. Only one attempt per invitation is allowed.' });
         }
 
-
-        // If no submission is found, fetch and return the test details.
+        // 5. If all validation checks pass, fetch and return the test details.
         const { Item: test } = await docClient.send(new GetCommand({
             TableName: "TestifyTests",
             Key: { testId }
         }));
 
         if (!test) {
-            return res.status(404).json({ message: 'Test not found.' });
+            return res.status(404).json({ message: 'Test content not found.' });
         }
+
+        // On success, send the test data to the frontend.
         res.json(test);
+
     } catch (error) {
         console.error("Public Test Details Error:", error);
         res.status(500).json({ message: 'Server error fetching test details.' });
@@ -9791,6 +9811,7 @@ app.get('/api/public/certificate/:id', async (req, res) => {
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
 
 
 
