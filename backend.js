@@ -7797,7 +7797,7 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
     if (!req.user.isExternal) {
         return res.status(403).json({ message: 'Access denied for this resource.' });
     }
-    const { testId, submissions, candidateDetails } = req.body;
+    const { testId, submissions, candidateDetails } = req.body; // <-- Receive candidateDetails
     const studentEmail = req.user.email;
     try {
         const { Item: test } = await docClient.send(new GetCommand({
@@ -7806,21 +7806,42 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
         }));
         if (!test) return res.status(404).json({ message: "Test not found." });
 
+        const problemIdsFromTest = test.problems.map(p => p.id || p.problemId).filter(Boolean);
+        const problemsAreIncomplete = test.problems.some(p => !p.title || !p.score);
+        let problemDetailsMap = new Map();
+
+        if (problemsAreIncomplete && problemIdsFromTest.length > 0) {
+            const keys = problemIdsFromTest.map(id => ({ id }));
+            const { Responses } = await docClient.send(new BatchGetCommand({
+                RequestItems: { "TestifyCodeLab": { Keys: keys } }
+            }));
+            const fullProblems = Responses.TestifyCodeLab || [];
+            fullProblems.forEach(p => problemDetailsMap.set(p.id, p));
+        } else {
+            test.problems.forEach(p => problemDetailsMap.set(p.id, p));
+        }
+
         let totalScore = 0;
         const detailedSubmissions = [];
 
         for (const sub of submissions) {
-            const problem = test.problems.find(p => p.id === sub.problemId);
+            const problem = problemDetailsMap.get(sub.problemId);
             if (!problem || !problem.testCases || problem.testCases.length === 0) continue;
 
             let passedCases = 0;
             for (const tc of problem.testCases) {
                 try {
-                    // FIX: Directly call the refactored compile function
-                    const compileResult = await compileCode(sub.language, sub.code, tc.input);
-                    const actual = (compileResult.output || '').trim().replace(/\s+/g, ' ');
-                    const expected = (tc.expected || '').trim().replace(/\s+/g, ' ');
-                    if (actual === expected) passedCases++;
+                    const compileResponse = await fetch('http://localhost:3000/api/compile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': req.header('x-auth-token') },
+                        body: JSON.stringify({ language: sub.language, code: sub.code, input: tc.input }),
+                    });
+                    if (compileResponse.ok) {
+                        const compileResult = await compileResponse.json();
+                        const actual = (compileResult.output || '').trim().replace(/\s+/g, ' ');
+                        const expected = (tc.expected || '').trim().replace(/\s+/g, ' ');
+                        if (actual === expected) passedCases++;
+                    }
                 } catch(e){
                     console.error("Inner compile error during submission:", e);
                 }
@@ -7850,6 +7871,7 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
             score: totalScore,
             totalMarks: test.totalMarks,
             submittedAt: new Date().toISOString(),
+            // --- ADDED: Save candidate details with the submission ---
             fullName: candidateDetails.fullName,
             rollNumber: candidateDetails.rollNumber,
             collegeName: candidateDetails.collegeName,
@@ -7864,6 +7886,7 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Server error submitting test.' });
     }
 });
+
 
 app.post('/api/public/upload-image', async (req, res) => {
     const { imageData } = req.body;
@@ -7899,6 +7922,7 @@ app.post('/api/hiring/assign-test', authMiddleware, async (req, res) => {
         }));
         if (!test) return res.status(404).json({ message: "Test not found." });
         
+        // *** FIX: Determine the correct link based on the test type ***
         const pageName = test.testType === 'hiring_coding' ? 'hiring-coding-test.html' : 'hiring-test.html';
 
         for (const email of candidateEmails) {
@@ -7913,8 +7937,10 @@ app.post('/api/hiring/assign-test', authMiddleware, async (req, res) => {
             };
             
             const testToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
-            // This is the critical fix: Using the production domain for the link
-            const testLink = `https://www.testify-lac.com/student/${pageName}?token=${testToken}`;
+            // Use the determined page name to build the correct link
+            const testLink = `${req.protocol}://${req.get('host')}/student/${pageName}?token=${testToken}`;
+            // const testLink = `https://www.testify-lac.com/student/${pageName}?token=${testToken}`;
+
 
             await docClient.send(new PutCommand({
                 TableName: "TestifyAssignments",
@@ -7927,7 +7953,71 @@ app.post('/api/hiring/assign-test', authMiddleware, async (req, res) => {
            const mailOptions = {
                 to: [email],
                 subject: `Invitation: ${test.title} Assessment`,
-                html: `<p>You have been invited to take the "<b>${test.title}</b>" assessment.</p><p><b>Start Time:</b> ${new Date(startTime).toLocaleString()}</p><p><b>End Time:</b> ${new Date(endTime).toLocaleString()}</p><p>Please use the following link to start the assessment: <a href="${testLink}">${testLink}</a></p><p>Good luck!</p>`
+                html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Test Invitation</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        a { text-decoration: none; }
+        @media screen and (max-width: 600px) {
+            .content-width { width: 90% !important; }
+        }
+    </style>
+</head>
+<body style="background-color: #f3f4f6; margin: 0; padding: 0;">
+    <span style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+        You've been invited to take an assessment.
+    </span>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
+                    <tr>
+                        <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
+                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo" style="height: 50px; width: auto;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding: 40px; text-align: center;">
+                             <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">Assessment Invitation</h1>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 20px; line-height: 1.7;">
+                                 You have been invited to take the "<b>${test.title}</b>" assessment.
+                             </p>
+                             <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 30px; text-align: left;">
+                                <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #4b5563; margin: 0 0 10px;"><b>Start Time:</b> ${new Date(startTime).toLocaleString()}</p>
+                                <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #4b5563; margin: 0;"><b>End Time:</b> ${new Date(endTime).toLocaleString()}</p>
+                             </div>
+                             <a href="${testLink}" 
+                                target="_blank"
+                                style="display: inline-block; padding: 15px 35px; font-family: 'Poppins', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #4338ca; border-radius: 8px; text-decoration: none;">
+                                 Start Assessment
+                             </a>
+                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
+                                 Please ensure you complete the assessment within the specified time window. Good luck!
+                             </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
+                                &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
+                            </p>
+                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
+                                This is an automated message. Please do not reply.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
             };
            await sendEmailWithSES(mailOptions);
         }
@@ -8138,40 +8228,21 @@ app.get('/api/public/test-details', authMiddleware, async (req, res) => {
     if (!req.user.isExternal) {
         return res.status(403).json({ message: 'Access denied for this resource.' });
     }
-
     try {
         const { testId, email, assignmentId } = req.user;
 
-        // 1. Verify the assignment record exists in the database.
+        // Verify the assignment is still valid (not expired, etc.)
         const { Item: assignment } = await docClient.send(new GetCommand({
             TableName: "TestifyAssignments",
             Key: { assignmentId }
         }));
-
-        if (!assignment) {
-            return res.status(403).json({ message: 'Assignment not found. This test link may be incorrect or has been revoked.' });
+        if (!assignment || assignment.studentEmail !== email || new Date() > new Date(assignment.endTime) || new Date() < new Date(assignment.startTime)) {
+            return res.status(403).json({ message: 'This test link is invalid, expired, or not yet active.' });
         }
 
-        // 2. Verify the email in the token matches the email in the assignment record.
-        if (assignment.studentEmail !== email) {
-            return res.status(403).json({ message: 'This test link is not assigned to your email address.' });
-        }
-
-        // 3. Verify the current time is within the allowed start and end window.
-        const now = new Date();
-        const startTime = new Date(assignment.startTime);
-        const endTime = new Date(assignment.endTime);
-
-        if (now < startTime) {
-            return res.status(403).json({ message: `This test is not yet active. It will be available on ${startTime.toLocaleString()}.` });
-        }
-
-        if (now > endTime) {
-            return res.status(403).json({ message: `This test link has expired. The deadline was ${endTime.toLocaleString()}.` });
-        }
-
-        // 4. Check if a result has already been submitted for this specific invitation (assignmentId).
-        // This prevents a candidate from using the same link to take the test multiple times.
+        // --- FIX APPLIED HERE ---
+        // Check if a result already exists FOR THIS SPECIFIC INVITATION (assignmentId).
+        // This allows a new invitation for the same test to work.
         const { Items: existingResults } = await docClient.send(new ScanCommand({
             TableName: "TestifyResults",
             FilterExpression: "assignmentId = :aid",
@@ -8179,22 +8250,21 @@ app.get('/api/public/test-details', authMiddleware, async (req, res) => {
         }));
 
         if (existingResults && existingResults.length > 0) {
+            // If a result is found for this assignmentId, block access.
             return res.status(403).json({ message: 'This test link has already been used. Only one attempt per invitation is allowed.' });
         }
 
-        // 5. If all validation checks pass, fetch and return the test details.
+
+        // If no submission is found, fetch and return the test details.
         const { Item: test } = await docClient.send(new GetCommand({
             TableName: "TestifyTests",
             Key: { testId }
         }));
 
         if (!test) {
-            return res.status(404).json({ message: 'Test content not found.' });
+            return res.status(404).json({ message: 'Test not found.' });
         }
-
-        // On success, send the test data to the frontend.
         res.json(test);
-
     } catch (error) {
         console.error("Public Test Details Error:", error);
         res.status(500).json({ message: 'Server error fetching test details.' });
@@ -9811,9 +9881,4 @@ app.get('/api/public/certificate/:id', async (req, res) => {
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-
-
-
-
-
 
