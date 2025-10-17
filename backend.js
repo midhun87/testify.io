@@ -314,8 +314,8 @@ async function endQuestionAndShowStats(liveQuizId) {
 const client = new DynamoDBClient({
     region: 'ap-south-1',
     credentials: {
-        accessKeyId: 'AKIATCKAN7T2GJJYYJSH',
-        secretAccessKey: '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'
+        accessKeyId: 'AKIAT4YSUMZD755UHGW7',
+        secretAccessKey: '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'
     }
 });
 const docClient = DynamoDBDocumentClient.from(client);
