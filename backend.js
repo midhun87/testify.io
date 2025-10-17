@@ -9875,10 +9875,89 @@ app.get('/api/public/certificate/:id', async (req, res) => {
         res.status(500).json({ message: 'Server error retrieving certificate.' });
     }
 });
+app.post('/api/admin/quiz-moderators', authMiddleware, async (req, res) => {
+    // Ensure only an Admin can create moderators
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    const { fullName, email, password } = req.body;
+    if (!fullName || !email || !password) {
+        return res.status(400).json({ message: 'Please provide full name, email, and password.' });
+    }
+
+    try {
+        // Check if a user with this email already exists
+        const { Item } = await docClient.send(new GetCommand({ TableName: "TestifyUsers", Key: { email: email.toLowerCase() } }));
+        if (Item) {
+            return res.status(400).json({ message: 'An account with this email already exists.' });
+        }
+
+        // Hash the password for security
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Create the new user with the specific "QuizCom Moderator" role
+        const newModerator = {
+            email: email.toLowerCase(),
+            fullName,
+            password: hashedPassword,
+            role: "QuizCom Moderator", // Assign the correct role
+            isBlocked: false,
+            createdAt: new Date().toISOString()
+        };
+
+        // Save the new moderator to the database
+        await docClient.send(new PutCommand({ TableName: "TestifyUsers", Item: newModerator }));
+        res.status(201).json({ message: 'QuizCom Moderator account created successfully!' });
+    } catch (error) {
+        console.error("Create QuizCom Moderator Error:", error);
+        res.status(500).json({ message: 'Server error during account creation.' });
+    }
+});
+
+// Get all QuizCom Moderators
+app.get('/api/admin/quiz-moderators', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: "TestifyUsers",
+            FilterExpression: "#role = :role",
+            ExpressionAttributeNames: { "#role": "role" },
+            ExpressionAttributeValues: { ":role": "QuizCom Moderator" }
+        }));
+        // Send back the list of moderators, excluding their passwords
+        res.json(Items.map(({ password, ...rest }) => rest));
+    } catch (error) {
+        console.error("Get QuizCom Moderators Error:", error);
+        res.status(500).json({ message: 'Server error fetching accounts.' });
+    }
+});
+
+// Delete a QuizCom Moderator
+app.delete('/api/admin/quiz-moderators/:email', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { email } = req.params;
+    try {
+        await docClient.send(new DeleteCommand({
+            TableName: "TestifyUsers",
+            Key: { email }
+        }));
+        res.json({ message: 'QuizCom Moderator deleted successfully.' });
+    } catch (error) {
+        console.error("Delete QuizCom Moderator Error:", error);
+        res.status(500).json({ message: 'Server error deleting account.' });
+    }
+});
 
 
 
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
 
