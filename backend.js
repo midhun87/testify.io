@@ -7943,8 +7943,18 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
         return res.status(403).json({ message: 'Access denied for this resource.' });
     }
     const { testId, submissions, candidateDetails } = req.body;
-    const studentEmail = req.user.email;
+    const { email: studentEmail, assignmentId } = req.user; // Get assignmentId from token
+
     try {
+        // --- ADDED: Check if the assignment window is still open ---
+        const { Item: assignment } = await docClient.send(new GetCommand({
+            TableName: "TestifyAssignments",
+            Key: { assignmentId }
+        }));
+        if (!assignment || new Date() > new Date(assignment.endTime)) {
+            return res.status(403).json({ message: 'The submission deadline for this test has passed.' });
+        }
+
         const { Item: test } = await docClient.send(new GetCommand({
             TableName: "TestifyTests",
             Key: { testId }
@@ -7976,13 +7986,10 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
             let passedCases = 0;
             for (const tc of problem.testCases) {
                 try {
-                    // Determine the base URL dynamically
                     const isProduction = process.env.NODE_ENV === 'production';
-                    const baseUrl = isProduction 
-                        ? 'https://www.testify-lac.com' 
-                        : `${req.protocol}://${req.get('host')}`;
-
-                    const compileResponse = await fetch(`${baseUrl}/api/compile`, { // <-- CORRECTED LINE
+                    const baseUrl = isProduction ? 'https://www.testify-lac.com' : `${req.protocol}://${req.get('host')}`;
+                    
+                    const compileResponse = await fetch(`${baseUrl}/api/compile`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'x-auth-token': req.header('x-auth-token') },
                         body: JSON.stringify({ language: sub.language, code: sub.code, input: tc.input }),
@@ -8016,6 +8023,7 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
         const newSubmission = {
             resultId: submissionId,
             testType: 'hiring_coding',
+            assignmentId, // <-- ADDED for better tracking
             testId,
             testTitle: test.title,
             candidateEmail: studentEmail,
@@ -8379,25 +8387,42 @@ app.get('/api/hiring/test-history', authMiddleware, async (req, res) => {
 
 // EXTERNAL CANDIDATE: Get test details using token
 app.get('/api/public/test-details', authMiddleware, async (req, res) => {
-    // This endpoint is called when a candidate clicks the test link.
     if (!req.user.isExternal) {
         return res.status(403).json({ message: 'Access denied for this resource.' });
     }
     try {
         const { testId, email, assignmentId } = req.user;
 
-        // Verify the assignment is still valid (not expired, etc.)
         const { Item: assignment } = await docClient.send(new GetCommand({
             TableName: "TestifyAssignments",
             Key: { assignmentId }
         }));
-        if (!assignment || assignment.studentEmail !== email || new Date() > new Date(assignment.endTime) || new Date() < new Date(assignment.startTime)) {
-            return res.status(403).json({ message: 'This test link is invalid, expired, or not yet active.' });
+        
+        // Detailed checks and logging
+        if (!assignment || assignment.studentEmail !== email) {
+            console.error("Assignment/Email Mismatch:", { 
+                assignmentId: assignmentId, 
+                tokenEmail: email, 
+                dbEmail: assignment?.studentEmail 
+            });
+            return res.status(403).json({ message: 'This test link is invalid or has been tampered with.' });
         }
 
-        // --- FIX APPLIED HERE ---
-        // Check if a result already exists FOR THIS SPECIFIC INVITATION (assignmentId).
-        // This allows a new invitation for the same test to work.
+        const now = new Date();
+        const startTime = new Date(assignment.startTime);
+        const endTime = new Date(assignment.endTime);
+
+        if (now < startTime || now > endTime) {
+            console.warn("Time Window Check Failed:", {
+                now: now.toISOString(),
+                start: startTime.toISOString(),
+                end: endTime.toISOString(),
+                isBeforeStart: now < startTime,
+                isAfterEnd: now > endTime
+            });
+            return res.status(403).json({ message: 'This test link is not yet active or has expired.' });
+        }
+        
         const { Items: existingResults } = await docClient.send(new ScanCommand({
             TableName: "TestifyResults",
             FilterExpression: "assignmentId = :aid",
@@ -8405,12 +8430,9 @@ app.get('/api/public/test-details', authMiddleware, async (req, res) => {
         }));
 
         if (existingResults && existingResults.length > 0) {
-            // If a result is found for this assignmentId, block access.
             return res.status(403).json({ message: 'This test link has already been used. Only one attempt per invitation is allowed.' });
         }
 
-
-        // If no submission is found, fetch and return the test details.
         const { Item: test } = await docClient.send(new GetCommand({
             TableName: "TestifyTests",
             Key: { testId }
