@@ -146,6 +146,10 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- CHANGE: Define a base URL for all API calls ---
+            // This makes the code work on both localhost and production without changes.
+            const API_BASE_URL = `${window.location.protocol}//${window.location.host}`;
+
             const token = new URLSearchParams(window.location.search).get('token');
             const mainContainer = document.getElementById('main-container');
             const fullscreenContainer = document.getElementById('fullscreen-container');
@@ -182,7 +186,8 @@
 
             async function fetchTestDetails() {
                 try {
-                    const response = await fetch('/api/public/test-details', { headers: { 'x-auth-token': token } });
+                    // --- CHANGE: Use absolute URL ---
+                    const response = await fetch(`${API_BASE_URL}/api/public/test-details`, { headers: { 'x-auth-token': token } });
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message);
                     currentTest = data;
@@ -198,7 +203,8 @@
             async function initializeDetailsForm() {
                 const collegeSelect = document.getElementById('college-select');
                 try {
-                    const response = await fetch(`/api/public/colleges/${currentTest.testId}`);
+                    // --- CHANGE: Use absolute URL ---
+                    const response = await fetch(`${API_BASE_URL}/api/public/colleges/${currentTest.testId}`);
                     const colleges = await response.json();
                     collegeSelect.innerHTML = '<option value="">Select your college</option>';
                     colleges.forEach(college => {
@@ -264,7 +270,8 @@
                 startBtn.querySelector('span').textContent = 'Uploading Photo...';
                 
                 try {
-                    const uploadResponse = await fetch('/api/public/upload-image', {
+                    // --- CHANGE: Use absolute URL ---
+                    const uploadResponse = await fetch(`${API_BASE_URL}/api/public/upload-image`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ imageData: capturedImageData })
@@ -382,7 +389,8 @@
                 const results = [];
                 for (const tc of problem.testCases) {
                     try {
-                        const response = await fetch('/api/compile', {
+                        // --- CHANGE: Use absolute URL ---
+                        const response = await fetch(`${API_BASE_URL}/api/compile`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                             body: JSON.stringify({ language: document.getElementById('language-select').value, code: editor.getValue(), input: tc.input })
@@ -463,7 +471,8 @@
                 }));
                 
                 try {
-                    const response = await fetch('/api/public/submit-coding-test', {
+                    // --- CHANGE: Use absolute URL ---
+                    const response = await fetch(`${API_BASE_URL}/api/public/submit-coding-test`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                         body: JSON.stringify({ testId: currentTest.testId, submissions, candidateDetails })
@@ -518,4 +527,3 @@
     </script>
 </body>
 </html>
-
