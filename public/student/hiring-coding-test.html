@@ -146,8 +146,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- CHANGE: Define a base URL for all API calls ---
-            // This makes the code work on both localhost and production without changes.
             const API_BASE_URL = `${window.location.protocol}//${window.location.host}`;
 
             const token = new URLSearchParams(window.location.search).get('token');
@@ -186,7 +184,6 @@
 
             async function fetchTestDetails() {
                 try {
-                    // --- CHANGE: Use absolute URL ---
                     const response = await fetch(`${API_BASE_URL}/api/public/test-details`, { headers: { 'x-auth-token': token } });
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.message);
@@ -203,7 +200,6 @@
             async function initializeDetailsForm() {
                 const collegeSelect = document.getElementById('college-select');
                 try {
-                    // --- CHANGE: Use absolute URL ---
                     const response = await fetch(`${API_BASE_URL}/api/public/colleges/${currentTest.testId}`);
                     const colleges = await response.json();
                     collegeSelect.innerHTML = '<option value="">Select your college</option>';
@@ -270,7 +266,6 @@
                 startBtn.querySelector('span').textContent = 'Uploading Photo...';
                 
                 try {
-                    // --- CHANGE: Use absolute URL ---
                     const uploadResponse = await fetch(`${API_BASE_URL}/api/public/upload-image`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -336,7 +331,9 @@
                 const previousProblem = currentTest.problems[currentProblemIndex];
                 if (previousProblem) {
                     const code = editor.getValue();
-                    problemSubmissions[previousProblem.id] = { code, language: document.getElementById('language-select').value };
+                    // Use problem 'id' if available, fallback to 'problemId' for compatibility
+                    const problemKey = previousProblem.id || previousProblem.problemId;
+                    problemSubmissions[problemKey] = { code, language: document.getElementById('language-select').value };
                     if (code.trim() !== '' && problemStatuses[currentProblemIndex] === 'pending') {
                         problemStatuses[currentProblemIndex] = 'attempted';
                     }
@@ -362,7 +359,8 @@
                     <h3>Example</h3><pre class="bg-gray-100 p-2 rounded text-sm font-mono">${problem.example || 'No example.'}</pre>
                 `;
                 
-                const savedSubmission = problemSubmissions[problem.id];
+                const problemKey = problem.id || problem.problemId;
+                const savedSubmission = problemSubmissions[problemKey];
                 editor.setValue(savedSubmission ? savedSubmission.code : '');
                 if(savedSubmission) document.getElementById('language-select').value = savedSubmission.language;
                 document.getElementById('language-select').dispatchEvent(new Event('change'));
@@ -389,7 +387,6 @@
                 const results = [];
                 for (const tc of problem.testCases) {
                     try {
-                        // --- CHANGE: Use absolute URL ---
                         const response = await fetch(`${API_BASE_URL}/api/compile`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
@@ -465,13 +462,12 @@
                 selectProblem(currentProblemIndex);
                 
                 const submissions = currentTest.problems.map(p => ({
-                    problemId: p.id,
-                    code: problemSubmissions[p.id]?.code || '',
-                    language: problemSubmissions[p.id]?.language || 'c'
+                    problemId: p.id || p.problemId,
+                    code: problemSubmissions[p.id || p.problemId]?.code || '',
+                    language: problemSubmissions[p.id || p.problemId]?.language || 'c'
                 }));
                 
                 try {
-                    // --- CHANGE: Use absolute URL ---
                     const response = await fetch(`${API_BASE_URL}/api/public/submit-coding-test`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
@@ -485,7 +481,8 @@
                 } finally {
                     setTimeout(() => {
                         if(document.fullscreenElement) document.exitFullscreen();
-                        window.location.href = '/login.html';
+                        // Redirect to a generic login/end page
+                        window.location.href = `${API_BASE_URL}/login.html`;
                     }, 4000);
                 }
             }
