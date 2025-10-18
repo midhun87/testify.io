@@ -7942,7 +7942,7 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
     if (!req.user.isExternal) {
         return res.status(403).json({ message: 'Access denied for this resource.' });
     }
-    const { testId, submissions, candidateDetails } = req.body; // <-- Receive candidateDetails
+    const { testId, submissions, candidateDetails } = req.body;
     const studentEmail = req.user.email;
     try {
         const { Item: test } = await docClient.send(new GetCommand({
@@ -7963,7 +7963,7 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
             const fullProblems = Responses.TestifyCodeLab || [];
             fullProblems.forEach(p => problemDetailsMap.set(p.id, p));
         } else {
-            test.problems.forEach(p => problemDetailsMap.set(p.id, p));
+            test.problems.forEach(p => problemDetailsMap.set(p.id || p.problemId, p));
         }
 
         let totalScore = 0;
@@ -7976,11 +7976,18 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
             let passedCases = 0;
             for (const tc of problem.testCases) {
                 try {
-                    const compileResponse = await fetch('http://localhost:3000/api/compile', {
+                    // Determine the base URL dynamically
+                    const isProduction = process.env.NODE_ENV === 'production';
+                    const baseUrl = isProduction 
+                        ? 'https://www.testify-lac.com' 
+                        : `${req.protocol}://${req.get('host')}`;
+
+                    const compileResponse = await fetch(`${baseUrl}/api/compile`, { // <-- CORRECTED LINE
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'x-auth-token': req.header('x-auth-token') },
                         body: JSON.stringify({ language: sub.language, code: sub.code, input: tc.input }),
                     });
+
                     if (compileResponse.ok) {
                         const compileResult = await compileResponse.json();
                         const actual = (compileResult.output || '').trim().replace(/\s+/g, ' ');
@@ -8016,7 +8023,6 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
             score: totalScore,
             totalMarks: test.totalMarks,
             submittedAt: new Date().toISOString(),
-            // --- ADDED: Save candidate details with the submission ---
             fullName: candidateDetails.fullName,
             rollNumber: candidateDetails.rollNumber,
             collegeName: candidateDetails.collegeName,
@@ -8067,7 +8073,6 @@ app.post('/api/hiring/assign-test', authMiddleware, async (req, res) => {
         }));
         if (!test) return res.status(404).json({ message: "Test not found." });
         
-        // *** FIX: Determine the correct link based on the test type ***
         const pageName = test.testType === 'hiring_coding' ? 'hiring-coding-test.html' : 'hiring-test.html';
 
         for (const email of candidateEmails) {
@@ -8082,10 +8087,14 @@ app.post('/api/hiring/assign-test', authMiddleware, async (req, res) => {
             };
             
             const testToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
-            // Use the determined page name to build the correct link
-            const testLink = `${req.protocol}://${req.get('host')}/student/${pageName}?token=${testToken}`;
-            // const testLink = `https://www.testify-lac.com/student/${pageName}?token=${testToken}`;
-
+            
+            // Determine the base URL dynamically
+            const isProduction = process.env.NODE_ENV === 'production';
+            const baseUrl = isProduction 
+                ? 'https://www.testify-lac.com' 
+                : `${req.protocol}://${req.get('host')}`;
+            
+            const testLink = `${baseUrl}/student/${pageName}?token=${testToken}`; // <-- CORRECTED LINE
 
             await docClient.send(new PutCommand({
                 TableName: "TestifyAssignments",
@@ -8172,6 +8181,7 @@ app.post('/api/hiring/assign-test', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Server error assigning test.' });
     }
 });
+
 
 app.get('/api/hiring/coding-test-results', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Hiring Moderator') {
