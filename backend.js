@@ -18,6 +18,8 @@ const crypto = require('crypto');
 const SibApiV3Sdk = require('sib-api-v3-sdk');
 const { Server } = require("socket.io"); 
 const http = require('http');
+const router = express.Router();
+const Razorpay = require('razorpay')
 
 const ZOOM_ACCOUNT_ID = process.env.ZOOM_ACCOUNT_ID || 'bq5-fIbESBONjaZAr184uA';
 const ZOOM_CLIENT_ID = process.env.ZOOM_CLIENT_ID || 'CXxbks94RlmD_90vofVqg';
@@ -81,6 +83,149 @@ const server = http.createServer(app); // FIX: Create the HTTP server
 const io = new Server(server, { cors: { origin: "*" } }); // FIX: Attach socket.io to the server
 const PORT = 3000;
 const JWT_SECRET = 'your-super-secret-key-for-jwt-in-production';
+
+// Initialize Razorpay instance
+// IMPORTANT: Replace with your actual Key ID and Key Secret, preferably from environment variables
+const razorpay = new Razorpay({
+    key_id: 'rzp_test_RUY94xvnIMW9f2',
+    key_secret: 'hCwPVZhrDL72fsA65dzKNgjL'
+});
+
+/**
+ * @route   POST /api/payment/create-order
+ * @desc    Create a new Razorpay order
+ * @access  Public
+ */
+router.post('/create-order', async (req, res) => {
+    const { amount, currency } = req.body;
+    
+    if (!amount || !currency) {
+        return res.status(400).json({ message: 'Amount and currency are required.' });
+    }
+
+    const options = {
+        amount: Number(amount), // amount in the smallest currency unit (e.g., 50000 for ₹500.00)
+        currency: currency,
+        receipt: `receipt_order_${new Date().getTime()}`
+    };
+
+    try {
+        const order = await razorpay.orders.create(options);
+        res.json(order);
+    } catch (error) {
+        console.error("Razorpay Create Order Error:", error);
+        res.status(500).json({ message: 'Server error creating Razorpay order.' });
+    }
+});
+
+/**
+ * @route   POST /api/payment/verify-signature
+ * @desc    Verify the payment signature from Razorpay
+ * @access  Public
+ */
+router.post('/verify-signature', (req, res) => {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+        return res.status(400).json({ message: 'Missing payment verification details.' });
+    }
+
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+
+    const expectedSignature = crypto
+        .createHmac('sha256', 'YOUR_RAZORPAY_KEY_SECRET') // Use your Key Secret here
+        .update(body.toString())
+        .digest('hex');
+
+    const isAuthentic = expectedSignature === razorpay_signature;
+
+    if (isAuthentic) {
+        // Payment is successful.
+        // You can save the payment details to your database here.
+        // For example:
+        // await db.collection('payments').insertOne({
+        //     orderId: razorpay_order_id,
+        //     paymentId: razorpay_payment_id,
+        //     status: 'captured',
+        //     createdAt: new Date()
+        // });
+        
+        res.status(200).json({ message: 'Payment verified successfully.' });
+    } else {
+        res.status(400).json({ message: 'Invalid signature. Payment verification failed.' });
+    }
+});
+app.post('/api/payment/create-order', async (req, res) => {
+    const { amount, currency } = req.body;
+    
+    if (!amount || !currency) {
+        return res.status(400).json({ message: 'Amount and currency are required.' });
+    }
+
+    const options = {
+        amount: Number(amount), // amount in the smallest currency unit (e.g., 50000 for ₹500.00)
+        currency: currency,
+        receipt: `receipt_order_${new Date().getTime()}`
+    };
+
+    try {
+        const order = await razorpay.orders.create(options);
+        res.json(order);
+    } catch (error) {
+        console.error("Razorpay Create Order Error:", error);
+        res.status(500).json({ message: 'Server error creating Razorpay order.' });
+    }
+});
+
+/**
+ * @route   POST /api/payment/verify-signature
+ * @desc    Verify the payment signature from Razorpay
+ * @access  Public
+ */
+app.post('/api/payment/verify-signature', (req, res) => {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+        return res.status(400).json({ message: 'Missing payment verification details.' });
+    }
+
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+
+    const expectedSignature = crypto
+        .createHmac('sha256', 'YOUR_RAZORPAY_KEY_SECRET') // Use your Key Secret here
+        .update(body.toString())
+        .digest('hex');
+
+    const isAuthentic = expectedSignature === razorpay_signature;
+
+    if (isAuthentic) {
+        // Payment is successful.
+        // You can save the payment details to your database here.
+        // For example:
+        // await db.collection('payments').insertOne({
+        //     orderId: razorpay_order_id,
+        //     paymentId: razorpay_payment_id,
+        //     status: 'captured',
+        //     createdAt: new Date()
+        // });
+        
+        res.status(200).json({ message: 'Payment verified successfully.' });
+    } else {
+        res.status(400).json({ message: 'Invalid signature. Payment verification failed.' });
+    }
+});
+
+module.exports = router;
+
+
+
+
+
+
+
+
+
+
 // In your backend.js file, find the io.on('connection', ...) block
 // and REPLACE the entire block with this new, updated logic.
 // This adds timers, question stats, and better state management.
@@ -9875,6 +10020,7 @@ app.get('/api/public/certificate/:id', async (req, res) => {
         res.status(500).json({ message: 'Server error retrieving certificate.' });
     }
 });
+
 app.post('/api/admin/quiz-moderators', authMiddleware, async (req, res) => {
     // Ensure only an Admin can create moderators
     if (req.user.role !== 'Admin') {
@@ -9954,10 +10100,104 @@ app.delete('/api/admin/quiz-moderators/:email', authMiddleware, async (req, res)
     }
 });
 
+app.post('/api/hiring/generate-test-from-pdf', authMiddleware, async (req, res) => {
+    // Allow both Admin and Hiring Moderator roles
+    if (req.user.role !== 'Admin' && req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
 
+    const { text } = req.body;
+    if (!text) {
+        return res.status(400).json({ message: 'No text provided from PDF.' });
+    }
+
+    try {
+        // The logic here is identical to the admin endpoint, just with different authorization.
+        const prompt = `Based on the following text which contains questions and answers, create a complete, structured JSON object for a test. The JSON must have a 'testTitle' (string), 'duration' (number, in minutes), 'totalMarks' (number), 'passingPercentage' (number), and an array of 'sections'. Each section must have a 'title' and an array of 'questions'. Each question object in the array must have:
+- 'text' (string): The question text.
+- 'type' (string): Can be 'mcq-single', 'mcq-multiple', or 'fill-blank'.
+- 'marks' (number): The marks for the question.
+- 'options' (array of strings): For 'mcq-single' and 'mcq-multiple' types.
+- 'correctAnswer' (string): For 'mcq-single' (the index of the correct option, e.g., "0") and 'fill-blank' (the exact answer string).
+- 'correctAnswers' (array of strings): For 'mcq-multiple' (an array of the indices of correct options, e.g., ["0", "2"]).
+Here is the text:\n\n${text}`;
+
+        const schema = {
+            type: "OBJECT",
+            properties: {
+                "testTitle": { "type": "STRING" },
+                "duration": { "type": "NUMBER" },
+                "totalMarks": { "type": "NUMBER" },
+                "passingPercentage": { "type": "NUMBER" },
+                "sections": {
+                    "type": "ARRAY",
+                    "items": {
+                        "type": "OBJECT",
+                        "properties": {
+                            "title": { "type": "STRING" },
+                            "questions": {
+                                "type": "ARRAY",
+                                "items": {
+                                    "type": "OBJECT",
+                                    "properties": {
+                                        "text": { "type": "STRING" },
+                                        "type": { "type": "STRING", "enum": ["mcq-single", "mcq-multiple", "fill-blank"] },
+                                        "marks": { "type": "NUMBER" },
+                                        "options": { "type": "ARRAY", "items": { "type": "STRING" } },
+                                        "correctAnswer": { "type": "STRING" },
+                                        "correctAnswers": { "type": "ARRAY", "items": { "type": "STRING" } }
+                                    },
+                                    "required": ["text", "type", "marks"]
+                                }
+                            }
+                        },
+                         "required": ["title", "questions"]
+                    }
+                }
+            },
+            required: ["testTitle", "duration", "totalMarks", "passingPercentage", "sections"]
+        };
+
+        const apiKey = 'AIzaSyAR_X4MZ75vxwV7OTU3dabFRcVe4SxWpb8'; // Use process.env in production
+
+        if (!apiKey) {
+            throw new Error("GEMINI_API_KEY is not configured on the server.");
+        }
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: schema
+            }
+        };
+
+        const apiResponse = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!apiResponse.ok) {
+            const errorBody = await apiResponse.text();
+            console.error("Hiring Gemini API Error:", errorBody);
+            throw new Error(`AI API call failed with status: ${apiResponse.status}`);
+        }
+
+        const result = await apiResponse.json();
+        const jsonText = result.candidates[0].content.parts[0].text;
+        const structuredTest = JSON.parse(jsonText);
+
+        res.json(structuredTest);
+
+    } catch (error) {
+        console.error('Error in AI hiring test generation backend:', error);
+        res.status(500).json({ message: 'Failed to generate test from AI.' });
+    }
+});
 
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-
 
