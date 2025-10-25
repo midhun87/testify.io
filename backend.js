@@ -72,10 +72,77 @@ async function sendEmailWithSES(mailOptions) {
         console.error('Error sending email with SES:', error);
     }
 }
+// --- START: NEW JUDGE0 HELPER FUNCTIONS ---
 
+// --- Judge0 Compiler Helper (Code) ---
+// This function is called by /api/compile
+async function compileWithJudge0(language, code, input) {
+    const judge0Url = process.env.JUDGE0_URL || 'http://localhost:2358';
+    const languageMap = {
+        'c': 50, 'cpp': 54, 'java': 62, 'python': 71, 'javascript': 63
+    };
+    const languageId = languageMap[language];
 
+    if (!languageId) {
+        throw new Error(`Language '${language}' is not supported.`);
+    }
 
+    // 1. Create submission
+    const submissionResponse = await fetch(`${judge0Url}/submissions/?base64_encoded=false&wait=false`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            source_code: code,
+            language_id: languageId,
+            stdin: input || ""
+        })
+    });
 
+    if (!submissionResponse.ok) {
+        const errorBody = await submissionResponse.text();
+        console.error(`Judge0 submission failed: ${submissionResponse.status}`, errorBody);
+        throw new Error(`Judge0 submission failed with status ${submissionResponse.status}`);
+    }
+    const { token } = await submissionResponse.json();
+
+    // 2. Poll for result
+    let result = null;
+    let attempts = 0;
+    const maxAttempts = 15;
+    const pollInterval = 1000;
+
+    while (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+        attempts++;
+        const resultResponse = await fetch(`${judge0Url}/submissions/${token}?base64_encoded=false&fields=*`);
+        if (!resultResponse.ok) continue; 
+        result = await resultResponse.json();
+        if (result.status_id > 2) break; // Finished (3) or error (>3)
+    }
+
+    if (!result || result.status_id <= 2) {
+        console.error(`Judge0 polling timed out for token ${token}`);
+        throw new Error('Execution timed out waiting for result.');
+    }
+
+    // 3. Format output - FIXED: Return only clean output without status info
+    let output = result.stdout || '';
+    
+    // Only add error information if there's no successful output
+    if (!output.trim()) {
+        if (result.compile_output) output += result.compile_output;
+        if (result.stderr) output += result.stderr;
+        if (result.message) output += result.message;
+    }
+
+    const cleanOutput = output.trim();
+
+    // Return a structured object - ONLY CLEAN OUTPUT, no status metadata
+    return {
+        output: cleanOutput, // This will now contain only the program output or errors
+        stdout: (result.stdout || '').trim() // Provide clean stdout for contest checker
+    };
+}
 
 // --- INITIALIZATION ---
 const app = express();
@@ -650,6 +717,26 @@ const authMiddleware = async (req, res, next) => {
         res.status(401).json({ message: 'Token is not valid' });
     }
 };
+
+
+// =================================================================
+// --- COMPILER ENDPOINT (REVISED WITH JUDGE0) ---
+// =======================================
+app.post('/api/compile', authMiddleware, async (req, res) => {
+    const { language, code, input } = req.body;
+    try {
+        if (typeof compileWithJudge0 !== 'function') {
+            throw new Error('compileWithJudge0 is not defined on the server.');
+        }
+        const result = await compileWithJudge0(language, code, input);
+        // result is { output, stdout }
+        res.json({ output: result.output, stdout: result.stdout });
+    } catch (error) {
+        console.error("Compile Error:", error);
+        res.status(500).json({ message: 'Server error during compilation.', output: error.message });
+    }
+});
+
 // const authMiddleware = async (req, res, next) => {
 //     const token = req.header('x-auth-token');
 //     if (!token) {
@@ -3395,90 +3482,6 @@ app.post('/api/admin/impact-stats', authMiddleware, upload.single('flyerImage'),
 // =================================================================
 // --- COMPILER ENDPOINT (REVISED WITH JUDGE0) ---
 // =================================================================
-app.post('/api/compile', authMiddleware, async (req, res) => {
-    const { language, code, input } = req.body;
-
-    // IMPORTANT: Replace with your actual RapidAPI Key for OneCompiler
-    // It's best to store this in an environment variable (.env file) for security
-    const ONECOMPILER_API_KEY = process.env.ONECOMPILER_API_KEY || '09ccf0b69bmsh066f3a3bc867b99p178664jsna5e9720da3f6';
-
-    if (!language || !code) {
-        return res.status(400).json({ message: 'Language and code are required.' });
-    }
-    if (!ONECOMPILER_API_KEY || ONECOMPILER_API_KEY === 'YOUR_ONECOMPILER_RAPIDAPI_KEY') {
-         return res.status(500).json({ message: 'OneCompiler API key is not configured on the server.' });
-    }
-
-    // Map your language names to OneCompiler's language identifiers
-    const languageMap = {
-        'c': 'c',
-        'cpp': 'cpp',
-        'java': 'java',
-        'python': 'python'
-    };
-    
-    // Determine the main file name based on language
-    const fileNames = {
-        'c': 'main.c',
-        'cpp': 'main.cpp',
-        'java': 'Main.java',
-        'python': 'main.py'
-    };
-
-    const langIdentifier = languageMap[language];
-    const fileName = fileNames[language];
-
-    if (!langIdentifier) {
-        return res.status(400).json({ message: `Language '${language}' is not supported.` });
-    }
-
-    try {
-        const submissionPayload = {
-            language: langIdentifier,
-            stdin: input || "",
-            files: [
-                {
-                    name: fileName,
-                    content: code
-                }
-            ]
-        };
-
-        const submissionResponse = await fetch('https://onecompiler-apis.p.rapidapi.com/api/v1/run', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-RapidAPI-Key': ONECOMPILER_API_KEY,
-                'X-RapidAPI-Host': 'onecompiler-apis.p.rapidapi.com'
-            },
-            body: JSON.stringify(submissionPayload)
-        });
-
-        if (!submissionResponse.ok) {
-            const errorBody = await submissionResponse.text();
-            console.error("OneCompiler API Error:", errorBody);
-            return res.status(500).json({ message: 'Error communicating with the compilation service.' });
-        }
-
-        const result = await submissionResponse.json();
-        
-        // Combine stdout and stderr for the output
-        let output = result.stdout || '';
-        if (result.stderr) {
-            output += `\nError:\n${result.stderr}`;
-        }
-        if (result.exception) {
-            output += `\nException:\n${result.exception}`;
-        }
-
-
-        res.json({ output: output || 'No output.' });
-
-    } catch (error) {
-        console.error("Compile Error:", error);
-        res.status(500).json({ message: 'Server error during compilation.' });
-    }
-});
 
 
 app.post('/api/admin/practice-tests', authMiddleware, async (req, res) => {
@@ -4456,12 +4459,13 @@ app.post('/api/compiler/save-score', authMiddleware, async (req, res) => {
 
 // GET endpoint for admins/moderators to view all compiler scores
 app.get('/api/admin/compiler-scores', authMiddleware, adminOrModeratorAuth, async (req, res) => {
+    if (req.user.role !== 'Admin' && req.user.role !== 'Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    
     try {
         const { Items: scores } = await docClient.send(new ScanCommand({
             TableName: "TestifyCompilerScores",
-            // ADDED FILTER: Only get items that are actual compiler scores,
-            // not SQL sections or problems that pollute this table.
-            // We identify compiler scores by the absence of the 'recordType' attribute.
             FilterExpression: "attribute_not_exists(recordType)"
         }));
 
@@ -4470,7 +4474,6 @@ app.get('/api/admin/compiler-scores', authMiddleware, adminOrModeratorAuth, asyn
         }
 
         const studentEmails = [...new Set(scores.map(s => s.studentEmail))];
-        
         const keys = studentEmails.map(email => ({ email }));
         
         const { Responses } = await docClient.send(new BatchGetCommand({
@@ -4480,10 +4483,8 @@ app.get('/api/admin/compiler-scores', authMiddleware, adminOrModeratorAuth, asyn
         const students = Responses.TestifyUsers || [];
         const studentMap = new Map(students.map(s => [s.email, { fullName: s.fullName, college: s.college }]));
 
-        // We are removing 'submittedCode' from this main list view for performance.
-        // It will be fetched on demand when the admin clicks "View Code".
         const enrichedScores = scores.map(score => {
-            const { submittedCode, ...rest } = score; // Exclude submittedCode here
+            const { submittedCode, ...rest } = score;
             const studentInfo = studentMap.get(score.studentEmail);
             return {
                 ...rest,
@@ -4493,7 +4494,6 @@ app.get('/api/admin/compiler-scores', authMiddleware, adminOrModeratorAuth, asyn
         });
         
         enrichedScores.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
-
         res.json(enrichedScores);
 
     } catch (error) {
@@ -5128,91 +5128,18 @@ app.get('/api/compiler/my-submission/:problemId', authMiddleware, async (req, re
 });
 
 
+/// =================================================================
+// --- SQL CODELAB ENDPOINTS (REFACTORED WITH JUDGE0) ---
 // =================================================================
-// --- SQL CODELAB ENDPOINTS (REFACTORED TO USE ONECOMPILER API) ---
-// =================================================================
-// Using the "TestifyCompilerScores" table as requested for testing purposes.
-const SQL_TABLE_NAME = "TestifyCompilerScores";
-
-// Helper function to run SQL queries using the OneCompiler API.
-// This replaces the local sqlite3 implementation.
-const runQueryWithOneCompiler = async (schema, query) => {
-    // It's recommended to store this API key in environment variables for security.
-    const ONECOMPILER_API_KEY = process.env.ONECOMPILER_API_KEY || '09ccf0b69bmsh066f3a3bc867b99p178664jsna5e9720da3f6';
-
-    // Combine schema (CREATE, INSERT statements) and the user's query into a single script.
-    const fullScript = `${schema || ''}\n\n${query || ''}`;
-
-    const payload = {
-        language: "mysql", // OneCompiler uses 'mysql' for standard SQL execution
-        stdin: "",
-        files: [{
-            name: "script.sql",
-            content: fullScript
-        }]
-    };
-
-    try {
-        const response = await fetch('https://onecompiler-apis.p.rapidapi.com/api/v1/run', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-RapidAPI-Key': '22be928fe3msh1ad95638f83d75cp18c454jsn9883d64a5a33',
-                'X-RapidAPI-Host': 'onecompiler-apis.p.rapidapi.com'
-            },
-            body: JSON.stringify(payload)
-        });
-
-        const result = await response.json();
-
-        // Check for compilation or runtime errors from the API response
-        if (!response.ok || result.stderr || result.exception) {
-            throw new Error(result.stderr || result.exception || result.message || 'An error occurred during SQL execution.');
-        }
-
-        // Parse the raw stdout from OneCompiler into the { columns, values } format
-        const output = (result.stdout || '').trim();
-        if (!output) {
-            // Query ran successfully but produced no rows
-            return { columns: [], values: [] };
-        }
-
-        const lines = output.split('\n');
-        const headerLine = lines.shift();
-        if (!headerLine) {
-            return { columns: [], values: [] };
-        }
-        
-        // OneCompiler's SQL output is typically tab-separated
-        const columns = headerLine.split('\t');
-        
-        const values = lines.map(line => {
-            const rowValues = line.split('\t');
-            const rowObject = {};
-            columns.forEach((col, index) => {
-                rowObject[col] = rowValues[index] !== undefined ? rowValues[index] : null;
-            });
-            return rowObject;
-        });
-
-        return { columns, values };
-
-    } catch (error) {
-        console.error("OneCompiler SQL Execution Error:", error.message);
-        // Re-throw the error so it's sent to the client
-        throw error;
-    }
-};
-
+const SQL_TABLE_NAME = "TestifyCompilerScores"; // Using this table as requested
 
 // --- SQL SECTION MANAGEMENT (ADMIN ONLY) ---
-
 app.post('/api/sql/sections', authMiddleware, adminOnlyAuth, async (req, res) => {
     const { sectionName, assignedColleges } = req.body;
     const scoreId = `section_${uuidv4()}`;
     const newSection = {
         scoreId,
-        recordType: 'SECTION',
+        recordType: 'SECTION', // Differentiator
         sectionName,
         assignedColleges: assignedColleges || [],
         createdAt: new Date().toISOString()
@@ -5269,7 +5196,6 @@ app.delete('/api/sql/sections/:id', authMiddleware, adminOnlyAuth, async (req, r
 });
 
 // --- SQL PROBLEM MANAGEMENT (ADMIN ONLY) ---
-
 app.post('/api/sql/problems', authMiddleware, adminOnlyAuth, async (req, res) => {
     const { sectionId, title, description, difficulty, schema, constraints, correctQuery } = req.body;
     const scoreId = `problem_${uuidv4()}`;
@@ -5330,7 +5256,6 @@ app.delete('/api/sql/problems/:id', authMiddleware, adminOnlyAuth, async (req, r
 });
 
 // --- STUDENT-FACING SQL API ---
-
 app.get('/api/student/sql/problems', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
     const studentCollege = req.user.college;
@@ -5357,18 +5282,18 @@ app.get('/api/student/sql/problems', authMiddleware, async (req, res) => {
 
 // --- SQL EXECUTION AND SCORING APIS ---
 
-// MODIFIED: This endpoint now uses the OneCompiler API instead of local sqlite.
+// MODIFIED: This endpoint now uses the Judge0 helper
 app.post('/api/sql/run', authMiddleware, async (req, res) => {
     const { schema, query } = req.body;
     try {
-        const result = await runQueryWithOneCompiler(schema, query);
+        const result = await runQueryWithJudge0(schema, query); // FIXED
         res.json(result);
     } catch (error) {
         res.status(400).json({ message: error.message, error: error.message });
     }
 });
 
-// MODIFIED: This endpoint now uses the OneCompiler API for validation.
+// MODIFIED: This endpoint now uses the Judge0 helper for validation
 app.post('/api/sql/save-score', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Student') {
         return res.status(403).json({ message: 'Only students can submit solutions.' });
@@ -5394,18 +5319,17 @@ app.post('/api/sql/save-score', authMiddleware, async (req, res) => {
         let studentResult, correctResult, isCorrect = false;
 
         try {
-            // Run both the student's query and the correct query via the API
+            // Run both queries using the new Judge0 helper
             [studentResult, correctResult] = await Promise.all([
-                runQueryWithOneCompiler(problem.schema, submittedCode),
-                runQueryWithOneCompiler(problem.schema, problem.correctQuery)
+                runQueryWithJudge0(problem.schema, submittedCode), // FIXED
+                runQueryWithJudge0(problem.schema, problem.correctQuery) // FIXED
             ]);
             
-            // Helper to create a consistent, sorted string from a row for comparison
             const canonicalRow = (row, columns) => {
+                 if (!columns) return "";
                 return columns.map(col => `${col}:${row[col]}`).sort().join('|');
             };
             
-            // Sort the values arrays of both results to ensure order doesn't affect comparison
             if (studentResult.values && studentResult.columns) {
                 studentResult.values.sort((a, b) => canonicalRow(a, studentResult.columns).localeCompare(canonicalRow(b, studentResult.columns)));
             }
@@ -5413,11 +5337,9 @@ app.post('/api/sql/save-score', authMiddleware, async (req, res) => {
                 correctResult.values.sort((a, b) => canonicalRow(a, correctResult.columns).localeCompare(canonicalRow(b, correctResult.columns)));
             }
             
-            // Compare the canonicalized results
             isCorrect = JSON.stringify(studentResult) === JSON.stringify(correctResult);
 
         } catch (error) {
-            // This will catch execution errors from the API call
             studentResult = { error: error.message };
         }
         
@@ -5455,7 +5377,7 @@ app.post('/api/sql/save-score', authMiddleware, async (req, res) => {
 
         res.status(200).json({
             isCorrect: isCorrect,
-            message: isCorrect ? 'Correct!' : 'Incorrect.',
+            message: isCorrect ? 'Correct!' : (studentResult.error ? 'Execution Error' : 'Incorrect.'),
             score: score,
             result: studentResult
         });
@@ -5466,9 +5388,7 @@ app.post('/api/sql/save-score', authMiddleware, async (req, res) => {
     }
 });
 
-
 // --- ADMIN & STUDENT SCORE/SUBMISSION RETRIEVAL ---
-
 app.get('/api/admin/sql-scores', authMiddleware, adminOnlyAuth, async (req, res) => {
     try {
         const { Items: scores } = await docClient.send(new ScanCommand({
@@ -5476,29 +5396,23 @@ app.get('/api/admin/sql-scores', authMiddleware, adminOnlyAuth, async (req, res)
             FilterExpression: "recordType = :type",
             ExpressionAttributeValues: { ":type": "SCORE" }
         }));
-
         if (!scores || scores.length === 0) return res.json([]);
-
         const studentEmails = [...new Set(scores.map(s => s.studentEmail))];
         const keys = studentEmails.map(email => ({ email }));
-        
         const { Responses } = await docClient.send(new BatchGetCommand({
             RequestItems: { "TestifyUsers": { Keys: keys, ProjectionExpression: "email, fullName, college" } }
         }));
-        
         const students = Responses.TestifyUsers || [];
         const studentMap = new Map(students.map(s => [s.email, { fullName: s.fullName, college: s.college }]));
-
         const enrichedScores = scores.map(score => {
             const studentInfo = studentMap.get(score.studentEmail);
             return {
                 ...score,
-                id: score.scoreId, // For frontend compatibility
+                id: score.scoreId, 
                 studentName: studentInfo ? studentInfo.fullName : 'Unknown',
                 college: studentInfo ? studentInfo.college : 'Unknown'
             };
         });
-
         res.json(enrichedScores);
     } catch (error) {
         console.error("Get Admin SQL Scores Error:", error);
@@ -5513,7 +5427,6 @@ app.get('/api/sql/submission/:scoreId', authMiddleware, adminOnlyAuth, async (re
             TableName: SQL_TABLE_NAME,
             Key: { scoreId: scoreId }
         }));
-
         if (!Item || Item.recordType !== 'SCORE') {
             return res.status(404).json({ message: 'Submission not found.' });
         }
@@ -5916,90 +5829,6 @@ app.get('/api/student/contests/:id', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Server error fetching contest details.' });
     }
 });
-
-// [NEW & SECURE] STUDENT: Submit contest for scoring
-app.post('/api/student/contests/submit', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
-
-    const { contestId, submissions, violationReason } = req.body;
-    const studentEmail = req.user.email;
-
-    try {
-        const { Item: contest } = await docClient.send(new GetCommand({
-            TableName: "TestifyCompilerScores",
-            Key: { scoreId: contestId }
-        }));
-
-        if (!contest || contest.recordType !== 'CONTEST') {
-            return res.status(404).json({ message: "Contest not found." });
-        }
-
-        let totalScore = 0;
-        const detailedSubmissions = [];
-
-        // Loop through each submitted problem to evaluate it
-        for (const sub of submissions) {
-            const problem = contest.problems.find(p => p.id === sub.problemId);
-            if (!problem || !problem.testCases || problem.testCases.length === 0) continue;
-
-            let passedCases = 0;
-            // Evaluate against each test case
-            for (const tc of problem.testCases) {
-                // IMPORTANT: This re-uses your existing /api/compile endpoint logic
-                const compileResponse = await fetch('http://localhost:3000/api/compile', { // Ensure this URL is correct for your setup
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-auth-token': req.header('x-auth-token') },
-                    body: JSON.stringify({ language: sub.language, code: sub.code, input: tc.input }),
-                });
-
-                if (compileResponse.ok) {
-                    const compileResult = await compileResponse.json();
-                    const actual = (compileResult.output || '').trim().replace(/\s+/g, ' ');
-                    const expected = (tc.expected || '').trim().replace(/\s+/g, ' ');
-                    if (actual === expected) {
-                        passedCases++;
-                    }
-                }
-            }
-
-            // Calculate score for this specific problem
-            const problemScore = Math.round((passedCases / problem.testCases.length) * problem.score);
-            totalScore += problemScore;
-
-            detailedSubmissions.push({
-                ...sub, // Includes problemId, code, language
-                problemTitle: problem.title,
-                score: problemScore,
-                passedCases: passedCases,
-                totalCases: problem.testCases.length
-            });
-        }
-
-        const submissionId = `contestsub_${uuidv4()}`;
-        const newSubmission = {
-            scoreId: submissionId,
-            recordType: 'CONTEST_SUBMISSION',
-            contestId,
-            studentEmail,
-            studentName: req.user.fullName,
-            college: req.user.college,
-            submissions: detailedSubmissions,
-            totalScore,
-            maxScore: contest.totalMarks,
-            contestTitle: contest.title,
-            violationReason: violationReason || null,
-            submittedAt: new Date().toISOString()
-        };
-
-        await docClient.send(new PutCommand({ TableName: "TestifyCompilerScores", Item: newSubmission }));
-        res.status(201).json({ message: 'Contest submitted successfully!' });
-
-    } catch (error) {
-        console.error("Submit Contest Error:", error);
-        res.status(500).json({ message: 'Server error submitting contest.' });
-    }
-});
-
 
 // [NEW] STUDENT: Get history of contest submissions
 app.get('/api/student/contest-history', authMiddleware, async(req, res) => {
@@ -7997,7 +7826,7 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
 
                     if (compileResponse.ok) {
                         const compileResult = await compileResponse.json();
-                        const actual = (compileResult.output || '').trim().replace(/\s+/g, ' ');
+                        const actual = (compileResult.stdout || '').trim().replace(/\s+/g, ' ');
                         const expected = (tc.expected || '').trim().replace(/\s+/g, ' ');
                         if (actual === expected) passedCases++;
                     }
@@ -8005,6 +7834,9 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
                     console.error("Inner compile error during submission:", e);
                 }
             }
+
+
+
 
             const problemScore = Math.round((passedCases / problem.testCases.length) * (problem.score || 0));
             totalScore += problemScore;
@@ -8045,8 +7877,6 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Server error submitting test.' });
     }
 });
-
-
 app.post('/api/public/upload-image', async (req, res) => {
     const { imageData } = req.body;
     if (!imageData) {
@@ -10229,7 +10059,47 @@ Here is the text:\n\n${text}`;
     }
 });
 
+app.post('/execute', (req, res) => {
+    const { code, language = 'javascript' } = req.body;
+    
+    if (!code) {
+        return res.status(400).json({ error: 'No code provided' });
+    }
+
+    let command;
+    switch(language) {
+        case 'javascript':
+            command = `node -e "${code.replace(/"/g, '\\"')}"`;
+            break;
+        case 'python':
+            command = `python3 -c "${code.replace(/"/g, '\\"')}"`;
+            break;
+        default:
+            return res.status(400).json({ error: 'Unsupported language' });
+    }
+
+    exec(command, { timeout: 5000 }, (error, stdout, stderr) => {
+        if (error) {
+            return res.status(500).json({ error: stderr });
+        }
+        res.json({ output: stdout, error: stderr });
+    });
+});
+
+// Docker-based compilation endpoint (optional)
+app.post('/compile', (req, res) => {
+    res.json({ 
+        message: 'Docker compiler endpoint',
+        note: 'This would require Docker setup'
+    });
+});
+
+
+// =================================================================
+// --- START SERVER ---
+// =================================================================
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
+    console.log(`Judge0 API is expected at: ${process.env.JUDGE0_URL || 'http://localhost:2358'}`);
 });
 
