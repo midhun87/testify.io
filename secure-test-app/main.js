@@ -180,6 +180,16 @@ app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) creat
 
 // --- IPC Handlers ---
 
+// --- !!! NEW HANDLER TO PROVIDE ENV TO RENDERER !!! ---
+ipcMain.handle('get-env', () => {
+    console.log(`[IPC get-env] Providing environment. isDev: ${isDev}, BACKEND_URL: ${BACKEND_URL}`);
+    return {
+        isDev: isDev,
+        BACKEND_URL: BACKEND_URL
+    };
+});
+// --- !!! END OF NEW HANDLER !!! ---
+
 // Handle Token Validation (from token-entry.js)
 ipcMain.handle('validate-token', async (event, token) => {
     console.log(`[IPC validate-token] Received token: ${token ? '******' : '<empty>'}`);
@@ -347,6 +357,7 @@ ipcMain.on('test-submitted-successfully', () => {
     // --- END MODIFICATION ---
     app.quit();
 });
+
 
 
 
