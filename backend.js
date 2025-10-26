@@ -8464,84 +8464,206 @@ app.post('/api/hiring/assign-test', hiringModeratorAuth, async (req, res) => {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test Invitation</title>
+    <!-- 
+      This <style> block is ONLY for progressive enhancement.
+      It will be ignored by Gmail/Outlook but read by Apple Mail, iOS, etc.
+      It contains responsive styles and hover effects.
+    -->
     <style>
-        body { margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif; }
-        table { border-collapse: collapse; }
-        .container { background-color: #ffffff; width: 100%; max-width: 600px; margin: 20px auto; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .header { background-color: #4A90E2; color: #ffffff; padding: 20px; text-align: center; border-top-left-radius: 8px; border-top-right-radius: 8px; }
-        .header img { max-height: 50px; } /* Adjust as needed */
-        .content { padding: 30px; color: #333333; line-height: 1.6; }
-        .content h2 { color: #4A90E2; margin-top: 0; }
-        .button-container { text-align: center; margin-top: 30px; }
-        .button { background-color: #4CAF50; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; }
-        .footer { background-color: #eeeeee; padding: 15px; text-align: center; font-size: 12px; color: #666666; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
-        .important { background-color: #fff3cd; border-left: 4px solid #ffeeba; padding: 10px 15px; margin: 20px 0; font-size: 14px; }
-        .token-info { font-size: 14px; color: #555; margin-top: 15px; padding: 10px; background-color: #f9f9f9; border: 1px dashed #ccc; border-radius: 4px; }
         @media screen and (max-width: 600px) {
-            .container { width: 95% !important; margin: 10px auto; }
-            .content { padding: 20px; }
+            .container {
+                /* tw: w-full */
+                width: 100% !important;
+                /* tw: rounded-none */
+                border-radius: 0 !important;
+            }
+            .content-cell {
+                /* tw: p-6 */
+                padding: 25px !important;
+            }
+            .header-cell {
+                /* tw: p-8 */
+                padding: 30px 25px !important;
+            }
+        }
+        
+        /* tw: hover:bg-blue-800 */
+        .btn:hover {
+            background: linear-gradient(135deg, #1e40af, #1d4ed8) !important;
+        }
+
+        /* tw: hover:underline */
+        .footer-link:hover {
+            text-decoration: underline !important;
         }
     </style>
 </head>
-<body>
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#f4f4f4">
+<!-- 
+  tw: bg-gray-100
+  Using a system font stack to look "native" on all devices.
+-->
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; width: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#f3f4f6" style="/* tw: bg-gray-100 */ background-color: #f3f4f6; margin: 0; padding: 0; width: 100%;">
         <tr>
-            <td align="center">
-                <table class="container" border="0" cellpadding="0" cellspacing="0">
+            <!-- tw: p-4 md:p-10 -->
+            <td align="center" style="padding: 40px 10px;">
+                
+                <!--[if mso | IE]>
+                <table align="center" border="0" cellpadding="0" cellspacing="0" width="600">
+                <tr>
+                <td style="width: 600px;">
+                <![endif]-->
+
+                <!-- 
+                  tw: bg-white max-w-2xl rounded-xl border border-gray-200
+                  NOTE: box-shadow (tw: shadow-lg) is NOT supported in email.
+                -->
+                <table class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; width: 100%; max-width: 600px; margin: 0 auto; border-radius: 12px; border-collapse: collapse; overflow: hidden; border: 1px solid #e5e7eb;">
                     <!-- Header -->
                     <tr>
-                        <td class="header">
-                             <!-- Optional: Add a logo URL here -->
-                             <!-- <img src="YOUR_LOGO_URL" alt="Company Logo"> -->
-                             <h1>Test Invitation</h1>
+                        <!-- 
+                          tw: bg-blue-600 (via gradient) text-center
+                          --- EDITED: Padding decreased from 35px top to 30px top ---
+                        -->
+                        <td class="header-cell" align="center" bgcolor="#2563eb" style="background: linear-gradient(135deg, #2563eb, #3b82f6); color: #ffffff; padding: 10px 10px 5px; text-align: center;">
+                            <!-- Logo size decreased from 90 to 80 -->
+                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="HireWithUs Logo" width="50" style="width: 60px; height: auto; margin-bottom: 15px; border: 0;">
+                            <!-- tw: text-2xl font-semibold text-white -->
+                            <h2 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 600;">
+                              Invitation to Test - HireWithUs
+                            </h2>
                         </td>
                     </tr>
                     <!-- Content -->
                     <tr>
-                        <td class="content">
-                            <h2>Hello,</h2>
-                            <p>You have been invited to take the ${testType === 'coding' ? 'Coding' : 'Aptitude'} test titled "<b>${testTitle}</b>".</p>
-                            <p>The test window is from <strong>${new Date(startTime).toLocaleString()}</strong> to <strong>${new Date(endTime).toLocaleString()}</strong>.</p>
-
-                            <div class="important">
-                                <strong>Important:</strong> This test requires a secure desktop application for proctoring and execution. Please ensure you are on a compatible computer before proceeding.
-                            </div>
-
-                            <p>Please use the button below to go to the download page where you can get the application and access token to start your test.</p>
-
-                            <table class="button-container" width="100%" border="0" cellspacing="0" cellpadding="0">
+                        <!-- 
+                          tw: p-8 md:p-10 text-gray-700 text-base leading-7
+                        -->
+                        <td class="content-cell" style="padding: 35px 40px; color: #374151; line-height: 1.7; font-size: 15px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                            <!-- tw: text-lg font-semibold text-gray-900 -->
+                            <p style="margin: 0 0 16px; font-size: 16px;"><b style="/* tw: text-gray-900 */ color: #111827;">Hello,</b></p>
+                            <!-- tw: mb-4 -->
+                            <p style="margin: 0 0 16px;">You have been invited to take the <strong style="/* tw: text-gray-900 */ color: #111827;">${testType === 'coding' ? 'Coding' : 'Aptitude'}</strong> test titled "<strong style="/* tw: text-gray-900 */ color: #111827;">${testTitle}</strong>".</p>
+                            
+                            <!-- 
+                              tw: bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg my-6
+                            -->
+                            <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="/* tw: bg-blue-50 */ background-color: #eff6ff; /* tw: border-l-4 border-blue-500 */ border-left: 4px solid #3b82f6; /* tw: rounded-lg */ border-radius: 8px; /* tw: my-6 */ margin: 24px 0;">
                                 <tr>
-                                    <td align="center">
-                                        <a href="${testLink}" target="_blank" class="button">Download App & Get Token</a>
+                                    <!-- tw: p-5 -->
+                                    <td style="padding: 20px;">
+                                        <strong style="/* tw: text-blue-800 */ color: #1e40af; display: block; margin-bottom: 4px;">Test Window:</strong>
+                                        <span style="/* tw: text-blue-700 */ color: #1d4ed8;">
+                                          ${new Date(startTime).toLocaleString()} — ${new Date(endTime).toLocaleString()}
+                                        </span>
                                     </td>
                                 </tr>
                             </table>
-                            <div class="token-info">
-                                <strong>Instructions:</strong>
-                                <ol>
-                                    <li>Click the button above to visit the download page.</li>
-                                    <li>Download and install the secure test application.</li>
-                                    <li>Copy the unique access token displayed on the download page.</li>
-                                    <li>Launch the application and paste the token when prompted to begin your test.</li>
-                                </ol>
-                            </div>
 
-                            <p>Good luck!</p>
-                            <p>Sincerely,<br>The Hiring Team</p>
+                            <!-- 
+                              tw: bg-red-50 border-l-4 border-red-500 p-4 rounded-lg my-6
+                              --- EDITED SECTION ---
+                            -->
+                            <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="/* tw: bg-red-50 */ background-color: #fef2f2; /* tw: border-l-4 border-red-500 */ border-left: 4px solid #ef4444; /* tw: rounded-lg */ border-radius: 8px; /* tw: my-6 */ margin: 24px 0;">
+                                <tr>
+                                    <!-- tw: p-5 -->
+                                    <td style="padding: 20px; /* tw: text-red-700 */ color: #b91c1c;">
+                                        <strong style="/* tw: text-red-800 */ color: #991b1b; display: block; margin-bottom: 8px;">Important Notes:</strong>
+                                        <span style="display: block; margin-bottom: 8px;">
+                                          This test requires a secure desktop application. Please ensure you are on a compatible computer before proceeding.
+                                        </span>
+                                        <span style="display: block;">
+                                          Please download the application and run a system test at least **one hour before** your test commencement time.
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Button -->
+                            <!-- tw: text-center my-8 -->
+                            <table class="button-container" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 30px 0; text-align: center;">
+                                <tr>
+                                    <td align="center">
+                                        <!-- 
+                                          tw: bg-blue-600 text-white font-bold py-3 px-6 rounded-lg text-decoration-none
+                                        -->
+                                        <a href="${testLink}" target="_blank" class="btn" bgcolor="#2563eb" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                                          Download App & Get Token
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- 
+                              tw: bg-gray-50 border border-gray-200 p-5 rounded-lg
+                            -->
+                            <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="/* tw: bg-gray-50 */ background-color: #f9fafb; /* tw: border border-gray-200 */ border: 1px solid #e5e7eb; /* tw: rounded-lg */ border-radius: 8px;">
+                                <tr>
+                                    <!-- tw: p-5 text-sm -->
+                                    <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 20px; font-size: 14px; /* tw: text-gray-600 */ color: #4b5563;">
+                                        <strong style="/* tw: text-gray-800 */ color: #1f2937; display: block; margin-bottom: 12px;">Instructions:</strong>
+                                        <!-- tw: list-decimal list-inside space-y-2 -->
+                                        <ol style="margin: 0; padding-left: 20px;">
+                                            <li style="margin-bottom: 8px;">Click the button above to visit the download page.</li>
+                                            <li style="margin-bottom: 8px;">Download and install the secure test application.</li>
+                                            <li style="margin-bottom: 8px;">Copy the unique access token displayed on the page.</li>
+                                            <li style="margin-bottom: 0;">Launch the application and paste the token to begin.</li>
+                                        </ol>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- tw: mt-8 -->
+                            <p style="margin: 16px 0; margin-top: 30px;">Good luck!</p>
+                            <p style="margin: 16px 0 0;">Sincerely,<br><strong style="/* tw: text-gray-900 */ color: #111827;">The HireWithUs Team</strong></p>
                         </td>
                     </tr>
-                    <!-- Footer -->
+                    <!-- 
+                      Footer 
+                      --- EDITED SECTION ---
+                    -->
                     <tr>
-                        <td class="footer">
-                            &copy; ${new Date().getFullYear()} Your Company Name. All rights reserved.
+                        <!-- 
+                          tw: bg-gray-50 border-t border-gray-200
+                        -->
+                        <td class="footer" align="center" bgcolor="#f9fafb" style="background-color: #f9fafb; padding: 24px 20px; text-align: center; /* tw: text-xs text-gray-500 */ font-size: 12px; color: #6b7280; border-top: 1px solid #e5e7eb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                            
+                            <p style="margin: 0 0 12px;">
+                                Testing Partner: 
+                                <a href="https://testify-lac.com" target="_blank" class="footer-link" style="color: #2563eb; text-decoration: none; font-weight: bold; vertical-align: middle;">
+                                    Testify
+                                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo" width="18" style="width: 18px; height: auto; border: 0; vertical-align: middle; margin-left: 4px;">
+                                </a>
+                            </p>
+                            
+                            <!-- tw: mb-2 -->
+                            <p style="margin: 0 0 8px;">
+                              Need help? 
+                              <!-- tw: text-blue-600 hover:underline -->
+                              <a href="mailto:support@testify-lac.com" class="footer-link" style="color: #2563eb; text-decoration: none;">support@testify-lac.com</a>
+                              <span style="color: #cbd5e1; margin: 0 4px;">|</span>
+                              <a href="https://testify-lac.com" target="_blank" class="footer-link" style="color: #2563eb; text-decoration: none;">testify-lac.com</a>
+                            </p>
+                            
+                          <p style="margin: 12px 0 0;">&copy; ${new Date().getFullYear()} | Testify-HireWithUS. All rights reserved.</p>
+                          
                         </td>
                     </tr>
                 </table>
+                
+                <!--[if mso | IE]>
+                </td>
+                </tr>
+                </table>
+                <![endif]-->
+
             </td>
         </tr>
     </table>
 </body>
 </html>
+
+
                  `
              };
             await sendEmailWithSES(mailOptions);
@@ -11705,5 +11827,4 @@ app.post('/api/public/upload-image', async (req, res) => {
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-
 
