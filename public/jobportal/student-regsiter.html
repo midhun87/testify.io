@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration - Job Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <!-- Include jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Include Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Include Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .form-input {
+            width: 100%; border-radius: 0.5rem; border: 1px solid #D1D5DB; padding: 0.75rem 1rem; transition: all 0.2s;
+        }
+        .form-input:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); }
+        /* Select2 Customization */
+        .select2-container--default .select2-selection--single { height: calc(2.25rem + 2px + 0.75rem * 2); border-radius: 0.5rem; border: 1px solid #D1D5DB; padding-top: 0.75rem; padding-bottom: 0.75rem; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 1.5rem; padding-left: 1rem; color: #374151; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: calc(2.25rem + 0.75rem * 2); }
+        .select2-container--default .select2-selection--single .select2-selection__placeholder { color: #9CA3AF; }
+        .select2-dropdown { border-radius: 0.5rem; border: 1px solid #D1D5DB; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .select2-search--dropdown .select2-search__field { border-radius: 0.375rem; border: 1px solid #D1D5DB; }
+        .select2-results__option { padding: 0.75rem 1rem; }
+        .select2-results__option--highlighted[aria-selected] { background-color: #e0e7ff; color: #4338ca; }
+         #message { transition: opacity 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="w-full max-w-md">
+        <div class="bg-white shadow-xl rounded-2xl p-8">
+            <div class="text-center mb-8">
+                <img class="h-12 w-auto mx-auto mb-4" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="Portal Logo">
+                <h1 class="text-2xl font-bold text-gray-800">Create Student Account</h1>
+                <p class="text-sm text-gray-500 mt-1">Find your next opportunity.</p>
+            </div>
+
+            <form id="register-form" class="space-y-5">
+                <div>
+                    <label for="fullName" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                    <input id="fullName" name="fullName" type="text" required class="form-input" placeholder="Your Name">
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <input id="email" name="email" type="email" required class="form-input" placeholder="you@example.com">
+                </div>
+                <div>
+                    <label for="college" class="block text-sm font-medium text-gray-700 mb-1">College</label>
+                    <select id="college" name="college" required class="form-input" style="width: 100%;" data-placeholder="Select your college">
+                        <option></option> <!-- Placeholder option -->
+                    </select>
+                </div>
+                 <div>
+                    <label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                    <input id="department" name="department" type="text" required class="form-input" placeholder="e.g., Computer Science">
+                </div>
+                 <div>
+                    <label for="rollNumber" class="block text-sm font-medium text-gray-700 mb-1">Roll Number / ID</label>
+                    <input id="rollNumber" name="rollNumber" type="text" required class="form-input" placeholder="Your University ID">
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input id="password" name="password" type="password" required class="form-input" placeholder="Create a strong password">
+                </div>
+                <div>
+                    <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                    <input id="confirmPassword" name="confirmPassword" type="password" required class="form-input" placeholder="Re-enter your password">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="submit-btn" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                        Register
+                    </button>
+                </div>
+
+                 <!-- Message Area -->
+                 <div id="message" class="mt-4 text-center text-sm opacity-0"></div>
+
+            </form>
+
+            <p class="mt-6 text-center text-sm text-gray-600">
+                Already have an account?
+                <a href="student-login.html" class="font-medium text-indigo-600 hover:text-indigo-500">
+                    Log in here
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            const collegeSelect = $('#college');
+            const messageDiv = $('#message');
+            const submitBtn = $('#submit-btn');
+
+            // Initialize Select2
+            collegeSelect.select2({
+                placeholder: "Select your college",
+                allowClear: true,
+                width: 'resolve' // need this for Tailwind responsiveness
+            });
+
+            // Fetch colleges from the backend
+            async function fetchColleges() {
+                try {
+                    // This endpoint needs to return ALL colleges added by ANY moderator
+                    const response = await fetch('/api/public/colleges');
+                    if (!response.ok) {
+                        throw new Error('Failed to load colleges.');
+                    }
+                    const colleges = await response.json();
+
+                    // Sort colleges alphabetically
+                    colleges.sort((a, b) => a.collegeName.localeCompare(b.collegeName));
+
+                    // Populate the dropdown
+                    colleges.forEach(college => {
+                        const option = new Option(college.collegeName, college.collegeName, false, false);
+                        collegeSelect.append(option);
+                    });
+                    collegeSelect.trigger('change'); // Notify Select2 of new options
+
+                } catch (error) {
+                    console.error("Error fetching colleges:", error);
+                    showMessage(`Error loading colleges: ${error.message}`, 'error');
+                    // Optionally disable the dropdown or form
+                    collegeSelect.prop('disabled', true);
+                }
+            }
+
+            fetchColleges();
+
+            // Handle form submission
+            $('#register-form').on('submit', async function(e) {
+                e.preventDefault();
+                messageDiv.text('').removeClass('text-red-600 text-green-600').css('opacity', 0);
+                submitBtn.prop('disabled', true).text('Registering...');
+
+                const password = $('#password').val();
+                const confirmPassword = $('#confirmPassword').val();
+
+                if (password !== confirmPassword) {
+                    showMessage('Passwords do not match.', 'error');
+                    submitBtn.prop('disabled', false).text('Register');
+                    return;
+                }
+
+                const formData = {
+                    fullName: $('#fullName').val(),
+                    email: $('#email').val(),
+                    college: collegeSelect.val(),
+                    department: $('#department').val(),
+                    rollNumber: $('#rollNumber').val(),
+                    password: password,
+                };
+
+                try {
+                    // This is the new endpoint for student registration
+                    const response = await fetch('/api/student/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.message || 'Registration failed.');
+                    }
+
+                    showMessage('Registration successful! Redirecting to login...', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'student-login.html';
+                    }, 2000);
+
+                } catch (error) {
+                    showMessage(`Error: ${error.message}`, 'error');
+                    submitBtn.prop('disabled', false).text('Register');
+                }
+            });
+
+             // Helper function to display messages
+            function showMessage(msg, type = 'info') {
+                 messageDiv.text(msg)
+                           .removeClass('text-red-600 text-green-600')
+                           .addClass(type === 'error' ? 'text-red-600' : (type === 'success' ? 'text-green-600' : 'text-gray-600'))
+                           .css('opacity', 1);
+            }
+        });
+    </script>
+</body>
+</html>

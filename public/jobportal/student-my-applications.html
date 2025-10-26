@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Applications - Student Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .status-badge { display: inline-block; padding: 0.25em 0.6em; font-size: 0.75rem; font-weight: 600; line-height: 1; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: 0.375rem; }
+        .status-Applied { background-color: #DBEAFE; color: #1E40AF; } /* blue */
+        .status-UnderReview { background-color: #FEF3C7; color: #92400E; } /* yellow */
+        .status-Interview { background-color: #E0E7FF; color: #4338CA; } /* indigo */
+        .status-Shortlisted { background-color: #FEF3C7; color: #92400E; } /* yellow */
+        .status-Hired { background-color: #D1FAE5; color: #065F46; } /* green */
+        .status-Rejected { background-color: #FEE2E2; color: #991B1B; } /* red */
+        .status-Received { background-color: #DBEAFE; color: #1E40AF; } /* blue */
+        .status-Default { background-color: #E5E7EB; color: #4B5563; } /* gray */
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Header Navigation (Same as Job Board) -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                     <img class="h-8 w-auto" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="Portal Logo">
+                     <span class="ml-3 font-bold text-xl text-gray-800">Student Job Portal</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="student-job-board.html" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-100">Job Board</a>
+                    <a href="student-my-applications.html" class="px-3 py-2 rounded-md text-sm font-medium text-white bg-indigo-600">My Applications</a>
+                    <!-- User Menu Dropdown -->
+                    <div class="relative">
+                        <button id="user-menu-button" class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                             <span id="user-name" class="mr-2 text-gray-700 font-medium">User</span>
+                            <svg class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </button>
+                        <div id="user-menu" class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                            <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="py-10">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-6 px-4 sm:px-0">My Job Applications</h1>
+
+            <div id="applications-container" class="space-y-6">
+                <!-- Loading State -->
+                <div id="loading-state" class="text-center py-16">
+                    <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">...</svg> <!-- SVG same as job board -->
+                    <p class="mt-4 text-lg font-medium text-gray-700">Loading your applications...</p>
+                </div>
+
+                 <!-- Error State -->
+                 <div id="error-state" class="hidden text-center py-16 bg-white rounded-lg shadow"></div>
+
+                 <!-- No Applications State -->
+                 <div id="no-apps-state" class="hidden text-center py-16 bg-white rounded-lg shadow">
+                     <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">...</svg> <!-- SVG same as job board -->
+                    <h3 class="mt-4 text-lg font-semibold text-gray-900">No Applications Found</h3>
+                    <p class="mt-2 text-sm text-gray-500">You haven't applied for any jobs yet. Check the Job Board!</p>
+                    <a href="student-job-board.html" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                        Find Jobs
+                    </a>
+                 </div>
+
+                 <!-- Application Cards will be appended here -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const appsContainer = document.getElementById('applications-container');
+            const loadingState = document.getElementById('loading-state');
+            const errorState = document.getElementById('error-state');
+            const noAppsState = document.getElementById('no-apps-state');
+            const userNameEl = document.getElementById('user-name');
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userMenu = document.getElementById('user-menu');
+            const logoutButton = document.getElementById('logout-button');
+
+             // --- Authentication Check ---
+             const token = localStorage.getItem('studentToken');
+             const userString = localStorage.getItem('studentUser');
+             if (!token || !userString) {
+                 window.location.href = 'student-login.html';
+                 return;
+             }
+             try {
+                 const user = JSON.parse(userString);
+                 userNameEl.textContent = user.fullName || 'Student';
+             } catch (e) {
+                 localStorage.clear();
+                 window.location.href = 'student-login.html';
+                 return;
+             }
+
+             // --- User Menu Logic ---
+            userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
+            logoutButton.addEventListener('click', () => {
+                localStorage.removeItem('studentToken');
+                localStorage.removeItem('studentUser');
+                window.location.href = 'student-login.html';
+            });
+            document.addEventListener('click', (event) => {
+                if (!userMenuButton.contains(event.target) && !userMenu.contains(event.target)) {
+                    userMenu.classList.add('hidden');
+                }
+            });
+
+            // --- Fetch Applications ---
+            try {
+                // Endpoint to fetch applications specific to the logged-in student
+                const response = await fetch('/api/student/applications', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.message || 'Could not load applications.');
+                }
+
+                const applications = await response.json();
+                loadingState.style.display = 'none';
+
+                if (applications.length === 0) {
+                    noAppsState.classList.remove('hidden');
+                } else {
+                    applications.forEach(app => {
+                        const appCard = document.createElement('div');
+                        appCard.className = 'bg-white shadow rounded-lg overflow-hidden';
+
+                        const appliedDate = new Date(app.appliedAt).toLocaleDateString();
+                        const deadline = app.jobDeadline ? new Date(app.jobDeadline) : null;
+                        const isEditable = deadline && new Date() < deadline;
+                        const statusKey = app.status ? app.status.replace(/\s+/g, '') : 'Default'; // Create CSS class-friendly key
+
+                        appCard.innerHTML = `
+                            <div class="p-5 sm:p-6">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                    <h3 class="text-lg font-semibold text-gray-900">${app.jobTitle || 'Job Title Unavailable'}</h3>
+                                    <span class="status-badge status-${statusKey} mt-2 sm:mt-0">${app.status || 'Applied'}</span>
+                                </div>
+                                <p class="mt-1 text-sm text-gray-500">Applied on: ${appliedDate}</p>
+                                ${deadline ? `<p class="mt-1 text-sm text-gray-500">Application Deadline: ${deadline.toLocaleDateString()}</p>` : ''}
+                            </div>
+                            <div class="bg-gray-50 px-5 sm:px-6 py-3 flex justify-end">
+                                <a href="student-edit-application.html?applicationId=${app.applicationId}"
+                                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm ${isEditable ? 'text-white bg-indigo-600 hover:bg-indigo-700' : 'text-gray-500 bg-gray-200 cursor-not-allowed'}"
+                                   ${!isEditable ? 'aria-disabled="true" onclick="return false;"' : ''}>
+                                    ${isEditable ? 'Edit Application' : 'Deadline Passed'}
+                                </a>
+                            </div>
+                        `;
+                        appsContainer.appendChild(appCard);
+                    });
+                }
+
+            } catch (error) {
+                console.error("Error fetching applications:", error);
+                loadingState.style.display = 'none';
+                errorState.classList.remove('hidden');
+                errorState.innerHTML = `<p class="text-red-600 font-semibold">Error loading applications: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

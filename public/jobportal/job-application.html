@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply for Job - Student Job Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <!-- Include Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Lighter blue-gray background */
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            border-radius: 0.5rem; /* rounded-lg */
+            border: 1px solid #cbd5e1; /* cool-gray-300 */
+            padding: 0.75rem 1rem; /* Consistent padding */
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background-color: white;
+            color: #1f2937; /* gray-800 */
+            font-size: 0.875rem; /* text-sm */
+            line-height: 1.25rem;
+        }
+         /* Smaller inputs for dynamic blocks */
+        .dynamic-block .form-input, .dynamic-block .form-select, .dynamic-block .form-textarea {
+             font-size: 0.8rem; /* Slightly smaller text */
+             padding: 0.6rem 0.8rem; /* Reduced padding */
+        }
+        .dynamic-block .form-label {
+             font-size: 0.75rem; /* text-xs */
+        }
+
+        .form-input::placeholder, .form-textarea::placeholder {
+            color: #9ca3af; /* gray-400 */
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* font-medium */
+            color: #374151; /* gray-700 */
+            margin-bottom: 0.25rem; /* mb-1 */
+        }
+        .form-label span.required { color: #dc2626; margin-left: 2px; } /* red-600 */
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: #4f46e5; /* indigo-600 */
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); /* ring-indigo-300 ring-opacity-20 */
+        }
+        .form-input[readonly], .form-select[readonly] {
+            background-color: #f3f4f6; /* gray-100 */
+            cursor: not-allowed;
+            border-color: #e5e7eb; /* gray-200 */
+        }
+
+        .form-textarea { min-height: 120px; }
+        .dynamic-block .form-textarea { min-height: 80px; } /* Smaller textarea in blocks */
+
+
+        .file-input-wrapper { display: flex; align-items: center; gap: 0.75rem; }
+        .file-input-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1rem;
+            background-color: #eef2ff; /* indigo-100 */
+            color: #4338ca; /* indigo-700 */
+            border-radius: 0.5rem; /* rounded-lg */
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            border: 1px solid #c7d2fe; /* indigo-200 */
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .dynamic-block .file-input-label {
+             padding: 0.5rem 0.8rem; /* Smaller padding */
+             font-size: 0.8rem;
+        }
+        .file-input-label:hover { background-color: #c7d2fe; color: #3730a3; } /* indigo-200, indigo-800 */
+        .file-input-label i { font-size: 0.875rem; } /* Consistent icon size */
+         .dynamic-block .file-input-label i { font-size: 0.75rem; }
+
+
+        .file-name-display {
+            font-size: 0.875rem; /* text-sm */
+            color: #4b5563; /* gray-600 */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 200px; /* Adjust as needed */
+            display: inline-block;
+            vertical-align: middle;
+        }
+         .dynamic-block .file-name-display {
+             font-size: 0.8rem;
+             max-width: 150px; /* Shorter display in blocks */
+         }
+        .file-name-display:empty::before {
+             content: "No file chosen";
+             color: #9ca3af; /* gray-400 */
+             font-style: italic;
+         }
+
+        #message, #loading-message, #submit-message { transition: opacity 0.3s ease-in-out; }
+
+        .button-spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            width: 1rem;
+            height: 1rem;
+            animation: spin 0.6s linear infinite;
+        }
+
+        section {
+            margin-bottom: 2.5rem; /* Increased spacing */
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #e5e7eb; /* gray-200 */
+        }
+        section:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .section-header {
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 600; /* font-semibold */
+            color: #111827; /* gray-900 */
+            margin-bottom: 1.5rem;
+             display: flex;
+             align-items: center;
+             gap: 0.7rem; /* Increased gap */
+        }
+        .section-header i {
+             color: #4f46e5; /* Icon color */
+             font-size: 1.1rem; /* Slightly larger icon */
+        }
+
+        .dynamic-block {
+            padding: 1rem 1.25rem;
+            border: 1px solid #e5e7eb; /* gray-200 */
+            border-radius: 0.75rem; /* More rounded */
+            background-color: #ffffff; /* White background */
+            position: relative;
+            margin-bottom: 1rem;
+             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.07), 0 1px 2px -1px rgba(0, 0, 0, 0.04); /* Adjusted shadow */
+        }
+        .remove-btn {
+            position: absolute; top: 0.6rem; right: 0.6rem;
+            background: #fee2e2; /* red-100 */
+            border: none;
+            color: #dc2626; /* red-600 */
+            cursor: pointer;
+            width: 1.5rem; height: 1.5rem;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; line-height: 1;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .remove-btn:hover { background-color: #fecaca; color: #b91c1c; } /* red-200, red-700 */
+
+        .add-button {
+             display: inline-flex;
+             align-items: center;
+             gap: 0.3rem;
+             padding: 0.5rem 1rem;
+             font-size: 0.875rem;
+             font-weight: 500;
+             color: #4338ca; /* indigo-700 */
+             background-color: #eef2ff; /* indigo-100 */
+             border: 1px solid #c7d2fe; /* indigo-200 */
+             border-radius: 0.5rem;
+             cursor: pointer;
+             transition: all 0.2s;
+        }
+        .add-button:hover { background-color: #c7d2fe; color: #3730a3; } /* indigo-200, indigo-800 */
+        .add-button i { font-size: 0.8rem; }
+
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        #application-form { display: none; }
+        #loading-state { text-align: center; padding: 4rem 0; }
+        .loading-spinner svg { margin: 0 auto 1rem; }
+         /* Message Box Styles */
+         .message-box {
+             padding: 1rem;
+             margin-bottom: 1.5rem;
+             border-radius: 0.5rem;
+             font-size: 0.875rem;
+             font-weight: 500;
+             display: flex;
+             align-items: center;
+             gap: 0.75rem;
+             opacity: 0; /* Hidden by default */
+             max-height: 0;
+             overflow: hidden;
+             transition: opacity 0.3s ease-in-out, max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+         }
+         .message-box.show {
+             opacity: 1;
+             max-height: 100px; /* Adjust as needed */
+             margin-top: 1rem; /* Add margin when visible */
+             margin-bottom: 1.5rem;
+         }
+         .message-box.error { background-color: #fee2e2; border: 1px solid #fecaca; color: #b91c1c; } /* red */
+         .message-box.success { background-color: #dcfce7; border: 1px solid #bbf7d0; color: #15803d; } /* green */
+         .message-box.info { background-color: #e0f2fe; border: 1px solid #bae6fd; color: #0369a1; } /* blue */
+         .message-box i { font-size: 1.1rem; }
+
+         .hint-text {
+            font-size: 0.75rem; /* text-xs */
+            color: #6b7280; /* gray-500 */
+            margin-top: 0.25rem; /* mt-1 */
+         }
+
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-5xl mx-auto bg-white shadow-xl rounded-2xl p-6 md:p-10"> <!-- Wider container -->
+        <!-- Header -->
+        <div class="text-center mb-10 border-b pb-8 border-gray-200"> <!-- Increased spacing -->
+            <img class="h-14 w-auto mx-auto mb-4" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="Portal Logo">
+            <h1 id="job-title-header" class="text-3xl md:text-4xl font-bold text-gray-800">Apply for Job</h1>
+            <p id="job-details-header" class="text-base text-gray-500 mt-3">Loading job details...</p> <!-- Larger text -->
+            <!-- Message Area for Loading Errors -->
+            <div id="loading-message" class="message-box error mt-4">
+                 <i class="fas fa-exclamation-triangle"></i>
+                 <span class="message-text"></span>
+            </div>
+        </div>
+
+        <!-- Loading State Indicator -->
+        <div id="loading-state" class="loading-spinner">
+            <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <p class="mt-3 text-gray-600 font-medium">Loading Application Form...</p>
+        </div>
+
+        <!-- Application Form (Initially Hidden) -->
+        <form id="application-form" class="space-y-10" enctype="multipart/form-data"> <!-- Increased space-y -->
+
+             <!-- Message Area for Submission Feedback -->
+             <div id="submit-message" class="message-box">
+                 <i class="message-icon fas"></i>
+                 <span class="message-text"></span>
+             </div>
+
+            <!-- Personal Information Section -->
+            <section>
+                <h2 class="section-header"><i class="fas fa-user-circle"></i>Personal Information</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6"> <!-- Increased gap-y -->
+                    <div>
+                        <label for="firstName" class="form-label">First Name <span class="required">*</span></label>
+                        <input id="firstName" name="firstName" type="text" required class="form-input" placeholder="e.g., Jane">
+                    </div>
+                    <div>
+                        <label for="lastName" class="form-label">Last Name <span class="required">*</span></label>
+                        <input id="lastName" name="lastName" type="text" required class="form-input" placeholder="e.g., Doe">
+                    </div>
+                    <div>
+                        <label for="email" class="form-label">Email Address <span class="required">*</span></label>
+                        <input id="email" name="email" type="email" required class="form-input" placeholder="Your Email" readonly>
+                    </div>
+                    <div>
+                        <label for="phone" class="form-label">Phone Number <span class="required">*</span></label>
+                        <input id="phone" name="phone" type="tel" required class="form-input" placeholder="e.g., +91 9876543210">
+                    </div>
+                    <div>
+                        <label for="college" class="form-label">College <span class="required">*</span></label>
+                        <input id="college" name="college" type="text" required class="form-input" placeholder="Your College" readonly>
+                    </div>
+                    <div>
+                        <label for="department" class="form-label">Department <span class="required">*</span></label>
+                        <input id="department" name="department" type="text" required class="form-input" placeholder="e.g., Computer Science Engineering">
+                    </div>
+                    <div>
+                        <label for="rollNumber" class="form-label">Roll Number / ID <span class="required">*</span></label>
+                        <input id="rollNumber" name="rollNumber" type="text" required class="form-input" placeholder="Your University ID Number">
+                    </div>
+                    <!-- Passport Photo -->
+                     <div class="md:col-span-2 flex flex-col sm:flex-row items-start sm:items-center gap-6 pt-2">
+                         <div class="flex-shrink-0">
+                            <label class="form-label block mb-2">Passport Photo <span class="required">*</span></label>
+                            <img id="passportPhotoPreview" src="https://placehold.co/96x96/E0E7FF/4338CA?text=Photo" alt="Photo Preview" class="h-24 w-24 rounded-lg object-cover bg-indigo-100 border border-indigo-200 shadow-sm">
+                         </div>
+                         <div class="flex-grow w-full">
+                             <div class="file-input-wrapper mt-1">
+                                <input type="file" id="passportPhoto" name="passportPhoto" accept="image/jpeg, image/png, image/gif" required class="hidden">
+                                <label for="passportPhoto" class="file-input-label"><i class="fas fa-camera"></i>Choose Photo</label>
+                                <span id="passportPhotoName" class="file-name-display" title=""></span>
+                            </div>
+                            <p class="hint-text">Accepts JPG, PNG, GIF. Max 5MB.</p>
+                         </div>
+                     </div>
+                </div>
+            </section>
+
+            <!-- Education -->
+            <section>
+                <h2 class="section-header"><i class="fas fa-graduation-cap"></i>Education</h2>
+                 <p class="text-sm text-gray-500 -mt-4 mb-5">Please add at least one educational qualification.<span class="required">*</span></p>
+                <div id="education-container" class="space-y-4">
+                    <!-- Dynamic education blocks will be added here -->
+                </div>
+                <button type="button" id="add-education-btn" class="add-button mt-4">
+                    <i class="fas fa-plus"></i> Add Education
+                </button>
+            </section>
+
+            <!-- Experience -->
+            <section>
+                 <h2 class="section-header"><i class="fas fa-briefcase"></i>Work Experience (Optional)</h2>
+                 <p class="text-sm text-gray-500 -mt-4 mb-5">Include internships or relevant work experience.</p>
+                <div id="experience-container" class="space-y-4">
+                    <!-- Dynamic experience blocks will be added here -->
+                </div>
+                <button type="button" id="add-experience-btn" class="add-button mt-4">
+                    <i class="fas fa-plus"></i> Add Experience
+                </button>
+            </section>
+
+             <!-- Certifications -->
+            <section>
+                 <h2 class="section-header"><i class="fas fa-certificate"></i>Global Certifications (Optional)</h2>
+                 <p class="text-sm text-gray-500 -mt-4 mb-5">List any relevant professional certifications.</p>
+                <div id="certification-container" class="space-y-4">
+                    <!-- Dynamic certification blocks will be added here -->
+                </div>
+                <button type="button" id="add-certification-btn" class="add-button mt-4">
+                    <i class="fas fa-plus"></i> Add Certification
+                </button>
+            </section>
+
+             <!-- Extracurricular Activities -->
+            <section>
+                 <h2 class="section-header"><i class="fas fa-users-rays"></i>Extracurricular Activities (Optional)</h2>
+                 <p class="text-sm text-gray-500 -mt-4 mb-5">Briefly mention significant activities, roles, or achievements.</p>
+                 <div>
+                    <label for="extracurricular" class="form-label sr-only">Extracurricular Activities</label>
+                    <textarea id="extracurricular" name="extracurricular" rows="4" class="form-textarea" placeholder="e.g., President of Coding Club (2023-24), Winner of Hackathon XYZ, Volunteer at ABC Org..."></textarea>
+                </div>
+            </section>
+
+
+            <!-- Documents & Links -->
+            <section>
+                 <h2 class="section-header"><i class="fas fa-paperclip"></i>Documents & Links</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6"> <!-- Increased gap-y -->
+                    <!-- Resume -->
+                    <div>
+                        <label class="form-label">Resume/CV (PDF) <span class="required">*</span></label>
+                        <div class="file-input-wrapper mt-1">
+                            <input type="file" id="resume" name="resume" accept=".pdf" required class="hidden">
+                            <label for="resume" class="file-input-label"><i class="fas fa-file-pdf"></i>Choose Resume</label>
+                            <span id="resumeName" class="file-name-display" title=""></span>
+                        </div>
+                         <p class="hint-text">PDF format only. Max 5MB.</p>
+                    </div>
+                    <!-- Govt ID -->
+                    <div>
+                        <label class="form-label">Government ID (Optional)</label>
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-1">
+                            <select id="govtIdType" name="govtIdType" class="form-select flex-shrink-0 w-full sm:w-auto">
+                                <option value="">Select ID Type</option>
+                                <option value="Aadhar">Aadhar Card</option>
+                                <option value="PAN">PAN Card</option>
+                                <option value="Passport">Passport</option>
+                                <option value="DrivingLicense">Driving License</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <div class="file-input-wrapper flex-grow">
+                                <input type="file" id="govtId" name="govtId" accept="image/*,.pdf" class="hidden">
+                                <label for="govtId" class="file-input-label"><i class="fas fa-id-card"></i>Upload ID</label>
+                                <span id="govtIdName" class="file-name-display" title=""></span>
+                            </div>
+                        </div>
+                        <p class="hint-text">PDF or Image. Max 5MB.</p>
+                    </div>
+                    <!-- Links -->
+                    <div class="md:col-span-2 space-y-5 pt-4"> <!-- Increased space-y -->
+                        <div>
+                            <label for="linkedinUrl" class="form-label">LinkedIn Profile URL (Optional)</label>
+                            <input type="url" id="linkedinUrl" name="linkedinUrl" class="form-input" placeholder="https://linkedin.com/in/yourprofile">
+                        </div>
+                        <div>
+                            <label for="githubUrl" class="form-label">GitHub Profile URL (Optional)</label>
+                            <input type="url" id="githubUrl" name="githubUrl" class="form-input" placeholder="https://github.com/yourusername">
+                        </div>
+                        <div>
+                            <label for="portfolioUrl" class="form-label">Portfolio URL (Optional)</label>
+                            <input type="url" id="portfolioUrl" name="portfolioUrl" class="form-input" placeholder="https://yourportfolio.com">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Submit Button -->
+            <div class="pt-8 mt-10 border-t border-gray-300"> <!-- Increased spacing -->
+                <button type="submit" id="submit-btn" class="w-full md:w-auto inline-flex justify-center items-center py-3 px-10 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed">
+                    <span class="button-text">Submit Application</span>
+                    <span class="button-spinner hidden ml-2"></span>
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+    <script>
+        // --- Utility Functions for Dynamic Sections ---
+        let educationCounter = 0;
+        let experienceCounter = 0;
+        let certificationCounter = 0; // New counter
+
+        // Function to create and add an education block
+        function addEducationBlock(data = {}) {
+            educationCounter++;
+            const container = document.getElementById('education-container');
+            const div = document.createElement('div');
+            div.className = 'dynamic-block education-block';
+            div.dataset.index = educationCounter;
+            div.innerHTML = `
+                <button type="button" class="remove-btn" onclick="removeBlock(this)" aria-label="Remove education entry"><i class="fas fa-times"></i></button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                    <div>
+                        <label class="form-label">Type <span class="required">*</span></label>
+                        <select name="education_${educationCounter}_type" required class="form-select">
+                            <option value="">Select Type</option>
+                            <option value="High School">High School</option>
+                            <option value="Diploma">Diploma</option>
+                            <option value="Bachelor's">Bachelor's</option>
+                            <option value="Master's">Master's</option>
+                            <option value="PhD">PhD</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label">Institute Name <span class="required">*</span></label>
+                        <input type="text" name="education_${educationCounter}_institute" required class="form-input" placeholder="e.g., University Name">
+                    </div>
+                    <div>
+                        <label class="form-label">Stream/Major <span class="required">*</span></label>
+                        <input type="text" name="education_${educationCounter}_stream" required class="form-input" placeholder="e.g., B.Tech CSE">
+                    </div>
+                    <div>
+                        <label class="form-label">Score/GPA <span class="required">*</span></label>
+                        <input type="text" name="education_${educationCounter}_score" required class="form-input" placeholder="e.g., 8.5 CGPA or 85%">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="form-label">Certificate/Marksheet (Optional)</label>
+                        <div class="file-input-wrapper mt-1">
+                            <input type="file" id="education_certificate_${educationCounter}" name="education_certificate_${educationCounter}" accept="image/*,.pdf" class="hidden">
+                            <label for="education_certificate_${educationCounter}" class="file-input-label"><i class="fas fa-upload"></i> Upload File</label>
+                            <span id="education_certificate_name_${educationCounter}" class="file-name-display" title=""></span>
+                        </div>
+                        <p class="hint-text">PDF or Image. Max 5MB.</p>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+            addFileDisplayListener(`education_certificate_${educationCounter}`);
+        }
+
+        // Function to create and add an experience block
+        function addExperienceBlock(data = {}) {
+            experienceCounter++;
+            const container = document.getElementById('experience-container');
+            const div = document.createElement('div');
+            div.className = 'dynamic-block experience-block';
+            div.dataset.index = experienceCounter;
+            div.innerHTML = `
+                <button type="button" class="remove-btn" onclick="removeBlock(this)" aria-label="Remove experience entry"><i class="fas fa-times"></i></button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                    <div>
+                        <label class="form-label">Job Title <span class="required">*</span></label>
+                        <input type="text" name="experience_${experienceCounter}_title" required class="form-input" placeholder="e.g., Software Engineer Intern">
+                    </div>
+                    <div>
+                        <label class="form-label">Company Name <span class="required">*</span></label>
+                        <input type="text" name="experience_${experienceCounter}_company" required class="form-input" placeholder="e.g., Tech Corp">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="form-label">Description (Optional)</label>
+                        <textarea name="experience_${experienceCounter}_description" rows="2" class="form-textarea" placeholder="Describe your responsibilities..."></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="form-label">Experience/Relieving Letter (Optional)</label>
+                        <div class="file-input-wrapper mt-1">
+                            <input type="file" id="experience_certificate_${experienceCounter}" name="experience_certificate_${experienceCounter}" accept="image/*,.pdf" class="hidden">
+                            <label for="experience_certificate_${experienceCounter}" class="file-input-label"><i class="fas fa-upload"></i> Upload File</label>
+                            <span id="experience_certificate_name_${experienceCounter}" class="file-name-display" title=""></span>
+                        </div>
+                         <p class="hint-text">PDF or Image. Max 5MB.</p>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+            addFileDisplayListener(`experience_certificate_${experienceCounter}`);
+        }
+
+        // *** NEW *** Function to create and add a certification block
+        function addCertificationBlock(data = {}) {
+            certificationCounter++;
+            const container = document.getElementById('certification-container');
+            const div = document.createElement('div');
+            div.className = 'dynamic-block certification-block'; // New class
+            div.dataset.index = certificationCounter;
+            div.innerHTML = `
+                <button type="button" class="remove-btn" onclick="removeBlock(this)" aria-label="Remove certification entry"><i class="fas fa-times"></i></button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                    <div>
+                        <label class="form-label">Certification Name <span class="required">*</span></label>
+                        <input type="text" name="certification_${certificationCounter}_name" required class="form-input" placeholder="e.g., AWS Certified Cloud Practitioner">
+                    </div>
+                    <div>
+                        <label class="form-label">Issuing Provider <span class="required">*</span></label>
+                        <input type="text" name="certification_${certificationCounter}_provider" required class="form-input" placeholder="e.g., Amazon Web Services">
+                    </div>
+                    <div>
+                        <label class="form-label">Credential ID (Optional)</label>
+                        <input type="text" name="certification_${certificationCounter}_id" class="form-input" placeholder="e.g., ABC-123-XYZ">
+                    </div>
+                    <div>
+                        <label class="form-label">Date Issued (Optional)</label>
+                        <input type="date" name="certification_${certificationCounter}_date" class="form-input">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="form-label">Certificate File (Optional)</label>
+                        <div class="file-input-wrapper mt-1">
+                            <input type="file" id="certification_file_${certificationCounter}" name="certification_file_${certificationCounter}" accept="image/*,.pdf" class="hidden">
+                            <label for="certification_file_${certificationCounter}" class="file-input-label"><i class="fas fa-upload"></i> Upload Certificate</label>
+                            <span id="certification_file_name_${certificationCounter}" class="file-name-display" title=""></span>
+                        </div>
+                         <p class="hint-text">PDF or Image. Max 5MB.</p>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+            addFileDisplayListener(`certification_file_${certificationCounter}`);
+        }
+
+        // Generic function to remove any dynamic block
+        function removeBlock(button) {
+            button.closest(`.dynamic-block`).remove();
+        }
+
+        // Function to update the file name display when a file is selected
+        function addFileDisplayListener(inputId) {
+            const input = document.getElementById(inputId);
+            // Derive the span ID dynamically
+            const nameSpanId = inputId.replace(/certificate_|file_/, '') + '_name_' + inputId.match(/\d+$/)[0];
+            const nameSpan = document.getElementById(nameSpanId);
+
+            if (input && nameSpan) {
+                input.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        const fileName = e.target.files[0].name;
+                        nameSpan.textContent = fileName;
+                        nameSpan.title = fileName; // Tooltip for long names
+                    } else {
+                        nameSpan.textContent = '';
+                        nameSpan.title = '';
+                    }
+                });
+            } else {
+                 // console.warn(`Could not find input or span for ID: ${inputId} (Span ID tried: ${nameSpanId})`);
+            }
+        }
+
+
+        // Function to display messages (loading, success, error)
+         function showMessage(divElement, msg, type = 'info') {
+             const textSpan = divElement.querySelector('.message-text') || divElement; // Handle divs with/without inner span
+             const iconElement = divElement.querySelector('.message-icon');
+
+             textSpan.textContent = msg;
+             divElement.classList.remove('error', 'success', 'info', 'show'); // Reset classes
+             if (iconElement) iconElement.className = 'message-icon fas'; // Reset icon
+
+             if (!msg) {
+                 // Keep it hidden
+             } else {
+                 divElement.classList.add('show', type); // Add type and show classes
+                  if (iconElement) {
+                      if (type === 'error') iconElement.classList.add('fa-exclamation-triangle');
+                      else if (type === 'success') iconElement.classList.add('fa-check-circle');
+                      else iconElement.classList.add('fa-info-circle');
+                  }
+             }
+         }
+
+
+        // --- Main Page Logic ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            const applicationForm = document.getElementById('application-form');
+            const loadingStateDiv = document.getElementById('loading-state');
+            const loadingMessageDiv = document.getElementById('loading-message');
+            const submitMessageDiv = document.getElementById('submit-message');
+            const submitBtn = document.getElementById('submit-btn');
+            const btnText = submitBtn.querySelector('.button-text');
+            const btnSpinner = submitBtn.querySelector('.button-spinner');
+            const jobTitleHeader = document.getElementById('job-title-header');
+            const jobDetailsHeader = document.getElementById('job-details-header');
+            const emailInput = document.getElementById('email');
+            const collegeInput = document.getElementById('college');
+
+            let jobId = null;
+
+            // --- 1. Get Job ID from URL ---
+            const urlParams = new URLSearchParams(window.location.search);
+            jobId = urlParams.get('jobId');
+
+            if (!jobId) {
+                showMessage(loadingMessageDiv, 'Error: Job ID not found in URL.', 'error');
+                loadingStateDiv.style.display = 'none';
+                jobDetailsHeader.textContent = 'Invalid Job ID.';
+                return;
+            }
+
+            // --- 2. Fetch User Data and Job Details ---
+            const token = localStorage.getItem('studentToken');
+            const userString = localStorage.getItem('studentUser');
+
+            if (!token || !userString) {
+                showMessage(loadingMessageDiv, 'You must be logged in to apply. Redirecting...', 'error');
+                loadingStateDiv.style.display = 'none';
+                jobDetailsHeader.textContent = 'Please log in.';
+                return;
+            }
+
+            let user;
+            try {
+                user = JSON.parse(userString);
+                emailInput.value = user.email || '';
+                collegeInput.value = user.college || '';
+                if (user.fullName) {
+                    const nameParts = user.fullName.split(' ');
+                    document.getElementById('firstName').value = nameParts[0] || '';
+                    document.getElementById('lastName').value = nameParts.slice(1).join(' ') || '';
+                }
+                document.getElementById('department').value = user.department || '';
+                document.getElementById('rollNumber').value = user.rollNumber || '';
+                document.getElementById('phone').value = user.mobile || user.phone || '';
+
+            } catch (e) {
+                showMessage(loadingMessageDiv, 'Could not load your profile data. Please log in again.', 'error');
+                loadingStateDiv.style.display = 'none';
+                jobDetailsHeader.textContent = 'User data error.';
+                return;
+            }
+
+            // --- Fetch Job Details ---
+            try {
+                jobDetailsHeader.textContent = 'Checking job details...';
+                const jobRes = await fetch(`/api/public/jobs/${jobId}`);
+                const jobResult = await jobRes.json();
+
+                if (!jobRes.ok) {
+                    if (jobRes.status === 404) {
+                         throw new Error(jobResult.message || 'Job not found or the application deadline has passed.');
+                    } else {
+                         throw new Error(jobResult.message || `Failed to load job (Status: ${jobRes.status})`);
+                    }
+                }
+
+                const job = jobResult;
+                jobTitleHeader.textContent = `Apply for ${job.title || 'Job'}`;
+                jobDetailsHeader.textContent = `Deadline: ${new Date(job.applicationDeadline).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+
+                 if (!user.college || !job.eligibleColleges || !Array.isArray(job.eligibleColleges) || !job.eligibleColleges.includes(user.college)) {
+                    throw new Error(`Your college ('${user.college || 'N/A'}') is not listed as eligible for this job opening.`);
+                 }
+
+                addEducationBlock(); // Add default education block
+
+                showMessage(loadingMessageDiv, '', 'info');
+                loadingStateDiv.style.display = 'none';
+                applicationForm.style.display = 'block';
+
+            } catch (error) {
+                console.error("Error fetching job details or checking eligibility:", error);
+                showMessage(loadingMessageDiv, `Error: ${error.message}`, 'error');
+                loadingStateDiv.style.display = 'none';
+                jobDetailsHeader.textContent = 'Could not load job details or you are not eligible.';
+                 submitBtn.disabled = true;
+                 submitBtn.textContent = 'Application Unavailable';
+                 submitBtn.classList.add('bg-gray-400', 'hover:bg-gray-400'); // Style disabled button
+                 submitBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+            }
+
+            // --- Add Dynamic Section Listeners ---
+            document.getElementById('add-education-btn').addEventListener('click', () => addEducationBlock());
+            document.getElementById('add-experience-btn').addEventListener('click', () => addExperienceBlock());
+            document.getElementById('add-certification-btn').addEventListener('click', () => addCertificationBlock()); // New listener
+
+
+            // --- Add Listeners for Individual File Inputs ---
+            addFileDisplayListener('passportPhoto');
+            addFileDisplayListener('resume');
+            addFileDisplayListener('govtId');
+
+            // --- Passport Photo Preview ---
+            const passportPhotoInput = document.getElementById('passportPhoto');
+            const passportPhotoPreview = document.getElementById('passportPhotoPreview');
+            if(passportPhotoInput && passportPhotoPreview) {
+                passportPhotoInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        const file = e.target.files[0];
+                        if (file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = (event) => { passportPhotoPreview.src = event.target.result; }
+                            reader.readAsDataURL(file);
+                        } else {
+                            passportPhotoPreview.src = 'https://placehold.co/96x96/E0E7FF/4338CA?text=Photo';
+                        }
+                    } else {
+                         passportPhotoPreview.src = 'https://placehold.co/96x96/E0E7FF/4338CA?text=Photo';
+                    }
+                });
+            }
+
+            // --- 3. Handle Form Submission ---
+            applicationForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (document.querySelectorAll('.education-block').length === 0) {
+                    showMessage(submitMessageDiv, 'Please add at least one education entry.', 'error');
+                     document.getElementById('education-container').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return;
+                }
+
+                showMessage(submitMessageDiv, '', 'info');
+                submitBtn.disabled = true;
+                btnText.textContent = 'Submitting...';
+                btnSpinner.classList.remove('hidden');
+
+                const formData = new FormData(applicationForm);
+
+                // --- Consolidate Dynamic Sections into JSON ---
+                const educationData = Array.from(document.querySelectorAll('.education-block')).map(block => {
+                    const i = block.dataset.index;
+                    const data = {
+                        type: formData.get(`education_${i}_type`),
+                        institute: formData.get(`education_${i}_institute`),
+                        stream: formData.get(`education_${i}_stream`),
+                        score: formData.get(`education_${i}_score`),
+                    };
+                    formData.delete(`education_${i}_type`);
+                    formData.delete(`education_${i}_institute`);
+                    formData.delete(`education_${i}_stream`);
+                    formData.delete(`education_${i}_score`);
+                    return data;
+                });
+                formData.set('education', JSON.stringify(educationData));
+
+                const experienceData = Array.from(document.querySelectorAll('.experience-block')).map(block => {
+                    const i = block.dataset.index;
+                    const data = {
+                        title: formData.get(`experience_${i}_title`),
+                        company: formData.get(`experience_${i}_company`),
+                        description: formData.get(`experience_${i}_description`),
+                    };
+                    formData.delete(`experience_${i}_title`);
+                    formData.delete(`experience_${i}_company`);
+                    formData.delete(`experience_${i}_description`);
+                    return data;
+                });
+                formData.set('experiences', JSON.stringify(experienceData));
+
+                 // *** NEW *** Consolidate Certification Data
+                 const certificationData = Array.from(document.querySelectorAll('.certification-block')).map(block => {
+                     const i = block.dataset.index;
+                     const data = {
+                         name: formData.get(`certification_${i}_name`),
+                         provider: formData.get(`certification_${i}_provider`),
+                         credentialId: formData.get(`certification_${i}_id`),
+                         dateIssued: formData.get(`certification_${i}_date`),
+                     };
+                     formData.delete(`certification_${i}_name`);
+                     formData.delete(`certification_${i}_provider`);
+                     formData.delete(`certification_${i}_id`);
+                     formData.delete(`certification_${i}_date`);
+                     return data;
+                 });
+                 formData.set('certifications', JSON.stringify(certificationData)); // Add certifications JSON
+
+
+                // Ensure read-only fields are explicitly set
+                formData.set('email', emailInput.value);
+                formData.set('college', collegeInput.value);
+
+                // Log FormData for debugging (optional)
+                // console.log("--- Sending FormData ---");
+                // for (let [key, value] of formData.entries()) {
+                //      console.log(`${key}: ${value instanceof File ? `File: ${value.name}` : value}`);
+                // }
+                // console.log("-----------------------");
+
+
+                try {
+                    const response = await fetch(`/api/student/apply/${jobId}`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        if (response.status === 400 && result.message.includes('already applied')) {
+                             throw new Error('You have already applied for this job.');
+                        } else if (response.status === 403 && result.message.includes('deadline')) {
+                             throw new Error('The application deadline has passed.');
+                         } else {
+                            throw new Error(result.message || 'Application submission failed.');
+                         }
+                    }
+
+                    showMessage(submitMessageDiv, 'Application submitted successfully! Redirecting...', 'success');
+                    applicationForm.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = true);
+                    setTimeout(() => {
+                        window.location.href = 'student-my-applications.html';
+                    }, 2500);
+
+                } catch (error) {
+                    console.error("Submission Error:", error);
+                    showMessage(submitMessageDiv, `Error: ${error.message}`, 'error');
+                     submitMessageDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    submitBtn.disabled = false;
+                    btnText.textContent = 'Submit Application';
+                    btnSpinner.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
+
