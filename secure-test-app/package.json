@@ -1,0 +1,58 @@
+{
+  "name": "testify-secure-app-electron",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dist": "electron-builder",
+    "server": "node backend.js"
+  },
+  "keywords": [],
+  "author": {
+    "name": "TESTIFY & HireWithUS",
+    "email": "support@testify-lac.com"
+  },
+  "license": "ISC",
+  "description": "Secure Test Application",
+  "devDependencies": {
+    "electron": "^38.4.0",
+    "electron-builder": "^24.6.4"
+  },
+  "dependencies": {
+    "node-fetch": "^2.7.0"
+  },
+  "build": {
+    "appId": "com.example.testifysecureapp",
+    "productName": "Testify Secure Test",
+    "files": [
+      "main.js",
+      "preload.js",
+      "token-entry.html",
+      "token-entry.js",
+      "candidate-verification.html",
+      "candidate-verification.js",
+      "hiring-test.html",
+      "hiring-coding-test.html",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "build/icon.png"
+    },
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    }
+  }
+}
+

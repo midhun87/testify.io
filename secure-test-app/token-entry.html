@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- CSP modified to allow Tailwind script -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://res.cloudinary.com;">
+    <title>Enter Test Token - TESTIFY</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Prevent text selection */
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10+ */
+            user-select: none; /* Standard syntax */
+        }
+        /* Custom focus style for better visibility */
+        #token-input:focus {
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4); /* Tailwind indigo-500 focus ring */
+            border-color: #6366f1; /* Tailwind indigo-500 */
+        }
+        /* Spinner color */
+        #submit-spinner {
+             /* Use currentColor to inherit text color (white in this case) */
+             border-top-color: currentColor;
+             animation: spin 1s linear infinite; /* Ensure animation is applied */
+        }
+         @keyframes spin {
+             from { transform: rotate(0deg); }
+             to { transform: rotate(360deg); }
+         }
+         /* Add a subtle transition for the main container appearance */
+         .fade-in {
+             animation: fadeInAnimation 0.5s ease-out forwards;
+             opacity: 0;
+         }
+         @keyframes fadeInAnimation {
+             from { opacity: 0; transform: translateY(10px); }
+             to { opacity: 1; transform: translateY(0); }
+         }
+    </style>
+</head>
+<!-- Updated body with a lighter gradient to match the image -->
+<body class="bg-gradient-to-br from-purple-50 via-white to-blue-50 flex flex-col min-h-screen antialiased">
+
+    <!-- Main content area to center the card -->
+    <main class="flex-grow flex items-center justify-center p-4">
+        <!-- Main container with updated styling: more padding, rounder, softer shadow -->
+        <div class="bg-white p-10 sm:p-12 rounded-3xl shadow-2xl max-w-lg w-full text-center fade-in">
+            <!-- Logo at the top changed to "Hire with us" logo -->
+            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="Testify Logo" class="h-16 w-auto mx-auto mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Secure Test Environment</h1>
+            <p class="text-gray-500 mb-8 text-sm sm:text-base px-2 sm:px-4">
+                Please paste the unique test token provided on the download page or in your email to begin.
+            </p>
+            <form id="token-form" class="space-y-6">
+                <div>
+                    <label for="token-input" class="sr-only">Test Token</label> <!-- Screen reader label -->
+                    <!-- Input field restyled to match image -->
+                    <input
+                        type="text"
+                        id="token-input"
+                        placeholder="Paste your token here"
+                        required
+                        aria-required="true"
+                        aria-label="Test Token Input"
+                        class="w-full px-5 py-4 border border-gray-200 bg-gray-50 rounded-xl shadow-sm text-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150 ease-in-out"
+                    />
+                </div>
+                <!-- Updated button with more padding and hover shadow -->
+                <button
+                    type"submit"
+                    id="submit-token-btn"
+                    class="w-full flex items-center justify-center px-6 py-4 border border-transparent text-lg font-semibold rounded-xl shadow-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transform transition duration-150 ease-in-out active:scale-[.98]"
+                >
+                    <!-- Spinner styling ensures it aligns nicely -->
+                    <svg id="submit-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span id="submit-btn-text">Validate Token & Start Test</span>
+                </button>
+            </form>
+            <!-- Error message with better spacing and color -->
+            <p id="error-message" class="text-red-600 mt-5 text-sm font-medium hidden"></p>
+            <!-- Proctoring warning with improved styling -->
+            <p id="proctoring-warning" class="text-yellow-800 bg-yellow-100 border border-yellow-300 rounded-lg p-3 mt-6 text-xs font-medium hidden">
+                <strong class="font-semibold">Warning:</strong> Do not exit fullscreen or switch applications during the test. Violations may result in automatic submission.
+            </p>
+        </div>
+    </main>
+
+    <!-- NEW Footer Section - SVG icons replaced with Gemini logo -->
+    <footer class="w-full p-6">
+        <div class="flex items-center justify-center space-x-3 max-w-lg mx-auto">
+            <!-- Gemini Logo -->
+            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo" class="h-6 w-auto opacity-70">
+            <!-- Text -->
+            <span class="text-base font-medium text-gray-500">Testify - Testing Partner</span>
+        </div>
+    </footer>
+
+    <!-- Include the JS file for this page -->
+    <!-- CORRECT for Electron loadFile -->
+    <script src="./token-entry.js"></script>
+</body>
+</html>
+

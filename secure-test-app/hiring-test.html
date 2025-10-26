@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- ... existing head content ... -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com;
+        font-src 'self' https://fonts.gstatic.com;
+        img-src 'self' https://res.cloudinary.com data:;
+        connect-src 'self' http://localhost:3000;
+    ">
+    <title>Hiring Test - TESTIFY</title>
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        #test-environment.fullscreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;
+            overflow: hidden; background-color: #f9fafb;
+        }
+        .palette-btn {
+            border: 2px solid #D1D5DB; transition: all 0.2s ease-in-out; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        .palette-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .palette-btn.active {
+            background-color: #4F46E5; color: white; font-weight: bold; border-color: #3730A3;
+            transform: scale(1.1); box-shadow: 0 4px 10px -1px rgba(79, 70, 229, 0.5);
+        }
+        .palette-btn.answered { background-color: #10B981; color: white; border-color: #059669; }
+        .palette-btn.marked {
+            background: #8B5CF6;
+            color: white; border-color: #7C3AED;
+            position: relative;
+        }
+        .palette-btn.marked::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 12px;
+            height: 12px;
+            background-color: #FBBF24;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(31, 41, 55, 0.8); /* gray-800 with opacity */
+            display: flex; justify-content: center; align-items: center; z-index: 10000;
+        }
+        .modal-container {
+            background-color: white; padding: 3rem; border-radius: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 90%; width: 500px; animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+        /* Custom Radio/Checkbox Styling */
+        .option-label {
+            display: block;
+            border: 2px solid #E5E7EB;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            margin-bottom: 0.75rem;
+        }
+        .option-label:hover {
+            border-color: #A5B4FC;
+            background-color: #F5F3FF;
+        }
+        .custom-radio { display: none; }
+        .custom-radio:checked + .option-label {
+            border-color: #4F46E5;
+            background-color: #EEF2FF;
+            box-shadow: 0 0 0 3px #C7D2FE;
+            font-weight: 600;
+            color: #4338CA;
+        }
+
+        /* Form Input Styling (Used in Candidate Details Modal) */
+        .form-input-custom {
+            background-color: transparent !important;
+            border: none !important;
+            border-bottom: 2px solid #E5E7EB !important;
+            border-radius: 0 !important;
+            padding: 0.75rem 0.25rem !important;
+            width: 100%;
+            transition: border-color 0.2s ease-in-out;
+            color: #111827;
+        }
+        .form-input-custom:focus {
+            outline: none !important;
+            box-shadow: none !important;
+            --tw-ring-shadow: 0 0 #000 !important; /* Removes tailwind focus ring */
+            border-bottom-color: #6366F1 !important; /* indigo-500 */
+        }
+        select.form-input-custom {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+         /* Message Box Styling */
+        .message-box {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-30px); /* Start off-screen */
+            padding: 0.75rem 1.5rem;
+            background-color: #ef4444; /* Default error red */
+            color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 10001; /* Above modal overlay */
+            opacity: 0;
+            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .message-box.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .message-box.warning { background-color: #f59e0b; /* Amber 500 */ }
+        .message-box.success { background-color: #10b981; /* Emerald 500 */ }
+        .message-box.info { background-color: #3b82f6; /* Blue 500 */ }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Message Box Container -->
+    <div id="message-box-container"></div>
+
+    <!-- Main content area: loading/error states -->
+    <div id="main-content" class="min-h-screen flex items-center justify-center p-4">
+         <div id="message-container" class="text-center">
+             <div id="loader" class="flex flex-col items-center">
+                 <!-- Loader SVG -->
+                 <svg class="animate-spin h-10 w-10 text-indigo-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                 </svg>
+                 <p class="text-xl font-semibold text-gray-700">Initializing Secure Test...</p>
+             </div>
+             <div id="error-message" class="hidden flex flex-col items-center">
+                 <!-- Error SVG -->
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                  </svg>
+                 <h2 class="text-2xl font-bold text-red-600 mt-4">Initialization Failed</h2>
+                 <p class="text-gray-600 mt-2"></p>
+                 <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Retry</button>
+             </div>
+         </div>
+    </div>
+
+    <!-- Test Environment (Initially Hidden) -->
+    <div id="test-environment" class="hidden">
+        <header class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6 fixed top-0 left-0 w-full z-20 shadow-lg">
+            <!-- Header Content -->
+             <div class="flex items-center">
+                <img class="h-12 w-auto" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="Testify-HireWithUs Logo">
+                <h1 id="test-title" class="ml-4 text-2xl font-extrabold text-indigo-800 tracking-tight">Loading Test...</h1>
+            </div>
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center bg-red-100 border-2 border-red-200 rounded-lg px-4 py-1.5 shadow-inner">
+                    <span class="text-sm font-bold text-red-800 mr-3 uppercase tracking-wider">Time Left</span>
+                    <div id="timer" class="text-2xl font-extrabold text-red-600" style="font-variant-numeric: tabular-nums;">00:00</div>
+                </div>
+                <button id="submit-test-btn" class="px-6 py-2.5 bg-red-600 text-white font-bold rounded-xl shadow-lg hover:bg-red-700 transition-all transform hover:scale-[1.03] duration-200 disabled:bg-red-300 disabled:cursor-not-allowed">
+                    Submit Test
+                </button>
+            </div>
+        </header>
+
+        <div class="pt-20 flex" style="height: 100vh;">
+            <!-- Main Question Area -->
+            <div class="flex-1 p-8 overflow-y-auto">
+                 <!-- Question Header -->
+                 <div id="question-header" class="mb-6">
+                     <p id="question-counter" class="text-sm font-semibold text-indigo-600 uppercase tracking-wide"></p>
+                     <h2 id="section-title" class="text-2xl font-bold text-gray-800"></h2>
+                 </div>
+                 <!-- Question Content Area -->
+                <div id="question-content" class="bg-white p-8 rounded-2xl shadow-xl border border-gray-200">
+                     <p class="text-gray-500">Loading question...</p>
+                </div>
+                <!-- Navigation Buttons -->
+                <div class="mt-8 flex justify-between items-center bg-white p-4 rounded-xl shadow-md border border-gray-100">
+                    <button id="prev-btn" class="px-6 py-3 bg-gray-200 text-gray-800 font-bold rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                        <span>Previous</span>
+                    </button>
+                    <button id="mark-review-btn" class="px-6 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2">
+                         <span>Mark for Review</span>
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                           <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-3.125L5 18V4z" />
+                         </svg>
+                    </button>
+                    <button id="next-btn" class="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2">
+                        <span>Next</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                    </button>
+                </div>
+            </div>
+            <!-- Sidebar/Palette -->
+            <aside class="w-80 bg-gray-50 border-l border-gray-200 p-6 flex flex-col flex-shrink-0 overflow-y-auto" >
+                 <!-- Legend -->
+                 <div id="palette-legend" class="mb-6 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                    <h3 class="font-bold text-lg mb-3 text-gray-700">Legend</h3>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div class="flex items-center"><span class="h-4 w-4 rounded-full bg-green-500 mr-2 border border-green-600"></span>Answered</div>
+                        <div class="flex items-center"><span class="h-4 w-4 rounded-full bg-white border-2 border-gray-400 mr-2"></span>Unanswered</div>
+                        <div class="flex items-center"><span class="h-4 w-4 rounded-full bg-purple-500 mr-2 border border-purple-600"></span>Marked</div>
+                        <div class="flex items-center relative">
+                            <span class="h-4 w-4 rounded-full bg-green-500 mr-2 border border-green-600"></span>
+                            <span class="absolute left-2.5 top-0 h-2 w-2 rounded-full bg-amber-400 border border-white"></span>
+                            <span class="ml-1">Marked & Answered</span>
+                        </div>
+                    </div>
+                </div>
+                 <!-- Palette Container -->
+                <div id="palette-container" class="space-y-6 flex-grow">
+                 <p class="text-gray-500 text-center">Loading palette...</p>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="modal-container text-center">
+             <div id="modal-icon" class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+                <!-- Icon updated dynamically -->
+                <svg class="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+             </div>
+            <p id="modal-message" class="text-gray-700 text-xl font-semibold mt-4">Are you sure?</p>
+             <!-- Spinner for submission -->
+            <div id="modal-spinner" class="hidden my-4">
+                 <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                 </svg>
+                 <p id="modal-spinner-text" class="text-sm text-gray-500 mt-2">Submitting...</p>
+            </div>
+             <!-- Error message area within modal -->
+             <p id="modal-error-message" class="text-red-600 mt-4 text-sm font-medium hidden"></p>
+             <!-- Buttons Area -->
+            <div id="modal-buttons" class="mt-8 flex justify-center space-x-4">
+                <button id="modal-cancel-btn" class="px-8 py-2.5 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300">Cancel</button>
+                <button id="modal-confirm-btn" class="px-8 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700">Confirm Submit</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM Elements ---
+        const mainContent = document.getElementById('main-content');
+        const testEnvironment = document.getElementById('test-environment');
+        const loader = document.getElementById('loader');
+        const errorMessageDiv = document.getElementById('error-message');
+        const messageContainer = document.getElementById('message-box-container');
+
+        // Modals
+        const confirmModal = document.getElementById('confirm-modal');
+        const modalMessage = document.getElementById('modal-message');
+        const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+        const modalCancelBtn = document.getElementById('modal-cancel-btn');
+        const modalIcon = document.getElementById('modal-icon');
+        const modalSpinner = document.getElementById('modal-spinner');
+        const modalSpinnertext = document.getElementById('modal-spinner-text');
+        const modalErrorMessage = document.getElementById('modal-error-message');
+        const modalButtons = document.getElementById('modal-buttons');
+
+        // Test Environment Elements
+        const timerDisplay = document.getElementById('timer');
+        const submitTestBtn = document.getElementById('submit-test-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const markReviewBtn = document.getElementById('mark-review-btn');
+        const paletteContainer = document.getElementById('palette-container');
+
+
+        // --- State Variables ---
+        let token = null;
+        let currentTest = null;
+        let allQuestions = [];
+        let currentQuestionIndex = 0;
+        let studentResponses = [];
+        let timerInterval;
+        let timeTaken = 0;
+        let isSubmitting = false;
+        let candidateDetails = {};
+
+        const BACKEND_URL = 'http://localhost:3000';
+
+
+        // --- Utility Functions ---
+        function showMessage(message, type = 'error', duration = 3000) {
+            const box = document.createElement('div');
+            box.textContent = message;
+            box.className = `message-box ${type}`;
+            messageContainer.appendChild(box);
+            requestAnimationFrame(() => { box.classList.add('show'); });
+            setTimeout(() => {
+                box.classList.remove('show');
+                box.addEventListener('transitionend', () => box.remove(), { once: true });
+            }, duration);
+        }
+
+        // --- UPDATED showErrorOnMainScreen ---
+        function showErrorOnMainScreen(message) {
+            if (loader) { // Check if loader element exists
+                loader.classList.add('hidden');
+            } else {
+                console.error("Could not find 'loader' element to hide.");
+            }
+            if (errorMessageDiv) { // Check if error message element exists
+                errorMessageDiv.classList.remove('hidden');
+                const pTag = errorMessageDiv.querySelector('p');
+                if (pTag) {
+                    pTag.textContent = message;
+                } else {
+                    console.error("Could not find paragraph tag inside 'error-message' div.");
+                    errorMessageDiv.textContent = message; // Fallback
+                }
+            } else {
+                console.error("Could not find 'error-message' element. Displaying message via showMessage.");
+                // Fallback to using the popup message if the main error div isn't found
+                showMessage(message, 'error', 10000);
+            }
+        }
+
+         // Updated showModal function (no changes needed from previous version)
+         function showModal(message, type = 'confirm') {
+            return new Promise(resolve => {
+                modalMessage.textContent = message;
+                modalSpinner.classList.add('hidden');
+                modalErrorMessage.classList.add('hidden');
+                modalErrorMessage.textContent = '';
+                modalButtons.classList.remove('hidden');
+
+                modalIcon.innerHTML = `<svg class="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`;
+                modalConfirmBtn.textContent = 'Confirm Submit';
+                modalConfirmBtn.className = 'px-8 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700';
+                modalCancelBtn.classList.remove('hidden');
+                modalConfirmBtn.classList.remove('hidden');
+                modalConfirmBtn.disabled = false;
+                modalCancelBtn.disabled = false;
+
+                switch(type) {
+                    case 'violation':
+                         modalIcon.innerHTML = `<svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`;
+                         modalButtons.classList.add('hidden');
+                         break;
+                    case 'submitting':
+                         modalIcon.innerHTML = `<svg class="animate-spin h-6 w-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+                         modalSpinnertext.textContent = 'Submitting...';
+                         modalSpinner.classList.remove('hidden');
+                         modalButtons.classList.add('hidden');
+                         break;
+                    case 'success':
+                         modalIcon.innerHTML = `<svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+                         modalButtons.classList.add('hidden');
+                         break;
+                    case 'error':
+                         modalIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>`;
+                         modalErrorMessage.textContent = message;
+                         modalErrorMessage.classList.remove('hidden');
+                         modalMessage.textContent = 'Submission Failed';
+                         modalButtons.classList.add('hidden');
+                         break;
+                 }
+                confirmModal.classList.remove('hidden');
+                const resolveOnce = (value) => { if (resolve) { resolve(value); resolve = null; } };
+                modalConfirmBtn.onclick = () => { resolveOnce(true); };
+                modalCancelBtn.onclick = () => { confirmModal.classList.add('hidden'); resolveOnce(false); };
+            });
+         }
+
+        // --- Initialize Test ---
+        async function initializeTest() {
+            console.log('Test Page: Initializing...');
+            try {
+                if (!window.electronAPI?.getValidatedToken) throw new Error('Secure environment API not available.');
+                token = await window.electronAPI.getValidatedToken();
+                if (!token) throw new Error('Could not retrieve validated test token.');
+                console.log('Test Page: Received validated token.');
+
+                window.electronAPI.onProctoringViolation((message) => {
+                     console.warn('[Proctoring Violation Received]:', message);
+                     showMessage(`Warning: ${message}. Further violations may lead to submission.`, 'warning', 6000);
+                     // forceSubmitTest(message); // Consider uncommenting if immediate submission on violation is desired
+                });
+
+                await fetchTestDetails();
+
+            } catch (error) {
+                console.error('Initialization Error:', error);
+                // Ensure showErrorOnMainScreen is called correctly
+                showErrorOnMainScreen(error.message || 'Failed to initialize the test environment.');
+            }
+        }
+
+        // Fetch Test & Candidate Details
+        async function fetchTestDetails() {
+            // ... (no changes needed in this function from previous version) ...
+            if (!token) { showErrorOnMainScreen("Token error."); return; }
+             console.log("Fetching test and candidate details...");
+             loader.classList.remove('hidden');
+             errorMessageDiv.classList.add('hidden');
+            try {
+                 const [testResponse, detailsResponse] = await Promise.all([
+                     fetch(`${BACKEND_URL}/api/public/test-details`, { headers: { 'x-auth-token': token } }),
+                     fetch(`${BACKEND_URL}/api/candidate-details`, { headers: { 'x-auth-token': token } })
+                 ]);
+
+                 console.log("Test Response Status:", testResponse.status);
+                 console.log("Details Response Status:", detailsResponse.status);
+
+                 const testData = await testResponse.json();
+                 if (!testResponse.ok) throw new Error(testData.message || `Failed to load test details (Status: ${testResponse.status})`);
+                 currentTest = testData;
+                 console.log("Fetched Test Details:", currentTest);
+
+                 const candData = await detailsResponse.json();
+                 if (!detailsResponse.ok) throw new Error(candData.message || `Failed to fetch candidate details (Status: ${detailsResponse.status}). Please ensure you completed any initial verification steps.`);
+                 candidateDetails = candData;
+                 console.log("Fetched Candidate Details:", candidateDetails);
+
+                allQuestions = (currentTest.sections || []).flatMap((section, sectionIndex) =>
+                    (section.questions || []).map(q => ({...q, sectionTitle: section.title, sectionIndex}))
+                );
+
+                if (allQuestions.length === 0) throw new Error("Test contains no questions.");
+                studentResponses = allQuestions.map(() => ({ answer: null, marked: false }));
+
+                loader.classList.add('hidden');
+                startTest();
+
+            } catch (error) {
+                 console.error("Error fetching test/candidate details:", error);
+                 showErrorOnMainScreen(error.message || "An error occurred loading test data.");
+                 loader.classList.add('hidden');
+            }
+        }
+
+        // Start Test Function
+        function startTest() {
+             // ... (no changes needed in this function from previous version) ...
+             console.log("Starting test UI...");
+             mainContent.classList.add('hidden');
+             testEnvironment.classList.remove('hidden');
+             document.getElementById('test-title').textContent = currentTest?.title || 'Test';
+             if(currentTest?.duration) {
+                startTimer(currentTest.duration * 60);
+             } else {
+                 console.error("Test duration missing!");
+                 showErrorOnMainScreen("Test configuration error: Duration missing.");
+                 return;
+             }
+             renderPalette();
+             renderQuestion();
+             setTimeout(() => {
+                document.addEventListener('contextmenu', event => event.preventDefault());
+                console.log("Context menu listener attached.");
+             }, 500);
+         }
+
+        // Render Question, Palette, Navigation
+        // ... (renderQuestion, renderPalette, updatePalette, updateNavButtons, saveAnswer functions remain unchanged) ...
+        function renderQuestion() {
+            if (!allQuestions || allQuestions.length === 0 || currentQuestionIndex >= allQuestions.length || !studentResponses[currentQuestionIndex]) {
+                 console.error("Cannot render question: Invalid state.", { allQuestions, currentQuestionIndex, studentResponses });
+                 showMessage("Error loading question. Please try navigating.", "error");
+                 document.getElementById('question-content').innerHTML = '<p class="text-red-500 text-center font-semibold">Error loading question content.</p>';
+                 return;
+            }
+            const question = allQuestions[currentQuestionIndex];
+            const response = studentResponses[currentQuestionIndex];
+
+            document.getElementById('section-title').textContent = `${question.sectionTitle}`;
+            document.getElementById('question-counter').textContent = `Question ${currentQuestionIndex + 1} of ${allQuestions.length}`;
+
+            const questionContent = document.getElementById('question-content');
+
+            let optionsHtml = '';
+            if (question.type && question.type.startsWith('mcq')) {
+                const inputType = question.type === 'mcq-single' ? 'radio' : 'checkbox';
+                 if (!question.options || !Array.isArray(question.options)) {
+                     console.error("MCQ question missing valid 'options' array:", question);
+                     optionsHtml = "<p class='text-red-500'>Error: Question options are missing or invalid.</p>";
+                 } else {
+                    optionsHtml = question.options.map((opt, i) => {
+                        let isChecked = false;
+                        if (inputType === 'radio') {
+                            isChecked = response.answer !== null && String(response.answer) === String(i);
+                        } else { // checkbox
+                            isChecked = Array.isArray(response.answer) && response.answer.map(String).includes(String(i));
+                        }
+                        return `
+                            <div>
+                                <input type="${inputType}" name="option" value="${i}" id="option-${i}" class="custom-radio" ${isChecked ? 'checked' : ''}>
+                                <label for="option-${i}" class="option-label">${opt}</label>
+                            </div>`;
+                    }).join('');
+                 }
+            } else if (question.type === 'fill-blank') {
+                 const fillValue = (response.answer !== null && response.answer !== undefined) ? String(response.answer) : '';
+                optionsHtml = `<input type="text" class="block w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" value="${fillValue}">`;
+            } else {
+                 console.error("Unknown question type:", question.type, question);
+                 optionsHtml = "<p class='text-red-500'>Error: Unknown question type.</p>";
+            }
+            const sanitizedQuestionText = (question.text || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            questionContent.innerHTML = `<p class="text-xl mb-6 font-medium text-gray-800">${sanitizedQuestionText}</p><div class="space-y-3">${optionsHtml}</div>`;
+            updateNavButtons();
+            updatePalette();
+        }
+
+         function renderPalette() {
+            const paletteContainer = document.getElementById('palette-container');
+            paletteContainer.innerHTML = '';
+            const questionsBySection = allQuestions.reduce((acc, q, i) => {
+                const sectionIdx = q.sectionIndex ?? 0;
+                if (!acc[sectionIdx]) acc[sectionIdx] = { title: q.sectionTitle || 'Section', questions: [] };
+                acc[sectionIdx].questions.push({ index: i });
+                return acc;
+            }, {});
+
+            Object.values(questionsBySection).forEach(section => {
+                 const sectionDiv = document.createElement('div');
+                 sectionDiv.innerHTML = `<h3 class="font-bold text-lg mb-3 text-gray-800">${section.title}</h3>`;
+                 const grid = document.createElement('div');
+                 grid.className = 'grid grid-cols-5 gap-3';
+                 section.questions.forEach(qInfo => {
+                     const btn = document.createElement('button');
+                     btn.textContent = qInfo.index + 1;
+                     btn.className = 'palette-btn h-11 w-11 flex items-center justify-center rounded-lg font-semibold';
+                     btn.onclick = () => { saveAnswer(); currentQuestionIndex = qInfo.index; renderQuestion(); };
+                     grid.appendChild(btn);
+                 });
+                 sectionDiv.appendChild(grid);
+                 paletteContainer.appendChild(sectionDiv);
+            });
+            updatePalette();
+         }
+
+        function updatePalette() {
+             Array.from(document.querySelectorAll('.palette-btn')).forEach((btn) => {
+                 const i = parseInt(btn.textContent) - 1;
+                 const response = studentResponses[i] || { answer: null, marked: false };
+                 btn.classList.remove('active', 'answered', 'marked');
+                 let isAnswered = false;
+                 if (Array.isArray(response.answer)) isAnswered = response.answer.length > 0;
+                 else isAnswered = response.answer !== null && response.answer !== undefined && String(response.answer).trim() !== '';
+
+                 if (isAnswered) btn.classList.add('answered');
+                 if (response.marked) btn.classList.add('marked');
+                 if (i === currentQuestionIndex) btn.classList.add('active');
+             });
+         }
+
+        function updateNavButtons() {
+            prevBtn.disabled = currentQuestionIndex === 0;
+            nextBtn.disabled = currentQuestionIndex === allQuestions.length - 1;
+            const markBtn = markReviewBtn;
+            if (!studentResponses[currentQuestionIndex]) return;
+
+            if (studentResponses[currentQuestionIndex].marked) {
+                markBtn.classList.replace('bg-purple-600', 'bg-amber-500');
+                markBtn.classList.replace('hover:bg-purple-700', 'hover:bg-amber-600');
+                markBtn.querySelector('span').textContent = 'Unmark';
+            } else {
+                markBtn.classList.replace('bg-amber-500', 'bg-purple-600');
+                markBtn.classList.replace('hover:bg-amber-600', 'hover:bg-purple-700');
+                markBtn.querySelector('span').textContent = 'Mark for Review';
+            }
+        }
+
+        function saveAnswer() {
+             if (!allQuestions[currentQuestionIndex]) return;
+             const question = allQuestions[currentQuestionIndex];
+             if (!studentResponses[currentQuestionIndex]) {
+                 studentResponses[currentQuestionIndex] = { answer: null, marked: false };
+             }
+
+             if (question.type === 'mcq-single') {
+                 const selected = document.querySelector('#question-content input[name="option"]:checked');
+                 studentResponses[currentQuestionIndex].answer = selected ? selected.value : null;
+             } else if (question.type === 'mcq-multiple') {
+                  const selected = Array.from(document.querySelectorAll('#question-content input[name="option"]:checked')).map(cb => cb.value);
+                  studentResponses[currentQuestionIndex].answer = selected;
+             } else if (question.type === 'fill-blank') {
+                 const input = document.querySelector('#question-content input[type="text"]');
+                 studentResponses[currentQuestionIndex].answer = input ? input.value : null;
+             }
+             updatePalette();
+         }
+
+
+        // Event Listeners (submitTestBtn updated)
+        nextBtn.addEventListener('click', () => { saveAnswer(); if (currentQuestionIndex < allQuestions.length - 1) { currentQuestionIndex++; renderQuestion(); } });
+        prevBtn.addEventListener('click', () => { saveAnswer(); if (currentQuestionIndex > 0) { currentQuestionIndex--; renderQuestion(); } });
+        markReviewBtn.addEventListener('click', () => { if (!studentResponses[currentQuestionIndex]) studentResponses[currentQuestionIndex] = { answer: null, marked: false }; studentResponses[currentQuestionIndex].marked = !studentResponses[currentQuestionIndex].marked; updateNavButtons(); updatePalette(); });
+
+        submitTestBtn.addEventListener('click', async () => {
+            console.log("Submit button clicked.");
+            saveAnswer();
+            const unanswered = studentResponses.filter(r => { if (Array.isArray(r.answer)) return r.answer.length === 0; return r.answer === null || r.answer === undefined || String(r.answer).trim() === ''; }).length;
+            const marked = studentResponses.filter(r => r.marked).length;
+            let msg = `Are you sure you want to submit?`;
+            if (unanswered > 0) msg += `\n${unanswered} question(s) are unanswered.`;
+            if (marked > 0) msg += `\n${marked} question(s) are marked for review.`;
+            const confirm = await showModal(msg, 'confirm');
+            if (confirm) {
+                console.log("User confirmed submission.");
+                performSubmission();
+            } else {
+                console.log("Submission cancelled by user.");
+            }
+        });
+
+
+        // Proctoring and Submission
+        function startTimer(duration) {
+            // ... (timer logic unchanged) ...
+             let timer = duration;
+             clearInterval(timerInterval);
+             timerInterval = setInterval(() => {
+                 timeTaken++; timer--;
+                 let minutes = Math.floor(timer / 60); let seconds = timer % 60;
+                 timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                 if (timer <= 0) { clearInterval(timerInterval); forceSubmitTest('Time Expired'); }
+                 else if (timer <= 60 && !timerDisplay.parentElement.classList.contains('animate-pulse')) {
+                      timerDisplay.parentElement.classList.add('animate-pulse', 'border-red-400', 'bg-red-200');
+                      timerDisplay.classList.add('text-red-700');
+                 }
+             }, 1000);
+        }
+
+        async function forceSubmitTest(reason) {
+            // ... (forceSubmit logic unchanged) ...
+            if (isSubmitting) return;
+            isSubmitting = true;
+            console.warn(`Force submitting test. Reason: ${reason}`);
+            clearInterval(timerInterval);
+            submitTestBtn.disabled = true; prevBtn.disabled = true; nextBtn.disabled = true; markReviewBtn.disabled = true;
+            await showModal(`Violation: ${reason}. Submitting automatically.`, 'violation');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            await performSubmission(reason);
+        }
+
+        // --- UPDATED performSubmission with Logging ---
+        async function performSubmission(violationReason = null) {
+            if (isSubmitting && !violationReason) {
+                 console.log("Submission already in progress.");
+                 return;
+            }
+            isSubmitting = true;
+            console.log("Attempting submission...");
+
+            saveAnswer();
+            clearInterval(timerInterval);
+
+            // Disable UI
+            submitTestBtn.disabled = true; prevBtn.disabled = true; nextBtn.disabled = true; markReviewBtn.disabled = true;
+            document.querySelectorAll('.palette-btn').forEach(btn => btn.disabled = true);
+
+            // Show submitting state in the modal
+            showModal("Submitting...", 'submitting');
+
+            // Prepare payload
+            const finalAnswers = studentResponses.map(r => r.answer);
+
+            if (!candidateDetails || !candidateDetails.fullName) {
+                console.error("[SUBMIT ERROR] Cannot submit: Candidate details were not fetched or are incomplete.");
+                await showModal("Critical Error: Candidate details missing. Cannot submit.", 'error');
+                isSubmitting = false;
+                 document.querySelectorAll('.palette-btn').forEach(btn => btn.disabled = false);
+                // Re-enable buttons carefully based on state
+                submitTestBtn.disabled = false;
+                prevBtn.disabled = currentQuestionIndex === 0;
+                nextBtn.disabled = currentQuestionIndex === allQuestions.length - 1;
+                markReviewBtn.disabled = false;
+                return;
+            }
+             console.log("Candidate details verified for payload:", candidateDetails);
+
+
+            const payload = {
+                answers: finalAnswers,
+                timeTaken,
+                violationReason,
+                fullName: candidateDetails.fullName,
+                rollNumber: candidateDetails.rollNumber,
+                collegeName: candidateDetails.collegeName,
+                department: candidateDetails.department,
+                profileImageUrl: candidateDetails.profileImageUrl || null
+            };
+
+            const submitUrl = `${BACKEND_URL}/api/public/submit-test`; // Define URL clearly
+            console.log(`Submitting Payload to ${submitUrl}:`, JSON.stringify(payload)); // Log payload and URL
+
+            try {
+                const response = await fetch(submitUrl, { // Use defined URL
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': token
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                // --- ADDED: Log status and attempt to get text/json ---
+                console.log("Backend Response Status:", response.status, response.statusText);
+                let result;
+                try {
+                     // Check content type before parsing
+                    const contentType = response.headers.get("content-type");
+                    if (contentType && contentType.indexOf("application/json") !== -1) {
+                        result = await response.json();
+                        console.log("Backend Response Body (JSON):", result);
+                    } else {
+                        result = await response.text();
+                        console.log("Backend Response Body (Text):", result);
+                         // If response wasn't OK but we got text, throw an error using that text
+                         if (!response.ok) {
+                             throw new Error(result || `Submission failed with status: ${response.status}`);
+                         }
+                         // If response was OK but not JSON, maybe treat as success but log warning
+                         result = { message: "Submission received (non-JSON response)." }; // Create a placeholder result
+                         console.warn("Received non-JSON success response from backend.");
+                    }
+                } catch (parseError) {
+                     console.error("Error parsing backend response:", parseError);
+                     // If parsing failed even on error, throw a generic error
+                     if (!response.ok) {
+                         throw new Error(`Submission failed with status: ${response.status} (Could not parse response)`);
+                     }
+                     // If parsing failed on success (unlikely), treat as error for safety
+                     throw new Error("Received an unparseable success response from the server.");
+                }
+                // --- End Added Logging ---
+
+
+                if (!response.ok) {
+                    throw new Error(result.message || `Submission failed with status: ${response.status}`);
+                }
+
+                if (window.electronAPI?.notifyTestSubmitted) {
+                    window.electronAPI.notifyTestSubmitted();
+                     console.log("Notified main process of successful submission.");
+                } else {
+                     console.warn("electronAPI.notifyTestSubmitted not found.");
+                }
+
+                await showModal(result.message || 'Submission complete!', 'success');
+                 console.log("Submission successful.");
+
+            } catch (error) {
+                 console.error("[SUBMIT ERROR] Fetch failed or backend returned error:", error);
+                 await showModal(`Submission failed: ${error.message}`, 'error');
+                 isSubmitting = false;
+
+                 // Re-enable UI
+                 submitTestBtn.disabled = false;
+                 prevBtn.disabled = currentQuestionIndex === 0;
+                 nextBtn.disabled = currentQuestionIndex === allQuestions.length - 1;
+                 markReviewBtn.disabled = false;
+                 document.querySelectorAll('.palette-btn').forEach(btn => btn.disabled = false);
+
+                 console.log("[SUBMIT ERROR] Submission failed, UI re-enabled.");
+                 return;
+            }
+        }
+
+
+        // --- Initial Call ---
+        initializeTest();
+
+        // Prevent Right Click
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+    }); // End DOMContentLoaded
+    </script>
+</body>
+</html>
+
