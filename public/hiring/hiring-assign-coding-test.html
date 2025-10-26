@@ -38,7 +38,7 @@
                             <label for="test-select" class="block text-sm font-medium text-gray-700">Select Coding Test</label>
                             <select id="test-select" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
                         </div>
-                        
+
                         <div>
                             <label for="candidate-emails" class="block text-sm font-medium text-gray-700">Candidate Emails</label>
                             <textarea id="candidate-emails" rows="6" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="Paste email addresses here, one per line or separated by commas."></textarea>
@@ -66,53 +66,86 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Assume common.js sets up initializePage and token handling -->
     <script src="common.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-             const hiringSidebarLinks = [
+            // Links remain the same
+            const hiringSidebarLinks = [
                 { href: "hiring-dashboard.html", text: "Dashboard" },
                 { href: "hiring-create-job.html", text: "Create Job" },
                 { href: "hiring-jobs.html", text: "Manage Jobs" },
                 { href: "hiring-create-test.html", text: "Create Aptitude Test" },
                  { href: "hiring-create-problem.html", text: "Manage Coding Problems"},
                  { href: "hiring-create-coding-test.html", text: "Create Coding Test"},
-                { href: "hiring-assign-test.html", text: "Assign Test" },
-                { href: "hiring-test-history.html", text: "Test History" },
+                 // Active link indication depends on initializePage logic
+                { href: "hiring-assign-test.html", text: "Assign Aptitude Test"},
+                { href: "hiring-assign-coding-test.html", text: "Assign Coding Test", active: true },
+                { href: "hiring-test-history.html", text: "Aptitude Test Results" },
+                { href: "hiring-coding-test-results.html", text: "Coding Test Results"},
+                { href: "hiring-manage-colleges.html", text: "Manage Colleges"}
             ];
-            initializePage('Assign Test');
+             // Initialize common elements like sidebar and user menu
+            initializePage('Assign Coding Test', hiringSidebarLinks); // Pass the correct links
+
             const token = localStorage.getItem('token');
             const form = document.getElementById('assign-test-form');
             const testSelect = document.getElementById('test-select');
             const submitBtn = document.getElementById('submit-btn');
             const messageDiv = document.getElementById('message');
 
+            // --- Fetch Coding Tests ---
             const fetchCodingTests = async () => {
+                messageDiv.textContent = 'Loading coding tests...';
+                messageDiv.className = 'text-gray-600';
+                submitBtn.disabled = true; // Disable submit while loading
+
                 try {
-                    const response = await fetch('/api/hiring/tests?type=coding', { // Assuming an API to fetch only coding tests
+                    // Fetch specifically coding tests
+                    const response = await fetch('/api/hiring/tests?type=coding', {
                         headers: { 'x-auth-token': token }
                     });
-                    if (!response.ok) throw new Error('Could not fetch coding tests.');
+                    if (!response.ok) {
+                         const err = await response.json();
+                         throw new Error(err.message || 'Could not fetch coding tests.');
+                    }
                     const tests = await response.json();
-                    
+                    console.log("Fetched coding tests:", tests); // Debugging line
+
+                    if (!Array.isArray(tests)) {
+                        throw new Error('Invalid response format received from server.');
+                    }
+
                     if (tests.length === 0) {
                         testSelect.innerHTML = '<option disabled selected>No coding tests found. Please create one first.</option>';
-                        submitBtn.disabled = true;
+                        submitBtn.disabled = true; // Keep disabled if no tests
+                        messageDiv.textContent = 'No coding tests available to assign.';
+                        messageDiv.className = 'text-yellow-600';
                     } else {
                         testSelect.innerHTML = '<option disabled selected value="">-- Select a coding test --</option>';
-                        tests.filter(t => t.testType === 'hiring_coding').forEach(test => {
+                        // ** FIX: Removed the incorrect filter: .filter(t => t.testType === 'hiring_coding') **
+                        // The backend endpoint already filters by type=coding
+                        tests.forEach(test => {
                             const option = document.createElement('option');
+                            // The backend maps codingTestId to testId in the response
                             option.value = test.testId;
-                            option.textContent = test.title;
+                            option.textContent = test.title; // Use the test title
                             testSelect.appendChild(option);
                         });
+                        submitBtn.disabled = false; // Enable submit now that tests are loaded
+                        messageDiv.textContent = ''; // Clear loading message
                     }
                 } catch (error) {
-                     testSelect.innerHTML = `<option disabled selected>Error loading tests</option>`;
-                     submitBtn.disabled = true;
+                     console.error("Error fetching coding tests:", error);
+                     testSelect.innerHTML = `<option disabled selected>Error loading tests: ${error.message}</option>`;
+                     submitBtn.disabled = true; // Keep disabled on error
+                     messageDiv.textContent = `Error loading tests: ${error.message}`;
+                     messageDiv.className = 'text-red-600';
                 }
             };
-            
+
+            // --- Form Submission Logic ---
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 messageDiv.textContent = '';
@@ -123,31 +156,60 @@
                 const emailsText = document.getElementById('candidate-emails').value;
                 const startTime = document.getElementById('start-time').value;
                 const endTime = document.getElementById('end-time').value;
-                
-                const candidateEmails = emailsText.split(/[\n, ]+/).map(email => email.trim()).filter(email => email);
-                
-                if (!testId || candidateEmails.length === 0 || !startTime || !endTime) {
-                    messageDiv.textContent = 'Please fill all fields correctly.';
+
+                // Simple email validation and splitting
+                const candidateEmails = emailsText.split(/[\n,;\s]+/) // Split by newline, comma, semicolon, or space
+                                         .map(email => email.trim())
+                                         .filter(email => email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)); // Basic email format check
+
+                if (!testId) {
+                    messageDiv.textContent = 'Please select a coding test.';
+                    messageDiv.className = 'text-red-600';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Send Invitations';
+                    return;
+                }
+                 if (candidateEmails.length === 0) {
+                    messageDiv.textContent = 'Please enter at least one valid email address.';
+                    messageDiv.className = 'text-red-600';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Send Invitations';
+                    return;
+                }
+                if (!startTime || !endTime) {
+                    messageDiv.textContent = 'Please select both start and end times.';
+                    messageDiv.className = 'text-red-600';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Send Invitations';
+                    return;
+                }
+                 if (new Date(startTime) >= new Date(endTime)) {
+                    messageDiv.textContent = 'Start time must be before end time.';
                     messageDiv.className = 'text-red-600';
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Send Invitations';
                     return;
                 }
 
+
                  const payload = { testId, candidateEmails, startTime, endTime };
+                 console.log("Sending payload:", payload); // Debug: Check payload
 
                 try {
+                    // Use the correct, general assignment endpoint
                     const response = await fetch('/api/hiring/assign-test', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                         body: JSON.stringify(payload)
                     });
                     const result = await response.json();
-                    if (!response.ok) throw new Error(result.message);
-                    messageDiv.textContent = result.message;
+                    if (!response.ok) throw new Error(result.message || `Server responded with ${response.status}`);
+                    messageDiv.textContent = result.message || 'Invitations sent successfully!';
                     messageDiv.className = 'text-green-600';
-                    form.reset();
+                    form.reset(); // Clear form on success
+                    testSelect.selectedIndex = 0; // Reset dropdown
                 } catch (error) {
+                     console.error("Error assigning test:", error);
                     messageDiv.textContent = `Error: ${error.message}`;
                     messageDiv.className = 'text-red-600';
                 } finally {
@@ -156,9 +218,9 @@
                 }
             });
 
+            // Initial fetch of tests when the page loads
             fetchCodingTests();
         });
     </script>
 </body>
 </html>
-

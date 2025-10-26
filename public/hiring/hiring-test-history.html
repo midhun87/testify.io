@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test History & Responses - HIRE WITH US</title>
+    <title>Aptitude Test History - HIRE WITH US</title> <!-- Updated Title -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
@@ -23,287 +23,505 @@
         .modal-container {
             background-color: white; border-radius: 1rem;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-            width: 90%; max-width: 7xl; max-height: 90vh;
+            width: 90%; max-width: 4xl; /* Adjusted size for details */
+            max-height: 90vh;
             transform: scale(0.95); transition: transform 0.3s ease;
             display: flex; flex-direction: column;
         }
         .modal-overlay.visible .modal-container { transform: scale(1); }
+        .modal-container table { table-layout: fixed; }
+        .modal-container td, .modal-container th { word-wrap: break-word; }
+
+        /* Accordion Styles */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease-in-out;
+        }
+        .accordion-header .chevron-icon {
+            transition: transform 0.35s ease-in-out;
+        }
+        .accordion-header.open .chevron-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Spinner Animation */
+        .spinner {
+            animation: rotate 1s linear infinite;
+        }
+        @keyframes rotate {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50">
 
-    <div class="flex h-screen bg-gray-100">
+    <div class="flex h-screen bg-gray-50">
         <!-- Sidebar -->
         <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
             <div class="flex items-center justify-center h-20 border-b border-gray-700">
                 <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo">
                 <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
             </div>
-            <nav class="flex-grow p-4 overflow-y-auto" id="sidebar-nav">
-                <!-- Links will be injected by common.js -->
-            </nav>
+            <nav class="flex-grow p-4 overflow-y-auto" id="sidebar-nav"></nav>
         </div>
 
         <!-- Main content -->
         <div class="flex flex-col flex-1 overflow-y-auto">
-            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
-                <h1 class="text-2xl font-bold text-gray-800">Test History & Responses</h1>
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6 sticky top-0 z-10">
+                <h1 id="page-title" class="text-2xl font-bold text-gray-800">Aptitude Test History</h1> <!-- Updated title -->
                 <div id="user-menu-container"></div>
             </div>
 
-            <div class="p-6">
-                <!-- Filters Section -->
-                <div class="mb-6 bg-white p-4 rounded-xl shadow-md flex items-center space-x-4">
-                    <div>
-                        <label for="filter-by-test" class="block text-sm font-medium text-gray-700">Filter by Test</label>
-                        <select id="filter-by-test" class="mt-1 block w-64 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                            <option value="all">All Tests</option>
-                        </select>
+            <main class="p-4 sm:p-6 lg:p-8">
+                <div class="max-w-7xl mx-auto">
+                    <!-- Results Container - Accordion Style -->
+                    <div id="results-container" class="space-y-4">
+                        <!-- Accordion results will be loaded here -->
                     </div>
-                    <div class="pt-5">
-                        <button id="clear-filters-btn" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                            Clear
-                        </button>
+                    <!-- Loader -->
+                    <div id="loader" class="text-center py-10">
+                        <svg class="spinner h-12 w-12 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <p class="mt-4 text-gray-600">Loading results...</p>
                     </div>
+                     <!-- Message Area for No Results -->
+                     <div id="message-area" class="text-center py-16 bg-white rounded-lg shadow-sm hidden">
+                         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
+                         <h3 class="mt-2 text-lg font-medium text-gray-900">No results found</h3>
+                         <p class="mt-1 text-sm text-gray-500">There are currently no aptitude test submissions to display.</p>
+                     </div>
                 </div>
-
-                <div id="history-container" class="bg-white p-8 rounded-xl shadow-md">
-                    <div id="message-area" class="text-center"></div>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 hidden" id="history-table">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Title</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attempts</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Passed</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Failed</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200" id="history-table-body">
-                                <!-- Rows will be inserted here by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+            </main>
         </div>
     </div>
 
-    <!-- Results Modal -->
-    <div id="results-modal" class="modal-overlay">
-        <div class="modal-container">
+    <!-- Candidate Details Modal -->
+    <div id="details-modal" class="modal-overlay"> <!-- Reusing modal-overlay class -->
+        <div class="modal-container"> <!-- Reusing modal-container class -->
             <div class="flex justify-between items-center p-4 border-b">
-                <h2 id="modal-title" class="text-xl font-bold text-gray-800">Test Results</h2>
-                <button id="modal-close-btn" class="p-2 rounded-full hover:bg-gray-200">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
+                <h2 id="modal-title" class="text-xl font-bold text-gray-800">Candidate Details</h2>
+                <div class="flex items-center space-x-2">
+                     <button id="download-report-btn" class="p-2 rounded-full hover:bg-gray-200 transition-colors duration-200" title="Download Report">
+                       <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    </button>
+                    <button id="modal-close-btn" class="text-gray-500 hover:text-gray-800 text-3xl font-bold">&times;</button>
+                </div>
             </div>
-            <div class="p-6 overflow-y-auto">
-                 <div id="modal-content" class="text-center"></div>
+            <div class="p-6 overflow-y-auto bg-gray-50">
+                 <div id="modal-content" class="text-center">
+                     <!-- Candidate details load here -->
+                 </div>
             </div>
         </div>
     </div>
-    
+
     <script src="common.js"></script>
+    <!-- Libraries for Export Functionality -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
     <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-        initializePage('Test History');
+    document.addEventListener('DOMContentLoaded', () => {
+        initializePage('Test History'); // Assuming 'Test History' is the correct active link ID
         const token = localStorage.getItem('token');
+        const resultsContainer = document.getElementById('results-container');
+        const loader = document.getElementById('loader');
+        const messageArea = document.getElementById('message-area'); // Area for "No results"
 
-        const messageArea = document.getElementById('message-area');
-        const historyTable = document.getElementById('history-table');
-        const historyTableBody = document.getElementById('history-table-body');
-        let allTestsData = [];
-        
-        const filterByTestSelect = document.getElementById('filter-by-test');
-        const clearFiltersBtn = document.getElementById('clear-filters-btn');
-
-        const resultsModal = document.getElementById('results-modal');
-        const modalTitle = document.getElementById('modal-title');
-        const modalContent = document.getElementById('modal-content');
+        const detailsModal = document.getElementById('details-modal');
         const modalCloseBtn = document.getElementById('modal-close-btn');
+        const downloadReportBtn = document.getElementById('download-report-btn');
 
-        modalCloseBtn.addEventListener('click', () => resultsModal.classList.remove('visible'));
-        resultsModal.addEventListener('click', (e) => {
-            if (e.target === resultsModal) resultsModal.classList.remove('visible');
-        });
+        let allTestsData = {}; // Store results grouped by testId
+        let currentDetailedResult = null; // Store data for the currently viewed candidate in modal
 
-        const fetchHistory = async () => {
-            messageArea.innerHTML = `<p class="text-gray-600">Loading history...</p>`;
+        // --- Image to Base64 (for PDF logos) ---
+        async function imageToBase64(url) {
             try {
-                const response = await fetch('/api/hiring/test-history', {
-                    headers: { 'x-auth-token': token }
+                // Use fetch with cache control to potentially speed up repeated calls
+                const response = await fetch(url, { cache: "force-cache" });
+                if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
+                const blob = await response.blob();
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result); // Base64 string
+                    reader.onerror = (error) => reject(error);
+                    reader.readAsDataURL(blob);
                 });
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.message || 'Failed to fetch data.');
-                }
-                allTestsData = await response.json();
-                populateTestFilter(allTestsData);
-                renderTable();
-            } catch (error) {
-                messageArea.innerHTML = `<p class="text-red-600 font-semibold">Error: ${error.message}</p>`;
+            } catch(e) {
+                console.error("Image to Base64 conversion failed:", url, e);
+                return null; // Return null on error
             }
-        };
+        }
 
-        const populateTestFilter = (data) => {
-            filterByTestSelect.innerHTML = '<option value="all">All Tests</option>';
-            data.forEach(test => {
-                const option = document.createElement('option');
-                option.value = test.testId;
-                option.textContent = test.title;
-                filterByTestSelect.appendChild(option);
+        // --- Fetch Test History Data ---
+        async function fetchHistory() {
+            loader.style.display = 'block';
+            messageArea.classList.add('hidden');
+            resultsContainer.innerHTML = ''; // Clear previous results
+            try {
+                // Backend endpoint now returns grouped data: [{ testId, title, ..., results: [...] }]
+                const response = await fetch('/api/hiring/test-history', { headers: { 'x-auth-token': token } });
+                if (!response.ok) throw new Error((await response.json()).message || 'Failed to fetch results');
+                const historyData = await response.json();
+
+                if (!historyData || historyData.length === 0) {
+                     messageArea.classList.remove('hidden'); // Show "No results" message
+                     return; // Stop if no data
+                }
+
+                // Store data grouped by testId for easier access
+                allTestsData = historyData.reduce((acc, test) => {
+                    acc[test.testId] = test; // test object includes the results array
+                    return acc;
+                }, {});
+
+                renderAccordions(); // Render the accordion view
+
+            } catch (error) {
+                console.error("Error fetching history:", error);
+                resultsContainer.innerHTML = `<p class="text-red-500 text-center p-4">Error loading history: ${error.message}</p>`;
+                messageArea.classList.add('hidden');
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        // --- Render Accordion Structure ---
+        function renderAccordions() {
+             resultsContainer.innerHTML = Object.entries(allTestsData).map(([testId, data]) => `
+                <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
+                    <div class="accordion-header flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200">
+                        <h3 class="text-lg font-bold text-gray-800">${data.title} <span class="text-sm font-medium text-gray-500">(${data.results?.length || 0} submissions)</span></h3>
+                        <svg class="chevron-icon w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="p-4 border-t border-gray-200 bg-gray-50">
+                            <!-- Export Buttons -->
+                            <div class="flex justify-end items-center mb-4 space-x-3">
+                                <button class="export-pdf-btn flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-2 px-4 rounded-lg text-sm transition-colors duration-200" data-testid="${testId}" data-test-title="${data.title}">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    Export PDF
+                                </button>
+                                <button class="export-excel-btn flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 font-semibold py-2 px-4 rounded-lg text-sm transition-colors duration-200" data-testid="${testId}" data-test-title="${data.title}">
+                                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    Export Excel
+                                </button>
+                            </div>
+                            <!-- Results Table -->
+                            <div class="overflow-x-auto bg-white rounded shadow border">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Candidate</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">College</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Department</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Score (%)</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Result</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Submitted At</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${(data.results && data.results.length > 0) ? data.results.map((r, index) => `
+                                            <tr class="hover:bg-indigo-50 transition-colors duration-150">
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${r.fullName || r.candidateEmail || 'N/A'}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${r.collegeName || 'N/A'}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${r.department || 'N/A'}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${r.result === 'Pass' ? 'text-green-600' : 'text-red-600'}">${r.score ?? 'N/A'}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${r.result === 'Pass' ? 'text-green-600' : 'text-red-600'}">${r.result || 'N/A'}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${r.submittedAt ? new Date(r.submittedAt).toLocaleString() : 'N/A'}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                                    <button class="view-details-btn text-indigo-600 hover:text-indigo-900 font-semibold" data-result-id="${r.resultId}" data-testid="${testId}">View Details</button>
+                                                </td>
+                                            </tr>
+                                        `).join('') : `<tr><td colspan="7" class="text-center py-4 text-gray-500">No submissions yet for this test.</td></tr>`}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Attach event listeners after rendering
+            attachAccordionListeners();
+            attachActionListeners();
+        }
+
+        // --- Attach Listeners ---
+        function attachAccordionListeners() {
+            resultsContainer.querySelectorAll('.accordion-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    header.classList.toggle('open');
+                    const content = header.nextElementSibling;
+                    // Animate opening/closing
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null; // Close
+                    } else {
+                        content.style.maxHeight = content.scrollHeight + "px"; // Open
+                    }
+                });
             });
-        };
-        
-        const renderTable = () => {
-            const selectedTestId = filterByTestSelect.value;
-            const filteredData = selectedTestId === 'all' 
-                ? allTestsData 
-                : allTestsData.filter(test => test.testId === selectedTestId);
+        }
 
-            if (filteredData.length === 0) {
-                messageArea.innerHTML = `<p class="text-gray-600">No test history found for the selected filter.</p>`;
-                historyTable.classList.add('hidden');
+        function attachActionListeners() {
+            resultsContainer.querySelectorAll('button').forEach(button => {
+                 // Clone and replace to remove old listeners first
+                 const newButton = button.cloneNode(true);
+                 button.parentNode.replaceChild(newButton, button);
+
+                 // Add new listeners
+                 if (newButton.classList.contains('view-details-btn')) {
+                    newButton.addEventListener('click', showDetailsModal);
+                } else if (newButton.classList.contains('export-pdf-btn')) {
+                    newButton.addEventListener('click', () => exportToPdf(newButton.dataset.testid, newButton.dataset.testTitle));
+                } else if (newButton.classList.contains('export-excel-btn')) {
+                    newButton.addEventListener('click', () => exportToExcel(newButton.dataset.testid, newButton.dataset.testTitle));
+                }
+            });
+        }
+
+        // --- Show Detailed Modal ---
+        function showDetailsModal(event) {
+            const button = event.target;
+            const resultId = button.dataset.resultId;
+            const testId = button.dataset.testid; // Get testId from button
+
+            // Find the specific result within the stored data
+            const testData = allTestsData[testId];
+            currentDetailedResult = testData?.results?.find(r => r.resultId === resultId);
+
+            if (!currentDetailedResult) {
+                console.error("Could not find result data for resultId:", resultId);
+                alert("Error: Could not load candidate details.");
                 return;
             }
-            
-            messageArea.innerHTML = '';
-            historyTable.classList.remove('hidden');
-            historyTableBody.innerHTML = '';
 
-            filteredData.forEach((test, index) => {
-                const row = document.createElement('tr');
-                row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
-                row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${test.title}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${test.attempted}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-bold">${test.passed}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-bold">${test.failed}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button data-testid="${test.testId}" class="view-results-btn text-indigo-600 hover:text-indigo-900">View Details</button>
-                    </td>
-                `;
-                historyTableBody.appendChild(row);
-            });
-            
-            document.querySelectorAll('.view-results-btn').forEach(btn => {
-                btn.addEventListener('click', showResultsModal);
-            });
-        };
+            const modalTitle = document.getElementById('modal-title');
+            const content = document.getElementById('modal-content');
+            modalTitle.textContent = `Details for ${currentDetailedResult.fullName || currentDetailedResult.candidateEmail}`;
 
-        const showResultsModal = (event) => {
-            const testId = event.target.dataset.testid;
-            const testData = allTestsData.find(t => t.testId === testId);
-            if (!testData) return;
-
-            modalTitle.textContent = `Results for "${testData.title}"`;
-            
-            const renderModalContent = (statusFilter = 'all', scoreFilter = 'all') => {
-                 const filteredResults = testData.results.filter(res => {
-                    const statusMatch = (statusFilter === 'all') || (res.result.toLowerCase() === statusFilter);
-                    const score = parseInt(res.score, 10);
-                    let scoreMatch = false;
-                    switch(scoreFilter) {
-                        case 'high': scoreMatch = score >= 80; break;
-                        case 'medium': scoreMatch = score >= 50 && score < 80; break;
-                        case 'low': scoreMatch = score < 50; break;
-                        default: scoreMatch = true;
-                    }
-                    return statusMatch && scoreMatch;
-                });
-                
-                if (filteredResults.length === 0) {
-                    modalContent.innerHTML = `
-                        <div class="mb-4 flex justify-end">
-                            ${getModalFiltersHTML(statusFilter, scoreFilter)}
-                        </div>
-                        <p class="text-gray-500 p-4">No candidates found for the selected filters.</p>
-                    `;
-                } else {
-                     modalContent.innerHTML = `
-                        <div class="mb-4 flex justify-end">
-                            ${getModalFiltersHTML(statusFilter, scoreFilter)}
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Candidate Name</th>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Roll Number</th>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">College</th>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Score (%)</th>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Result</th>
-                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Submitted At</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    ${filteredResults.map(res => `
-                                        <tr>
-                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">${res.fullName || 'N/A'}</td>
-                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${res.rollNumber || 'N/A'}</td>
-                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${res.collegeName || 'N/A'}</td>
-                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${res.candidateEmail}</td>
-                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-bold ${res.result === 'Pass' ? 'text-green-600' : 'text-red-600'}">${res.score}</td>
-                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold ${res.result === 'Pass' ? 'text-green-600' : 'text-red-600'}">${res.result}</td>
-                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${new Date(res.submittedAt).toLocaleString()}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
-                }
-                document.getElementById('modal-status-filter').addEventListener('change', () => {
-                    const newStatus = document.getElementById('modal-status-filter').value;
-                    const currentScore = document.getElementById('modal-score-filter').value;
-                    renderModalContent(newStatus, currentScore);
-                });
-                document.getElementById('modal-score-filter').addEventListener('change', () => {
-                    const newScore = document.getElementById('modal-score-filter').value;
-                    const currentStatus = document.getElementById('modal-status-filter').value;
-                    renderModalContent(currentStatus, newScore);
-                });
-            };
-            
-            const getModalFiltersHTML = (currentStatus, currentScore) => {
-                return `
-                    <div class="flex items-center space-x-4">
-                        <div>
-                            <label for="modal-status-filter" class="text-sm font-medium text-gray-700 mr-2">Filter by Status:</label>
-                            <select id="modal-status-filter" class="w-40 py-1 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                <option value="all" ${currentStatus === 'all' ? 'selected' : ''}>All</option>
-                                <option value="pass" ${currentStatus === 'pass' ? 'selected' : ''}>Passed</option>
-                                <option value="fail" ${currentStatus === 'fail' ? 'selected' : ''}>Failed</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="modal-score-filter" class="text-sm font-medium text-gray-700 mr-2">Filter by Score:</label>
-                            <select id="modal-score-filter" class="w-40 py-1 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                                <option value="all" ${currentScore === 'all' ? 'selected' : ''}>All Scores</option>
-                                <option value="high" ${currentScore === 'high' ? 'selected' : ''}>&gt;= 80%</option>
-                                <option value="medium" ${currentScore === 'medium' ? 'selected' : ''}>50% - 79%</option>
-                                <option value="low" ${currentScore === 'low' ? 'selected' : ''}>&lt; 50%</option>
-                            </select>
-                        </div>
+            // Populate modal content with detailed candidate info
+            content.innerHTML = `
+                <div class="mb-6 pb-6 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Candidate Information</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                        <div><strong class="block text-gray-500">Name</strong> <span class="text-gray-900">${currentDetailedResult.fullName || 'N/A'}</span></div>
+                        <div><strong class="block text-gray-500">Roll Number</strong> <span class="text-gray-900">${currentDetailedResult.rollNumber || 'N/A'}</span></div>
+                        <div><strong class="block text-gray-500">College</strong> <span class="text-gray-900">${currentDetailedResult.collegeName || 'N/A'}</span></div>
+                        <div><strong class="block text-gray-500">Department</strong> <span class="text-gray-900">${currentDetailedResult.department || 'N/A'}</span></div>
+                        <div class="md:col-span-2"><strong class="block text-gray-500">Email</strong> <span class="text-gray-900">${currentDetailedResult.candidateEmail || 'N/A'}</span></div>
                     </div>
-                `;
-            };
+                </div>
+                <div>
+                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Test Performance</h3>
+                     <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3 text-sm bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+                        <div><strong class="block text-indigo-800">Score</strong> <span class="font-bold text-xl ${currentDetailedResult.result === 'Pass' ? 'text-green-600' : 'text-red-600'}">${currentDetailedResult.score ?? 'N/A'}%</span></div>
+                        <div><strong class="block text-indigo-800">Result</strong> <span class="font-bold text-xl ${currentDetailedResult.result === 'Pass' ? 'text-green-600' : 'text-red-600'}">${currentDetailedResult.result || 'N/A'}</span></div>
+                        <div><strong class="block text-indigo-800">Violation</strong> <span class="font-semibold ${currentDetailedResult.violationReason ? 'text-red-600' : 'text-gray-700'}">${currentDetailedResult.violationReason || 'None'}</span></div>
+                         <div class="md:col-span-3"><strong class="block text-indigo-800">Submitted At</strong> <span class="text-gray-700">${currentDetailedResult.submittedAt ? new Date(currentDetailedResult.submittedAt).toLocaleString() : 'N/A'}</span></div>
+                     </div>
+                </div>
+                <!-- Aptitude tests don't have code/breakdown, add other relevant info if available -->
+            `;
 
-            renderModalContent();
-            resultsModal.classList.add('visible');
-        };
-        
-        filterByTestSelect.addEventListener('change', renderTable);
-        clearFiltersBtn.addEventListener('click', () => {
-            filterByTestSelect.value = 'all';
-            renderTable();
-        });
+            detailsModal.classList.add('visible'); // Show modal
+        }
 
+        // --- Export Functions (Adapted for Aptitude Test Data) ---
+        async function exportToPdf(testId, testTitle) {
+            const testData = allTestsData[testId];
+            if (!testData || !testData.results || testData.results.length === 0) return alert("No results to export for this test.");
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape' });
+
+            try {
+                // Fetch logos (optional, can remove if not needed or causing issues)
+                const [hireWithUsLogo, testifyLogo] = await Promise.all([
+                    imageToBase64('https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png'),
+                    imageToBase64('https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png')
+                ]).catch(err => { console.warn("Could not load logos for PDF:", err); return [null, null];}); // Gracefully handle logo load errors
+
+
+                // Header
+                if (testifyLogo) doc.addImage(testifyLogo, 'PNG', 15, 12, 20, 20); // Adjusted size
+                if (hireWithUsLogo) doc.addImage(hireWithUsLogo, 'PNG', doc.internal.pageSize.getWidth() - 35, 12, 20, 20); // Adjusted size
+                doc.setFontSize(18);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Aptitude Test Report', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+                doc.setFontSize(14);
+                doc.setFont('helvetica', 'normal');
+                doc.text(testTitle, doc.internal.pageSize.getWidth() / 2, 30, { align: 'center' });
+
+                // Table Data
+                const tableColumn = ["Candidate", "Email", "College", "Dept", "Score (%)", "Result", "Submitted", "Violation"];
+                const tableRows = testData.results.map(r => [
+                    r.fullName || 'N/A', r.candidateEmail || 'N/A', r.collegeName || 'N/A', r.department || 'N/A',
+                    r.score ?? 'N/A', r.result || 'N/A', r.submittedAt ? new Date(r.submittedAt).toLocaleString() : 'N/A', r.violationReason || 'None'
+                ]);
+
+                // Generate Table
+                doc.autoTable({
+                    head: [tableColumn], body: tableRows, startY: 45, theme: 'grid',
+                    headStyles: { fillColor: [79, 70, 229] }, // Indigo color
+                    styles: { fontSize: 8 }, // Smaller font for landscape
+                    columnStyles: { // Adjust column widths (total should be ~277 for landscape A4)
+                       0: { cellWidth: 45 }, // Candidate
+                       1: { cellWidth: 50 }, // Email
+                       2: { cellWidth: 45 }, // College
+                       3: { cellWidth: 35 }, // Dept
+                       4: { cellWidth: 15, halign: 'center'}, // Score
+                       5: { cellWidth: 15, halign: 'center'}, // Result
+                       6: { cellWidth: 37 }, // Submitted
+                       7: { cellWidth: 35 }  // Violation
+                    }
+                });
+
+                // Footer (Pagination, Date)
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.getWidth() - 15, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
+                    doc.text(`Report Generated: ${new Date().toLocaleDateString()}`, 15, doc.internal.pageSize.getHeight() - 10);
+                }
+                doc.save(`${testTitle.replace(/\s/g, '_')}_AptitudeResults.pdf`);
+            } catch (error) {
+                console.error("Error generating PDF:", error);
+                alert("Failed to generate PDF report.");
+            }
+        }
+
+        function exportToExcel(testId, testTitle) {
+            const testData = allTestsData[testId];
+             if (!testData || !testData.results || testData.results.length === 0) return alert("No results to export for this test.");
+
+            // Prepare data array for worksheet
+            const worksheetData = [
+                // Header Row
+                ["Candidate Name", "Email", "College", "Department", "Score (%)", "Result", "Submitted At", "Violation Reason"],
+                // Data Rows
+                ...testData.results.map(r => [
+                    r.fullName || 'N/A',
+                    r.candidateEmail || 'N/A',
+                    r.collegeName || 'N/A',
+                    r.department || 'N/A',
+                    r.score ?? 'N/A', // Use percentage score
+                    r.result || 'N/A',
+                    r.submittedAt ? new Date(r.submittedAt).toLocaleString() : 'N/A',
+                    r.violationReason || 'None'
+                ])
+            ];
+
+            // Create worksheet and workbook
+            const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+            // Optional: Adjust column widths (example)
+            ws['!cols'] = [ { wch: 25 }, { wch: 30 }, { wch: 30 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 20 }, { wch: 30 } ];
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Aptitude Results");
+
+            // Trigger download
+            XLSX.writeFile(wb, `${testTitle.replace(/\s/g, '_')}_AptitudeResults.xlsx`);
+        }
+
+        // --- Individual Report PDF ---
+        async function generateIndividualPdfReport() {
+            if (!currentDetailedResult) {
+                alert("Candidate data not loaded. Please reopen the details view.");
+                return;
+            }
+            const result = currentDetailedResult;
+            const testTitle = allTestsData[result.testId]?.title || "Aptitude Test"; // Get test title
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF(); // Portrait is default
+
+             try {
+                 // Fetch logos
+                const [hireWithUsLogo, testifyLogo] = await Promise.all([
+                    imageToBase64('https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png'),
+                    imageToBase64('https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png')
+                ]).catch(err => { console.warn("Could not load logos for PDF:", err); return [null, null];});
+
+                // Header
+                if (testifyLogo) doc.addImage(testifyLogo, 'PNG', 15, 12, 20, 20);
+                if (hireWithUsLogo) doc.addImage(hireWithUsLogo, 'PNG', doc.internal.pageSize.getWidth() - 35, 12, 20, 20);
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Candidate Aptitude Test Report', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+                doc.setFontSize(12);
+                 doc.setFont('helvetica', 'normal');
+                doc.text(`Test: ${testTitle}`, doc.internal.pageSize.getWidth() / 2, 28, { align: 'center' });
+
+                // Candidate Info Section
+                let yPos = 45;
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Candidate Details', 15, yPos);
+                yPos += 7;
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.text(`Name: ${result.fullName || 'N/A'}`, 15, yPos);
+                doc.text(`College: ${result.collegeName || 'N/A'}`, 105, yPos);
+                yPos += 6;
+                doc.text(`Roll Number: ${result.rollNumber || 'N/A'}`, 15, yPos);
+                doc.text(`Department: ${result.department || 'N/A'}`, 105, yPos);
+                yPos += 6;
+                doc.text(`Email: ${result.candidateEmail || 'N/A'}`, 15, yPos);
+                yPos += 10;
+
+                doc.setLineWidth(0.3);
+                doc.line(15, yPos, 195, yPos); // Separator line
+                yPos += 10;
+
+                // Performance Summary
+                doc.setFontSize(11);
+                doc.setFont('helvetica', 'bold');
+                doc.text('Performance Summary', 15, yPos);
+                yPos += 7;
+                doc.setFontSize(10);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Score: ${result.score ?? 'N/A'}%`, 15, yPos);
+                doc.text(`Result: ${result.result || 'N/A'}`, 75, yPos);
+                doc.text(`Violation: ${result.violationReason || 'None'}`, 135, yPos);
+                yPos += 6;
+                 doc.text(`Submitted At: ${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}`, 15, yPos);
+                yPos += 10;
+
+                // Note: Aptitude tests usually don't have a question-by-question breakdown available
+                // Add if needed, similar to coding report but likely without code
+
+                 doc.setLineWidth(0.3);
+                 doc.line(15, yPos, 195, yPos);
+                 yPos += 10;
+
+                 doc.setFontSize(8);
+                 doc.text(`Report Generated: ${new Date().toLocaleString()}`, 15, doc.internal.pageSize.getHeight() - 10);
+                 doc.text(`Result ID: ${result.resultId}`, doc.internal.pageSize.getWidth() - 15, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
+
+
+                doc.save(`AptitudeReport_${(result.fullName || result.candidateEmail).replace(/\s/g, '_')}.pdf`);
+             } catch (error) {
+                 console.error("Error generating individual PDF:", error);
+                 alert("Failed to generate PDF report.");
+             }
+        }
+
+        // --- Attach Modal Action Listeners ---
+        modalCloseBtn.onclick = () => detailsModal.classList.remove('visible');
+        downloadReportBtn.addEventListener('click', generateIndividualPdfReport);
+
+
+        // Initial data fetch
         fetchHistory();
     });
     </script>
 </body>
 </html>
+

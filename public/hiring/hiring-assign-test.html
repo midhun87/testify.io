@@ -39,10 +39,10 @@
                 <div class="max-w-4xl mx-auto">
                     <form id="assign-test-form" class="bg-white p-8 rounded-xl shadow-md space-y-6">
                         <div>
-                            <label for="test-select" class="block text-sm font-medium text-gray-700">Select Test</label>
+                            <label for="test-select" class="block text-sm font-medium text-gray-700">Select Test (Aptitude or Coding)</label>
                             <select id="test-select" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
                         </div>
-                        
+
                         <div>
                             <label for="candidate-emails" class="block text-sm font-medium text-gray-700">Candidate Emails</label>
                             <textarea id="candidate-emails" rows="6" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="Paste email addresses here, one per line or separated by commas."></textarea>
@@ -70,7 +70,7 @@
             </div>
         </div>
     </div>
-    
+
     <script src="common.js"></script>
      <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -82,14 +82,16 @@
             const messageDiv = document.getElementById('message');
             const submitBtn = document.getElementById('submit-btn');
 
-            // Fetch tests created by this moderator
+            // --- MODIFIED FETCH ---
+            // Fetch ALL tests (Aptitude/Jobs and Coding) created by this moderator
             try {
+                // The backend endpoint /api/hiring/tests now fetches both types
                 const response = await fetch('/api/hiring/tests', {
                     headers: { 'x-auth-token': token }
                 });
                 if (!response.ok) throw new Error('Could not fetch tests.');
-                const tests = await response.json();
-                
+                const tests = await response.json(); // Expecting an array like [{ testId: '...', title: '...', testType: 'aptitude/coding' }, ...]
+
                 if (tests.length === 0) {
                     testSelect.innerHTML = '<option disabled selected>No tests found. Please create one first.</option>';
                     submitBtn.disabled = true;
@@ -97,8 +99,10 @@
                     testSelect.innerHTML = '<option disabled selected value="">-- Select a test to assign --</option>';
                     tests.forEach(test => {
                         const option = document.createElement('option');
+                        // Use the consistent testId (which is jobId or codingTestId)
                         option.value = test.testId;
-                        option.textContent = test.title;
+                        // Display title and potentially the type for clarity
+                        option.textContent = `${test.title} (${test.testType === 'coding' ? 'Coding' : 'Aptitude'})`;
                         testSelect.appendChild(option);
                     });
                 }
@@ -106,6 +110,8 @@
                  testSelect.innerHTML = `<option disabled selected>Error loading tests: ${error.message}</option>`;
                  submitBtn.disabled = true;
             }
+            // --- END MODIFIED FETCH ---
+
 
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -117,7 +123,7 @@
                 const emailsText = document.getElementById('candidate-emails').value;
                 const startTime = document.getElementById('start-time').value;
                 const endTime = document.getElementById('end-time').value;
-                
+
                 const candidateEmails = emailsText.split(/[\n, ]+/).map(email => email.trim()).filter(email => email);
 
                 if (!testId || candidateEmails.length === 0 || !startTime || !endTime) {
@@ -137,7 +143,7 @@
                 }
 
                 const payload = {
-                    testId,
+                    testId, // This is now jobId or codingTestId
                     candidateEmails,
                     startTime,
                     endTime

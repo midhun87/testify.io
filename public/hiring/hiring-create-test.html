@@ -262,8 +262,8 @@
                             fullText += textContent.items.map(item => item.str).join(' ') + '\n';
                         }
                         
-                        // NOTE: The endpoint in the original file was incorrect. This is corrected to the hiring-specific AI endpoint.
-                        const response = await fetch('/api/admin/generate-test-from-pdf', {
+                        // *** FIX: Corrected the API endpoint to the one for hiring moderators ***
+                        const response = await fetch('/api/hiring/generate-test-from-pdf', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                             body: JSON.stringify({ text: fullText })
@@ -292,6 +292,7 @@
                 if (data.sections && data.sections.length > 0) {
                     data.sections.forEach(section => addSection(section));
                 } else if (data.questions && data.questions.length > 0) {
+                    // Fallback for older AI model that might return 'questions' directly
                     addSection({ title: 'Main Section', questions: data.questions });
                 }
             }
