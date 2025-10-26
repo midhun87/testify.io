@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Your Application - HIRE WITH US</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-12">
+        <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8">
+            <div id="loading-state" class="text-center py-10">
+                <p class="text-gray-600">Loading your application...</p>
+            </div>
+
+            <div id="error-state" class="hidden text-center py-10 bg-red-50 rounded-lg">
+                 <h2 class="text-2xl font-bold text-red-700">Error</h2>
+                 <p id="error-message" class="text-red-600 mt-2">Application not found.</p>
+            </div>
+
+            <div id="application-form" class="hidden">
+                <div class="text-center mb-8">
+                    <h1 id="job-title-display" class="text-3xl font-extrabold text-gray-800">Edit Your Application</h1>
+                    <p id="job-subtitle" class="text-gray-500"></p>
+                </div>
+
+                <div id="deadline-passed-message" class="hidden bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-md">
+                    <p class="font-bold">Editing is Closed</p>
+                    <p>The application deadline for this position has passed. You can view your submitted details below, but you cannot make any changes.</p>
+                </div>
+                
+                <form id="edit-form">
+                    <!-- Personal Details -->
+                    <div class="border-b pb-6 mb-6">
+                        <h2 class="text-xl font-bold text-gray-700 mb-4">Personal Details</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">First Name</label>
+                                <input type="text" id="firstName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                                <input type="text" id="lastName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Email Address</label>
+                                <input type="email" id="email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100" readonly>
+                            </div>
+                             <div>
+                                <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+                                <input type="tel" id="phone" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Education -->
+                    <div class="border-b pb-6 mb-6">
+                         <h2 class="text-xl font-bold text-gray-700 mb-4">Education</h2>
+                         <div id="education-container" class="space-y-4">
+                            <!-- Education details will be injected here -->
+                         </div>
+                    </div>
+
+                    <!-- Experience -->
+                     <div class="border-b pb-6 mb-6">
+                         <h2 class="text-xl font-bold text-gray-700 mb-4">Professional Experience</h2>
+                         <div id="experience-container" class="space-y-4">
+                            <!-- Experience details will be injected here -->
+                         </div>
+                    </div>
+
+                     <!-- Documents -->
+                     <div class="pb-6 mb-6">
+                         <h2 class="text-xl font-bold text-gray-700 mb-4">Submitted Documents</h2>
+                         <div id="documents-container" class="space-y-2">
+                             <!-- Links to documents will be injected here -->
+                         </div>
+                    </div>
+                
+                    <div class="mt-8 text-right">
+                        <button type="submit" id="update-btn" class="hidden px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:bg-gray-400">
+                            Update Application
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    const loadingState = document.getElementById('loading-state');
+    const errorState = document.getElementById('error-state');
+    const errorMessage = document.getElementById('error-message');
+    const applicationForm = document.getElementById('application-form');
+    const jobTitleDisplay = document.getElementById('job-title-display');
+    const jobSubtitle = document.getElementById('job-subtitle');
+    const deadlinePassedMessage = document.getElementById('deadline-passed-message');
+    const updateBtn = document.getElementById('update-btn');
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const applicationId = urlParams.get('applicationId');
+
+    if (!applicationId) {
+        showError('Application ID is missing from the URL.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/public/hiring-application/${applicationId}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Failed to load application.');
+        }
+
+        populateForm(data);
+        showForm(data.isEditable);
+
+    } catch (error) {
+        showError(error.message);
+    }
+
+    function showError(message) {
+        loadingState.classList.add('hidden');
+        errorMessage.textContent = message;
+        errorState.classList.remove('hidden');
+    }
+
+    function showForm(isEditable) {
+        loadingState.classList.add('hidden');
+        applicationForm.classList.remove('hidden');
+        if (!isEditable) {
+            deadlinePassedMessage.classList.remove('hidden');
+            // Make all inputs readonly if not editable
+            document.querySelectorAll('#edit-form input, #edit-form textarea, #edit-form select').forEach(el => {
+                el.readOnly = true;
+                el.classList.add('bg-gray-100');
+            });
+        } else {
+             updateBtn.classList.remove('hidden');
+        }
+    }
+
+    function populateForm(appData) {
+        jobTitleDisplay.textContent = `Edit Your Application`;
+        jobSubtitle.textContent = `For the position of ${appData.jobTitle}`;
+        
+        // Personal Details
+        document.getElementById('firstName').value = appData.firstName || '';
+        document.getElementById('lastName').value = appData.lastName || '';
+        document.getElementById('email').value = appData.email || '';
+        document.getElementById('phone').value = appData.phone || '';
+
+        // Education
+        const educationContainer = document.getElementById('education-container');
+        if (appData.education && appData.education.length > 0) {
+            educationContainer.innerHTML = appData.education.map(edu => `
+                <div class="p-4 bg-gray-50 rounded-lg border">
+                    <p><strong>${edu.type || 'N/A'}:</strong> ${edu.institute || 'N/A'}</p>
+                    <p class="text-sm text-gray-600">Stream: ${edu.stream || 'N/A'} | Score: ${edu.score || 'N/A'}</p>
+                </div>
+            `).join('');
+        } else {
+            educationContainer.innerHTML = '<p class="text-gray-500">No education details provided.</p>';
+        }
+
+        // Experience
+        const experienceContainer = document.getElementById('experience-container');
+         if (appData.experiences && appData.experiences.length > 0) {
+            experienceContainer.innerHTML = appData.experiences.map(exp => `
+                <div class="p-4 bg-gray-50 rounded-lg border">
+                    <p><strong>${exp.title || 'N/A'} at ${exp.company || 'N/A'}</strong></p>
+                    <p class="text-sm text-gray-600">${exp.description || 'No description.'}</p>
+                </div>
+            `).join('');
+        } else {
+            experienceContainer.innerHTML = '<p class="text-gray-500">No experience details provided.</p>';
+        }
+
+        // Documents
+        const documentsContainer = document.getElementById('documents-container');
+        let docsHTML = '';
+        if(appData.resumeUrl) docsHTML += `<div><a href="${appData.resumeUrl}" target="_blank" class="text-indigo-600 hover:underline">View Submitted Resume</a></div>`;
+        if(appData.govtId && appData.govtId.url) docsHTML += `<div><a href="${appData.govtId.url}" target="_blank" class="text-indigo-600 hover:underline">View Submitted Government ID</a></div>`;
+        documentsContainer.innerHTML = docsHTML || '<p class="text-gray-500">No documents found.</p>';
+    }
+
+    // NOTE: The update/submit functionality is not yet implemented.
+    // This is a placeholder to show the button.
+    updateBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        alert('Update functionality is a work in progress and will be available soon!');
+    });
+});
+</script>
+</body>
+</html>

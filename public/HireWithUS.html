@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HireWithUS | Skill-Based Hiring Platform by XETA SOLUTIONS</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-color: #ffffff;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(to right, #4f46e5, #7c3aed, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-bg {
+             background-color: #f9fafb;
+             background-image: 
+                radial-gradient(at 20% 20%, hsla(245, 100%, 95%, 1) 0px, transparent 50%),
+                radial-gradient(at 80% 20%, hsla(220, 100%, 95%, 1) 0px, transparent 50%),
+                radial-gradient(at 20% 80%, hsla(260, 100%, 95%, 1) 0px, transparent 50%),
+                radial-gradient(at 80% 80%, hsla(240, 100%, 95%, 1) 0px, transparent 50%);
+        }
+
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.7s cubic-bezier(0.645, 0.045, 0.355, 1), transform 0.7s cubic-bezier(0.645, 0.045, 0.355, 1);
+        }
+        .fade-in-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card-hover-effect {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-hover-effect:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        
+        .step-line {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 48px; 
+            bottom: -48px;
+            width: 2px;
+            background-color: #e5e7eb;
+            transform: translateX(-50%);
+        }
+        .step-item:last-child .step-line {
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .form-input-styled {
+            background-color: #f3f4f6;
+            border: 2px solid transparent;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+        .form-input-styled:focus {
+            background-color: #ffffff;
+            border-color: #7c3aed;
+            box-shadow: none;
+            outline: none;
+            --tw-ring-color: transparent;
+        }
+
+        .btn-gradient {
+            background-image: linear-gradient(to right, #6d28d9, #7c3aed, #a855f7);
+            background-size: 200% auto;
+            transition: background-position 0.5s;
+        }
+        .btn-gradient:hover {
+            background-position: right center;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Navigation Bar -->
+    <header id="navbar" class="bg-white/80 backdrop-blur-lg fixed top-0 left-0 right-0 z-50 transition-all duration-300 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <!-- Logo -->
+                <a href="#" class="flex-shrink-0 flex items-center space-x-2">
+                    <img class="h-10 w-auto" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="HireWithUS Logo">
+                    <span class="text-2xl font-bold text-slate-900 tracking-tight">HireWithUS</span>
+                </a>
+                
+                <!-- Desktop Navigation Links -->
+                <nav class="hidden md:flex items-center space-x-8">
+                    <a href="#features" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 font-semibold">Features</a>
+                    <a href="#how-it-works" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 font-semibold">How It Works</a>
+                    <a href="#contact" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 font-semibold">Contact</a>
+                </nav>
+
+                <!-- CTA & Mobile Menu Button -->
+                <div class="flex items-center">
+                    <div class="hidden md:block">
+                        <a href="#contact" class="btn-gradient inline-flex items-center justify-center px-5 py-2.5 border border-transparent rounded-lg text-base font-semibold text-white transition-all">
+                            Request a Demo
+                        </a>
+                    </div>
+                    <div class="md:hidden ml-4">
+                        <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-slate-600 hover:text-violet-700 hover:bg-slate-100 focus:outline-none">
+                            <span class="sr-only">Open main menu</span>
+                            <svg id="menu-open-icon" class="h-6 w-6 block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg>
+                            <svg id="menu-close-icon" class="h-6 w-6 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div class="md:hidden hidden" id="mobile-menu">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-slate-200">
+                <a href="#features" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Features</a>
+                <a href="#how-it-works" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">How It Works</a>
+                <a href="#contact" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Contact</a>
+                 <a href="#contact" class="mobile-nav-link text-white bg-violet-600 hover:bg-violet-700 block px-3 py-3 mt-2 rounded-md text-base font-medium text-center">Request a Demo</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="relative pt-40 pb-32 hero-bg overflow-hidden">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+                <h1 class="text-4xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl leading-tight fade-in-up">
+                    <span class="block text-slate-900">Hire Smarter,</span>
+                    <span class="block gradient-text mt-2">Not Harder.</span>
+                </h1>
+                <p class="mt-8 max-w-2xl mx-auto text-lg text-slate-600 leading-relaxed fade-in-up" style="transition-delay: 150ms;">
+                    The ultimate platform for skill-based testing, AI evaluation, and automated interviews — designed to help you find the right talent, faster.
+                </p>
+                <div class="mt-12 flex flex-col sm:flex-row justify-center items-center gap-4 fade-in-up" style="transition-delay: 300ms;">
+                    <a href="#contact" class="w-full sm:w-auto btn-gradient inline-flex items-center justify-center px-8 py-4 border border-transparent rounded-lg shadow-lg text-base font-semibold text-white transition-all duration-300 transform hover:scale-105">
+                        Request a Demo
+                    </a>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Features Section -->
+        <section id="features" class="py-28 sm:py-36 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl fade-in-up">Everything You Need to Hire Top Talent</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600 fade-in-up" style="transition-delay: 150ms;">
+                        Focus on what truly matters: a candidate's ability to perform.
+                    </p>
+                </div>
+                <div class="mt-20 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+                    <!-- Feature 1 -->
+                    <div class="fade-in-up card-hover-effect p-8 bg-slate-50/50 rounded-2xl border border-slate-200/80">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-violet-100 text-violet-600">
+                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.375 3.375 0 0014 18.442V21a1 1 0 11-2 0v-2.558a3.375 3.375 0 00-.435-1.897l-.548-.547z" /></svg>
+                        </div>
+                        <h3 class="mt-5 text-xl font-bold text-gray-900">AI-Powered Assessments</h3>
+                        <p class="mt-2 text-base text-gray-600">Create tailored tests that measure real-world skills, from coding challenges to situational judgment.</p>
+                    </div>
+                    <!-- Feature 2 -->
+                    <div class="fade-in-up card-hover-effect p-8 bg-slate-50/50 rounded-2xl border border-slate-200/80" style="transition-delay: 100ms;">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-violet-100 text-violet-600">
+                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                        </div>
+                        <h3 class="mt-5 text-xl font-bold text-gray-900">Automated Interviews</h3>
+                        <p class="mt-2 text-base text-gray-600">Save hundreds of hours with structured, AI-evaluated video interviews that assess communication and problem-solving.</p>
+                    </div>
+                    <!-- Feature 3 -->
+                    <div class="fade-in-up card-hover-effect p-8 bg-slate-50/50 rounded-2xl border border-slate-200/80" style="transition-delay: 200ms;">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-violet-100 text-violet-600">
+                             <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                        </div>
+                        <h3 class="mt-5 text-xl font-bold text-gray-900">In-Depth Analytics</h3>
+                        <p class="mt-2 text-base text-gray-600">Get actionable insights into candidate performance, compare applicants objectively, and identify top potential.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works Section -->
+        <section id="how-it-works" class="py-28 sm:py-36 bg-slate-50">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl fade-in-up">Get Started in 3 Simple Steps</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600 fade-in-up" style="transition-delay: 150ms;">
+                        A streamlined process from assessment creation to confident hiring.
+                    </p>
+                </div>
+                <div class="mt-20 space-y-20">
+                    <!-- Step 1 -->
+                    <div class="relative flex flex-col md:flex-row items-center gap-8 md:gap-16 fade-in-up step-item">
+                        <div class="step-line"></div>
+                        <div class="flex-shrink-0 w-24 h-24 rounded-full bg-violet-600 text-white flex items-center justify-center text-3xl font-bold shadow-lg">1</div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900">Create & Assign</h3>
+                            <p class="mt-2 text-lg text-gray-600">Build custom skill assessments or use our expert-designed templates. Invite candidates to your branded portal with a single click.</p>
+                        </div>
+                    </div>
+                     <!-- Step 2 -->
+                    <div class="relative flex flex-col md:flex-row-reverse items-center gap-8 md:gap-16 fade-in-up step-item" style="transition-delay: 200ms;">
+                        <div class="step-line"></div>
+                        <div class="flex-shrink-0 w-24 h-24 rounded-full bg-violet-600 text-white flex items-center justify-center text-3xl font-bold shadow-lg">2</div>
+                        <div class="md:text-right">
+                            <h3 class="text-2xl font-bold text-gray-900">AI Evaluates</h3>
+                            <p class="mt-2 text-lg text-gray-600">Our platform automatically scores tests, evaluates code, and analyzes video interviews for key metrics like communication and clarity.</p>
+                        </div>
+                    </div>
+                     <!-- Step 3 -->
+                    <div class="relative flex flex-col md:flex-row items-center gap-8 md:gap-16 fade-in-up step-item" style="transition-delay: 400ms;">
+                        <div class="flex-shrink-0 w-24 h-24 rounded-full bg-violet-600 text-white flex items-center justify-center text-3xl font-bold shadow-lg">3</div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-900">Hire with Confidence</h3>
+                            <p class="mt-2 text-lg text-gray-600">Review a shortlist of top candidates with data-driven reports and make unbiased hiring decisions based on proven skills.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Contact Section -->
+        <section id="contact" class="py-28 sm:py-36 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="lg:grid lg:grid-cols-2 lg:gap-24 items-center">
+                    <div class="fade-in-up">
+                        <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Ready to Transform Your Hiring?</h2>
+                        <p class="mt-4 text-lg text-gray-600">Fill out the form to schedule a personalized demo and see how HireWithUS can help you find the best talent.</p>
+                        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760706363/TEAM_MEET_cjvlvo.png" alt="Team collaborating on a project" class="mt-8 rounded-2xl shadow-xl">
+                    </div>
+                    <div class="mt-12 lg:mt-0 bg-white p-8 sm:p-10 rounded-2xl shadow-2xl fade-in-up" style="transition-delay: 150ms;">
+                        <form id="contact-form" action="https://formspree.io/f/xdkwwgow" method="POST" class="space-y-6">
+                            <div>
+                                <label for="name" class="block text-sm font-semibold text-gray-700">Full Name</label>
+                                <input type="text" name="name" id="name" required class="form-input-styled mt-1 block w-full rounded-lg shadow-sm sm:text-sm p-3">
+                            </div>
+                            <div>
+                                <label for="company" class="block text-sm font-semibold text-gray-700">Company</label>
+                                <input type="text" name="company" id="company" required class="form-input-styled mt-1 block w-full rounded-lg shadow-sm sm:text-sm p-3">
+                            </div>
+                            <div>
+                                <label for="email" class="block text-sm font-semibold text-gray-700">Email Address</label>
+                                <input type="email" name="email" id="email" required class="form-input-styled mt-1 block w-full rounded-lg shadow-sm sm:text-sm p-3">
+                            </div>
+                            <div>
+                                <label for="message" class="block text-sm font-semibold text-gray-700">Message</label>
+                                <textarea id="message" name="message" rows="4" required class="form-input-styled mt-1 block w-full rounded-lg shadow-sm sm:text-sm p-3"></textarea>
+                            </div>
+                            <div id="form-status" class="text-center text-sm font-medium h-4"></div>
+                            <div>
+                                <button id="form-submit-btn" type="submit" class="w-full btn-gradient inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white transition-all duration-300">
+                                    <span id="button-text">Schedule Demo</span>
+                                    <div id="spinner" class="spinner ml-3 hidden"></div>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-300">
+        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col items-center">
+                 <a href="/XetaSolutions.html" class="inline-flex items-center justify-center space-x-3">
+                     <p class="text-slate-400 text-sm">A Product By</p>
+                     <img class="h-8 w-auto" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg" alt="XETA SOLUTIONS Logo">
+                 </a>
+            </div>
+            <div class="mt-8 border-t border-slate-700 pt-8 text-center">
+                <p class="text-base text-slate-400">&copy; 2025 XETA SOLUTIONS. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile Menu
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const menuOpenIcon = document.getElementById('menu-open-icon');
+            const menuCloseIcon = document.getElementById('menu-close-icon');
+            const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+
+            const toggleMenu = () => {
+                mobileMenu.classList.toggle('hidden');
+                menuOpenIcon.classList.toggle('hidden');
+                menuCloseIcon.classList.toggle('hidden');
+            };
+
+            mobileMenuButton.addEventListener('click', toggleMenu);
+            mobileNavLinks.forEach(link => link.addEventListener('click', () => {
+                if (!mobileMenu.classList.contains('hidden')) toggleMenu();
+            }));
+
+            // Animate on scroll
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
+            
+            // Formspree Logic
+            const contactForm = document.getElementById('contact-form');
+            const formStatus = document.getElementById('form-status');
+            const formSubmitBtn = document.getElementById('form-submit-btn');
+            const buttonText = document.getElementById('button-text');
+            const spinner = document.getElementById('spinner');
+
+            contactForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                buttonText.textContent = "Sending...";
+                spinner.classList.remove('hidden');
+                formSubmitBtn.disabled = true;
+                const data = new FormData(e.target);
+                try {
+                    const response = await fetch(e.target.action, {
+                        method: 'POST',
+                        body: data,
+                        headers: {'Accept': 'application/json'}
+                    });
+                    if (response.ok) {
+                        formStatus.textContent = "Thanks for your submission!";
+                        formStatus.className = "text-center text-sm font-medium h-4 text-green-600";
+                        contactForm.reset();
+                    } else {
+                        const data = await response.json();
+                        if (Object.hasOwn(data, 'errors')) {
+                            formStatus.textContent = data["errors"].map(error => error["message"]).join(", ");
+                        } else {
+                            formStatus.textContent = "Oops! There was a problem submitting your form";
+                        }
+                         formStatus.className = "text-center text-sm font-medium h-4 text-red-600";
+                    }
+                } catch (error) {
+                    formStatus.textContent = "Oops! There was a problem submitting your form";
+                    formStatus.className = "text-center text-sm font-medium h-4 text-red-600";
+                } finally {
+                    buttonText.textContent = "Schedule Demo";
+                    spinner.classList.add('hidden');
+                    formSubmitBtn.disabled = false;
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
+
