@@ -4,76 +4,130 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hiring Coding Test - TESTIFY</title>
+    <!-- Favicon, Tailwind, Fonts, CodeMirror CSS, Font Awesome, etc. -->
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material-darker.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.4/purify.min.js"></script>
+    <!-- Custom Styles -->
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .CodeMirror { height: 100%; border-radius: 0 0 0.5rem 0.5rem; font-size: 14px; }
-        .CodeMirror-placeholder { color: #888 !important; }
-        .palette-btn { transition: all 0.2s; }
-        .palette-btn.active { background-color: #4F46E5; color: white; border-color: #4F46E5; }
-        .palette-btn.solved { background-color: #10B981; color: white; border-color: #059669; }
-        .palette-btn.attempted { border-color: #F59E0B; color: #F59E0B; }
-        .modal-overlay { background-color: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
+        .CodeMirror { height: 100%; border-radius: 0 0 0.5rem 0.5rem; font-size: 14px; background-color: #1f2937; }
+        .palette-btn { transition: all 0.2s; border-width: 2px; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 600; min-width: 60px; text-align: center; }
+        .palette-btn.pending { border-color: #d1d5db; color: #4b5563; }
+        .palette-btn.pending:hover { background-color: #f3f4f6; }
+        .palette-btn.active { background-color: #4f46e5; color: white; border-color: #4f46e5; }
+        .palette-btn.solved { background-color: #10b981; color: white; border-color: #059669; }
+        .palette-btn.attempted { border-color: #f59e0b; color: #f59e0b; background-color: #fffbeb; }
+        .palette-btn.attempted:hover { background-color: #fef3c7; }
         .test-case-tab { transition: all 0.2s; }
-        .test-case-tab.active { border-color: #4F46E5; color: #4F46E5; background-color: #EEF2FF; }
-        .prose pre { white-space: pre-wrap; word-wrap: break-word; }
+        .test-case-tab.active { border-color: #6366f1; color: #6366f1; background-color: #e0e7ff; font-weight: 600; }
+        .prose h3 { margin-top: 1.5em; margin-bottom: 0.5em; font-weight: 700; color: #1f2937; }
+        .prose h2 { color: #111827; }
+        .prose p, .prose li { color: #374151; line-height: 1.7; }
+        .prose pre { white-space: pre-wrap; word-wrap: break-word; background-color: #f3f4f6; padding: 1em; border-radius: 0.375rem; font-size: 0.875em; border: 1px solid #e5e7eb; }
+        .prose code:not(pre > code) { background-color: #e5e7eb; padding: 0.2em 0.4em; border-radius: 0.25rem; font-size: 0.9em; }
+        .prose pre > code { background-color: transparent; padding: 0; border-radius: 0; font-size: inherit; }
         #fullscreen-container:fullscreen { background-color: #f3f4f6; padding: 0; overflow: hidden; }
+        .message-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 0.8rem 1.5rem; border-radius: 0.5rem; color: white; font-weight: 500; z-index: 1000; opacity: 0; transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); font-size: 0.9rem; transform: translateY(-20px) translateX(-50%); }
+        .message-box.show { opacity: 1; transform: translateY(0) translateX(-50%); }
+        .message-box.error { background-color: #ef4444; }
+        .message-box.success { background-color: #10b981; }
+        .message-box.warning { background-color: #f59e0b; }
+        .message-box.info { background-color: #3b82f6; }
+        .spinner { border-top-color: #4f46e5; }
+        /* Camera Preview Fix */
+        #camera-feed { display: block; /* Ensure it's not hidden by default */}
+        #camera-placeholder { display: none; /* Hide placeholder initially */ align-items: center; justify-content: center; flex-direction: column; text-align: center; color: #ef4444; font-size: 0.875rem; height: 100%; background-color: #e5e7eb; }
+        #camera-placeholder.show { display: flex; /* Show placeholder when needed */ }
+        #camera-placeholder i { font-size: 2rem; margin-bottom: 0.5rem; }
+         #network-status { position: fixed; bottom: 10px; right: 10px; padding: 5px 10px; border-radius: 5px; font-size: 0.8rem; font-weight: 500; z-index: 1100; transition: opacity 0.5s ease-in-out; }
+         #network-status.online { background-color: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+         #network-status.offline { background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px;}
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px;}
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        #results-view, #output-console-container { background-color: #1f2937; color: #d1d5db; border-radius: 0.5rem; }
+        #test-case-tabs button { border-color: transparent; }
+        #test-case-tabs button.active { border-color: #6366f1; color: #a5b4fc; background-color: #374151; }
+        #test-case-details pre { background-color: #374151; border: 1px solid #4b5563; }
+        #output-console { background-color: #1f2937; }
+        #output-placeholder { color: #6b7280; }
+        #modal-error-message, #proctoring-modal-error-message { color: #ef4444; font-size: 0.875rem; margin-top: 1rem; }
+
+        /* Ensure modal overlay has high z-index but allows clicks through */
+        .modal-overlay {
+            position: fixed; /* Added for z-index */
+            inset: 0; /* Cover entire screen */
+            background-color: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            pointer-events: none; /* Let clicks pass through overlay */
+            z-index: 9990; /* High z-index */
+        }
+        /* Ensure modal content box allows clicks and is above overlay */
+        #confirm-modal > div, #proctoring-modal > div {
+            pointer-events: auto; /* Allow clicks on the content box */
+            z-index: 9991; /* Higher than overlay */
+            position: relative; /* Needed for z-index stacking context */
+        }
+        /* Explicitly make buttons clickable and ensure they are visually on top */
+        #modal-cancel-btn, #modal-confirm-btn, #proctoring-confirm-btn {
+            pointer-events: auto !important;
+            cursor: pointer;
+            z-index: 9992; /* HIGHEST z-index */
+            position: relative; /* Helps with z-index */
+        }
     </style>
 </head>
-<body class="bg-gray-100">
-    <!-- Main container -->
+<body class="bg-gray-100 min-h-screen">
+    <!-- Main container for initial loading/form -->
     <div id="main-container" class="min-h-screen flex items-center justify-center p-4">
-        <div id="loader" class="text-center">
-            <svg class="animate-spin h-10 w-10 text-indigo-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        <!-- Loader -->
+        <div id="loader" class="text-center p-8 bg-white rounded-lg shadow-xl">
+            <svg class="animate-spin h-10 w-10 text-indigo-600 mx-auto mb-4 spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
             <p class="text-xl font-semibold text-gray-700">Validating Test Link...</p>
         </div>
-        <div id="error-message" class="hidden text-center bg-white p-8 rounded-lg shadow-xl">
-            <h2 class="text-2xl font-bold text-red-600">Access Denied</h2>
-            <p class="text-gray-600 mt-2"></p>
+        <!-- Error Message Display -->
+        <div id="error-message" class="hidden text-center bg-white p-8 rounded-lg shadow-xl max-w-lg">
+            <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+            <h2 class="text-2xl font-bold text-red-600 mb-2">Access Denied</h2>
+            <p class="text-gray-600"></p>
         </div>
+        <!-- Candidate Details Form -->
         <div id="details-form-container" class="hidden bg-white p-8 rounded-lg shadow-xl w-full max-w-3xl">
             <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">Candidate Verification</h2>
             <form id="candidate-details-form">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-4">
-                        <div>
-                            <label for="student-name" class="block text-sm font-medium text-gray-700">Full Name</label>
-                            <input type="text" id="student-name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-                        <div>
-                            <label for="roll-number" class="block text-sm font-medium text-gray-700">Roll Number</label>
-                            <input type="text" id="roll-number" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-                        <div>
-                            <label for="college-select" class="block text-sm font-medium text-gray-700">College Name</label>
-                            <select id="college-select" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="">Loading colleges...</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="department" class="block text-sm font-medium text-gray-700">Department</label>
-                            <input type="text" id="department" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
+                        <div><label for="student-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label><input type="text" id="student-name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"></div>
+                        <div><label for="roll-number" class="block text-sm font-medium text-gray-700 mb-1">Roll Number / ID</label><input type="text" id="roll-number" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"></div>
+                        <div><label for="college-select" class="block text-sm font-medium text-gray-700 mb-1">College Name</label><select id="college-select" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white focus:ring-indigo-500 focus:border-indigo-500 text-sm"><option value="">Loading colleges...</option></select></div>
+                        <div><label for="department" class="block text-sm font-medium text-gray-700 mb-1">Department</label><input type="text" id="department" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"></div>
                     </div>
                     <div class="space-y-4">
-                        <label class="block text-sm font-medium text-gray-700">Live Photo Capture</label>
-                        <div class="bg-gray-200 rounded-md overflow-hidden aspect-video relative">
-                            <video id="camera-feed" class="w-full h-full object-cover" autoplay playsinline muted></video>
-                            <img id="captured-photo" class="absolute top-0 left-0 w-full h-full object-cover hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Live Photo Capture</label>
+                        <div id="camera-container" class="bg-gray-200 rounded-md overflow-hidden aspect-video relative border border-gray-300">
+                             <video id="camera-feed" class="w-full h-full object-cover" autoplay playsinline muted></video>
+                             <img id="captured-photo" class="absolute top-0 left-0 w-full h-full object-cover hidden">
+                             <!-- Placeholder is hidden by default, shown on error -->
+                             <div id="camera-placeholder" class="absolute inset-0"><i class="fas fa-video-slash"></i><span id="camera-placeholder-text">Camera Error</span></div>
                         </div>
                         <canvas id="capture-canvas" class="hidden"></canvas>
                         <div id="capture-buttons" class="flex space-x-2">
-                             <button type="button" id="capture-btn" class="w-full px-4 py-2 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-100">Capture Photo</button>
-                             <button type="button" id="recapture-btn" class="hidden w-full px-4 py-2 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-100">Recapture</button>
+                             <button type="button" id="capture-btn" class="flex-1 px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">Capture Photo</button>
+                             <button type="button" id="recapture-btn" class="hidden flex-1 px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Recapture</button>
                         </div>
+                        <p id="camera-error" class="text-xs text-red-600 hidden text-center"></p>
                     </div>
                 </div>
                 <div class="mt-8">
-                    <button type="submit" id="start-test-btn" class="w-full px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:bg-gray-400">
+                    <button type="submit" id="start-test-btn" class="w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-150 ease-in-out">
+                        <svg id="start-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         <span id="start-btn-text">Submit Details & Start Test</span>
                     </button>
                 </div>
@@ -84,70 +138,102 @@
     <!-- Test Environment -->
     <div id="fullscreen-container">
         <div id="test-environment" class="hidden h-screen w-screen flex flex-col bg-gray-100">
-            <header class="flex items-center justify-between h-16 bg-white border-b px-4 shadow-md flex-shrink-0 z-10">
-                <h1 id="test-title" class="text-xl font-bold text-gray-800">Coding Test</h1>
-                <div class="flex items-center space-x-4">
-                    <div class="text-lg font-semibold text-red-600">Time Left: <span id="timer">00:00</span></div>
-                    <button id="submit-test-btn" class="px-5 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700">Submit Test</button>
+            <!-- Header -->
+            <header class="flex items-center justify-between h-16 bg-white border-b px-4 md:px-6 shadow-sm flex-shrink-0 z-10">
+                <h1 id="test-title" class="text-lg md:text-xl font-bold text-gray-800 truncate">Coding Test</h1>
+                <div class="flex items-center space-x-3 md:space-x-4">
+                    <div class="flex items-center text-base md:text-lg font-semibold text-red-600"><i class="far fa-clock mr-2"></i><span id="timer-label">Time Left:</span> <span id="timer" class="ml-1 tabular-nums">00:00</span></div>
+                    <button id="submit-test-btn" class="px-4 py-2 text-sm font-medium rounded-lg shadow-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150 ease-in-out">Submit Test</button>
                 </div>
             </header>
-            <div class="flex flex-1 overflow-hidden p-4 gap-4">
-                <aside class="w-1/3 bg-white p-4 overflow-y-auto border rounded-lg shadow-sm flex flex-col">
-                    <div class="border-b pb-4 mb-4">
-                         <h2 class="text-lg font-bold text-gray-800 mb-3">Problems</h2>
-                         <div class="flex justify-between text-sm font-medium text-gray-600">
-                            <span>Solved: <span id="solved-count" class="font-bold text-green-600">0</span></span>
-                            <span>Attempted: <span id="attempted-count" class="font-bold text-yellow-600">0</span></span>
-                            <span>Pending: <span id="pending-count" class="font-bold text-gray-800">0</span></span>
-                         </div>
+            <!-- Main Content Area -->
+            <div class="flex flex-1 overflow-hidden p-3 md:p-4 gap-3 md:gap-4">
+                <!-- Left Panel: Problems -->
+                <aside class="w-full md:w-1/3 bg-white p-3 md:p-4 overflow-y-auto border rounded-lg shadow-sm flex flex-col">
+                    <div class="border-b pb-3 mb-3 md:pb-4 md:mb-4">
+                         <h2 class="text-base md:text-lg font-bold text-gray-800 mb-3">Problems Overview</h2>
+                         <div class="flex flex-wrap justify-between text-xs md:text-sm font-medium text-gray-600 gap-2"><span>Solved: <span id="solved-count" class="font-bold text-green-600">0</span></span><span>Attempted: <span id="attempted-count" class="font-bold text-yellow-600">0</span></span><span>Pending: <span id="pending-count" class="font-bold text-gray-800">0</span></span></div>
                     </div>
                     <div id="problem-palette" class="flex flex-wrap gap-2 mb-4"></div>
-                    <div id="problem-details" class="prose max-w-none flex-grow"></div>
+                    <div id="problem-details-container" class="prose prose-sm md:prose-base max-w-none flex-grow relative border-t pt-4 mt-auto">
+                        <div id="problem-spinner" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 z-10 hidden"><svg class="animate-spin h-8 w-8 text-indigo-600 spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></div>
+                        <div id="problem-details"><p class="text-center text-gray-500 italic">Select a problem number from above to view details.</p></div>
+                    </div>
                 </aside>
-                <main class="w-2/3 flex flex-col gap-4">
-                    <div class="flex-grow flex flex-col bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                <!-- Right Panel: Editor & Output -->
+                <main class="w-full md:w-2/3 flex flex-col gap-3 md:gap-4">
+                    <div class="flex-grow flex flex-col bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-700">
                         <div class="p-2 bg-gray-700 border-b border-gray-600 flex justify-between items-center flex-shrink-0">
-                            <select id="language-select" class="p-2 border border-gray-500 rounded-md bg-gray-800 text-white text-sm focus:ring-indigo-500 focus:border-indigo-500"></select>
-                            <button id="run-code-btn" class="px-4 py-2 bg-green-600 text-white font-semibold rounded-md text-sm hover:bg-green-700 disabled:bg-gray-500">
+                            <select id="language-select" class="px-2 py-1 border border-gray-500 rounded-md bg-gray-800 text-white text-xs md:text-sm focus:ring-indigo-500 focus:border-indigo-500"></select>
+                            <button id="run-code-btn" class="px-3 py-1.5 md:px-4 md:py-2 bg-green-600 text-white font-semibold rounded-md text-xs md:text-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-700 focus:ring-green-500 disabled:bg-gray-500 disabled:cursor-not-allowed flex items-center justify-center transition duration-150 ease-in-out">
+                                <svg id="run-spinner" class="animate-spin -ml-1 mr-2 h-4 w-4 md:h-5 md:w-5 text-white hidden spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                 <span id="run-code-btn-text">Run & Evaluate</span>
                             </button>
                         </div>
                         <div class="flex-grow relative"><textarea id="code-editor"></textarea></div>
                     </div>
-                    <div class="h-2/5 bg-gray-800 text-white p-2 flex flex-col rounded-lg shadow-sm">
-                        <div id="results-view" class="flex-grow hidden flex-col">
-                            <div id="test-case-tabs" class="flex border-b border-gray-600 mb-2 flex-shrink-0"></div>
-                            <div id="test-case-details" class="flex-grow overflow-y-auto"></div>
-                        </div>
-                        <pre id="output-console" class="flex-grow overflow-y-auto text-sm font-mono p-2">
-                             <div id="output-placeholder" class="flex items-center justify-center h-full text-gray-500">Output will appear here...</div>
-                        </pre>
+                    <div class="h-2/5 flex flex-col rounded-lg shadow-sm overflow-hidden border border-gray-700">
+                         <div id="results-view" class="flex-grow hidden flex flex-col bg-gray-800">
+                            <div id="test-case-tabs" class="flex border-b border-gray-600 flex-shrink-0 overflow-x-auto px-2 pt-1 bg-gray-700 rounded-t-lg"></div>
+                            <div id="test-case-details" class="flex-grow overflow-y-auto p-2 md:p-3 text-sm"></div>
+                         </div>
+                         <div id="output-console-container" class="flex-grow overflow-y-auto bg-gray-800 rounded-lg">
+                              <pre id="output-console" class="text-sm font-mono p-2 md:p-3 h-full"><div id="output-placeholder" class="flex items-center justify-center h-full text-gray-500 italic">Output will appear here after running code...</div></pre>
+                         </div>
                     </div>
                 </main>
             </div>
         </div>
     </div>
-    
-    <!-- Confirmation Modal -->
-    <div id="confirm-modal" class="hidden fixed inset-0 modal-overlay flex items-center justify-center z-50">
-        <div class="bg-white p-8 rounded-lg shadow-xl text-center">
-            <p id="modal-message" class="text-lg font-semibold text-gray-700"></p>
-            <div id="modal-buttons" class="mt-6 flex justify-center space-x-4">
-                <button id="modal-cancel-btn" class="px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Cancel</button>
-                <button id="modal-confirm-btn" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Confirm</button>
+
+    <!-- Confirmation Modal (for manual submit) - REMOVED -->
+    <!-- <div id="confirm-modal" ... > ... </div> -->
+
+    <!-- Proctoring Violation Modal (Submit Only) -->
+    <div id="proctoring-modal" class="hidden fixed inset-0 modal-overlay flex items-center justify-center z-[9995] p-4"> <!-- Increased z-index -->
+        <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl text-center max-w-md w-full mx-auto">
+            <i class="fas fa-exclamation-triangle text-3xl text-red-500 mb-4"></i>
+            <p id="proctoring-message" class="text-base md:text-lg font-medium text-red-700 mb-6"></p>
+            <p class="text-sm text-gray-600 mb-6">Your test will be submitted automatically due to a proctoring violation.</p>
+             <div id="proctoring-modal-spinner" class="hidden mb-4">
+                 <svg class="animate-spin h-6 w-6 text-indigo-600 mx-auto spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                 <p class="text-sm text-gray-600 mt-2">Submitting test...</p>
+            </div>
+             <p id="proctoring-modal-error-message" class="hidden text-red-600 text-sm mt-4"></p> <!-- Error for proctoring modal -->
+            <div id="proctoring-modal-buttons">
+                <!-- Only Confirm/Submit button -->
+                <button id="proctoring-confirm-btn" class="w-full px-5 py-2 text-sm font-medium rounded-lg bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">Submit Now</button>
             </div>
         </div>
     </div>
-    
+
+    <!-- Simple Processing Modal (Replaces Confirmation Modal for Submit) -->
+    <div id="processing-modal" class="hidden fixed inset-0 modal-overlay flex items-center justify-center z-[9995] p-4">
+        <div class="bg-white p-6 md:p-8 rounded-lg shadow-xl text-center max-w-md w-full mx-auto">
+             <div id="processing-spinner" class="mb-4">
+                 <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                 <p id="processing-message" class="text-sm text-gray-600 mt-3">Submitting test...</p>
+            </div>
+            <p id="processing-error-message" class="hidden text-red-600 text-sm mt-4"></p>
+        </div>
+    </div>
+
+
+    <div id="message-box-container"></div>
+    <div id="network-status" class="online opacity-0">Online</div>
+
+    <!-- CodeMirror JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/placeholder/placeholder.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/matchbrackets.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/closebrackets.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const API_BASE_URL = `${window.location.protocol}//${window.location.host}`;
-
+            // --- DOM Element Refs --- (Keep existing refs, ADD processing modal refs)
             const token = new URLSearchParams(window.location.search).get('token');
             const mainContainer = document.getElementById('main-container');
             const fullscreenContainer = document.getElementById('fullscreen-container');
@@ -155,9 +241,62 @@
             const loader = document.getElementById('loader');
             const errorMessageDiv = document.getElementById('error-message');
             const detailsFormContainer = document.getElementById('details-form-container');
+            const collegeSelect = document.getElementById('college-select');
+            const cameraContainer = document.getElementById('camera-container');
+            const cameraFeed = document.getElementById('camera-feed');
+            const capturedPhoto = document.getElementById('captured-photo');
+            const cameraPlaceholder = document.getElementById('camera-placeholder');
+            const cameraPlaceholderText = document.getElementById('camera-placeholder-text');
+            const captureCanvas = document.getElementById('capture-canvas');
+            const captureBtn = document.getElementById('capture-btn');
+            const recaptureBtn = document.getElementById('recapture-btn');
+            const cameraError = document.getElementById('camera-error');
+            const startTestBtn = document.getElementById('start-test-btn');
+            const startBtnText = document.getElementById('start-btn-text');
+            const startSpinner = document.getElementById('start-spinner');
+            const runCodeBtn = document.getElementById('run-code-btn');
+            const runBtnText = document.getElementById('run-code-btn-text');
+            const runSpinner = document.getElementById('run-spinner');
+            const outputConsoleContainer = document.getElementById('output-console-container');
+            const outputConsole = document.getElementById('output-console');
+            const outputPlaceholder = document.getElementById('output-placeholder');
+            const resultsView = document.getElementById('results-view');
+            const testCaseTabs = document.getElementById('test-case-tabs');
+            const testCaseDetails = document.getElementById('test-case-details');
+            const problemPalette = document.getElementById('problem-palette');
+            const problemDetailsContainer = document.getElementById('problem-details-container');
+            const problemDetailsDiv = document.getElementById('problem-details');
+            const problemSpinner = document.getElementById('problem-spinner');
+            const languageSelect = document.getElementById('language-select');
+            const timerEl = document.getElementById('timer');
+            const submitTestBtn = document.getElementById('submit-test-btn');
+            // const confirmModal = document.getElementById('confirm-modal'); // REMOVED
+            // const modalMessage = document.getElementById('modal-message'); // REMOVED
+            // const modalButtons = document.getElementById('modal-buttons'); // REMOVED
+            // const modalConfirmBtn = document.getElementById('modal-confirm-btn'); // REMOVED
+            // const modalCancelBtn = document.getElementById('modal-cancel-btn'); // REMOVED
+            // const modalSpinner = document.getElementById('modal-spinner'); // REMOVED
+            // const modalSpinnertext = document.getElementById('modal-spinner-text'); // REMOVED
+            // const modalErrorMessage = document.getElementById('modal-error-message'); // REMOVED
+            const messageBoxContainer = document.getElementById('message-box-container');
+            const networkStatusIndicator = document.getElementById('network-status');
+            const proctoringModal = document.getElementById('proctoring-modal');
+            const proctoringMessage = document.getElementById('proctoring-message');
+            const proctoringConfirmBtn = document.getElementById('proctoring-confirm-btn');
+            const proctoringModalSpinner = document.getElementById('proctoring-modal-spinner');
+            const proctoringModalErrorMessage = document.getElementById('proctoring-modal-error-message');
+            const proctoringModalButtons = document.getElementById('proctoring-modal-buttons');
 
+            // --- *** NEW: Processing Modal Refs *** ---
+            const processingModal = document.getElementById('processing-modal');
+            const processingSpinner = document.getElementById('processing-spinner');
+            const processingMessage = document.getElementById('processing-message');
+            const processingErrorMessage = document.getElementById('processing-error-message');
+
+
+            // --- State Variables --- (Keep existing state)
             let currentTest = null;
-            let currentProblemIndex = 0;
+            let currentProblemIndex = -1;
             let problemSubmissions = {};
             let problemStatuses = [];
             let timerInterval;
@@ -165,362 +304,572 @@
             let candidateDetails = {};
             let capturedImageData = null;
             let cameraStream = null;
+            let markdownConverter = new showdown.Converter({ tables: true, strikethrough: true, tasklists: true, simpleLineBreaks: true });
+            let autosaveTimeout = null;
+            const AUTOSAVE_DELAY = 3000;
+            let currentAssignmentId = null;
+            let currentTestId = null;
 
-            const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
-                lineNumbers: true, mode: 'text/x-csrc', theme: 'material-darker', placeholder: 'Type your code here...'
-            });
+            // --- CodeMirror --- (Keep existing init)
+            const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), { lineNumbers: true, mode: 'text/x-csrc', theme: 'material-darker', placeholder: 'Write your solution here...', indentUnit: 4, tabSize: 4, indentWithTabs: false, lineWrapping: true, matchBrackets: true, autoCloseBrackets: true });
 
-            if (!token) {
-                showError('No test token provided. This link is invalid.');
-                return;
+            // --- Utility Functions ---
+             function showMessage(message, type = 'error', duration = 3000) {
+                const box = document.createElement('div');
+                box.textContent = message;
+                box.className = `message-box ${type}`;
+                messageBoxContainer.appendChild(box);
+                requestAnimationFrame(() => { box.classList.add('show'); });
+                setTimeout(() => {
+                    box.classList.remove('show');
+                    box.addEventListener('transitionend', () => { if (messageBoxContainer.contains(box)) { messageBoxContainer.removeChild(box); } }, { once: true });
+                }, duration);
             }
 
-            function showError(message) {
+             function showError(message) {
                 loader.style.display = 'none';
                 detailsFormContainer.style.display = 'none';
                 errorMessageDiv.style.display = 'block';
                 errorMessageDiv.querySelector('p').textContent = message;
             }
 
-            async function fetchTestDetails() {
+             // --- *** REMOVED showConfirmation FUNCTION *** ---
+
+            // --- *** NEW: Functions to control Processing Modal *** ---
+            function showProcessingModal(message = "Submitting test...") {
+                processingMessage.textContent = message;
+                processingErrorMessage.textContent = '';
+                processingErrorMessage.classList.add('hidden');
+                processingSpinner.classList.remove('hidden'); // Ensure spinner is visible
+                processingModal.classList.remove('hidden');
+            }
+            function showProcessingSuccess(message = "Success!") {
+                processingMessage.textContent = message;
+                processingMessage.classList.remove('text-gray-600');
+                processingMessage.classList.add('text-green-600', 'font-semibold');
+                processingErrorMessage.classList.add('hidden');
+                processingSpinner.classList.add('hidden'); // Hide spinner on success
+                // Keep modal open briefly to show success before redirect
+            }
+            function showProcessingError(message = "An error occurred.") {
+                processingMessage.textContent = "Submission Failed"; // Or keep previous message?
+                processingMessage.classList.remove('text-green-600');
+                processingMessage.classList.add('text-gray-600');
+                processingErrorMessage.textContent = `Error: ${message}`;
+                processingErrorMessage.classList.remove('hidden');
+                processingSpinner.classList.add('hidden'); // Hide spinner on error
+                // Keep modal open on error
+            }
+            function hideProcessingModal() {
+                processingModal.classList.add('hidden');
+                 // Reset message color for next use
+                processingMessage.classList.remove('text-green-600', 'font-semibold');
+                processingMessage.classList.add('text-gray-600');
+            }
+             // --- *** END Processing Modal Functions *** ---
+
+
+             function showProctoringViolationModal(message) {
+                proctoringMessage.textContent = `Violation: ${message}`;
+                proctoringModalSpinner.classList.add('hidden');
+                proctoringModalButtons.style.display = 'block';
+                proctoringModalErrorMessage.classList.add('hidden');
+                proctoringModalErrorMessage.textContent = '';
+                proctoringModal.classList.remove('hidden');
+                proctoringConfirmBtn.addEventListener('click', () => {
+                    proctoringModal.classList.add('hidden');
+                }, { once: true });
+             }
+             // Removed showModalSpinner
+             // Removed showModalError
+             function showProctoringModalSpinner(isSpinning = true, spinnerText = "Submitting test...") {
+                 if (!proctoringModal.classList.contains('hidden')) {
+                     proctoringModalSpinner.querySelector('p').textContent = spinnerText;
+                     proctoringModalSpinner.classList.toggle('hidden', !isSpinning);
+                     proctoringModalButtons.style.display = isSpinning ? 'none' : 'block';
+                 }
+             }
+            function showProctoringModalError(message) {
+                 if (!proctoringModal.classList.contains('hidden')) {
+                     proctoringModalSpinner.classList.add('hidden');
+                     proctoringModalButtons.style.display = 'none';
+                     proctoringModalErrorMessage.textContent = `Error: ${message}. Test could not be submitted automatically. Please contact support.`;
+                     proctoringModalErrorMessage.classList.remove('hidden');
+                 }
+             }
+             function startTimer(durationSeconds) {
+                let timer = durationSeconds;
+                clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    timer--;
+                    if (timer < 0) {
+                        console.log("[TIMER] Time is up!");
+                        forceSubmitTest('Time Expired');
+                        return;
+                    }
+                    let minutes = Math.floor(timer / 60);
+                    let seconds = timer % 60;
+                    timerEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    if (timer <= 60 && timer > 30) { timerEl.parentElement.classList.remove('text-red-600'); timerEl.parentElement.classList.add('text-orange-600', 'animate-pulse'); }
+                    else if (timer <= 30) { timerEl.parentElement.classList.remove('text-orange-600'); timerEl.parentElement.classList.add('text-red-600', 'animate-pulse'); }
+                }, 1000);
+            }
+            function sanitizeHTML(dirtyHtml) { return DOMPurify.sanitize(dirtyHtml, { USE_PROFILES: { html: true }, ALLOWED_TAGS: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'b', 'i', 'strong', 'em', 'ul', 'ol', 'li', 'code', 'pre', 'br', 'a', 'span'], ALLOWED_ATTR: ['href', 'title', 'target', 'class', 'style'] }); }
+            function markdownToHtml(md) { if (typeof md !== 'string' || !md) return '<p class="text-gray-500 italic">No description provided.</p>'; try { const rawHtml = markdownConverter.makeHtml(md); return sanitizeHTML(rawHtml); } catch (e) { console.error("Markdown conversion error:", e); return sanitizeHTML(md.replace(/</g, "&lt;").replace(/>/g, "&gt;")); } }
+            function updateNetworkStatus() { const online = navigator.onLine; networkStatusIndicator.textContent = online ? 'Online' : 'Offline'; networkStatusIndicator.className = `network-status ${online ? 'online' : 'offline'}`; networkStatusIndicator.style.opacity = '1'; if (!online) { showMessage('You are offline. Code changes saved locally.', 'warning', 5000); } else { if (autosaveTimeout) { triggerAutosave(); } } setTimeout(() => { networkStatusIndicator.style.opacity = '0'; }, 4000); }
+            async function saveCodeSnippet(problemId, code, language) {
+                 if (!navigator.onLine) { console.log("[AUTOSAVE] Offline. Skipping server save."); showMessage('Offline - Code saved locally.', 'info', 1500); return; }
+                 if (!currentAssignmentId || !currentTestId) { console.error("[AUTOSAVE ERROR] Missing critical IDs. Cannot save."); showMessage('Internal error: Cannot auto-save (missing IDs).', 'error'); return; }
+                 if (!token || !problemId || code === undefined || code === null || !language) { console.warn("[AUTOSAVE] Invalid data for snippet."); return; }
+                 console.log(`[AUTOSAVE] Saving snippet for ${problemId}...`);
+                 try {
+                      const response = await fetch('/api/public/save-code-snippet', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth-token': token }, body: JSON.stringify({ assignmentId: currentAssignmentId, testId: currentTestId, problemId: problemId, code: code, language: language }) });
+                      if (!response.ok) { const errorData = await response.json(); console.error(`[AUTOSAVE SERVER ERROR] ${problemId}:`, response.status, errorData.message); showMessage(`Error auto-saving code: ${errorData.message || 'Server error'}`, 'error'); }
+                      else { console.log(`[AUTOSAVE] Success for ${problemId}`); }
+                 } catch (error) { console.error(`[AUTOSAVE NETWORK ERROR] ${problemId}:`, error); showMessage('Network error during auto-save.', 'warning'); }
+            }
+            function triggerAutosave() {
+                 if (currentProblemIndex < 0 || !currentTest?.problems?.[currentProblemIndex]) return;
+                 const problem = currentTest.problems[currentProblemIndex];
+                 const problemId = problem.problemId || `index-${currentProblemIndex}`;
+                 const currentCode = editor.getValue();
+                 const currentLanguage = languageSelect.value;
+                 problemSubmissions[problemId] = { code: currentCode, language: currentLanguage, evaluationResults: problemSubmissions[problemId]?.evaluationResults };
+                 if (currentCode.trim() !== '' && problemStatuses[currentProblemIndex] === 'pending') { problemStatuses[currentProblemIndex] = 'attempted'; updatePalette(); }
+                 clearTimeout(autosaveTimeout);
+                 autosaveTimeout = setTimeout(() => { saveCodeSnippet(problemId, currentCode, currentLanguage); }, AUTOSAVE_DELAY);
+            }
+            editor.on('change', triggerAutosave);
+
+            // --- Core Logic ---
+             async function fetchTestDetails() {
+                if (!token) { showError('No test token provided.'); return; }
                 try {
-                    const response = await fetch(`${API_BASE_URL}/api/public/test-details`, { headers: { 'x-auth-token': token } });
+                    console.log("[FETCH] Fetching test details...");
+                    const response = await fetch('/api/public/test-details', { headers: { 'x-auth-token': token } });
                     const data = await response.json();
-                    if (!response.ok) throw new Error(data.message);
+                    if (!response.ok) {
+                        console.error("[FETCH ERROR]", response.status, data.message);
+                        try { const base64Url = token.split('.')[1]; const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/'); const jsonPayload = decodeURIComponent(atob(base64).split('').map(c=>'%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')); const decodedToken = JSON.parse(jsonPayload); currentAssignmentId = decodedToken?.user?.assignmentId; console.warn(`[FETCH WARN] Stored assignmentId (${currentAssignmentId}) despite fetch error.`); } catch (decodeError) { console.error("[FETCH FATAL] Failed decode after fetch error:", decodeError); }
+                        throw new Error(data.message || `Failed validation (Status: ${response.status})`);
+                    }
+                    console.log("[FETCH SUCCESS] Received:", data);
                     currentTest = data;
+                    try {
+                        const base64Url = token.split('.')[1]; const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c=>'%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+                        const decodedToken = JSON.parse(jsonPayload);
+                        currentAssignmentId = decodedToken?.user?.assignmentId;
+                        currentTestId = decodedToken?.user?.testId;
+                        if (!currentAssignmentId || !currentTestId) throw new Error("Token missing assignment/test ID.");
+                        console.log(`[FETCH INFO] Stored assignmentId: ${currentAssignmentId}, testId: ${currentTestId} from token.`);
+                    } catch (decodeError) {
+                        console.error("[FETCH FATAL] Failed decode token/extract IDs:", decodeError);
+                        throw new Error("Invalid token format.");
+                    }
+                    if (!currentTest || !currentTest.problems || !Array.isArray(currentTest.problems)) throw new Error('Invalid test data format received.');
                     problemStatuses = new Array(currentTest.problems.length).fill('pending');
                     loader.style.display = 'none';
                     detailsFormContainer.style.display = 'block';
                     initializeDetailsForm();
                 } catch (error) {
-                    showError(error.message);
+                    console.error("[FETCH FATAL]", error);
+                    showError(error.message || 'Error loading test details.');
                 }
             }
 
             async function initializeDetailsForm() {
-                const collegeSelect = document.getElementById('college-select');
+                 collegeSelect.innerHTML = '<option value="">Loading colleges...</option>';
                 try {
-                    const response = await fetch(`${API_BASE_URL}/api/public/colleges/${currentTest.testId}`);
-                    const colleges = await response.json();
-                    collegeSelect.innerHTML = '<option value="">Select your college</option>';
-                    colleges.forEach(college => {
-                        const option = document.createElement('option');
-                        option.value = college.collegeName;
-                        option.textContent = college.collegeName;
-                        collegeSelect.appendChild(option);
-                    });
+                    const testIdForColleges = currentTestId;
+                    if (!testIdForColleges) { throw new Error("Missing Test ID for fetching colleges."); }
+                    console.log("[INIT FORM] Fetching colleges for test ID:", testIdForColleges);
+                    const response = await fetch(`/api/public/colleges/${testIdForColleges}`);
+                    const data = await response.json();
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            console.warn("[INIT FORM WARN] Colleges not found for this test (404). Setting to N/A.");
+                            collegeSelect.innerHTML = '<option value="N/A">Not Applicable</option>';
+                        } else {
+                            throw new Error(data.message || `Server error ${response.status} fetching colleges.`);
+                        }
+                    } else if (!Array.isArray(data)) {
+                        throw new Error("Invalid college data format received.");
+                    } else {
+                        collegeSelect.innerHTML = '<option value="">Select your college</option>';
+                        if (data.length === 0) {
+                            collegeSelect.innerHTML += '<option value="N/A">Not Applicable</option>';
+                        } else {
+                            data.forEach(c => { if (c && c.collegeName) { collegeSelect.innerHTML += `<option value="${c.collegeName}">${c.collegeName}</option>`; } });
+                            collegeSelect.innerHTML += '<option value="N/A">Not Listed</option>';
+                        }
+                        console.log("[INIT FORM] Colleges loaded successfully.");
+                    }
                 } catch (e) {
-                    collegeSelect.innerHTML = '<option value="">Could not load colleges</option>';
+                    console.error("[INIT FORM FATAL] Error loading colleges:", e);
+                    collegeSelect.innerHTML = '<option value="">College load failed</option>';
+                    showMessage(`Error loading colleges: ${e.message}`, 'error');
+                } finally {
+                    startCamera();
                 }
-                startCamera();
             }
-            
+
+            // --- *** REVISED startCamera FUNCTION *** ---
             async function startCamera() {
+                 // Reset UI elements correctly
+                cameraFeed.classList.remove('hidden'); // Show video element
+                capturedPhoto.classList.add('hidden'); // Hide captured photo
+                cameraPlaceholder.classList.remove('show'); // Hide placeholder
+                cameraError.classList.add('hidden');
+                captureBtn.disabled = true; // Disable capture initially
+                captureBtn.classList.remove('hidden');
+                recaptureBtn.classList.add('hidden');
+
                 try {
                     if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+                    console.log("[CAMERA] Requesting camera access...");
+                    if (!navigator.mediaDevices?.getUserMedia) throw new Error("Browser does not support camera access.");
+
                     cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    document.getElementById('camera-feed').srcObject = cameraStream;
-                    document.getElementById('camera-feed').classList.remove('hidden');
-                    document.getElementById('captured-photo').classList.add('hidden');
+                    console.log("[CAMERA] Access granted.");
+                    cameraFeed.srcObject = cameraStream;
+
+                    // Use Promise to wait for playing event
+                    await new Promise((resolve, reject) => {
+                        cameraFeed.onloadedmetadata = () => {
+                             console.log("[CAMERA] Metadata loaded.");
+                             cameraFeed.play().then(resolve).catch(reject); // Attempt to play
+                        };
+                        cameraFeed.onerror = (e) => {
+                            reject(new Error("Video element error: " + (e.target.error.message || 'Unknown error')));
+                        };
+                         cameraFeed.onplaying = () => {
+                             console.log("[CAMERA] Video stream playing.");
+                             resolve(); // Resolve promise when playing starts
+                         };
+                         // Timeout if play never happens
+                         setTimeout(() => reject(new Error("Camera playback timed out")), 5000);
+                    });
+                     captureBtn.disabled = false; // Enable capture button only after successful play
+
                 } catch (e) {
-                    alert('Camera access is required. Please allow camera access and refresh.');
+                    console.error("[CAMERA ERROR]", e.name, e.message);
+                    let userMsg = 'Camera access is required for verification.', phMsg = 'Camera Error';
+                    if (e.name === 'NotAllowedError') { userMsg = 'Camera permission denied.'; phMsg = 'Permission Denied';}
+                    else if (e.name === 'NotFoundError') { userMsg = 'No camera found on this device.'; phMsg = 'No Camera';}
+                    else if (e.name === 'NotReadableError') { userMsg = 'Camera is currently in use or hardware error.'; phMsg = 'Camera In Use / Error';}
+                    else { userMsg = `An unexpected camera error occurred (${e.name}). Try refreshing.`; phMsg = 'Unexpected Error';}
+
+                    // Update UI on error
+                    cameraError.textContent = userMsg + (e.name !== 'NotFoundError' ? ' Please allow access and refresh the page.' : '');
+                    cameraError.classList.remove('hidden');
+                    cameraPlaceholderText.textContent = phMsg;
+                    cameraPlaceholder.classList.add('show'); // Show placeholder
+                    cameraFeed.classList.add('hidden'); // Hide video feed
+                    captureBtn.disabled = true;
+                    showMessage(userMsg, 'error');
                 }
-            }
-            
+             }
+             // --- *** END REVISED startCamera FUNCTION *** ---
+
             function stopCamera() {
                 if (cameraStream) {
+                    console.log("[CAMERA] Stopping video stream.");
                     cameraStream.getTracks().forEach(track => track.stop());
                     cameraStream = null;
                 }
-            }
-
-            document.getElementById('capture-btn').addEventListener('click', () => {
-                const video = document.getElementById('camera-feed');
-                const canvas = document.getElementById('capture-canvas');
-                const photo = document.getElementById('captured-photo');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
-                capturedImageData = canvas.toDataURL('image/jpeg');
-                photo.src = capturedImageData;
-                video.classList.add('hidden');
-                photo.classList.remove('hidden');
-                document.getElementById('capture-btn').classList.add('hidden');
-                document.getElementById('recapture-btn').classList.remove('hidden');
-                stopCamera();
-            });
-
-            document.getElementById('recapture-btn').addEventListener('click', () => {
-                capturedImageData = null;
-                startCamera();
-                document.getElementById('capture-btn').classList.remove('hidden');
-                document.getElementById('recapture-btn').classList.add('hidden');
-            });
-
-            document.getElementById('candidate-details-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                if (!capturedImageData) return alert('Please capture your photo.');
-                
-                const startBtn = document.getElementById('start-test-btn');
-                startBtn.disabled = true;
-                startBtn.querySelector('span').textContent = 'Uploading Photo...';
-                
+             }
+            captureBtn.addEventListener('click', () => {
+                 if (!cameraStream || !cameraFeed.srcObject || cameraFeed.ended || cameraFeed.paused) { // Added paused check
+                    showMessage('Camera is not active. Please ensure it is connected and permissions are granted.', 'warning');
+                    startCamera();
+                    return;
+                }
+                console.log("[CAPTURE] Capturing photo...");
+                const video = cameraFeed, canvas = captureCanvas, photo = capturedPhoto;
+                 if (video.videoWidth === 0) { showMessage('Camera is still initializing. Please wait.', 'warning'); return; }
+                canvas.width = video.videoWidth; canvas.height = video.videoHeight;
                 try {
-                    const uploadResponse = await fetch(`${API_BASE_URL}/api/public/upload-image`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ imageData: capturedImageData })
-                    });
+                    canvas.getContext('2d').drawImage(video, 0, 0);
+                    capturedImageData = canvas.toDataURL('image/jpeg', 0.8);
+                    console.log("[CAPTURE] Photo captured successfully.");
+                    photo.src = capturedImageData;
+                    video.classList.add('hidden'); photo.classList.remove('hidden'); cameraPlaceholder.classList.remove('show');
+                    captureBtn.classList.add('hidden'); recaptureBtn.classList.remove('hidden');
+                    stopCamera();
+                } catch (e) {
+                     console.error("[CAPTURE ERROR]", e);
+                     showMessage("Failed to capture photo. Please try again.", "error");
+                     startCamera();
+                     captureBtn.classList.remove('hidden'); recaptureBtn.classList.add('hidden');
+                 }
+             });
+            recaptureBtn.addEventListener('click', () => {
+                 console.log("[RECAPTURE] Recapturing photo.");
+                capturedImageData = null;
+                capturedPhoto.classList.add('hidden');
+                startCamera(); // Restart camera should handle showing the video feed
+                captureBtn.classList.remove('hidden'); recaptureBtn.classList.add('hidden');
+            });
+            document.getElementById('candidate-details-form').addEventListener('submit', async (e) => {
+                 e.preventDefault();
+                console.log("[FORM SUBMIT] Form submission initiated...");
+                if (!collegeSelect.value) { showMessage('Please select your college.', 'warning'); return; }
+                if (!capturedImageData) { showMessage('Please capture your photo for verification.', 'warning'); return; }
+                startTestBtn.disabled = true; startBtnText.textContent = 'Submitting...'; startSpinner.classList.remove('hidden');
+                try {
+                    console.log("[FORM SUBMIT] Uploading captured photo...");
+                    const uploadResponse = await fetch('/api/public/upload-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageData: capturedImageData }) });
                     const uploadResult = await uploadResponse.json();
-                    if (!uploadResponse.ok) throw new Error(uploadResult.message);
-
-                    candidateDetails = {
-                        fullName: document.getElementById('student-name').value,
-                        rollNumber: document.getElementById('roll-number').value,
-                        collegeName: document.getElementById('college-select').value,
-                        department: document.getElementById('department').value,
-                        profileImageUrl: uploadResult.imageUrl
-                    };
-                    
+                    if (!uploadResponse.ok) throw new Error(uploadResult.message || `Photo upload failed (Status: ${uploadResponse.status})`);
+                    console.log("[FORM SUBMIT] Photo uploaded successfully:", uploadResult.imageUrl);
+                    candidateDetails = { fullName: document.getElementById('student-name').value.trim(), rollNumber: document.getElementById('roll-number').value.trim(), collegeName: collegeSelect.value, department: document.getElementById('department').value.trim(), profileImageUrl: uploadResult.imageUrl };
+                    console.log("[FORM SUBMIT] Candidate Details Captured:", candidateDetails);
                     mainContainer.style.display = 'none';
                     testEnvironment.style.display = 'flex';
-                    fullscreenContainer.requestFullscreen().catch(console.error);
+                    console.log("[FORM SUBMIT] Entering fullscreen mode...");
+                    try { await fullscreenContainer.requestFullscreen(); } catch (fsError) { console.warn("[FS WARN] Failed to enter fullscreen:", fsError); showMessage("Failed to enter fullscreen mode. Please try manually.", "warning"); }
                     startTest();
-
                 } catch (error) {
-                    alert(`Error: ${error.message}`);
-                    startBtn.disabled = false;
-                    startBtn.querySelector('span').textContent = 'Submit Details & Start Test';
+                    console.error("[FORM SUBMIT FATAL] Error during form submission:", error);
+                    showMessage(`Error starting test: ${error.message}`, 'error');
+                    startTestBtn.disabled = false; startBtnText.textContent = 'Submit Details & Start Test'; startSpinner.classList.add('hidden');
                 }
-            });
-
+             });
             function startTest() {
-                document.getElementById('test-title').textContent = currentTest.title;
-                startTimer(currentTest.duration * 60);
+                if (!currentTest?.problems) { showError("Test data is missing or invalid."); if (document.fullscreenElement) document.exitFullscreen().catch(e=>console.warn("FS exit fail:",e)); mainContainer.style.display = 'flex'; testEnvironment.style.display = 'none'; return; }
+                console.log("[START TEST] Initializing test environment...");
+                document.getElementById('test-title').textContent = currentTest.title || 'Coding Test';
+                const durationMinutes = parseInt(currentTest.duration, 10);
+                const durationSeconds = !isNaN(durationMinutes) && durationMinutes > 0 ? durationMinutes * 60 : 3600;
+                startTimer(durationSeconds);
+                populateLanguages();
                 updatePalette();
-                selectProblem(0);
-                document.addEventListener('fullscreenchange', () => {
-                    if (!document.fullscreenElement && !isSubmitting) forceSubmitTest('Exited Full-Screen Mode');
-                });
-                document.addEventListener('visibilitychange', () => {
-                    if (document.hidden && !isSubmitting) forceSubmitTest('Switched to another tab');
-                });
-            }
-            
+                if (currentTest.problems.length > 0) selectProblem(0);
+                else { problemDetailsDiv.innerHTML = '<p class="text-center text-gray-500 italic">No problems available.</p>'; runCodeBtn.disabled = true; }
+                setTimeout(() => { document.addEventListener('fullscreenchange', handleFullscreenChange); document.addEventListener('visibilitychange', handleVisibilityChange); showMessage("Test started. Remain in full-screen and do not switch tabs.", "info", 5000); console.log("[PROCTORING] Listeners attached."); }, 500);
+             }
             function updatePalette() {
-                const palette = document.getElementById('problem-palette');
-                const solvedCount = problemStatuses.filter(s => s === 'solved').length;
-                const attemptedCount = problemStatuses.filter(s => s === 'attempted').length;
-                document.getElementById('solved-count').textContent = solvedCount;
-                document.getElementById('attempted-count').textContent = attemptedCount;
-                document.getElementById('pending-count').textContent = currentTest.problems.length - solvedCount - attemptedCount;
-
-                palette.innerHTML = currentTest.problems.map((p, i) => {
-                    let statusClass = '';
-                    if (problemStatuses[i] === 'solved') statusClass = 'solved';
-                    else if (problemStatuses[i] === 'attempted') statusClass = 'attempted';
-                    return `<button class="palette-btn px-3 py-1 border-2 rounded-md ${statusClass}" data-index="${i}">Problem ${i + 1}</button>`;
-                }).join('');
-
-                palette.querySelectorAll('.palette-btn').forEach(btn => {
-                    btn.addEventListener('click', () => selectProblem(parseInt(btn.dataset.index)));
-                });
+                 if (!currentTest?.problems) return;
+                const solved = problemStatuses.filter(s => s === 'solved').length;
+                const attempted = problemStatuses.filter(s => s === 'attempted').length;
+                const pending = currentTest.problems.length - solved - attempted;
+                document.getElementById('solved-count').textContent = solved;
+                document.getElementById('attempted-count').textContent = attempted;
+                document.getElementById('pending-count').textContent = pending;
+                problemPalette.innerHTML = currentTest.problems.map((p, i) => { if (!p) return ''; const id = p.problemId || `index-${i}`; let status = problemStatuses[i]; const active = i === currentProblemIndex ? 'active' : ''; return `<button class="palette-btn ${status} ${active}" data-index="${i}" data-problemid="${id}">${i + 1}</button>`; }).join('');
+                problemPalette.querySelectorAll('.palette-btn').forEach(btn => { btn.addEventListener('click', (e) => { const index = parseInt(e.currentTarget.dataset.index, 10); if (!isNaN(index)) selectProblem(index); }); });
             }
-
-            function selectProblem(index) {
-                const previousProblem = currentTest.problems[currentProblemIndex];
-                if (previousProblem) {
-                    const code = editor.getValue();
-                    // Use problem 'id' if available, fallback to 'problemId' for compatibility
-                    const problemKey = previousProblem.id || previousProblem.problemId;
-                    problemSubmissions[problemKey] = { code, language: document.getElementById('language-select').value };
-                    if (code.trim() !== '' && problemStatuses[currentProblemIndex] === 'pending') {
-                        problemStatuses[currentProblemIndex] = 'attempted';
-                    }
+            async function selectProblem(index) {
+                 if (index === currentProblemIndex || isSubmitting) return;
+                console.log(`[SELECT PROBLEM] Switching from ${currentProblemIndex} to ${index}`);
+                if (currentProblemIndex >= 0 && currentTest?.problems?.[currentProblemIndex]) {
+                    const prevP = currentTest.problems[currentProblemIndex]; const prevId = prevP.problemId || `index-${currentProblemIndex}`;
+                    const prevCode = editor.getValue(); const prevLang = languageSelect.value;
+                    console.log(`[SELECT] Saving state for problem ${prevId}`);
+                    problemSubmissions[prevId] = { code: prevCode, language: prevLang, evaluationResults: problemSubmissions[prevId]?.evaluationResults };
+                    if (prevCode.trim() !== '' && problemStatuses[currentProblemIndex] === 'pending') { console.log(`[SELECT] Marking problem ${currentProblemIndex} as 'attempted'.`); problemStatuses[currentProblemIndex] = 'attempted'; }
+                    clearTimeout(autosaveTimeout); if (navigator.onLine) { await saveCodeSnippet(prevId, prevCode, prevLang); }
                 }
-
                 currentProblemIndex = index;
-                const problem = currentTest.problems[index];
-                
-                const consoleEl = document.getElementById('output-console');
-                const placeholder = document.getElementById('output-placeholder');
-                consoleEl.style.display = 'block';
-                consoleEl.innerHTML = '';
-                if(placeholder) {
-                    placeholder.style.display = 'flex';
-                    consoleEl.appendChild(placeholder);
-                }
-                document.getElementById('results-view').style.display = 'none';
-                
-                document.getElementById('problem-details').innerHTML = `
-                    <h2 class="text-2xl font-bold mb-2">${problem.title}</h2>
-                    <p class="text-sm font-semibold text-gray-500 mb-4">${problem.difficulty} - ${problem.score} points</p>
-                    <h3>Description</h3><p>${problem.description.replace(/\n/g, '<br>')}</p>
-                    <h3>Example</h3><pre class="bg-gray-100 p-2 rounded text-sm font-mono">${problem.example || 'No example.'}</pre>
-                `;
-                
-                const problemKey = problem.id || problem.problemId;
-                const savedSubmission = problemSubmissions[problemKey];
-                editor.setValue(savedSubmission ? savedSubmission.code : '');
-                if(savedSubmission) document.getElementById('language-select').value = savedSubmission.language;
-                document.getElementById('language-select').dispatchEvent(new Event('change'));
-
-                updatePalette();
-                document.querySelector(`.palette-btn[data-index='${index}']`).classList.add('active');
-                setTimeout(() => editor.refresh(), 1);
-            }
-            
-            document.getElementById('language-select').innerHTML = `<option value="c">C</option><option value="cpp">C++</option><option value="java">Java</option><option value="python">Python</option>`;
-            document.getElementById('language-select').addEventListener('change', (e) => {
-                const modes = { 'python': 'python', 'java': 'text/x-java', 'c': 'text/x-csrc', 'cpp': 'text/x-c++src' };
-                editor.setOption('mode', modes[e.target.value]);
-            });
-
-            document.getElementById('run-code-btn').addEventListener('click', async () => {
-                const problem = currentTest.problems[currentProblemIndex];
-                const runBtn = document.getElementById('run-code-btn');
-                runBtn.disabled = true;
-                runBtn.querySelector('span').textContent = 'Evaluating...';
-                document.getElementById('output-console').style.display = 'none';
-                document.getElementById('results-view').style.display = 'flex';
-
-                const results = [];
-                for (const tc of problem.testCases) {
-                    try {
-                        const response = await fetch(`${API_BASE_URL}/api/compile`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                            body: JSON.stringify({ language: document.getElementById('language-select').value, code: editor.getValue(), input: tc.input })
-                        });
-                        const data = await response.json();
-                        const actual = (data.output || '').trim().replace(/\s+/g, ' ');
-                        const expected = (tc.expected || '').trim().replace(/\s+/g, ' ');
-                        results.push({ actual, status: actual === expected ? 'Accepted' : 'Wrong Answer' });
-                    } catch (e) {
-                        results.push({ actual: 'Execution Error', status: 'Error' });
-                        break; 
-                    }
-                }
-                
-                if (results.every(r => r.status === 'Accepted')) {
-                    problemStatuses[currentProblemIndex] = 'solved';
-                } else if(editor.getValue().trim() !== '') {
-                    problemStatuses[currentProblemIndex] = 'attempted';
-                }
-                updatePalette();
-                renderTestResults(results, problem.testCases);
-                runBtn.disabled = false;
-                runBtn.querySelector('span').textContent = 'Run & Evaluate';
-            });
-            
-            function renderTestResults(results, testCases) {
-                const tabsContainer = document.getElementById('test-case-tabs');
-                tabsContainer.innerHTML = results.map((r, i) => {
-                    const isAccepted = r.status === 'Accepted';
-                    return `<button class="test-case-tab px-4 py-2 border-b-2 font-medium text-sm ${isAccepted ? 'text-green-400 border-transparent hover:border-green-400' : 'text-red-400 border-transparent hover:border-red-400'}" data-index="${i}">Case ${i + 1}</button>`;
-                }).join('');
-
-                tabsContainer.querySelectorAll('.test-case-tab').forEach(tab => {
-                    tab.addEventListener('click', (e) => {
-                        const index = parseInt(e.target.dataset.index);
-                        tabsContainer.querySelectorAll('.test-case-tab').forEach(t => t.classList.remove('active'));
-                        e.target.classList.add('active');
-                        renderTestCaseDetail(index, results[index], testCases);
-                    });
-                });
-                
-                if (results.length > 0) {
-                    const firstFailedIndex = results.findIndex(r => r.status !== 'Accepted');
-                    const activeIndex = firstFailedIndex !== -1 ? firstFailedIndex : 0;
-                    if(tabsContainer.children[activeIndex]) tabsContainer.children[activeIndex].click();
-                }
-            }
-            
-            function renderTestCaseDetail(index, result, testCases) {
-                const sanitize = (text) => text ? text.replace(/</g, "&lt;").replace(/>/g, "&gt;") : '';
-                document.getElementById('test-case-details').innerHTML = `
-                    <div class="p-2 text-gray-300">
-                        <div class="font-semibold text-lg mb-2 ${result.status === 'Accepted' ? 'text-green-400' : 'text-red-400'}">Case ${index + 1}: ${result.status}</div>
-                        <div class="space-y-3 text-sm">
-                            <div><strong>Input:</strong><pre class="bg-gray-700 p-2 rounded mt-1 font-mono">${sanitize(testCases[index].input)}</pre></div>
-                            <div><strong>Your Output:</strong><pre class="bg-gray-700 p-2 rounded mt-1 font-mono">${sanitize(result.actual)}</pre></div>
-                            <div><strong>Expected Output:</strong><pre class="bg-gray-700 p-2 rounded mt-1 font-mono">${sanitize(testCases[index].expected)}</pre></div>
-                        </div>
-                    </div>`;
-            }
-
-            async function forceSubmitTest(reason) {
-                if(isSubmitting) return;
-                isSubmitting = true;
-                await showConfirmation(`Violation: ${reason}. Submitting test automatically.`, true);
-                performSubmission();
-            }
-
-            async function performSubmission() {
-                isSubmitting = true;
-                clearInterval(timerInterval);
-                selectProblem(currentProblemIndex);
-                
-                const submissions = currentTest.problems.map(p => ({
-                    problemId: p.id || p.problemId,
-                    code: problemSubmissions[p.id || p.problemId]?.code || '',
-                    language: problemSubmissions[p.id || p.problemId]?.language || 'c'
-                }));
-                
+                problemDetailsDiv.innerHTML = ''; problemSpinner.style.display = 'flex';
+                runCodeBtn.disabled = true; updatePalette();
+                if (!currentTest?.problems?.[index]) { console.error(`[SELECT ERR] Invalid problem index: ${index}`); problemDetailsDiv.innerHTML = '<p class="text-red-500 text-center">Error: Could not load problem.</p>'; problemSpinner.style.display = 'none'; editor.setValue(''); return; }
+                let problem = currentTest.problems[index]; const problemId = problem.problemId || `index-${index}`;
+                console.log(`[SELECT] Loading details for problem ID: ${problemId}`);
                 try {
-                    const response = await fetch(`${API_BASE_URL}/api/public/submit-coding-test`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                        body: JSON.stringify({ testId: currentTest.testId, submissions, candidateDetails })
-                    });
-                    const result = await response.json();
-                    if (!response.ok) throw new Error(result.message);
-                    showConfirmation(result.message, true);
+                     if (!problem.description || !problem.testCases) { // Fetch full if needed
+                         console.log(`[SELECT] Fetching full details for ${problemId} from server...`);
+                         const response = await fetch(`/api/public/problem-details/${problemId}`, { headers: { 'x-auth-token': token } });
+                         const fullData = await response.json();
+                         if (!response.ok) throw new Error(fullData.message || `Fetch failed (Status: ${response.status})`);
+                         console.log(`[SELECT] Fetched full details for ${problemId}.`);
+                         problem = { ...problem, ...fullData }; currentTest.problems[index] = problem;
+                     } else { console.log(`[SELECT] Full details cached for ${problemId}.`); }
+                    problemDetailsDiv.innerHTML = `<h2 class="text-xl font-bold mb-1 !mt-0">${sanitizeHTML(problem.title || 'Untitled')}</h2><p class="text-xs font-semibold text-gray-500 mb-3">${sanitizeHTML(problem.difficulty || 'N/A')} - ${problem.score || 0} pts</p><h3>Description</h3>${markdownToHtml(problem.description)}${problem.inputFormat ? `<h3>Input Format</h3>${markdownToHtml(problem.inputFormat)}` : ''}${problem.outputFormat ? `<h3>Output Format</h3>${markdownToHtml(problem.outputFormat)}` : ''}${problem.constraints ? `<h3>Constraints</h3><pre><code>${sanitizeHTML(problem.constraints)}</code></pre>` : ''}${problem.example ? `<h3>Example</h3><pre><code>${sanitizeHTML(problem.example)}</code></pre>` : ''}`;
+                    const saved = problemSubmissions[problemId];
+                    editor.setValue(saved ? saved.code : ''); languageSelect.value = saved ? saved.language : (languageSelect.options[0]?.value || 'c');
+                    languageSelect.dispatchEvent(new Event('change'));
+                    outputConsoleContainer.style.display = 'block'; resultsView.style.display = 'none';
+                    outputConsole.innerHTML = ''; outputConsole.appendChild(outputPlaceholder); outputPlaceholder.style.display = 'flex';
+                    runCodeBtn.disabled = false;
+                } catch (error) { console.error(`[SELECT FATAL] Failed to load ${problemId}:`, error); problemDetailsDiv.innerHTML = `<p class="text-red-500 text-center">Error loading: ${error.message}</p>`; showMessage(`Error loading problem: ${error.message}`, 'error'); }
+                finally { problemSpinner.style.display = 'none'; setTimeout(() => editor.refresh(), 1); }
+             }
+            function populateLanguages() {
+                const langs = { c: "C", cpp: "C++", java: "Java", python: "Python", javascript: "JavaScript" };
+                languageSelect.innerHTML = Object.entries(langs).map(([v, t]) => `<option value="${v}">${t}</option>`).join('');
+                languageSelect.dispatchEvent(new Event('change'));
+             }
+            languageSelect.addEventListener('change', (e) => {
+                 const lang = e.target.value; console.log(`[LANG CHANGE] Switched to ${lang}`);
+                const modes = { python: 'python', java: 'text/x-java', c: 'text/x-csrc', cpp: 'text/x-c++src', javascript: 'javascript' };
+                editor.setOption('mode', modes[lang] || 'text/plain');
+                if (currentProblemIndex >= 0 && currentTest?.problems?.[currentProblemIndex]) {
+                    const p = currentTest.problems[currentProblemIndex]; const id = p.problemId || `index-${currentProblemIndex}`;
+                    if (problemSubmissions[id]) { problemSubmissions[id].language = lang; } else { problemSubmissions[id] = { code: editor.getValue(), language: lang }; }
+                    triggerAutosave();
+                }
+             });
+            runCodeBtn.addEventListener('click', async () => {
+                 if (isSubmitting || runCodeBtn.disabled || !navigator.onLine) { if(!navigator.onLine) showMessage("Cannot run code while offline.", "warning"); return; }
+                if (currentProblemIndex < 0 || !currentTest?.problems?.[currentProblemIndex]) { showMessage("Select a problem first.", "warning"); return; }
+                let problem = currentTest.problems[currentProblemIndex]; const problemId = problem.problemId || `index-${currentProblemIndex}`;
+                if (!problem.testCases || !Array.isArray(problem.testCases) || problem.testCases.length === 0) { console.warn(`[RUN WARN] Test cases missing for ${problemId}. Refetching...`); showMessage("Test cases missing. Reloading...", "warning"); await selectProblem(currentProblemIndex); problem = currentTest.problems[currentProblemIndex]; if (!problem.testCases || !Array.isArray(problem.testCases) || problem.testCases.length === 0) { showMessage("Failed to load test cases.", "error"); return; } }
+                console.log(`[RUN] Evaluating ${problemId} (${problem.testCases.length} cases).`);
+                runCodeBtn.disabled = true; runBtnText.textContent = 'Evaluating...'; runSpinner.classList.remove('hidden');
+                outputConsoleContainer.style.display = 'none'; resultsView.style.display = 'flex';
+                testCaseTabs.innerHTML = '<div class="p-2 text-gray-400 text-sm italic animate-pulse">Running...</div>'; testCaseDetails.innerHTML = '';
+                const language = languageSelect.value; const code = editor.getValue();
+                problemSubmissions[problemId] = { ...problemSubmissions[problemId], code, language }; triggerAutosave();
+                let allResults = [];
+                for (let i = 0; i < problem.testCases.length; i++) {
+                    const tc = problem.testCases[i]; console.log(`[RUN] Executing TC ${i + 1}...`);
+                    try {
+                        if (tc.input === undefined || tc.expected === undefined) { console.warn(`[RUN WARN] Skipping invalid TC ${i+1}.`); allResults.push({ input: tc.input, expected: tc.expected, actual: 'Skipped (Invalid Definition)', status: 'Error'}); continue; }
+                        const response = await fetch('/api/compile', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth-token': token }, body: JSON.stringify({ language, code, input: tc.input }) });
+                        const data = await response.json(); if (!response.ok) throw new Error(data.message || `Execution failed (Status: ${response.status})`);
+                        const normalize = (str) => (str || '').toString().trim().replace(/\r\n/g, '\n').replace(/\s+$/, '');
+                        const actual = normalize(data.output); const expected = normalize(tc.expected); const status = actual === expected ? 'Accepted' : 'Wrong Answer';
+                        console.log(`[RUN TC ${i+1}] Status: ${status}`); allResults.push({ input: tc.input, expected: tc.expected, actual: data.output || '', status });
+                    } catch (e) { console.error(`[RUN ERR] TC ${i+1} failed:`, e); allResults.push({ input: tc.input, expected: tc.expected, actual: `Execution Error: ${e.message}`, status: 'Error' }); }
+                }
+                console.log("[RUN] Evaluation completed."); problemSubmissions[problemId].evaluationResults = allResults;
+                if (code.trim() === '') problemStatuses[currentProblemIndex] = 'pending';
+                else if (allResults.length > 0 && allResults.every(r => r.status === 'Accepted')) { problemStatuses[currentProblemIndex] = 'solved'; showMessage(`Problem ${currentProblemIndex + 1} Solved!`, 'success'); }
+                else { problemStatuses[currentProblemIndex] = 'attempted'; }
+                console.log(`[RUN] Problem ${currentProblemIndex + 1} status: ${problemStatuses[currentProblemIndex]}`); updatePalette(); renderTestResults(allResults);
+                runCodeBtn.disabled = false; runBtnText.textContent = 'Run & Evaluate'; runSpinner.classList.add('hidden');
+             });
+            function renderTestResults(results) {
+                if (!results || results.length === 0) { testCaseTabs.innerHTML = '<div class="p-2 text-gray-400">No results.</div>'; testCaseDetails.innerHTML = ''; return; }
+                testCaseTabs.innerHTML = results.map((r, i) => { const statusClass = r.status === 'Accepted' ? 'text-green-500' : (r.status === 'Error' ? 'text-yellow-500' : 'text-red-500'); const icon = r.status === 'Accepted' ? 'fa-check-circle' : (r.status === 'Error' ? 'fa-exclamation-triangle' : 'fa-times-circle'); return `<button class="test-case-tab px-3 py-2 border-b-2 text-xs md:text-sm font-medium text-gray-400 hover:text-indigo-400" data-index="${i}"><i class="fas ${icon} ${statusClass} mr-1"></i> Case ${i + 1}</button>`; }).join('');
+                testCaseTabs.querySelectorAll('.test-case-tab').forEach(tab => { tab.addEventListener('click', (e) => { testCaseTabs.querySelectorAll('.test-case-tab').forEach(t => t.classList.remove('active')); e.currentTarget.classList.add('active'); renderTestCaseDetail(parseInt(e.currentTarget.dataset.index, 10), results); }); });
+                const firstFailIndex = results.findIndex(r => r.status !== 'Accepted'); const activeIndex = firstFailIndex !== -1 ? firstFailIndex : 0;
+                if (testCaseTabs.children[activeIndex]) testCaseTabs.children[activeIndex].click(); else if (results.length > 0) testCaseTabs.children[0].click(); else testCaseDetails.innerHTML = '<p class="p-2 text-gray-400">No details.</p>';
+             }
+            function renderTestCaseDetail(index, results) {
+                 const r = results[index]; if (!r) { testCaseDetails.innerHTML = '<p class="text-red-500">Invalid index.</p>'; return; }
+                const sanitize = (text) => { if (text == null) return ''; const temp = document.createElement('div'); temp.textContent = String(text); return temp.innerHTML; };
+                const color = r.status === 'Accepted' ? 'text-green-400' : (r.status === 'Error' ? 'text-yellow-400' : 'text-red-400'); const icon = r.status === 'Accepted' ? 'fa-check-circle' : (r.status === 'Error' ? 'fa-exclamation-triangle' : 'fa-times-circle');
+                testCaseDetails.innerHTML = `<div class="text-gray-300 space-y-3"><div class="font-semibold text-base md:text-lg mb-2 ${color}"><i class="fas ${icon} mr-2"></i>Case ${index + 1}: ${sanitize(r.status)}</div><div><strong class="text-gray-400 block mb-1">Input:</strong><pre class="bg-gray-700 p-2 md:p-3 rounded font-mono text-xs md:text-sm max-h-24 overflow-auto whitespace-pre-wrap border border-gray-600">${sanitize(r.input)}</pre></div><div><strong class="text-gray-400 block mb-1">Your Output:</strong><pre class="bg-gray-700 p-2 md:p-3 rounded font-mono text-xs md:text-sm max-h-24 overflow-auto whitespace-pre-wrap border border-gray-600">${sanitize(r.actual)}</pre></div>${r.status !== 'Accepted' ? `<div><strong class="text-gray-400 block mb-1">Expected:</strong><pre class="bg-gray-700 p-2 md:p-3 rounded font-mono text-xs md:text-sm max-h-24 overflow-auto whitespace-pre-wrap border border-gray-600">${sanitize(r.expected)}</pre></div>` : ''}${r.status === 'Error' ? `<div class="text-yellow-400 mt-2"><strong>Details:</strong> ${sanitize(r.actual.startsWith('Execution Error:') ? r.actual.substring('Execution Error:'.length).trim() : r.actual)}</div>` : ''}</div>`;
+            }
+
+            // --- Proctoring Logic ---
+             function handleFullscreenChange() { if (!document.fullscreenElement && !isSubmitting && testEnvironment.style.display !== 'none') { console.warn("[PROCTORING] Fullscreen exited."); forceSubmitTest('Exited Full-Screen'); } }
+             function handleVisibilityChange() { if (document.hidden && !isSubmitting && testEnvironment.style.display !== 'none') { console.warn("[PROCTORING] Switched tab."); forceSubmitTest('Switched Tab'); } }
+             function removeProctoringListeners() { console.log("[PROCTORING] Removing listeners."); document.removeEventListener('fullscreenchange', handleFullscreenChange); document.removeEventListener('visibilitychange', handleVisibilityChange); }
+             async function forceSubmitTest(violationReason) { if (isSubmitting) { console.log("[FORCE SUBMIT] Ignored: Already submitting."); return; } isSubmitting = true; console.log(`[FORCE SUBMIT] Initiated. Reason: ${violationReason}`); showMessage(`Violation: ${violationReason}. Submitting...`, 'error', 5000); showProctoringViolationModal(violationReason); console.log("[FORCE SUBMIT] Calling performSubmission..."); await performSubmission(violationReason); }
+
+            // --- ** Main Submission Logic ** ---
+            async function performSubmission(violationReason = null) {
+                console.log(`[SUBMIT ENTRY] Called. Reason: ${violationReason || 'Manual'}. isSubmitting: ${isSubmitting}`);
+                 // Removed redundant isSubmitting check here as it's checked before calling or set at start
+                 isSubmitting = true; // Confirm flag
+                clearInterval(timerInterval); removeProctoringListeners();
+                if (submitTestBtn) submitTestBtn.disabled = true; if (runCodeBtn) runCodeBtn.disabled = true;
+                console.log("[SUBMIT] State locked.");
+
+                // --- Use Processing Modal instead of Confirmation/Proctoring Modal Spinner ---
+                if (violationReason) {
+                    // Proctoring modal is already shown by forceSubmitTest
+                    showProctoringModalSpinner(true);
+                } else {
+                    showProcessingModal("Submitting test..."); // Show the simple processing modal
+                }
+                // --- End Modal Change ---
+
+                console.log(`[SUBMIT FINAL SAVE] Attempting final save for index: ${currentProblemIndex}`);
+                // ...(rest of final save logic remains the same)...
+                if (currentProblemIndex >= 0 && currentTest?.problems?.[currentProblemIndex]) {
+                    const currentP = currentTest.problems[currentProblemIndex]; const currentPId = currentP.problemId || `index-${currentProblemIndex}`;
+                    const finalCode = editor.getValue(); const finalLang = languageSelect.value;
+                    problemSubmissions[currentPId] = { code: finalCode, language: finalLang, evaluationResults: problemSubmissions[currentPId]?.evaluationResults };
+                    clearTimeout(autosaveTimeout); console.log(`[SUBMIT FINAL SAVE] Local state updated for ${currentPId}.`);
+                    if (navigator.onLine && currentAssignmentId && currentTestId) {
+                        console.log(`[SUBMIT FINAL SAVE] Attempting network save for ${currentPId}...`);
+                        try { await saveCodeSnippet(currentPId, finalCode, finalLang); console.log(`[SUBMIT FINAL SAVE] Network save OK for ${currentPId}.`); }
+                        catch (saveError) { console.error(`[SUBMIT FINAL SAVE ERROR] Network save failed for ${currentPId}:`, saveError); showMessage("Warning: Final code save failed.", "warning"); }
+                    } else { console.log("[SUBMIT FINAL SAVE] Skipping network save (offline/no IDs)."); }
+                } else { console.log("[SUBMIT FINAL SAVE] No current problem. Skipping final save."); }
+                console.log("[SUBMIT FINAL SAVE] Done.");
+
+                console.log("[SUBMIT PAYLOAD PREP] Preparing payload...");
+                const subsPayload = currentTest?.problems ? currentTest.problems.map((p, i) => { const id = p.problemId || `index-${i}`; const sub = problemSubmissions[id]; return { problemId: id, code: sub?.code || '', language: sub?.language || (languageSelect.options[0]?.value || 'c'), evaluationResults: sub?.evaluationResults || null }; }).filter(Boolean) : [];
+                console.log("[SUBMIT PAYLOAD PREP] Checking candidateDetails:", candidateDetails);
+                if (!candidateDetails || !candidateDetails.fullName || !candidateDetails.rollNumber || !candidateDetails.collegeName || !candidateDetails.department || !candidateDetails.profileImageUrl) {
+                     console.error("[SUBMIT PAYLOAD PREP ERROR] Candidate details incomplete!", candidateDetails); const errorMsg = "Critical error: Candidate details incomplete. Cannot submit.";
+                     // --- Show error in correct modal ---
+                     if (violationReason) { showProctoringModalError(errorMsg); } else { showProcessingError(errorMsg); }
+                     isSubmitting = false; // *** Reset on PRE-SUBMIT error ***
+                     if (submitTestBtn) submitTestBtn.disabled = false; if (runCodeBtn) runCodeBtn.disabled = false;
+                     console.log("[SUBMIT ERROR - Payload Prep] State reset. isSubmitting:", isSubmitting); return;
+                 }
+                const finalPayload = { submissions: subsPayload, candidateDetails, violationReason };
+                console.log("[SUBMIT PAYLOAD PREP] Payload ready. Submitting...");
+                let submissionSuccess = false; let finalMessage = 'Submitting...';
+                try {
+                    console.log("[SUBMIT FETCH START] Sending to /api/public/submit-coding-test");
+                    const response = await fetch('/api/public/submit-coding-test', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth-token': token }, body: JSON.stringify(finalPayload) });
+                    console.log(`[SUBMIT FETCH RESPONSE] Status: ${response.status}`); const result = await response.json(); console.log("[SUBMIT FETCH RESPONSE] Body:", result);
+                    if (!response.ok) { console.error(`[SUBMIT SERVER ERROR] Status: ${response.status}`, result); finalMessage = result.message || `Submission failed (Status: ${response.status}).`; throw new Error(finalMessage); }
+                    console.log("[SUBMIT SUCCESS]", result.message); submissionSuccess = true; finalMessage = result.message || 'Submitted successfully! Redirecting...';
+                    // --- Show success in correct modal ---
+                    if (violationReason) {
+                        if (!proctoringModal.classList.contains('hidden')) { showProctoringModalSpinner(false); proctoringModalButtons.style.display = 'none'; proctoringModalErrorMessage.classList.add('hidden'); proctoringMessage.textContent = finalMessage; proctoringMessage.classList.remove('text-red-700'); proctoringMessage.classList.add('text-green-700'); }
+                    } else {
+                        showProcessingSuccess(finalMessage); // Show success in processing modal
+                    }
                 } catch (error) {
-                    showConfirmation(`Submission Error: ${error.message}`, true);
+                    console.error("[SUBMIT FETCH FATAL]", error.name, error.message); submissionSuccess = false; finalMessage = error.message || "Network error or server unavailable.";
+                    // --- Show error in correct modal ---
+                     if (violationReason) { showProctoringModalError(finalMessage); } else { showProcessingError(finalMessage); }
+                    showMessage(`Submission Error: ${finalMessage}`, 'error', 5000);
+                    isSubmitting = false; // *** Reset flag on error ***
+                    if (submitTestBtn) submitTestBtn.disabled = false; if (runCodeBtn) runCodeBtn.disabled = false;
+                    console.log("[SUBMIT ERROR - Fetch] State reset. isSubmitting:", isSubmitting); return;
                 } finally {
-                    setTimeout(() => {
-                        if(document.fullscreenElement) document.exitFullscreen();
-                        // Redirect to a generic login/end page
-                        window.location.href = `${API_BASE_URL}/login.html`;
-                    }, 4000);
+                    console.log(`[SUBMIT FINALLY] Reached. Success: ${submissionSuccess}. isSubmitting: ${isSubmitting}`);
+                    if (submissionSuccess) {
+                        console.log(`[SUBMIT FINALLY] Success. Message: "${finalMessage}". Starting redirect timer...`);
+                        setTimeout(() => {
+                            console.log("[SUBMIT FINALLY] Redirecting to /login."); testEnvironment.style.display = 'none';
+                            // Hide the processing modal before redirect
+                            hideProcessingModal();
+                            if (document.fullscreenElement) { document.exitFullscreen().catch(e => console.warn("FS exit fail:", e)).finally(() => { window.location.href = '/login'; }); }
+                            else { window.location.href = '/login'; }
+                        }, 4000); // Keep delay
+                    } else {
+                        console.log("[SUBMIT FINALLY] Failed or stopped. No redirect.");
+                        // Keep processing/proctoring modal open with error message shown in the catch block
+                    }
                 }
             }
+            // --- End Submission Logic ---
 
-            document.getElementById('submit-test-btn').addEventListener('click', async () => {
-                const confirmed = await showConfirmation("Are you sure you want to submit the test?");
-                if(confirmed) performSubmission();
+            // --- *** MODIFIED submitTestBtn listener *** ---
+            submitTestBtn.addEventListener('click', async () => {
+                console.log("[MANUAL SUBMIT] Clicked.");
+                if (isSubmitting) {
+                    console.warn("[MANUAL SUBMIT] Ignored: Already submitting.");
+                    return;
+                }
+                // Directly call performSubmission without confirmation
+                console.log("[MANUAL SUBMIT] Calling performSubmission directly...");
+                await performSubmission();
             });
+            // --- *** END MODIFIED submitTestBtn listener *** ---
 
-            function showConfirmation(message, isFinal = false) {
-                return new Promise(resolve => {
-                    document.getElementById('modal-message').textContent = message;
-                    const modal = document.getElementById('confirm-modal');
-                    modal.classList.remove('hidden');
-                    if (isFinal) {
-                        document.getElementById('modal-buttons').style.display = 'none';
-                        resolve(true);
-                    } else {
-                        document.getElementById('modal-buttons').style.display = 'flex';
-                        document.getElementById('modal-confirm-btn').onclick = () => { modal.classList.add('hidden'); resolve(true); };
-                        document.getElementById('modal-cancel-btn').onclick = () => { modal.classList.add('hidden'); resolve(false); };
-                    }
-                });
-            }
 
-            function startTimer(duration) {
-                let timer = duration;
-                timerInterval = setInterval(() => {
-                    timer--;
-                    let minutes = Math.floor(timer / 60);
-                    let seconds = timer % 60;
-                    document.getElementById('timer').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                    if (timer <= 0) forceSubmitTest('Time is up!');
-                }, 1000);
-            }
-
+            // --- Initial Load & Network Listeners ---
+            console.log("[INIT] Page loaded.");
+            window.addEventListener('online', updateNetworkStatus);
+            window.addEventListener('offline', updateNetworkStatus);
+            updateNetworkStatus();
             fetchTestDetails();
+
         });
     </script>
 </body>
 </html>
+

@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { 
+        body {
             font-family: 'Inter', sans-serif;
             -webkit-user-select: none;
             -ms-user-select: none;
@@ -43,10 +43,10 @@
             border-radius: 50%;
             border: 2px solid white;
         }
-        
+
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #1F2937; /* gray-800 */
+            background-color: rgba(31, 41, 55, 0.8); /* gray-800 with opacity */
             display: flex; justify-content: center; align-items: center; z-index: 10000;
         }
         .modal-container {
@@ -55,7 +55,7 @@
             max-width: 90%; width: 500px; animation: fadeIn 0.3s ease-out;
         }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        
+
         /* Custom Radio/Checkbox Styling */
         .option-label {
             display: block;
@@ -78,8 +78,8 @@
             font-weight: 600;
             color: #4338CA;
         }
-        
-        /* New Form Input Styling from Image */
+
+        /* New Form Input Styling */
         .form-input-custom {
             background-color: transparent !important;
             border: none !important;
@@ -148,12 +148,16 @@
         </header>
 
         <div class="pt-20 flex" style="height: 100vh;">
+            <!-- Main Question Area -->
             <div class="flex-1 p-8 overflow-y-auto">
                  <div id="question-header" class="mb-6">
                      <p id="question-counter" class="text-sm font-semibold text-indigo-600 uppercase tracking-wide"></p>
                      <h2 id="section-title" class="text-2xl font-bold text-gray-800"></h2>
                  </div>
-                <div id="question-content" class="bg-white p-8 rounded-2xl shadow-xl border border-gray-200"></div>
+                <div id="question-content" class="bg-white p-8 rounded-2xl shadow-xl border border-gray-200">
+                     <!-- Question text and options load here -->
+                </div>
+                <!-- Navigation Buttons -->
                 <div class="mt-8 flex justify-between items-center bg-white p-4 rounded-xl shadow-md border border-gray-100">
                     <button id="prev-btn" class="px-6 py-3 bg-gray-200 text-gray-800 font-bold rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
@@ -171,6 +175,7 @@
                     </button>
                 </div>
             </div>
+            <!-- Sidebar/Palette -->
             <aside class="w-80 bg-gray-50 border-l border-gray-200 p-6 flex flex-col flex-shrink-0 overflow-y-auto" >
                  <div id="palette-legend" class="mb-6 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
                     <h3 class="font-bold text-lg mb-3 text-gray-700">Legend</h3>
@@ -205,11 +210,38 @@
                     <label for="rollNumber" class="block text-sm font-medium text-gray-700">Roll Number / Registration ID</label>
                     <input type="text" id="rollNumber" placeholder="Enter your registration ID" required class="form-input-custom">
                 </div>
+                 <!-- Department Input -->
+                <div>
+                    <label for="department" class="block text-sm font-medium text-gray-700">Department</label>
+                    <input type="text" id="department" placeholder="Enter your department" required class="form-input-custom">
+                </div>
+                <!-- College Dropdown -->
                 <div>
                     <label for="collegeName" class="block text-sm font-medium text-gray-700">College Name</label>
                     <select id="collegeName" required class="form-input-custom">
                         <option value="" disabled selected>Loading colleges...</option>
                     </select>
+                </div>
+                 <!-- Image Upload -->
+                 <div class="space-y-1">
+                    <label class="block text-sm font-medium text-gray-700">Profile Image</label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                        <div class="space-y-1 text-center">
+                            <svg id="upload-icon" class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <img id="image-preview" src="#" alt="Image Preview" class="mx-auto h-24 w-auto rounded-md hidden"/>
+                            <div class="flex text-sm text-gray-600">
+                                <label for="profileImage" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                    <span>Upload a file</span>
+                                    <input id="profileImage" name="profileImage" type="file" class="sr-only" accept="image/*" required>
+                                </label>
+                                <p class="pl-1">or drag and drop</p>
+                            </div>
+                            <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                        </div>
+                    </div>
+                    <p id="upload-status" class="text-xs text-gray-500 mt-1"></p>
                 </div>
                 <div class="flex justify-end pt-6">
                     <button type="submit" id="proceed-btn" class="w-full px-6 py-3 bg-indigo-500 text-white font-semibold rounded-xl hover:bg-indigo-600 disabled:bg-indigo-300 disabled:cursor-not-allowed transition-all" disabled>Proceed to Instructions</button>
@@ -232,7 +264,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="confirm-modal" class="modal-overlay hidden">
         <div class="modal-container text-center">
              <div id="modal-icon" class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
@@ -256,11 +288,16 @@
         const testEnvironment = document.getElementById('test-environment');
         const loader = document.getElementById('loader');
         const errorMessageDiv = document.getElementById('error-message');
-        
-        // Modals
+
+        // Modals & Forms
         const candidateDetailsModal = document.getElementById('candidate-details-modal');
         const candidateDetailsForm = document.getElementById('candidate-details-form');
         const proceedBtn = document.getElementById('proceed-btn');
+        const collegeSelect = document.getElementById('collegeName');
+        const imageInput = document.getElementById('profileImage');
+        const imagePreview = document.getElementById('image-preview');
+        const uploadIcon = document.getElementById('upload-icon');
+        const uploadStatus = document.getElementById('upload-status');
         const preTestModal = document.getElementById('pre-test-modal');
         const preTestConfirmBtn = document.getElementById('pre-test-confirm-btn');
         const confirmModal = document.getElementById('confirm-modal');
@@ -273,11 +310,11 @@
         let currentTest = null;
         let allQuestions = [];
         let currentQuestionIndex = 0;
-        let studentResponses = []; // Changed from studentAnswers to be more descriptive
+        let studentResponses = [];
         let timerInterval;
         let timeTaken = 0;
         let isSubmitting = false;
-        let candidateDetails = {};
+        let candidateDetails = { profileImageUrl: null }; // Initialize with null URL
 
         if (!token) {
             showError('No test token provided. This link is invalid.');
@@ -290,6 +327,7 @@
             errorMessageDiv.querySelector('p').textContent = message;
         }
 
+        // --- Fetch Test Details (Modified to handle testId extraction) ---
         async function fetchTestDetails() {
             try {
                 const response = await fetch('/api/public/test-details', {
@@ -300,52 +338,162 @@
                     throw new Error(data.message || 'Failed to load test.');
                 }
                 currentTest = data;
-                
-                allQuestions = currentTest.sections.flatMap((section, sectionIndex) => 
-                    section.questions.map(q => ({...q, sectionTitle: section.title, sectionIndex}))
+                console.log("Fetched Test Details:", currentTest); // Debug log
+
+                allQuestions = (currentTest.sections || []).flatMap((section, sectionIndex) =>
+                    (section.questions || []).map(q => ({...q, sectionTitle: section.title, sectionIndex}))
                 );
-                
-                // Initialize responses with answer and marked status
+
+                if (allQuestions.length === 0) {
+                     throw new Error("Test contains no questions.");
+                }
+
                 studentResponses = allQuestions.map(() => ({ answer: null, marked: false }));
-                
-                await populateCollegeDropdown(currentTest.testId);
+
+                // --- FIX: Extract the correct test ID ---
+                const testIdForColleges = currentTest.aptitudeTestId || currentTest.codingTestId;
+                console.log("Test ID for colleges:", testIdForColleges); // Debug log
+
+                if (!testIdForColleges) {
+                    throw new Error("Could not determine Test ID from fetched details.");
+                }
+
+                await populateCollegeDropdown(testIdForColleges); // Use the extracted ID
                 loader.classList.add('hidden');
                 candidateDetailsModal.classList.remove('hidden');
 
             } catch (error) {
-                showError(error.message);
-            }
-        }
-        
-        async function populateCollegeDropdown(testId) {
-            const select = document.getElementById('collegeName');
-            try {
-                const response = await fetch(`/api/public/colleges/${testId}`);
-                if (!response.ok) throw new Error('Could not load colleges.');
-                const colleges = await response.json();
-                select.innerHTML = '<option value="" disabled selected>Select your college</option>';
-                colleges.forEach(college => {
-                    const option = document.createElement('option');
-                    option.value = college.collegeName;
-                    option.textContent = college.collegeName;
-                    select.appendChild(option);
-                });
-            } catch (error) {
-                select.innerHTML = `<option value="" disabled selected>${error.message}</option>`;
+                 console.error("Error fetching test details or populating colleges:", error);
+                 showError(error.message || "An error occurred loading test details.");
             }
         }
 
-        candidateDetailsForm.addEventListener('input', () => {
-            proceedBtn.disabled = !candidateDetailsForm.checkValidity();
+        // --- Populate College Dropdown (Modified Error Handling) ---
+         async function populateCollegeDropdown(testId) {
+            console.log(`Fetching colleges for testId: ${testId}`); // Debug log
+            if (!testId) {
+                 collegeSelect.innerHTML = `<option value="" disabled selected>Error: Test ID missing</option>`;
+                 return;
+            }
+            try {
+                const response = await fetch(`/api/public/colleges/${testId}`);
+                console.log(`College fetch response status for ${testId}: ${response.status}`); // Debug log
+                const responseText = await response.text(); // Read text first for debugging
+                console.log(`College fetch response text for ${testId}: ${responseText}`); // Debug log
+
+                if (!response.ok) {
+                     let errorMsg = `HTTP error ${response.status}: ${responseText}`;
+                     if(response.status === 404) {
+                         // Try parsing JSON for the specific 404 message from backend
+                         try { errorMsg = JSON.parse(responseText).message || 'No colleges listed for this test creator.'; } catch { /* Ignore parse error, use original text */ }
+                     }
+                     throw new Error(errorMsg);
+                }
+
+                 const colleges = JSON.parse(responseText); // Parse JSON only if response is OK
+                 console.log("Fetched Colleges:", colleges); // Debug log
+
+                collegeSelect.innerHTML = '<option value="" disabled selected>Select your college</option>';
+                if (colleges.length === 0) {
+                     // Provide a more informative message if list is empty
+                     collegeSelect.innerHTML = '<option value="" disabled selected>No specific colleges listed for this test creator.</option>';
+                } else {
+                    colleges.forEach(college => {
+                        const option = document.createElement('option');
+                        option.value = college.collegeName;
+                        option.textContent = college.collegeName;
+                        collegeSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error("Error populating colleges:", error);
+                collegeSelect.innerHTML = `<option value="" disabled selected>Error: ${error.message}</option>`;
+            }
+        }
+
+        // Image Upload Handling
+        imageInput.addEventListener('change', async function() {
+            const file = this.files[0];
+            if (file) {
+                // Basic validation (optional)
+                if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                    uploadStatus.textContent = 'Error: File size exceeds 10MB.';
+                    uploadStatus.style.color = 'red';
+                    return;
+                }
+                 uploadStatus.textContent = 'Uploading...';
+                 uploadStatus.style.color = 'gray';
+                 imagePreview.classList.add('hidden');
+                 uploadIcon.classList.remove('hidden');
+                 proceedBtn.disabled = true; // Disable while uploading
+
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    try {
+                         const response = await fetch('/api/public/upload-image', {
+                             method: 'POST',
+                             headers: { 'Content-Type': 'application/json' },
+                             body: JSON.stringify({ imageData: reader.result }) // Send base64 data
+                         });
+                         const data = await response.json();
+                         if (!response.ok) throw new Error(data.message || 'Upload failed');
+
+                         candidateDetails.profileImageUrl = data.imageUrl; // Store the Cloudinary URL
+                         imagePreview.src = data.imageUrl;
+                         imagePreview.classList.remove('hidden');
+                         uploadIcon.classList.add('hidden');
+                         uploadStatus.textContent = 'Upload successful!';
+                         uploadStatus.style.color = 'green';
+                         checkFormValidity(); // Re-check form validity after successful upload
+
+                    } catch (error) {
+                        console.error("Image Upload Error:", error);
+                        uploadStatus.textContent = `Error: ${error.message}`;
+                        uploadStatus.style.color = 'red';
+                        candidateDetails.profileImageUrl = null; // Reset URL on failure
+                        imageInput.value = ''; // Clear the input
+                        checkFormValidity();
+                    }
+                };
+                 reader.readAsDataURL(file); // Read as base64
+            } else {
+                 // Reset if no file is selected
+                 imagePreview.src = '#';
+                 imagePreview.classList.add('hidden');
+                 uploadIcon.classList.remove('hidden');
+                 uploadStatus.textContent = '';
+                 candidateDetails.profileImageUrl = null;
+                 checkFormValidity();
+            }
         });
-        
+
+        // Check overall form validity including image upload
+         function checkFormValidity() {
+             const isTextValid = candidateDetailsForm.checkValidity();
+             const isImageUploaded = !!candidateDetails.profileImageUrl;
+             proceedBtn.disabled = !(isTextValid && isImageUploaded);
+             console.log(`Form validity check: TextValid=${isTextValid}, ImageUploaded=${isImageUploaded}, ButtonDisabled=${proceedBtn.disabled}`); // Debug log
+         }
+
+        // Listen for input changes on text fields as well
+        candidateDetailsForm.addEventListener('input', checkFormValidity);
+        candidateDetailsForm.addEventListener('change', checkFormValidity); // For select dropdown
+
+        // Handle form submission
         candidateDetailsForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            candidateDetails = {
-                fullName: document.getElementById('fullName').value,
-                rollNumber: document.getElementById('rollNumber').value,
-                collegeName: document.getElementById('collegeName').value,
-            };
+             if (!candidateDetails.profileImageUrl) {
+                 uploadStatus.textContent = 'Profile image is required.';
+                 uploadStatus.style.color = 'red';
+                 return; // Prevent proceeding without image
+             }
+            // Store details from form fields
+            candidateDetails.fullName = document.getElementById('fullName').value;
+            candidateDetails.rollNumber = document.getElementById('rollNumber').value;
+            candidateDetails.collegeName = document.getElementById('collegeName').value;
+            candidateDetails.department = document.getElementById('department').value; // Get department
+
+            console.log("Proceeding with Candidate Details:", candidateDetails); // Debug log
             candidateDetailsModal.classList.add('hidden');
             preTestModal.classList.remove('hidden');
         });
@@ -366,32 +514,53 @@
             renderQuestion();
             document.addEventListener('fullscreenchange', handleFullScreenChange);
             document.addEventListener('visibilitychange', handleVisibilityChange);
+            // Disable right-click
+            document.addEventListener('contextmenu', event => event.preventDefault());
         }
 
         function renderQuestion() {
+            if (!allQuestions || allQuestions.length === 0 || currentQuestionIndex >= allQuestions.length) {
+                 console.error("Cannot render question: Invalid state.", { allQuestions, currentQuestionIndex });
+                 showError("An error occurred loading the question.");
+                 return;
+            }
             const question = allQuestions[currentQuestionIndex];
             const response = studentResponses[currentQuestionIndex];
-            
+
             document.getElementById('section-title').textContent = `${question.sectionTitle}`;
             document.getElementById('question-counter').textContent = `Question ${currentQuestionIndex + 1} of ${allQuestions.length}`;
-            
+
             const questionContent = document.getElementById('question-content');
-            
+
             let optionsHtml = '';
-            if (question.type.startsWith('mcq')) {
+            if (question.type && question.type.startsWith('mcq')) {
                 const inputType = question.type === 'mcq-single' ? 'radio' : 'checkbox';
-                optionsHtml = question.options.map((opt, i) => {
-                    // Check if the current option is the saved answer
-                    const isChecked = response.answer !== null && response.answer == i;
-                    return `
-                        <div>
-                            <input type="${inputType}" name="option" value="${i}" id="option-${i}" class="custom-radio" ${isChecked ? 'checked' : ''}>
-                            <label for="option-${i}" class="option-label">${opt}</label>
-                        </div>
-                    `;
-                }).join('');
-            } else { // fill-blank
+                 if (!question.options || !Array.isArray(question.options)) {
+                     console.error("MCQ question missing valid 'options' array:", question);
+                     optionsHtml = "<p class='text-red-500'>Error: Question options are missing or invalid.</p>";
+                 } else {
+                    optionsHtml = question.options.map((opt, i) => {
+                        // Determine if this option should be checked based on saved response
+                        let isChecked = false;
+                        if (inputType === 'radio') {
+                            isChecked = response.answer !== null && String(response.answer) === String(i);
+                        } else { // checkbox
+                            isChecked = Array.isArray(response.answer) && response.answer.map(String).includes(String(i));
+                        }
+
+                        return `
+                            <div>
+                                <input type="${inputType}" name="option" value="${i}" id="option-${i}" class="custom-radio" ${isChecked ? 'checked' : ''}>
+                                <label for="option-${i}" class="option-label">${opt}</label>
+                            </div>
+                        `;
+                    }).join('');
+                 }
+            } else if (question.type === 'fill-blank') {
                 optionsHtml = `<input type="text" class="block w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" value="${response.answer || ''}">`;
+            } else {
+                 console.error("Unknown question type:", question.type, question);
+                 optionsHtml = "<p class='text-red-500'>Error: Unknown question type.</p>";
             }
 
             questionContent.innerHTML = `<p class="text-xl mb-6 font-medium text-gray-800">${question.text}</p><div class="space-y-3">${optionsHtml}</div>`;
@@ -399,37 +568,48 @@
             updatePalette();
         }
 
-        function renderPalette() {
+         function renderPalette() {
             const paletteContainer = document.getElementById('palette-container');
             paletteContainer.innerHTML = '';
-            currentTest.sections.forEach((section, sectionIndex) => {
-                const sectionDiv = document.createElement('div');
-                sectionDiv.innerHTML = `<h3 class="font-bold text-lg mb-3 text-gray-800">${section.title}</h3>`;
-                const grid = document.createElement('div');
-                grid.className = 'grid grid-cols-5 gap-3';
-                
-                allQuestions.forEach((q, i) => {
-                    if (q.sectionIndex === sectionIndex) {
-                        const btn = document.createElement('button');
-                        btn.textContent = i + 1;
-                        btn.className = 'palette-btn h-11 w-11 flex items-center justify-center rounded-lg font-semibold';
-                        btn.onclick = () => { saveAnswer(); currentQuestionIndex = i; renderQuestion(); };
-                        grid.appendChild(btn);
-                    }
-                });
-                sectionDiv.appendChild(grid);
-                paletteContainer.appendChild(sectionDiv);
+            // Group questions by section index for palette rendering
+            const questionsBySection = allQuestions.reduce((acc, q, i) => {
+                if (!acc[q.sectionIndex]) acc[q.sectionIndex] = { title: q.sectionTitle, questions: [] };
+                acc[q.sectionIndex].questions.push({ index: i });
+                return acc;
+            }, {});
+
+            Object.values(questionsBySection).forEach(section => {
+                 const sectionDiv = document.createElement('div');
+                 sectionDiv.innerHTML = `<h3 class="font-bold text-lg mb-3 text-gray-800">${section.title}</h3>`;
+                 const grid = document.createElement('div');
+                 grid.className = 'grid grid-cols-5 gap-3';
+                 section.questions.forEach(qInfo => {
+                     const btn = document.createElement('button');
+                     btn.textContent = qInfo.index + 1;
+                     btn.className = 'palette-btn h-11 w-11 flex items-center justify-center rounded-lg font-semibold';
+                     btn.onclick = () => { saveAnswer(); currentQuestionIndex = qInfo.index; renderQuestion(); };
+                     grid.appendChild(btn);
+                 });
+                 sectionDiv.appendChild(grid);
+                 paletteContainer.appendChild(sectionDiv);
             });
             updatePalette();
-        }
-        
+         }
+
         function updatePalette() {
             document.querySelectorAll('.palette-btn').forEach((btn) => {
                 const i = parseInt(btn.textContent) - 1;
                 const response = studentResponses[i];
                 btn.classList.remove('active', 'answered', 'marked');
-                
-                if (response.answer !== null && response.answer !== '') {
+
+                let isAnswered = false;
+                if (Array.isArray(response.answer)) {
+                     isAnswered = response.answer.length > 0;
+                } else {
+                     isAnswered = response.answer !== null && response.answer !== '';
+                }
+
+                if (isAnswered) {
                     btn.classList.add('answered');
                 }
                 if (response.marked) {
@@ -440,12 +620,13 @@
                 }
             });
         }
-        
+
         function updateNavButtons() {
             document.getElementById('prev-btn').disabled = currentQuestionIndex === 0;
             document.getElementById('next-btn').disabled = currentQuestionIndex === allQuestions.length - 1;
-            
+
             const markBtn = document.getElementById('mark-review-btn');
+             if (!studentResponses[currentQuestionIndex]) return; // Guard against errors if state is bad
             if (studentResponses[currentQuestionIndex].marked) {
                 markBtn.classList.replace('bg-purple-600', 'bg-amber-500');
                 markBtn.classList.replace('hover:bg-purple-700', 'hover:bg-amber-600');
@@ -457,17 +638,24 @@
             }
         }
 
+        // --- Save Answer (Modified for checkbox) ---
         function saveAnswer() {
+             if (!allQuestions[currentQuestionIndex]) return; // Safety check
             const question = allQuestions[currentQuestionIndex];
-            if (question.type.startsWith('mcq')) {
+             if (!studentResponses[currentQuestionIndex]) studentResponses[currentQuestionIndex] = { answer: null, marked: false }; // Initialize if missing
+
+            if (question.type === 'mcq-single') {
                 const selected = document.querySelector('#question-content input[name="option"]:checked');
                 studentResponses[currentQuestionIndex].answer = selected ? selected.value : null;
-            } else {
+            } else if (question.type === 'mcq-multiple') {
+                 const selected = Array.from(document.querySelectorAll('#question-content input[name="option"]:checked')).map(cb => cb.value);
+                 studentResponses[currentQuestionIndex].answer = selected.length > 0 ? selected : null; // Store array or null
+            } else if (question.type === 'fill-blank') {
                 const input = document.querySelector('#question-content input[type="text"]');
                 studentResponses[currentQuestionIndex].answer = input ? input.value : null;
             }
-        }
-        
+         }
+
         document.getElementById('next-btn').addEventListener('click', () => {
             saveAnswer();
             if (currentQuestionIndex < allQuestions.length - 1) {
@@ -482,30 +670,56 @@
                 renderQuestion();
             }
         });
-        
+
         document.getElementById('mark-review-btn').addEventListener('click', () => {
+             if (!studentResponses[currentQuestionIndex]) studentResponses[currentQuestionIndex] = { answer: null, marked: false }; // Initialize if missing
             studentResponses[currentQuestionIndex].marked = !studentResponses[currentQuestionIndex].marked;
             updateNavButtons();
             updatePalette();
         });
-        
+
         document.getElementById('submit-test-btn').addEventListener('click', async () => {
-              const confirm = await showModal('Are you sure you want to submit the test?');
-              if(confirm) performSubmission();
+             saveAnswer(); // Save current question before confirming
+             const unanswered = studentResponses.filter(r => r.answer === null || (Array.isArray(r.answer) && r.answer.length === 0)).length;
+             const marked = studentResponses.filter(r => r.marked).length;
+             let msg = `Are you sure you want to submit?`;
+             if (unanswered > 0) msg += `\n${unanswered} question(s) are unanswered.`;
+             if (marked > 0) msg += `\n${marked} question(s) are marked for review.`;
+
+             const confirm = await showModal(msg);
+             if (confirm) performSubmission();
          });
-        
+
         function enterFullScreen() {
-            document.documentElement.requestFullscreen().catch(err => console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`));
-        }
+             if (document.documentElement.requestFullscreen) {
+                 document.documentElement.requestFullscreen().catch(err => {
+                     console.error(`FS Error: ${err.message} (${err.name})`);
+                     alert("Could not enter full-screen. Please manually enter full-screen (F11) to continue.");
+                 });
+             } else if (document.documentElement.webkitRequestFullscreen) { /* Safari */
+                 document.documentElement.webkitRequestFullscreen();
+             } else if (document.documentElement.msRequestFullscreen) { /* IE11 */
+                 document.documentElement.msRequestFullscreen();
+             }
+         }
 
-        function handleFullScreenChange() {
-            if (!document.fullscreenElement && !isSubmitting) forceSubmitTest('Exited Full-Screen Mode');
-        }
+        function handleFullScreenChange(event) {
+             const isFullScreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+             console.log("Fullscreen Change Detected. Is Fullscreen:", isFullScreen); // Debug log
+             if (!isFullScreen && !isSubmitting) {
+                 console.warn("Exited Full-Screen!");
+                 forceSubmitTest('Exited Full-Screen Mode');
+             }
+         }
 
-        function handleVisibilityChange() {
-            if (document.hidden && !isSubmitting) forceSubmitTest('Switched to Another Tab/Window');
-        }
-        
+         function handleVisibilityChange() {
+             console.log("Visibility Change Detected. Hidden:", document.hidden); // Debug log
+             if (document.hidden && !isSubmitting) {
+                  console.warn("Tab switched!");
+                 forceSubmitTest('Switched to Another Tab/Window');
+             }
+         }
+
         function startTimer(duration) {
             let timer = duration;
             const timerDisplay = document.getElementById('timer');
@@ -517,36 +731,59 @@
                 timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                 if (timer <= 0) {
                     clearInterval(timerInterval);
+                     console.warn("Time is up!");
                     forceSubmitTest('Time is up!');
                 }
             }, 1000);
         }
 
-        async function forceSubmitTest(reason) {
-            if (isSubmitting) return;
+         async function forceSubmitTest(reason) {
+            if (isSubmitting) return; // Prevent multiple submissions
             isSubmitting = true;
-            modalCancelBtn.style.display = 'none';
-            modalConfirmBtn.style.display = 'none';
-            await showModal(`Violation: ${reason}. Submitting test automatically.`);
-            performSubmission(reason);
+            console.warn(`Force submitting test. Reason: ${reason}`);
+            clearInterval(timerInterval); // Stop timer
+            // Remove listeners to prevent further triggers during submission
+            document.removeEventListener('fullscreenchange', handleFullScreenChange);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            document.removeEventListener('contextmenu', event => event.preventDefault());
+
+            // Update modal for forced submission
+            modalCancelBtn.classList.add('hidden');
+            modalConfirmBtn.classList.add('hidden');
+             modalIcon.innerHTML = `<svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`; // Warning icon
+            await showModal(`Violation: ${reason}. Submitting test automatically.`); // Show message
+            performSubmission(reason); // Proceed with submission
         }
 
         async function performSubmission(violationReason = null) {
-            if (isSubmitting && !violationReason) return;
+            if (isSubmitting && !violationReason) return; // Prevent double manual submit clicks
             isSubmitting = true;
-            saveAnswer();
+            saveAnswer(); // Ensure last answer is saved
             clearInterval(timerInterval);
+            // Remove listeners
+            document.removeEventListener('fullscreenchange', handleFullScreenChange);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            document.removeEventListener('contextmenu', event => event.preventDefault());
 
-            // Prepare payload with just the answers
+
+            // Prepare payload
             const finalAnswers = studentResponses.map(r => r.answer);
 
-            const payload = { 
+            // --- Ensure all required candidateDetails are included ---
+            const payload = {
                 answers: finalAnswers,
-                timeTaken, 
+                timeTaken,
                 violationReason,
-                ...candidateDetails 
+                fullName: candidateDetails.fullName,
+                rollNumber: candidateDetails.rollNumber,
+                collegeName: candidateDetails.collegeName,
+                department: candidateDetails.department, // Include department
+                profileImageUrl: candidateDetails.profileImageUrl // Include image URL
             };
+             console.log("Submitting Payload:", JSON.stringify(payload)); // Debug log
 
+
+            // Update modal for submission process
             modalMessage.textContent = "Submitting your test...";
             modalIcon.innerHTML = `<svg class="animate-spin h-6 w-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
             confirmModal.classList.remove('hidden');
@@ -554,38 +791,59 @@
             modalConfirmBtn.classList.add('hidden');
 
             try {
+                 console.log("Sending submission to /api/public/submit-test");
                 const response = await fetch('/api/public/submit-test', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                     body: JSON.stringify(payload)
                 });
                 const result = await response.json();
+                 console.log("Submission response:", response.status, result);
+                 if (!response.ok) throw new Error(result.message || `Server responded with ${response.status}`);
+
                 modalIcon.innerHTML = `<svg class="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
                 modalMessage.textContent = result.message || 'Submission complete! You will be redirected shortly.';
             } catch (error) {
+                console.error("Submission Error:", error);
                 modalIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>`;
                 modalMessage.textContent = 'Submission failed: ' + error.message;
             } finally {
-                if (document.fullscreenElement) document.exitFullscreen();
-                setTimeout(() => window.location.href = '/login.html', 4000); // Redirect away
+                 // Ensure exit fullscreen happens regardless of success/fail
+                 if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                     try {
+                         if (document.exitFullscreen) await document.exitFullscreen();
+                         else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
+                         else if (document.msExitFullscreen) await document.msExitFullscreen();
+                     } catch (exitErr) { console.error("Error exiting fullscreen:", exitErr); }
+                 }
+                // Redirect after a short delay
+                 setTimeout(() => {
+                     console.log("Redirecting...");
+                     window.location.href = '/login.html'; // Adjust redirect as needed
+                 }, 4000);
             }
         }
-        
+
         function showModal(message) {
             return new Promise(resolve => {
                 modalMessage.textContent = message;
-                modalCancelBtn.classList.remove('hidden');
-                modalConfirmBtn.classList.remove('hidden');
+                modalCancelBtn.classList.remove('hidden'); // Ensure cancel is visible for normal submit
+                modalConfirmBtn.classList.remove('hidden'); // Ensure confirm is visible for normal submit
+                 // Reset icon to default warning for confirmation
+                 modalIcon.innerHTML = `<svg class="h-6 w-6 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`;
                 confirmModal.classList.remove('hidden');
-                
+
                 modalConfirmBtn.onclick = () => { confirmModal.classList.add('hidden'); resolve(true); };
                 modalCancelBtn.onclick = () => { confirmModal.classList.add('hidden'); resolve(false); };
             });
         }
 
+        // --- Initial Call ---
         fetchTestDetails();
+
+        // Prevent Right Click
+        document.addEventListener('contextmenu', event => event.preventDefault());
     });
     </script>
 </body>
 </html>
-
