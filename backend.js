@@ -8790,16 +8790,10 @@ app.get('/api/hiring/test-history', hiringModeratorAuth, async (req, res) => {
 // EXTERNAL CANDIDATE: Get test details using token
 app.get('/api/public/test-details', authMiddleware, async (req, res) => {
     // --- Authentication & Token Data Extraction ---
-    // authMiddleware should populate req.user with { email, testId, assignmentId, isExternal: true }
     if (!req.user || !req.user.isExternal) {
         console.warn('[GET TEST DETAILS] Denied: User not external or not authenticated.');
-        // Ensure headers aren't already sent before sending response
-        if (!res.headersSent) {
-            return res.status(403).json({ message: 'Access denied.' });
-        } else {
-             console.error("[GET TEST DETAILS] Headers already sent on auth failure.");
-             return; // Stop processing if headers sent
-        }
+        if (!res.headersSent) return res.status(403).json({ message: 'Access denied.' });
+        console.error("[GET TEST DETAILS] Headers already sent on auth failure."); return;
     }
     const { testId: testPkFromToken, email: candidateEmail, assignmentId } = req.user;
     console.log(`[GET TEST DETAILS] Request for assignmentId: ${assignmentId}, testPkFromToken: ${testPkFromToken}, email: ${candidateEmail}`);
@@ -8812,143 +8806,130 @@ app.get('/api/public/test-details', authMiddleware, async (req, res) => {
             Key: { assignmentId }
         }));
 
-        // Check if assignment exists and matches token data
         if (!assignment) {
             console.warn(`[GET TEST DETAILS] Assignment ${assignmentId} not found.`);
-             if (!res.headersSent) {
-                return res.status(403).json({ message: 'Assignment record not found. Link may be invalid.' });
-             } else { return; }
+             if (!res.headersSent) return res.status(403).json({ message: 'Assignment record not found. Link may be invalid.' });
+             return;
         }
         if (assignment.studentEmail !== candidateEmail || assignment.testId !== testPkFromToken) {
             console.warn(`[GET TEST DETAILS] Assignment ${assignmentId} data mismatch. Token vs DB.`);
-             if (!res.headersSent) {
-                return res.status(403).json({ message: 'Link invalid or assignment details mismatch.' });
-             } else { return; }
+             if (!res.headersSent) return res.status(403).json({ message: 'Link invalid or assignment details mismatch.' });
+             return;
         }
         console.log(`[GET TEST DETAILS] Assignment ${assignmentId} found. Type: ${assignment.testType}, Test PK: ${assignment.testId}`);
 
-        // --- Check Test Time Window ---
-        const now = new Date();
-        const startTime = new Date(assignment.startTime);
-        const endTime = new Date(assignment.endTime);
-        if (now < startTime || now > endTime) {
-            console.warn(`[GET TEST DETAILS] Assignment ${assignmentId} outside active window. Now: ${now.toISOString()}, Start: ${assignment.startTime}, End: ${assignment.endTime}`);
-             if (!res.headersSent) {
-                return res.status(403).json({ message: 'This test link is not currently active or has expired.' });
-             } else { return; }
+        // --- Check Test Time Window (TIMEZONE FIX APPLIED HERE) ---
+        const now = new Date(); // Current time in UTC on the server
+        console.log(`[GET TEST DETAILS] Server time (UTC): ${now.toISOString()}`);
+        console.log(`[GET TEST DETAILS] Assignment Start Time (Raw): ${assignment.startTime}`);
+        console.log(`[GET TEST DETAILS] Assignment End Time (Raw): ${assignment.endTime}`);
+
+        // ** START OF TIMEZONE FIX **
+        // Assume the stored times are IST (+05:30)
+        // Construct ISO strings WITH the offset to ensure correct parsing
+        const startTimeString = `${assignment.startTime}+05:30`;
+        const endTimeString = `${assignment.endTime}+05:30`;
+
+        let startTime, endTime;
+        try {
+            startTime = new Date(startTimeString);
+            endTime = new Date(endTimeString);
+            // Check if parsing resulted in valid dates
+            if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+                throw new Error("Invalid date format in database");
+            }
+             console.log(`[GET TEST DETAILS] Parsed Start Time (as IST, in UTC): ${startTime.toISOString()}`);
+             console.log(`[GET TEST DETAILS] Parsed End Time (as IST, in UTC): ${endTime.toISOString()}`);
+        } catch (parseError) {
+             console.error(`[GET TEST DETAILS] CRITICAL ERROR: Could not parse assignment times for ${assignmentId}. Raw Start: '${assignment.startTime}', Raw End: '${assignment.endTime}'. Error: ${parseError.message}`);
+             if (!res.headersSent) return res.status(500).json({ message: 'Internal Server Error: Invalid time format in assignment record.' });
+             return;
         }
+
+        // Now 'now', 'startTime', and 'endTime' are all Date objects comparable in UTC
+        if (now < startTime || now > endTime) {
+            const reason = now < startTime ? 'not yet active' : 'expired';
+            console.warn(`[GET TEST DETAILS] Assignment ${assignmentId} outside active window (${reason}). Now: ${now.toISOString()}, Start (UTC): ${startTime.toISOString()}, End (UTC): ${endTime.toISOString()}`);
+             if (!res.headersSent) return res.status(403).json({ message: `This test link is ${reason}.` });
+             return;
+        }
+        // ** END OF TIMEZONE FIX **
+
         console.log(`[GET TEST DETAILS] Assignment ${assignmentId} is within the active time window.`);
 
-        // --- Check for Previous *SUBMITTED* Result (Crucial Fix) ---
-        // This query checks if a result exists for this assignment that IS NOT the initial placeholder record.
-        const GSI_NAME = 'AssignmentIdIndex'; // GSI on HIRING_TEST_RESULTS_TABLE with assignmentId as Partition Key
+        // --- Check for Previous *SUBMITTED* Result (Crucial Fix remains the same) ---
+        const GSI_NAME = 'AssignmentIdIndex';
         console.log(`[GET TEST DETAILS] Checking for existing SUBMITTED results using GSI '${GSI_NAME}' on ${HIRING_TEST_RESULTS_TABLE} for assignment ${assignmentId}`);
         const queryParams = {
-             TableName: HIRING_TEST_RESULTS_TABLE,
-             IndexName: GSI_NAME,
+             TableName: HIRING_TEST_RESULTS_TABLE, IndexName: GSI_NAME,
              KeyConditionExpression: 'assignmentId = :aid',
-             // Filter ensures we ONLY find results that are NOT the 'init_' placeholder.
              FilterExpression: 'attribute_not_exists(resultId) OR not begins_with(resultId, :initPrefix)',
-             ExpressionAttributeValues: {
-                 ':aid': assignmentId,
-                 ':initPrefix': 'init_' // Prefix for initial placeholder records created during verification
-             },
-             Limit: 1 // We only need to know if one *submitted* result exists
+             ExpressionAttributeValues: { ':aid': assignmentId, ':initPrefix': 'init_' },
+             Limit: 1
         };
         const { Items: existingSubmittedResults } = await docClient.send(new QueryCommand(queryParams));
 
-        // If a submitted (non-init_) result exists, block access.
         if (existingSubmittedResults && existingSubmittedResults.length > 0) {
             console.warn(`[GET TEST DETAILS] Test already SUBMITTED for assignment ${assignmentId}. Found resultId: ${existingSubmittedResults[0].resultId}. Blocking access.`);
-             if (!res.headersSent) {
-                // Use 403 Forbidden as the resource exists but access is denied due to submission state.
-                return res.status(403).json({ message: 'This test link has already been used to submit results.' });
-             } else { return; }
+             if (!res.headersSent) return res.status(403).json({ message: 'This test link has already been used to submit results.' });
+             return;
         }
         console.log(`[GET TEST DETAILS] No previous SUBMITTED result found. Proceeding to fetch test details.`);
 
+        // --- Fetch Actual Test Details based on testType from Assignment (remains the same) ---
+        let test;
+        let targetTableName;
+        let targetPkName;
 
-        // --- Fetch Actual Test Details based on testType from Assignment ---
-        let test; // Holds the details of the specific test (aptitude or coding)
-        let targetTableName; // Table where the test definition is stored
-        let targetPkName; // Primary key name for that table
-
-        // Determine which table to query based on the assignment's testType
         if (assignment.testType === 'coding') {
-            targetTableName = HIRING_CODING_TESTS_TABLE;
-            targetPkName = 'codingTestId'; // Primary key for coding tests table
+            targetTableName = HIRING_CODING_TESTS_TABLE; targetPkName = 'codingTestId';
             console.log(`[GET TEST DETAILS] Fetching CODING test details from ${targetTableName} using key: ${assignment.testId}`);
             const { Item } = await docClient.send(new GetCommand({ TableName: targetTableName, Key: { [targetPkName]: assignment.testId } }));
             test = Item;
         } else if (assignment.testType === 'aptitude') {
-            targetTableName = HIRING_APTITUDE_TESTS_TABLE; // Use the correct table name
-            targetPkName = 'aptitudeTestId'; // Primary key for aptitude tests table
+            targetTableName = HIRING_APTITUDE_TESTS_TABLE; targetPkName = 'aptitudeTestId';
             console.log(`[GET TEST DETAILS] Fetching APTITUDE test details from ${targetTableName} using key: ${assignment.testId}`);
             const { Item } = await docClient.send(new GetCommand({ TableName: targetTableName, Key: { [targetPkName]: assignment.testId } }));
             test = Item;
         } else {
-             // Handle unexpected testType
              console.error(`[GET TEST DETAILS] Invalid testType '${assignment.testType}' found in assignment ${assignmentId}.`);
-             if (!res.headersSent) {
-                return res.status(500).json({ message: 'Internal Server Error: Invalid test type associated with this assignment.' });
-             } else { return; }
+             if (!res.headersSent) return res.status(500).json({ message: 'Internal Server Error: Invalid test type associated with this assignment.' });
+             return;
         }
 
-        // Check if the test definition was actually found
         if (!test) {
             console.error(`[GET TEST DETAILS] Test definition ${assignment.testId} (Type: ${assignment.testType}) not found in table ${targetTableName}. Assignment ${assignmentId} points to a non-existent test.`);
-             if (!res.headersSent) {
-                return res.status(404).json({ message: 'Test content not found. The assigned test may have been deleted.' });
-             } else { return; }
+             if (!res.headersSent) return res.status(404).json({ message: 'Test content not found. The assigned test may have been deleted.' });
+             return;
         }
         console.log(`[GET TEST DETAILS] Successfully fetched test definition for ${assignment.testId}. Title: ${test.title}`);
 
-        // --- Prepare Test Data for Frontend (Remove sensitive info) ---
-        // Create a copy to modify without affecting the original 'test' object
+        // --- Prepare Test Data for Frontend (remains the same) ---
         let processedTest = { ...test };
-        processedTest.assignmentId = assignmentId; // Add assignmentId to the response payload
+        processedTest.assignmentId = assignmentId;
 
-        // Remove correct answers from aptitude questions before sending
         if (assignment.testType === 'aptitude' && processedTest.sections && Array.isArray(processedTest.sections)) {
             processedTest.sections = processedTest.sections.map(section => {
-                 // Ensure questions exist and is an array before mapping
                  const questions = (section.questions && Array.isArray(section.questions))
-                    ? section.questions.map(q => {
-                        const { correctAnswer, correctAnswers, ...questionData } = q; // Destructure to remove answer fields
-                        return questionData; // Return question without answers
-                      })
-                    : []; // Default to empty array if questions are missing/invalid
+                    ? section.questions.map(q => { const { correctAnswer, correctAnswers, ...questionData } = q; return questionData; })
+                    : [];
                 return { ...section, questions };
             });
             console.log(`[GET TEST DETAILS] Removed answers from aptitude test sections.`);
         }
-        // For coding tests, only send basic problem info initially.
-        // Full details (description, test cases) are fetched by the frontend per problem.
         else if (assignment.testType === 'coding' && processedTest.problems && Array.isArray(processedTest.problems)) {
-             processedTest.problems = processedTest.problems.map(p => ({
-                 problemId: p.problemId, // ID to fetch full details later
-                 title: p.title,
-                 difficulty: p.difficulty,
-                 score: p.score
-                 // DO NOT send description, testCases, constraints, example etc. here
-             }));
+             processedTest.problems = processedTest.problems.map(p => ({ problemId: p.problemId, title: p.title, difficulty: p.difficulty, score: p.score }));
              console.log(`[GET TEST DETAILS] Prepared basic info for ${processedTest.problems.length} coding problems.`);
         }
 
         // --- Return Processed Test Data ---
         console.log(`[GET TEST DETAILS] Returning processed test data for assignment ${assignmentId}.`);
-         if (!res.headersSent) {
-             res.json(processedTest);
-         } else {
-             console.error("[GET TEST DETAILS] Headers already sent before final response.");
-         }
+         if (!res.headersSent) res.json(processedTest);
+         else console.error("[GET TEST DETAILS] Headers already sent before final response.");
 
     } catch (error) {
-        // Log detailed error information
         console.error(`[GET TEST DETAILS] Fatal Error processing assignment ${assignmentId}:`, error);
-        // Provide a generic error message to the client, unless headers are already sent
         if (!res.headersSent){
-            // Handle specific errors if needed (e.g., missing index, table)
             if (error.name === 'ResourceNotFoundException' || (error.message && error.message.includes('index does not exist'))) {
                  console.error(`[GET TEST DETAILS] Critical Error: A required DynamoDB table or index might be missing.`);
                  return res.status(500).json({ message: 'Server configuration error: Required resource not found. Please contact support.' });
@@ -11724,4 +11705,5 @@ app.post('/api/public/upload-image', async (req, res) => {
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
 
