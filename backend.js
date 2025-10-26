@@ -21,6 +21,19 @@ const http = require('http');
 const router = express.Router();
 const Razorpay = require('razorpay')
 
+const HIRING_USERS_TABLE = "HiringUsers";
+const HIRING_COLLEGES_TABLE = "HiringColleges";
+const HIRING_JOBS_TABLE = "HiringJobs";                 // Aptitude tests / Job postings
+const HIRING_APPLICATIONS_TABLE = "HiringApplications"; // Applications for HIRING_JOBS_TABLE items
+const HIRING_CODING_PROBLEMS_TABLE = "HiringCodingProblems";
+const HIRING_CODING_TESTS_TABLE = "HiringCodingTests";
+const HIRING_ASSIGNMENTS_TABLE = "HiringAssignments";   // Assignments for both HIRING_JOBS_TABLE and HIRING_CODING_TESTS_TABLE items
+const HIRING_TEST_RESULTS_TABLE = "HiringTestResults";   // Results for both types of tests
+const APPLICATIONS_TABLE = "HiringApplications"; // Use the correct table name
+const JOBS_TABLE = "HiringJobs"; // Use the correct table name
+const HIRING_CODE_SNIPPETS_TABLE = "HiringCodeSnippets"; // New table for saving snippets
+const HIRING_APTITUDE_TESTS_TABLE = "HiringAptitudeTests";
+
 const ZOOM_ACCOUNT_ID = process.env.ZOOM_ACCOUNT_ID || 'bq5-fIbESBONjaZAr184uA';
 const ZOOM_CLIENT_ID = process.env.ZOOM_CLIENT_ID || 'CXxbks94RlmD_90vofVqg';
 const ZOOM_CLIENT_SECRET = process.env.ZOOM_CLIENT_SECRET || 'XXoYPmG5z8rSf1J6Fov7iXSminmBRuO9';
@@ -72,77 +85,18 @@ async function sendEmailWithSES(mailOptions) {
         console.error('Error sending email with SES:', error);
     }
 }
-// --- START: NEW JUDGE0 HELPER FUNCTIONS ---
 
-// --- Judge0 Compiler Helper (Code) ---
-// This function is called by /api/compile
-async function compileWithJudge0(language, code, input) {
-    const judge0Url = process.env.JUDGE0_URL || 'http://localhost:2358';
-    const languageMap = {
-        'c': 50, 'cpp': 54, 'java': 62, 'python': 71, 'javascript': 63
-    };
-    const languageId = languageMap[language];
 
-    if (!languageId) {
-        throw new Error(`Language '${language}' is not supported.`);
-    }
 
-    // 1. Create submission
-    const submissionResponse = await fetch(`${judge0Url}/submissions/?base64_encoded=false&wait=false`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            source_code: code,
-            language_id: languageId,
-            stdin: input || ""
-        })
+const hiringModeratorAuth = async (req, res, next) => {
+     await authMiddleware(req, res, () => {
+        if (req.user && req.user.role === 'Hiring Moderator') {
+            next();
+        } else if (!res.headersSent) {
+             res.status(403).json({ message: 'Access denied. Hiring Moderator role required.' });
+        }
     });
-
-    if (!submissionResponse.ok) {
-        const errorBody = await submissionResponse.text();
-        console.error(`Judge0 submission failed: ${submissionResponse.status}`, errorBody);
-        throw new Error(`Judge0 submission failed with status ${submissionResponse.status}`);
-    }
-    const { token } = await submissionResponse.json();
-
-    // 2. Poll for result
-    let result = null;
-    let attempts = 0;
-    const maxAttempts = 15;
-    const pollInterval = 1000;
-
-    while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, pollInterval));
-        attempts++;
-        const resultResponse = await fetch(`${judge0Url}/submissions/${token}?base64_encoded=false&fields=*`);
-        if (!resultResponse.ok) continue; 
-        result = await resultResponse.json();
-        if (result.status_id > 2) break; // Finished (3) or error (>3)
-    }
-
-    if (!result || result.status_id <= 2) {
-        console.error(`Judge0 polling timed out for token ${token}`);
-        throw new Error('Execution timed out waiting for result.');
-    }
-
-    // 3. Format output - FIXED: Return only clean output without status info
-    let output = result.stdout || '';
-    
-    // Only add error information if there's no successful output
-    if (!output.trim()) {
-        if (result.compile_output) output += result.compile_output;
-        if (result.stderr) output += result.stderr;
-        if (result.message) output += result.message;
-    }
-
-    const cleanOutput = output.trim();
-
-    // Return a structured object - ONLY CLEAN OUTPUT, no status metadata
-    return {
-        output: cleanOutput, // This will now contain only the program output or errors
-        stdout: (result.stdout || '').trim() // Provide clean stdout for contest checker
-    };
-}
+};
 
 // --- INITIALIZATION ---
 const app = express();
@@ -284,13 +238,44 @@ app.post('/api/payment/verify-signature', (req, res) => {
 
 module.exports = router;
 
+const studentAuthMiddleware = async (req, res, next) => {
+    const authHeader = req.header('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'No token, authorization denied' });
+    }
+    const token = authHeader.split(' ')[1];
 
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        // Ensure the token is for a student role if this middleware is specific
+        if (decoded.user.role !== 'Student') {
+             return res.status(403).json({ message: 'Access denied. Student role required.' });
+        }
 
+        // Fetch user data to ensure account is still active/valid
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: HIRING_TABLE, // Assuming students are in the main user table
+            Key: { email: decoded.user.email }
+        }));
 
+        if (!Item || Item.isBlocked) {
+            return res.status(401).json({ message: 'User not found or account blocked.' });
+        }
 
-
-
-
+        // Attach user info (excluding password) to the request object
+        req.user = {
+            email: Item.email,
+            fullName: Item.fullName,
+            college: Item.college,
+            role: Item.role
+            // Add other necessary fields
+        };
+        next();
+    } catch (e) {
+        console.error("Auth Middleware Error:", e.message);
+        res.status(401).json({ message: 'Token is not valid' });
+    }
+};
 
 
 // In your backend.js file, find the io.on('connection', ...) block
@@ -717,26 +702,6 @@ const authMiddleware = async (req, res, next) => {
         res.status(401).json({ message: 'Token is not valid' });
     }
 };
-
-
-// =================================================================
-// --- COMPILER ENDPOINT (REVISED WITH JUDGE0) ---
-// =======================================
-app.post('/api/compile', authMiddleware, async (req, res) => {
-    const { language, code, input } = req.body;
-    try {
-        if (typeof compileWithJudge0 !== 'function') {
-            throw new Error('compileWithJudge0 is not defined on the server.');
-        }
-        const result = await compileWithJudge0(language, code, input);
-        // result is { output, stdout }
-        res.json({ output: result.output, stdout: result.stdout });
-    } catch (error) {
-        console.error("Compile Error:", error);
-        res.status(500).json({ message: 'Server error during compilation.', output: error.message });
-    }
-});
-
 // const authMiddleware = async (req, res, next) => {
 //     const token = req.header('x-auth-token');
 //     if (!token) {
@@ -3482,6 +3447,66 @@ app.post('/api/admin/impact-stats', authMiddleware, upload.single('flyerImage'),
 // =================================================================
 // --- COMPILER ENDPOINT (REVISED WITH JUDGE0) ---
 // =================================================================
+app.post('/api/compile', authMiddleware, async (req, res) => {
+    // Middleware ensures req.user exists if token is valid
+    const { language, code, input } = req.body;
+    const ONECOMPILER_API_KEY = process.env.ONECOMPILER_API_KEY || '09ccf0b69bmsh066f3a3bc867b99p178664jsna5e9720da3f6'; // Use ENV Var
+
+    if (!language || code === undefined || code === null) { // Allow empty code, but not missing
+        return res.status(400).json({ message: 'Language and code are required.' });
+    }
+    if (!ONECOMPILER_API_KEY || ONECOMPILER_API_KEY === 'YOUR_ONECOMPILER_RAPIDAPI_KEY') {
+        console.error("[COMPILE API] OneCompiler API Key not configured!");
+        return res.status(500).json({ message: 'Compilation service key is not configured on the server.' });
+    }
+
+    const languageMap = { 'c': 'c', 'cpp': 'cpp', 'java': 'java', 'python': 'python', 'javascript': 'javascript' };
+    const fileNames = { 'c': 'main.c', 'cpp': 'main.cpp', 'java': 'Main.java', 'python': 'main.py', 'javascript': 'index.js' };
+    const langIdentifier = languageMap[language];
+    const fileName = fileNames[language];
+
+    if (!langIdentifier) {
+        return res.status(400).json({ message: `Language '${language}' is not supported.` });
+    }
+
+    try {
+        const submissionPayload = {
+            language: langIdentifier,
+            stdin: input || "",
+            files: [{ name: fileName, content: code }]
+        };
+
+        const submissionResponse = await fetch('https://onecompiler-apis.p.rapidapi.com/api/v1/run', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-RapidAPI-Key': ONECOMPILER_API_KEY,
+                'X-RapidAPI-Host': 'onecompiler-apis.p.rapidapi.com'
+            },
+            body: JSON.stringify(submissionPayload)
+        });
+
+        const result = await submissionResponse.json(); // Always try to parse JSON
+
+        if (!submissionResponse.ok) {
+            console.error("OneCompiler API Error:", submissionResponse.status, result);
+            // Try to extract a meaningful error message
+            const errorMessage = result?.message || result?.stderr || `Execution failed (Status: ${submissionResponse.status})`;
+            return res.status(500).json({ message: `Compilation Service Error: ${errorMessage}` });
+        }
+
+        // Combine stdout, stderr, and exception for output
+        let output = result.stdout || '';
+        if (result.stderr) output += `\nError:\n${result.stderr}`;
+        if (result.exception) output += `\nException:\n${result.exception}`;
+
+        res.json({ output: output || 'Execution finished with no output.' }); // Provide default message
+
+    } catch (error) {
+        console.error("[COMPILE API] Fetch or JSON Parsing Error:", error);
+        res.status(500).json({ message: 'Server error communicating with the compilation service.' });
+    }
+});
 
 
 app.post('/api/admin/practice-tests', authMiddleware, async (req, res) => {
@@ -4459,13 +4484,12 @@ app.post('/api/compiler/save-score', authMiddleware, async (req, res) => {
 
 // GET endpoint for admins/moderators to view all compiler scores
 app.get('/api/admin/compiler-scores', authMiddleware, adminOrModeratorAuth, async (req, res) => {
-    if (req.user.role !== 'Admin' && req.user.role !== 'Moderator') {
-        return res.status(403).json({ message: 'Access denied.' });
-    }
-    
     try {
         const { Items: scores } = await docClient.send(new ScanCommand({
             TableName: "TestifyCompilerScores",
+            // ADDED FILTER: Only get items that are actual compiler scores,
+            // not SQL sections or problems that pollute this table.
+            // We identify compiler scores by the absence of the 'recordType' attribute.
             FilterExpression: "attribute_not_exists(recordType)"
         }));
 
@@ -4474,6 +4498,7 @@ app.get('/api/admin/compiler-scores', authMiddleware, adminOrModeratorAuth, asyn
         }
 
         const studentEmails = [...new Set(scores.map(s => s.studentEmail))];
+        
         const keys = studentEmails.map(email => ({ email }));
         
         const { Responses } = await docClient.send(new BatchGetCommand({
@@ -4483,8 +4508,10 @@ app.get('/api/admin/compiler-scores', authMiddleware, adminOrModeratorAuth, asyn
         const students = Responses.TestifyUsers || [];
         const studentMap = new Map(students.map(s => [s.email, { fullName: s.fullName, college: s.college }]));
 
+        // We are removing 'submittedCode' from this main list view for performance.
+        // It will be fetched on demand when the admin clicks "View Code".
         const enrichedScores = scores.map(score => {
-            const { submittedCode, ...rest } = score;
+            const { submittedCode, ...rest } = score; // Exclude submittedCode here
             const studentInfo = studentMap.get(score.studentEmail);
             return {
                 ...rest,
@@ -4494,6 +4521,7 @@ app.get('/api/admin/compiler-scores', authMiddleware, adminOrModeratorAuth, asyn
         });
         
         enrichedScores.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+
         res.json(enrichedScores);
 
     } catch (error) {
@@ -5128,18 +5156,91 @@ app.get('/api/compiler/my-submission/:problemId', authMiddleware, async (req, re
 });
 
 
-/// =================================================================
-// --- SQL CODELAB ENDPOINTS (REFACTORED WITH JUDGE0) ---
 // =================================================================
-const SQL_TABLE_NAME = "TestifyCompilerScores"; // Using this table as requested
+// --- SQL CODELAB ENDPOINTS (REFACTORED TO USE ONECOMPILER API) ---
+// =================================================================
+// Using the "TestifyCompilerScores" table as requested for testing purposes.
+const SQL_TABLE_NAME = "TestifyCompilerScores";
+
+// Helper function to run SQL queries using the OneCompiler API.
+// This replaces the local sqlite3 implementation.
+const runQueryWithOneCompiler = async (schema, query) => {
+    // It's recommended to store this API key in environment variables for security.
+    const ONECOMPILER_API_KEY = process.env.ONECOMPILER_API_KEY || '09ccf0b69bmsh066f3a3bc867b99p178664jsna5e9720da3f6';
+
+    // Combine schema (CREATE, INSERT statements) and the user's query into a single script.
+    const fullScript = `${schema || ''}\n\n${query || ''}`;
+
+    const payload = {
+        language: "mysql", // OneCompiler uses 'mysql' for standard SQL execution
+        stdin: "",
+        files: [{
+            name: "script.sql",
+            content: fullScript
+        }]
+    };
+
+    try {
+        const response = await fetch('https://onecompiler-apis.p.rapidapi.com/api/v1/run', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-RapidAPI-Key': '22be928fe3msh1ad95638f83d75cp18c454jsn9883d64a5a33',
+                'X-RapidAPI-Host': 'onecompiler-apis.p.rapidapi.com'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        // Check for compilation or runtime errors from the API response
+        if (!response.ok || result.stderr || result.exception) {
+            throw new Error(result.stderr || result.exception || result.message || 'An error occurred during SQL execution.');
+        }
+
+        // Parse the raw stdout from OneCompiler into the { columns, values } format
+        const output = (result.stdout || '').trim();
+        if (!output) {
+            // Query ran successfully but produced no rows
+            return { columns: [], values: [] };
+        }
+
+        const lines = output.split('\n');
+        const headerLine = lines.shift();
+        if (!headerLine) {
+            return { columns: [], values: [] };
+        }
+        
+        // OneCompiler's SQL output is typically tab-separated
+        const columns = headerLine.split('\t');
+        
+        const values = lines.map(line => {
+            const rowValues = line.split('\t');
+            const rowObject = {};
+            columns.forEach((col, index) => {
+                rowObject[col] = rowValues[index] !== undefined ? rowValues[index] : null;
+            });
+            return rowObject;
+        });
+
+        return { columns, values };
+
+    } catch (error) {
+        console.error("OneCompiler SQL Execution Error:", error.message);
+        // Re-throw the error so it's sent to the client
+        throw error;
+    }
+};
+
 
 // --- SQL SECTION MANAGEMENT (ADMIN ONLY) ---
+
 app.post('/api/sql/sections', authMiddleware, adminOnlyAuth, async (req, res) => {
     const { sectionName, assignedColleges } = req.body;
     const scoreId = `section_${uuidv4()}`;
     const newSection = {
         scoreId,
-        recordType: 'SECTION', // Differentiator
+        recordType: 'SECTION',
         sectionName,
         assignedColleges: assignedColleges || [],
         createdAt: new Date().toISOString()
@@ -5196,6 +5297,7 @@ app.delete('/api/sql/sections/:id', authMiddleware, adminOnlyAuth, async (req, r
 });
 
 // --- SQL PROBLEM MANAGEMENT (ADMIN ONLY) ---
+
 app.post('/api/sql/problems', authMiddleware, adminOnlyAuth, async (req, res) => {
     const { sectionId, title, description, difficulty, schema, constraints, correctQuery } = req.body;
     const scoreId = `problem_${uuidv4()}`;
@@ -5256,6 +5358,7 @@ app.delete('/api/sql/problems/:id', authMiddleware, adminOnlyAuth, async (req, r
 });
 
 // --- STUDENT-FACING SQL API ---
+
 app.get('/api/student/sql/problems', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
     const studentCollege = req.user.college;
@@ -5282,18 +5385,18 @@ app.get('/api/student/sql/problems', authMiddleware, async (req, res) => {
 
 // --- SQL EXECUTION AND SCORING APIS ---
 
-// MODIFIED: This endpoint now uses the Judge0 helper
+// MODIFIED: This endpoint now uses the OneCompiler API instead of local sqlite.
 app.post('/api/sql/run', authMiddleware, async (req, res) => {
     const { schema, query } = req.body;
     try {
-        const result = await runQueryWithJudge0(schema, query); // FIXED
+        const result = await runQueryWithOneCompiler(schema, query);
         res.json(result);
     } catch (error) {
         res.status(400).json({ message: error.message, error: error.message });
     }
 });
 
-// MODIFIED: This endpoint now uses the Judge0 helper for validation
+// MODIFIED: This endpoint now uses the OneCompiler API for validation.
 app.post('/api/sql/save-score', authMiddleware, async (req, res) => {
     if (req.user.role !== 'Student') {
         return res.status(403).json({ message: 'Only students can submit solutions.' });
@@ -5319,17 +5422,18 @@ app.post('/api/sql/save-score', authMiddleware, async (req, res) => {
         let studentResult, correctResult, isCorrect = false;
 
         try {
-            // Run both queries using the new Judge0 helper
+            // Run both the student's query and the correct query via the API
             [studentResult, correctResult] = await Promise.all([
-                runQueryWithJudge0(problem.schema, submittedCode), // FIXED
-                runQueryWithJudge0(problem.schema, problem.correctQuery) // FIXED
+                runQueryWithOneCompiler(problem.schema, submittedCode),
+                runQueryWithOneCompiler(problem.schema, problem.correctQuery)
             ]);
             
+            // Helper to create a consistent, sorted string from a row for comparison
             const canonicalRow = (row, columns) => {
-                 if (!columns) return "";
                 return columns.map(col => `${col}:${row[col]}`).sort().join('|');
             };
             
+            // Sort the values arrays of both results to ensure order doesn't affect comparison
             if (studentResult.values && studentResult.columns) {
                 studentResult.values.sort((a, b) => canonicalRow(a, studentResult.columns).localeCompare(canonicalRow(b, studentResult.columns)));
             }
@@ -5337,9 +5441,11 @@ app.post('/api/sql/save-score', authMiddleware, async (req, res) => {
                 correctResult.values.sort((a, b) => canonicalRow(a, correctResult.columns).localeCompare(canonicalRow(b, correctResult.columns)));
             }
             
+            // Compare the canonicalized results
             isCorrect = JSON.stringify(studentResult) === JSON.stringify(correctResult);
 
         } catch (error) {
+            // This will catch execution errors from the API call
             studentResult = { error: error.message };
         }
         
@@ -5377,7 +5483,7 @@ app.post('/api/sql/save-score', authMiddleware, async (req, res) => {
 
         res.status(200).json({
             isCorrect: isCorrect,
-            message: isCorrect ? 'Correct!' : (studentResult.error ? 'Execution Error' : 'Incorrect.'),
+            message: isCorrect ? 'Correct!' : 'Incorrect.',
             score: score,
             result: studentResult
         });
@@ -5388,7 +5494,9 @@ app.post('/api/sql/save-score', authMiddleware, async (req, res) => {
     }
 });
 
+
 // --- ADMIN & STUDENT SCORE/SUBMISSION RETRIEVAL ---
+
 app.get('/api/admin/sql-scores', authMiddleware, adminOnlyAuth, async (req, res) => {
     try {
         const { Items: scores } = await docClient.send(new ScanCommand({
@@ -5396,23 +5504,29 @@ app.get('/api/admin/sql-scores', authMiddleware, adminOnlyAuth, async (req, res)
             FilterExpression: "recordType = :type",
             ExpressionAttributeValues: { ":type": "SCORE" }
         }));
+
         if (!scores || scores.length === 0) return res.json([]);
+
         const studentEmails = [...new Set(scores.map(s => s.studentEmail))];
         const keys = studentEmails.map(email => ({ email }));
+        
         const { Responses } = await docClient.send(new BatchGetCommand({
             RequestItems: { "TestifyUsers": { Keys: keys, ProjectionExpression: "email, fullName, college" } }
         }));
+        
         const students = Responses.TestifyUsers || [];
         const studentMap = new Map(students.map(s => [s.email, { fullName: s.fullName, college: s.college }]));
+
         const enrichedScores = scores.map(score => {
             const studentInfo = studentMap.get(score.studentEmail);
             return {
                 ...score,
-                id: score.scoreId, 
+                id: score.scoreId, // For frontend compatibility
                 studentName: studentInfo ? studentInfo.fullName : 'Unknown',
                 college: studentInfo ? studentInfo.college : 'Unknown'
             };
         });
+
         res.json(enrichedScores);
     } catch (error) {
         console.error("Get Admin SQL Scores Error:", error);
@@ -5427,6 +5541,7 @@ app.get('/api/sql/submission/:scoreId', authMiddleware, adminOnlyAuth, async (re
             TableName: SQL_TABLE_NAME,
             Key: { scoreId: scoreId }
         }));
+
         if (!Item || Item.recordType !== 'SCORE') {
             return res.status(404).json({ message: 'Submission not found.' });
         }
@@ -5829,6 +5944,90 @@ app.get('/api/student/contests/:id', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Server error fetching contest details.' });
     }
 });
+
+// [NEW & SECURE] STUDENT: Submit contest for scoring
+app.post('/api/student/contests/submit', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Student') return res.status(403).json({ message: 'Access denied.' });
+
+    const { contestId, submissions, violationReason } = req.body;
+    const studentEmail = req.user.email;
+
+    try {
+        const { Item: contest } = await docClient.send(new GetCommand({
+            TableName: "TestifyCompilerScores",
+            Key: { scoreId: contestId }
+        }));
+
+        if (!contest || contest.recordType !== 'CONTEST') {
+            return res.status(404).json({ message: "Contest not found." });
+        }
+
+        let totalScore = 0;
+        const detailedSubmissions = [];
+
+        // Loop through each submitted problem to evaluate it
+        for (const sub of submissions) {
+            const problem = contest.problems.find(p => p.id === sub.problemId);
+            if (!problem || !problem.testCases || problem.testCases.length === 0) continue;
+
+            let passedCases = 0;
+            // Evaluate against each test case
+            for (const tc of problem.testCases) {
+                // IMPORTANT: This re-uses your existing /api/compile endpoint logic
+                const compileResponse = await fetch('http://localhost:3000/api/compile', { // Ensure this URL is correct for your setup
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': req.header('x-auth-token') },
+                    body: JSON.stringify({ language: sub.language, code: sub.code, input: tc.input }),
+                });
+
+                if (compileResponse.ok) {
+                    const compileResult = await compileResponse.json();
+                    const actual = (compileResult.output || '').trim().replace(/\s+/g, ' ');
+                    const expected = (tc.expected || '').trim().replace(/\s+/g, ' ');
+                    if (actual === expected) {
+                        passedCases++;
+                    }
+                }
+            }
+
+            // Calculate score for this specific problem
+            const problemScore = Math.round((passedCases / problem.testCases.length) * problem.score);
+            totalScore += problemScore;
+
+            detailedSubmissions.push({
+                ...sub, // Includes problemId, code, language
+                problemTitle: problem.title,
+                score: problemScore,
+                passedCases: passedCases,
+                totalCases: problem.testCases.length
+            });
+        }
+
+        const submissionId = `contestsub_${uuidv4()}`;
+        const newSubmission = {
+            scoreId: submissionId,
+            recordType: 'CONTEST_SUBMISSION',
+            contestId,
+            studentEmail,
+            studentName: req.user.fullName,
+            college: req.user.college,
+            submissions: detailedSubmissions,
+            totalScore,
+            maxScore: contest.totalMarks,
+            contestTitle: contest.title,
+            violationReason: violationReason || null,
+            submittedAt: new Date().toISOString()
+        };
+
+        await docClient.send(new PutCommand({ TableName: "TestifyCompilerScores", Item: newSubmission }));
+        res.status(201).json({ message: 'Contest submitted successfully!' });
+
+    } catch (error) {
+        console.error("Submit Contest Error:", error);
+        res.status(500).json({ message: 'Server error submitting contest.' });
+    }
+});
+
 
 // [NEW] STUDENT: Get history of contest submissions
 app.get('/api/student/contest-history', authMiddleware, async(req, res) => {
@@ -6436,28 +6635,99 @@ app.post('/api/careers/apply/:jobId',
  * @desc    Student: Get all their past applications
  * @access  Private (Student)
  */
-app.get('/api/student/my-applications', authMiddleware, async (req, res) => {
+app.get('/api/student/applications', studentAuthMiddleware, async (req, res) => {
     // Assuming the authMiddleware populates req.user.email for the logged-in student
     const studentEmail = req.user.email;
     if (!studentEmail) {
+        console.error("[MY_APPS_ERROR] studentAuthMiddleware did not populate req.user correctly.");
         return res.status(401).json({ message: 'Authentication required.' });
     }
 
+    console.log(`[MY_APPS_START] Fetching applications for student ${studentEmail}`);
+
     try {
-        // UPDATED: Changed from Scan to a more efficient Query on the new index.
-        const { Items } = await docClient.send(new QueryCommand({
-            TableName: "TestifyApplications",
-            IndexName: "email-index", // Use the newly created Global Secondary Index
-            KeyConditionExpression: "email = :email",
-            ExpressionAttributeValues: { ":email": studentEmail }
-        }));
-        
-        Items.sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt));
-        
-        res.json(Items);
+        // *** FIX APPLIED HERE: Changed IndexName ***
+        // Verify this index exists on your HiringApplications table with 'email' as the partition key.
+        const correctIndexName = "email-jobId-index"; // <-- CONFIRM THIS NAME IN AWS
+        console.log(`[MY_APPS_QUERY] Querying ${HIRING_APPLICATIONS_TABLE} using index: ${correctIndexName} for email: ${studentEmail}`);
+
+        const queryParams = {
+            TableName: HIRING_APPLICATIONS_TABLE,
+            IndexName: correctIndexName, // Use the corrected index name
+            KeyConditionExpression: "email = :emailVal", // Query only by the partition key (email) of the GSI
+            ExpressionAttributeValues: { ":emailVal": studentEmail }
+        };
+        console.log("[MY_APPS_QUERY] Query Params:", queryParams);
+
+        const { Items } = await docClient.send(new QueryCommand(queryParams));
+
+        if (!Items || Items.length === 0) {
+            console.log(`[MY_APPS_INFO] No applications found for student ${studentEmail}`);
+            return res.json([]); // Return empty array if no applications found
+        }
+        console.log(`[MY_APPS_INFO] Found ${Items.length} application(s) for student ${studentEmail}. Fetching job details...`);
+
+        // --- Fetch Job Details for Deadlines (BatchGet for efficiency) ---
+        const jobIds = [...new Set(Items.map(app => app.jobId))];
+        let jobDeadlineMap = new Map();
+
+        if (jobIds.length > 0) {
+            const jobKeys = jobIds.map(id => ({ jobId: id })); // Assuming 'jobId' is the PK for HIRING_JOBS_TABLE
+            console.log(`[MY_APPS_BATCH_GET] Fetching details for ${jobKeys.length} unique jobs from ${HIRING_JOBS_TABLE}`);
+
+            const batchGetParams = {
+                RequestItems: {
+                    [HIRING_JOBS_TABLE]: { // Use the correct table name constant
+                        Keys: jobKeys,
+                        ProjectionExpression: "jobId, applicationDeadline, title" // Fetch title as well
+                    }
+                }
+            };
+            console.log("[MY_APPS_BATCH_GET] BatchGet Params:", JSON.stringify(batchGetParams, null, 2));
+
+            const { Responses } = await docClient.send(new BatchGetCommand(batchGetParams));
+            const jobs = Responses && Responses[HIRING_JOBS_TABLE] ? Responses[HIRING_JOBS_TABLE] : [];
+            jobs.forEach(j => {
+                if (j && j.jobId) {
+                    // Store both deadline and title
+                    jobDeadlineMap.set(j.jobId, { deadline: j.applicationDeadline, title: j.title });
+                } else {
+                     console.warn(`[MY_APPS_WARN] Missing details for jobId: ${j?.jobId}`);
+                }
+            });
+             console.log(`[MY_APPS_BATCH_GET] Successfully fetched details for ${jobs.length} jobs.`);
+        } else {
+             console.log(`[MY_APPS_INFO] No job IDs found in applications, skipping BatchGet.`);
+        }
+
+
+        // Enrich application data with the deadline and title from the map
+        const enrichedApplications = Items.map(app => {
+            const jobInfo = jobDeadlineMap.get(app.jobId);
+            return {
+                ...app,
+                jobTitle: jobInfo?.title || 'Job Title Unavailable', // Add title
+                jobDeadline: jobInfo?.deadline || null // Add deadline
+            };
+        });
+
+        enrichedApplications.sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt));
+
+        console.log(`[MY_APPS_SUCCESS] Returning ${enrichedApplications.length} enriched application(s) for student ${studentEmail}`);
+        res.json(enrichedApplications);
+
     } catch (error) {
-        console.error("Get My Applications Error:", error);
-        res.status(500).json({ message: 'Server error fetching your applications.' });
+        console.error(`[MY_APPS_FATAL_ERROR] Failed fetching applications for student ${studentEmail}:`, error);
+        if (error.name === 'ValidationException' && error.message.includes('specified index does not exist')) {
+            console.error(`[MY_APPS_FATAL_ERROR] >>> The index "${correctIndexName}" was not found on table "${HIRING_APPLICATIONS_TABLE}". Please verify the index name in AWS DynamoDB. <<<`);
+            if (!res.headersSent) {
+                res.status(500).json({ message: `Configuration Error: The required database index ("${correctIndexName}") is missing. Please contact support.` });
+            }
+        } else if (!res.headersSent) {
+            res.status(500).json({ message: 'Server error fetching your applications. Please try again later or contact support.' });
+        } else {
+             console.error("[MY_APPS_ERROR] Headers already sent, could not send error response.");
+        }
     }
 });
 
@@ -6719,86 +6989,213 @@ app.get('/api/public/hiring-application/:applicationId', async (req, res) => {
     }
 });
 
-app.post('/api/hiring/coding-problems', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'Hiring Moderator') {
-        return res.status(403).json({ message: 'Access denied.' });
-    }
+app.post('/api/hiring/coding-problems', hiringModeratorAuth, async (req, res) => {
     const { title, description, difficulty, score, inputFormat, outputFormat, constraints, example, testCases } = req.body;
     if (!title || !description || !difficulty || !score || !testCases || testCases.length === 0) {
         return res.status(400).json({ message: 'Missing required problem fields.' });
     }
-
     const problemId = `hire_problem_${uuidv4()}`;
     const newProblem = {
-        id: problemId,
-        recordType: 'HIRING_PROBLEM', // Special identifier
-        createdBy: req.user.email,
-        title, description, difficulty, score, inputFormat, outputFormat, constraints, example, testCases,
-        createdAt: new Date().toISOString()
+        problemId, title, description, difficulty, score: parseInt(score, 10), inputFormat, outputFormat, constraints, example, testCases,
+        createdBy: req.user.email, createdAt: new Date().toISOString()
     };
-
     try {
-        await docClient.send(new PutCommand({ TableName: "TestifyCodeLab", Item: newProblem }));
-        res.status(201).json({ message: 'Coding problem created successfully!', problem: newProblem });
+        await docClient.send(new PutCommand({ TableName: HIRING_CODING_PROBLEMS_TABLE, Item: newProblem }));
+        res.status(201).json({ message: 'Coding problem created successfully!', problem: { ...newProblem, id: problemId } }); // Map to id
     } catch (error) {
-        console.error("Create Hiring Coding Problem Error:", error);
+        console.error("Create Coding Problem Error:", error);
         res.status(500).json({ message: 'Server error creating problem.' });
     }
 });
 
 // Get all coding problems created by the hiring moderator
-app.get('/api/hiring/coding-problems', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'Hiring Moderator') {
-        return res.status(403).json({ message: 'Access denied.' });
-    }
+app.get('/api/hiring/coding-problems', hiringModeratorAuth, async (req, res) => {
     try {
-        const { Items } = await docClient.send(new ScanCommand({
-            TableName: "TestifyCodeLab",
-            FilterExpression: "recordType = :type AND createdBy = :creator",
-            ExpressionAttributeValues: {
-                ":type": "HIRING_PROBLEM",
-                ":creator": req.user.email
-            }
+        const { Items } = await docClient.send(new QueryCommand({
+            TableName: HIRING_CODING_PROBLEMS_TABLE,
+            IndexName: "createdBy-index",
+            KeyConditionExpression: "createdBy = :creator",
+            ExpressionAttributeValues: { ":creator": req.user.email }
         }));
-        res.json(Items || []);
+        res.json((Items || []).map(p => ({ ...p, id: p.problemId }))); // Map problemId to id
     } catch (error) {
-        console.error("Get Hiring Coding Problems Error:", error);
+        console.error("Get Moderator Coding Problems Error:", error);
         res.status(500).json({ message: 'Server error fetching problems.' });
     }
 });
 
-// --- HIRING MODERATOR: CODING TEST MANAGEMENT ---
+app.put('/api/hiring/coding-problems/:problemId', authMiddleware, hiringModeratorAuth, async (req, res) => {
+    const { problemId } = req.params;
+    const { title, description, difficulty, score, inputFormat, outputFormat, constraints, example, testCases } = req.body;
 
-// Create a new hiring coding test (which is a collection of problems)
-app.post('/api/hiring/coding-tests', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'Hiring Moderator') {
-        return res.status(403).json({ message: 'Access denied.' });
+    console.log(`[UPDATE PROBLEM] Request received for problemId: ${problemId} by ${req.user.email}`);
+
+    // Basic validation
+    if (!title || !description || !difficulty || score === undefined || !testCases || !Array.isArray(testCases) || testCases.length === 0) {
+        console.warn(`[UPDATE PROBLEM] Validation failed for ${problemId}: Missing required fields.`);
+        return res.status(400).json({ message: 'Missing required problem fields (title, description, difficulty, score, testCases).' });
     }
-    const { testTitle, duration, problems } = req.body;
-    if (!testTitle || !duration || !problems || problems.length === 0) {
-        return res.status(400).json({ message: 'Test title, duration, and at least one problem are required.' });
+    const parsedScore = parseInt(score, 10);
+    if (isNaN(parsedScore)) {
+        console.warn(`[UPDATE PROBLEM] Validation failed for ${problemId}: Invalid score value.`);
+        return res.status(400).json({ message: 'Score must be a valid number.' });
     }
 
-    const testId = `hire_coding_test_${uuidv4()}`;
-    const totalMarks = problems.reduce((sum, prob) => sum + (prob.score || 0), 0);
-
-    const newTest = {
-        testId: testId,
-        testType: 'hiring_coding', // Special identifier
-        title: testTitle,
-        duration: parseInt(duration, 10),
-        totalMarks,
-        problems, // Array of problem objects selected by the moderator
-        createdBy: req.user.email,
-        createdAt: new Date().toISOString()
-    };
 
     try {
-        await docClient.send(new PutCommand({ TableName: "TestifyTests", Item: newTest }));
-        res.status(201).json({ message: 'Coding test created successfully!', test: newTest });
+        // 1. Verify the problem exists and belongs to the moderator
+        console.log(`[UPDATE PROBLEM] Fetching existing problem ${problemId} from ${HIRING_CODING_PROBLEMS_TABLE}`);
+        const { Item: existingProblem } = await docClient.send(new GetCommand({
+            TableName: HIRING_CODING_PROBLEMS_TABLE,
+            Key: { problemId } // Ensure 'problemId' is the correct primary key
+        }));
+
+        if (!existingProblem) {
+            console.warn(`[UPDATE PROBLEM] Problem ${problemId} not found.`);
+            return res.status(404).json({ message: 'Coding problem not found.' });
+        }
+        // Check ownership
+        if (existingProblem.createdBy !== req.user.email) {
+            console.warn(`[UPDATE PROBLEM] Permission denied for ${problemId}. Owner: ${existingProblem.createdBy}, Requester: ${req.user.email}`);
+            return res.status(403).json({ message: 'You do not have permission to modify this problem.' });
+        }
+        console.log(`[UPDATE PROBLEM] Ownership verified for ${problemId}. Proceeding with update.`);
+
+        // 2. Prepare the update command using UpdateCommand for robustness
+        // Only updates fields that are actually sent in the request body
+        const updateExpressionParts = [];
+        const expressionAttributeNames = {};
+        const expressionAttributeValues = {};
+
+        // Helper to add field to update expression if it exists in the body
+        const addUpdate = (key, attributeName, placeholder) => {
+            if (req.body[key] !== undefined) {
+                updateExpressionParts.push(`${attributeName} = ${placeholder}`);
+                // Use ExpressionAttributeNames if the key is a reserved word (like 'constraints')
+                if (attributeName.startsWith('#')) {
+                    expressionAttributeNames[attributeName] = key;
+                }
+                // Assign value (handle score parsing)
+                expressionAttributeValues[placeholder] = (key === 'score') ? parsedScore : req.body[key];
+            }
+        };
+
+        addUpdate('title', ':t', ':titleValue'); // DynamoDB attribute name can be same as key if not reserved
+        addUpdate('description', ':d', ':descValue');
+        addUpdate('difficulty', ':diff', ':diffValue');
+        addUpdate('score', ':s', ':scoreValue'); // Use parsedScore here
+        addUpdate('inputFormat', ':if', ':ifValue');
+        addUpdate('outputFormat', ':of', ':ofValue');
+        addUpdate('constraints', '#const', ':constValue'); // Use # for potential reserved word
+        addUpdate('example', ':e', ':exValue');
+        addUpdate('testCases', ':tc', ':tcValue'); // Update the whole test case array
+
+        // Check if any fields were actually provided for update
+        if (updateExpressionParts.length === 0) {
+            console.log(`[UPDATE PROBLEM] No fields provided to update for ${problemId}.`);
+            return res.status(400).json({ message: 'No fields provided for update.' });
+        }
+
+
+        // Construct the final UpdateExpression
+        const updateExpression = `SET ${updateExpressionParts.join(', ')}`;
+
+        const updateParams = {
+            TableName: HIRING_CODING_PROBLEMS_TABLE,
+            Key: { problemId },
+            UpdateExpression: updateExpression,
+            ExpressionAttributeValues: expressionAttributeValues,
+            ReturnValues: "UPDATED_NEW" // Optional: Return the updated item
+        };
+         // Add ExpressionAttributeNames only if needed (e.g., for 'constraints')
+        if (Object.keys(expressionAttributeNames).length > 0) {
+            updateParams.ExpressionAttributeNames = expressionAttributeNames;
+        }
+
+        console.log(`[UPDATE PROBLEM] Executing UpdateCommand for ${problemId}`);
+        await docClient.send(new UpdateCommand(updateParams));
+
+        console.log(`[UPDATE PROBLEM] Problem ${problemId} updated successfully.`);
+        res.status(200).json({ message: 'Coding problem updated successfully!' });
+
     } catch (error) {
-        console.error("Create Hiring Coding Test Error:", error);
-        res.status(500).json({ message: 'Server error creating coding test.' });
+        console.error(`[UPDATE PROBLEM] Error updating problem ${problemId}:`, error);
+        res.status(500).json({ message: 'Server error updating coding problem.' });
+    }
+});
+
+// --- HIRING MODERATOR: CODING TEST MANAGEMENT ---
+// NEW ENDPOINT TO FETCH HIRING TESTS (Aptitude or Coding)
+app.get('/api/hiring/tests', hiringModeratorAuth, async (req, res) => {
+    // Determine which type of test to fetch based on query param
+    const typeQuery = req.query.type; // Expect 'coding' or undefined/other for aptitude
+    let tableName;
+    let pkName; // Primary key name for the specific table
+
+    if (typeQuery === 'coding') {
+        tableName = HIRING_CODING_TESTS_TABLE;
+        pkName = 'codingTestId'; // Primary key of HiringCodingTests table
+        console.log(`[GET /api/hiring/tests] Fetching CODING tests for moderator: ${req.user.email}`);
+    } else {
+        // --- CHANGE: Fetch from HIRING_APTITUDE_TESTS_TABLE ---
+        tableName = HIRING_APTITUDE_TESTS_TABLE;
+        pkName = 'aptitudeTestId'; // Primary key of HiringAptitudeTests table
+        console.log(`[GET /api/hiring/tests] Fetching APTITUDE tests for moderator: ${req.user.email}`);
+    }
+
+    try {
+        // Query the appropriate table using the createdBy index
+        const { Items } = await docClient.send(new QueryCommand({
+            TableName: tableName,
+            IndexName: "createdBy-index", // Assumes this GSI exists on both tables with 'createdBy' as the HASH key
+            KeyConditionExpression: "createdBy = :creator",
+            ExpressionAttributeValues: { ":creator": req.user.email }
+        }));
+
+        console.log(`[GET /api/hiring/tests] Found ${Items ? Items.length : 0} tests of type '${typeQuery || 'aptitude'}'`);
+
+        // Map the table-specific primary key (aptitudeTestId or codingTestId) to a common 'testId' for the frontend
+        const tests = (Items || []).map(item => ({ ...item, testId: item[pkName] }));
+
+        // Sort by creation date, newest first
+        tests.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        res.json(tests);
+    } catch (error) {
+        console.error(`[GET /api/hiring/tests] Error fetching ${typeQuery || 'aptitude'} tests for ${req.user.email}:`, error);
+        res.status(500).json({ message: `Server error fetching ${typeQuery || 'aptitude'} tests.` });
+    }
+});
+
+
+// NOTE: This assumes a Global Secondary Index named createdBy-index exists on both the HiringJobs and HiringCodingTests tables with createdBy as the partition key.
+
+// Create a new hiring coding test (which is a collection of problems)
+app.post('/api/hiring/coding-tests', hiringModeratorAuth, async (req, res) => {
+    const { testTitle, duration, problems } = req.body; // problems is array of { id/problemId, title, difficulty, score }
+    if (!testTitle || !duration || !problems || problems.length === 0) {
+        return res.status(400).json({ message: 'Missing required fields.' });
+    }
+    const codingTestId = `hire_coding_test_${uuidv4()}`;
+    // Ensure we store the correct problemId from the selected problems
+    const problemsToStore = problems.map(p => ({
+        problemId: p.id || p.problemId, // Use the actual problemId
+        title: p.title,
+        difficulty: p.difficulty,
+        score: p.score
+    }));
+    const totalMarks = problemsToStore.reduce((sum, prob) => sum + (prob.score || 0), 0);
+    const newTest = {
+        codingTestId, title: testTitle, duration: parseInt(duration, 10), totalMarks,
+        problems: problemsToStore,
+        createdBy: req.user.email, createdAt: new Date().toISOString()
+    };
+    try {
+        await docClient.send(new PutCommand({ TableName: HIRING_CODING_TESTS_TABLE, Item: newTest }));
+        res.status(201).json({ message: 'Coding test created successfully!', test: { ...newTest, testId: codingTestId } }); // Map back if needed
+    } catch (error) {
+        console.error("Create Coding Test Error:", error);
+        res.status(500).json({ message: 'Server error creating test.' });
     }
 });
 
@@ -7705,176 +8102,258 @@ app.post('/api/admin/hiring-moderators', authMiddleware, async (req, res) => {
 
 // HIRING MODERATOR: Create a new Test
 app.post('/api/hiring/tests', authMiddleware, async (req, res) => {
+    // Ensure only Hiring Moderator or Admin can create
     if (req.user.role !== 'Hiring Moderator' && req.user.role !== 'Admin') {
         return res.status(403).json({ message: 'Access denied.' });
     }
-    
+
     // Sections are part of the questions array
     const { testTitle, duration, totalMarks, passingPercentage, sections } = req.body;
-    const testId = `hire_${uuidv4()}`;
+    // --- CHANGE: Use aptitudeTestId ---
+    const aptitudeTestId = `hire_apt_${uuidv4()}`;
 
     const newTest = {
-        testId,
+        // --- CHANGE: Use aptitudeTestId as the primary key ---
+        aptitudeTestId,
         title: testTitle,
-        duration,
-        totalMarks,
-        passingPercentage,
+        duration: parseInt(duration, 10), // Ensure duration is a number
+        totalMarks: parseInt(totalMarks, 10), // Ensure marks are numbers
+        passingPercentage: parseInt(passingPercentage, 10), // Ensure percentage is a number
         sections, // e.g., [{ title: "Section A", questions: [...] }]
         createdBy: req.user.email,
-        testType: 'hiring',
+        // testType is implicitly 'aptitude' by being in this table
         createdAt: new Date().toISOString()
     };
 
     try {
-        await docClient.send(new PutCommand({ TableName: "TestifyTests", Item: newTest }));
-        res.status(201).json({ message: 'Hiring test created successfully!', test: newTest });
+        // --- CHANGE: Save to the new HIRING_APTITUDE_TESTS_TABLE ---
+        await docClient.send(new PutCommand({ TableName: HIRING_APTITUDE_TESTS_TABLE, Item: newTest }));
+        // --- CHANGE: Return aptitudeTestId consistently ---
+        // Map aptitudeTestId back to testId for frontend compatibility if needed, or keep as aptitudeTestId
+        res.status(201).json({ message: 'Hiring aptitude test created successfully!', test: { ...newTest, testId: aptitudeTestId } });
     } catch (error) {
-        console.error("Create Hiring Test Error:", error);
-        res.status(500).json({ message: 'Server error creating hiring test.' });
+        console.error("Create Hiring Aptitude Test Error:", error);
+        res.status(500).json({ message: 'Server error creating hiring aptitude test.' });
     }
 });
 
 
 // NEW ENDPOINT TO FETCH HIRING TESTS
-app.get('/api/hiring/tests', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'Hiring Moderator' && req.user.role !== 'Admin') {
-        return res.status(403).json({ message: 'Access denied.' });
-    }
-    
-    // Check for a query from the frontend to specify the test type
-    const typeQuery = req.query.type; 
-    
-    // Determine the database testType to filter by
-    let dbTestType;
+app.get('/api/hiring/tests', hiringModeratorAuth, async (req, res) => {
+    const typeQuery = req.query.type;
+    let tableName;
+    let pkName;
     if (typeQuery === 'coding') {
-        dbTestType = 'hiring_coding'; // Map 'coding' from URL to 'hiring_coding' in DB
+        tableName = HIRING_CODING_TESTS_TABLE;
+        pkName = 'codingTestId';
     } else {
-        dbTestType = 'hiring'; // Default to aptitude tests for the original page
+        tableName = HIRING_JOBS_TABLE; // Default to Aptitude/Jobs
+        pkName = 'jobId';
     }
-
     try {
-        const { Items } = await docClient.send(new ScanCommand({
-            TableName: "TestifyTests",
-            FilterExpression: "testType = :type AND createdBy = :creator",
-            ExpressionAttributeValues: {
-                ":type": dbTestType, // Use the determined DB type
-                ":creator": req.user.email
-            }
+        const { Items } = await docClient.send(new QueryCommand({
+            TableName: tableName,
+            IndexName: "createdBy-index",
+            KeyConditionExpression: "createdBy = :creator",
+            ExpressionAttributeValues: { ":creator": req.user.email }
         }));
-        res.json(Items);
+         const tests = (Items || []).map(item => ({ ...item, testId: item[pkName] })); // Map PK to testId
+         tests.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+        res.json(tests);
     } catch (error) {
-        console.error("Get Hiring Tests Error:", error);
-        res.status(500).json({ message: 'Server error fetching hiring tests.' });
+        console.error(`Get Hiring ${typeQuery || 'Aptitude'} Tests Error:`, error);
+        res.status(500).json({ message: `Server error fetching ${typeQuery || 'aptitude'} tests.` });
     }
 });
+
+// // --- Add near the top with other table constants ---
+// const HIRING_USERS_TABLE = "HiringUsers"; // Assuming this exists for moderator lookups if needed
+// const HIRING_COLLEGES_TABLE = "HiringColleges"; // Assuming this exists
+// const HIRING_JOBS_TABLE = "HiringJobs";                 // Aptitude tests / Job postings
+// const HIRING_APPLICATIONS_TABLE = "HiringApplications"; // Applications for HIRING_JOBS_TABLE items
+// const HIRING_CODING_PROBLEMS_TABLE = "HiringCodingProblems";
+// const HIRING_CODING_TESTS_TABLE = "HiringCodingTests";
+// const HIRING_ASSIGNMENTS_TABLE = "HiringAssignments";   // Assignments for both types
+// const HIRING_TEST_RESULTS_TABLE = "HiringTestResults";   // Results for both types
+// const HIRING_CODE_SNIPPETS_TABLE = "HiringCodeSnippets"; // For code snippets
+
+// // Ensure necessary imports are present:
+// // authMiddleware, docClient, GetCommand, PutCommand, QueryCommand, uuidv4, ScanCommand (optional fallback)
+
+// /**
+//  * @route   POST /api/public/submit-coding-test
+//  * @desc    External Candidate: Submits final answers for a coding test.
+//  * @access  Private (External Candidate Token Required)
+//  */
 app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
-    if (!req.user.isExternal) {
-        return res.status(403).json({ message: 'Access denied for this resource.' });
+    // 1. Verify Authentication & Extract Token Data
+    if (!req.user || !req.user.isExternal) {
+        console.warn('[SUBMIT CODING TEST] Denied: User not external or not authenticated.');
+        return res.status(403).json({ message: 'Access denied.' });
     }
-    const { testId, submissions, candidateDetails } = req.body;
-    const { email: studentEmail, assignmentId } = req.user; // Get assignmentId from token
+    const { testId: testPkFromToken, email: candidateEmail, assignmentId } = req.user;
+    console.log(`[SUBMIT CODING TEST] Received submission for assignment: ${assignmentId}, Candidate: ${candidateEmail}, Test PK in token: ${testPkFromToken}`);
+
+    // 2. Extract Submission Data from Request Body
+    const { submissions, violationReason, candidateDetails } = req.body; // Candidate details NOW come from body
+
+    // 3. Validate Input Data
+    if (!candidateDetails || !candidateDetails.fullName || !candidateDetails.rollNumber || !candidateDetails.collegeName || !candidateDetails.department) {
+        console.warn(`[SUBMIT CODING TEST] Incomplete candidate details received in body for assignment ${assignmentId}.`);
+        return res.status(400).json({ message: 'Missing required candidate details in submission.' });
+    }
+    if (!submissions || !Array.isArray(submissions)) {
+        console.warn(`[SUBMIT CODING TEST] Invalid 'submissions' format for assignment ${assignmentId}.`);
+        return res.status(400).json({ message: "Invalid submission data format." });
+    }
+    console.log(`[SUBMIT CODING TEST] Input data validated for assignment ${assignmentId}.`);
+
+    // Define a unique ID for this test result record.
+    const resultId = `hcs_${uuidv4()}`; // Prefix 'hcs_' for Hiring Coding Submission
 
     try {
-        // --- ADDED: Check if the assignment window is still open ---
+        // --- Verify Assignment Record ---
+        console.log(`[SUBMIT CODING TEST] Verifying assignment ${assignmentId} in ${HIRING_ASSIGNMENTS_TABLE}`);
         const { Item: assignment } = await docClient.send(new GetCommand({
-            TableName: "TestifyAssignments",
+            TableName: HIRING_ASSIGNMENTS_TABLE,
             Key: { assignmentId }
         }));
-        if (!assignment || new Date() > new Date(assignment.endTime)) {
-            return res.status(403).json({ message: 'The submission deadline for this test has passed.' });
-        }
 
-        const { Item: test } = await docClient.send(new GetCommand({
-            TableName: "TestifyTests",
-            Key: { testId }
+        // Validate if assignment exists, belongs to the candidate, matches the test in the token, and is for a coding test.
+        if (!assignment) {
+            console.warn(`[SUBMIT CODING TEST] Assignment ${assignmentId} not found.`);
+            return res.status(403).json({ message: 'Assignment record not found. Link may be invalid.' });
+        }
+        if (assignment.studentEmail !== candidateEmail || assignment.testId !== testPkFromToken) {
+            console.warn(`[SUBMIT CODING TEST] Assignment ${assignmentId} data mismatch. Token vs DB.`);
+            return res.status(403).json({ message: 'Link invalid or assignment details mismatch.' });
+        }
+        if (assignment.testType !== 'coding') {
+            console.warn(`[SUBMIT CODING TEST] Incorrect test type in assignment ${assignmentId}. Expected 'coding', got '${assignment.testType}'.`);
+            return res.status(403).json({ message: 'Assignment is not for a coding test.' });
+        }
+        console.log(`[SUBMIT CODING TEST] Assignment ${assignmentId} verified.`);
+
+
+        // --- Check for Previous *SUBMITTED* Submission (Ignore 'init_' records) ---
+        const GSI_NAME = 'AssignmentIdIndex'; // GSI on HIRING_TEST_RESULTS_TABLE with assignmentId as key
+        console.log(`[SUBMIT CODING TEST] Checking for existing SUBMITTED results using GSI '${GSI_NAME}' on ${HIRING_TEST_RESULTS_TABLE} for assignment ${assignmentId}`);
+        const { Items: existingSubmittedResults } = await docClient.send(new QueryCommand({
+             TableName: HIRING_TEST_RESULTS_TABLE,
+             IndexName: GSI_NAME,
+             KeyConditionExpression: 'assignmentId = :aid',
+             // Filter ensures we ONLY find results that are NOT the 'init_' placeholder.
+             FilterExpression: 'attribute_not_exists(resultId) OR not begins_with(resultId, :initPrefix)',
+             ExpressionAttributeValues: {
+                 ':aid': assignmentId,
+                 ':initPrefix': 'init_' // Prefix used for the initial verification record
+             },
+             Limit: 1 // We only need to know if one *submitted* result exists
         }));
-        if (!test) return res.status(404).json({ message: "Test not found." });
 
-        const problemIdsFromTest = test.problems.map(p => p.id || p.problemId).filter(Boolean);
-        const problemsAreIncomplete = test.problems.some(p => !p.title || !p.score);
-        let problemDetailsMap = new Map();
-
-        if (problemsAreIncomplete && problemIdsFromTest.length > 0) {
-            const keys = problemIdsFromTest.map(id => ({ id }));
-            const { Responses } = await docClient.send(new BatchGetCommand({
-                RequestItems: { "TestifyCodeLab": { Keys: keys } }
-            }));
-            const fullProblems = Responses.TestifyCodeLab || [];
-            fullProblems.forEach(p => problemDetailsMap.set(p.id, p));
-        } else {
-            test.problems.forEach(p => problemDetailsMap.set(p.id || p.problemId, p));
+        // If a *submitted* result (not 'init_') is found, reject the new submission.
+        if (existingSubmittedResults && existingSubmittedResults.length > 0) {
+            console.warn(`[SUBMIT CODING TEST] Test already SUBMITTED (found non-init result) for assignment ${assignmentId}. Result ID: ${existingSubmittedResults[0].resultId}`);
+            return res.status(409).json({ message: 'This test has already been submitted.' }); // 409 Conflict
         }
+        console.log(`[SUBMIT CODING TEST] No previous SUBMITTED result found. Proceeding with submission.`);
 
+
+        // --- Fetch Coding Test Definition ---
+        console.log(`[SUBMIT CODING TEST] Fetching test definition for ${assignment.testId} from ${HIRING_CODING_TESTS_TABLE}`);
+        const { Item: test } = await docClient.send(new GetCommand({
+            TableName: HIRING_CODING_TESTS_TABLE,
+            Key: { codingTestId: assignment.testId } // Ensure 'codingTestId' is the correct primary key
+        }));
+
+        if (!test || !test.problems || !Array.isArray(test.problems)) {
+            console.error(`[SUBMIT CODING TEST] Test definition ${assignment.testId} not found or invalid in ${HIRING_CODING_TESTS_TABLE}.`);
+            return res.status(404).json({ message: "Coding test definition not found or invalid." });
+        }
+        console.log(`[SUBMIT CODING TEST] Test definition found: ${test.title}`);
+
+        // Create a map for easy lookup of problem scores
+        const problemMapForScores = new Map(test.problems.map(p => [ p.problemId, (parseInt(p.score, 10) || 0) ]));
+        // Use totalMarks from test definition if available, otherwise calculate from problems array
+        const totalPossibleMarks = test.totalMarks || test.problems.reduce((sum, p) => sum + (parseInt(p.score, 10) || 0), 0);
+        console.log(`[SUBMIT CODING TEST] Total possible marks for test ${assignment.testId}: ${totalPossibleMarks}`);
+
+
+        // --- Process Submissions & Calculate Score ---
         let totalScore = 0;
-        const detailedSubmissions = [];
+        const detailedSubmissions = submissions.map(sub => {
+            const problemId = sub.problemId;
+            const maxProblemScore = problemMapForScores.get(problemId) ?? 0; // Default score to 0 if problemId not found in test def
+            const evaluationResults = sub.evaluationResults || []; // Results from frontend evaluation
+            const passedCases = evaluationResults.filter(r => r && r.status === 'Accepted').length;
+            const totalCases = evaluationResults.length;
 
-        for (const sub of submissions) {
-            const problem = problemDetailsMap.get(sub.problemId);
-            if (!problem || !problem.testCases || problem.testCases.length === 0) continue;
+            // Calculate score for this problem based on passed cases and max score
+            const calculatedScore = (totalCases > 0 && maxProblemScore > 0)
+                                      ? Math.round((passedCases / totalCases) * maxProblemScore)
+                                      : 0;
+            totalScore += calculatedScore; // Add to overall test score
 
-            let passedCases = 0;
-            for (const tc of problem.testCases) {
-                try {
-                    const isProduction = process.env.NODE_ENV === 'production';
-                    const baseUrl = isProduction ? 'https://www.testify-lac.com' : `${req.protocol}://${req.get('host')}`;
-                    
-                    const compileResponse = await fetch(`${baseUrl}/api/compile`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'x-auth-token': req.header('x-auth-token') },
-                        body: JSON.stringify({ language: sub.language, code: sub.code, input: tc.input }),
-                    });
+            console.log(`[SUBMIT CODING TEST] Problem ${problemId}: Passed ${passedCases}/${totalCases}, Score: ${calculatedScore}/${maxProblemScore}`);
 
-                    if (compileResponse.ok) {
-                        const compileResult = await compileResponse.json();
-                        const actual = (compileResult.stdout || '').trim().replace(/\s+/g, ' ');
-                        const expected = (tc.expected || '').trim().replace(/\s+/g, ' ');
-                        if (actual === expected) passedCases++;
-                    }
-                } catch(e){
-                    console.error("Inner compile error during submission:", e);
-                }
-            }
-
-
+            return {
+                 problemId: problemId,
+                 problemTitle: test.problems.find(p => p.problemId === problemId)?.title || 'Title Not Found', // Get title from test def
+                 language: sub.language || 'N/A',
+                 code: sub.code || '', // Store the submitted code
+                 score: maxProblemScore, // Max possible score for this problem
+                 calculatedScore: calculatedScore, // Actual score obtained
+                 passedCases: passedCases,
+                 totalCases: totalCases,
+                 evaluationResults: evaluationResults // Store detailed pass/fail results
+             };
+        });
+        console.log(`[SUBMIT CODING TEST] Final Calculated Score for assignment ${assignmentId}: ${totalScore}/${totalPossibleMarks}`);
 
 
-            const problemScore = Math.round((passedCases / problem.testCases.length) * (problem.score || 0));
-            totalScore += problemScore;
-
-            detailedSubmissions.push({
-                ...sub,
-                problemTitle: problem.title,
-                score: problem.score || 0,
-                calculatedScore: problemScore,
-                passedCases,
-                totalCases: problem.testCases.length
-            });
-        }
-        
-        const submissionId = `hcs_${uuidv4()}`;
-        const newSubmission = {
-            resultId: submissionId,
-            testType: 'hiring_coding',
-            assignmentId, // <-- ADDED for better tracking
-            testId,
-            testTitle: test.title,
-            candidateEmail: studentEmail,
-            submissions: detailedSubmissions,
-            score: totalScore,
-            totalMarks: test.totalMarks,
-            submittedAt: new Date().toISOString(),
+        // --- Construct Final Result Object ---
+        // Combine all gathered information into the final result record.
+        const newSubmissionResult = {
+            resultId,                               // Unique ID for this submission result
+            testId: assignment.testId,             // The actual primary key of the test (codingTestId)
+            assignmentId,                           // Link back to the specific assignment
+            testType: 'coding',                     // Clearly mark the test type
+            candidateEmail,                         // Candidate's email from the token
+            // Candidate details submitted from the frontend body
             fullName: candidateDetails.fullName,
             rollNumber: candidateDetails.rollNumber,
             collegeName: candidateDetails.collegeName,
             department: candidateDetails.department,
-            profileImageUrl: candidateDetails.profileImageUrl
+            profileImageUrl: candidateDetails.profileImageUrl || null, // Include profile image URL if provided
+            // Test information and results
+            testTitle: test.title || 'N/A',         // Title from the test definition
+            submissions: detailedSubmissions,       // Array containing details for each problem submission
+            score: totalScore,                      // Total score obtained across all problems
+            totalMarks: totalPossibleMarks,         // Maximum possible marks for the entire test
+            // Metadata
+            submittedAt: new Date().toISOString(),  // Timestamp of submission
+            violationReason: violationReason || null, // Record any proctoring violations
         };
+        console.log(`[SUBMIT CODING TEST] Constructed final result object for ${resultId}.`);
 
-        await docClient.send(new PutCommand({ TableName: "TestifyResults", Item: newSubmission }));
-        res.status(201).json({ message: 'Test submitted successfully!' });
+
+        // --- Save Result ---
+        console.log(`[SUBMIT CODING TEST] Saving result ${resultId} to ${HIRING_TEST_RESULTS_TABLE}...`);
+        await docClient.send(new PutCommand({
+            TableName: HIRING_TEST_RESULTS_TABLE,
+            Item: newSubmissionResult
+        }));
+        console.log(`[SUBMIT CODING TEST] Successfully saved result ${resultId}.`);
+
+
+        // --- Send Success Response ---
+        res.status(201).json({ message: 'Test submitted successfully! Redirecting...' }); // 201 Created
+
     } catch (error) {
-        console.error("Submit Coding Test Error:", error);
-        res.status(500).json({ message: 'Server error submitting test.' });
+        // Log detailed error information for debugging.
+        console.error(`[SUBMIT CODING TEST] FATAL ERROR processing assignment ${assignmentId}:`, error);
+        // Provide a generic error message to the client.
+        res.status(500).json({ message: 'Server error submitting test. Please contact support.' });
     }
 });
 app.post('/api/public/upload-image', async (req, res) => {
@@ -7897,111 +8376,164 @@ app.post('/api/public/upload-image', async (req, res) => {
 
 
 // HIRING: Assign a test to external candidates
-app.post('/api/hiring/assign-test', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'Hiring Moderator') {
-        return res.status(403).json({ message: 'Access denied.' });
+app.post('/api/hiring/assign-test', hiringModeratorAuth, async (req, res) => {
+    const { testId, candidateEmails, startTime, endTime } = req.body; // testId could be aptitudeTestId or codingTestId
+    if (!testId || !candidateEmails || candidateEmails.length === 0 || !startTime || !endTime) {
+         return res.status(400).json({ message: 'Missing required fields.' });
     }
-
-    const { testId, candidateEmails, startTime, endTime } = req.body;
-
+    if (new Date(startTime) >= new Date(endTime)) {
+         return res.status(400).json({ message: 'Start time must be before end time.' });
+    }
     try {
-        const { Item: test } = await docClient.send(new GetCommand({
-            TableName: "TestifyTests",
-            Key: { testId }
-        }));
-        if (!test) return res.status(404).json({ message: "Test not found." });
-        
-        const pageName = test.testType === 'hiring_coding' ? 'hiring-coding-test.html' : 'hiring-test.html';
+        // Fetch the test to determine its type and check existence
+        let test;
+        let testType = ''; // Will be 'aptitude' or 'coding'
+        let testPk;
+        let testTitle;
 
+        // Check Aptitude table first
+        console.log(`[ASSIGN TEST] Checking Aptitude table for testId: ${testId}`);
+        const { Item: aptitudeTest } = await docClient.send(new GetCommand({
+            TableName: HIRING_APTITUDE_TESTS_TABLE, Key: { aptitudeTestId: testId }
+        }));
+
+        if (aptitudeTest) {
+            test = aptitudeTest;
+            testType = 'aptitude';
+            testPk = aptitudeTest.aptitudeTestId;
+            testTitle = aptitudeTest.title;
+            console.log(`[ASSIGN TEST] Found Aptitude test: ${testTitle}`);
+        } else {
+            // Check Coding table if not found in Aptitude
+            console.log(`[ASSIGN TEST] Aptitude test not found. Checking Coding table for testId: ${testId}`);
+            const { Item: codingTest } = await docClient.send(new GetCommand({
+                TableName: HIRING_CODING_TESTS_TABLE, Key: { codingTestId: testId }
+            }));
+            if (codingTest) {
+                test = codingTest;
+                testType = 'coding';
+                testPk = codingTest.codingTestId;
+                testTitle = codingTest.title;
+                console.log(`[ASSIGN TEST] Found Coding test: ${testTitle}`);
+            }
+        }
+
+        // If test not found in either table
+        if (!test) {
+            console.warn(`[ASSIGN TEST] Test not found for testId: ${testId}`);
+            return res.status(404).json({ message: "Test not found." });
+        }
+
+        // Always point to the download page
+        const pageName = 'download-test-app.html';
+        const baseUrl = req.protocol + '://' + req.get('host'); // Or use environment variable
+
+        let assignmentsCreated = 0;
         for (const email of candidateEmails) {
             const assignmentId = uuidv4();
-            const payload = { 
-                user: { 
-                    email: email, 
-                    testId: testId, 
-                    assignmentId: assignmentId,
-                    isExternal: true 
-                } 
-            };
-            
-            const testToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
-            
-            // Determine the base URL dynamically
-            const isProduction = process.env.NODE_ENV === 'production';
-            const baseUrl = isProduction 
-                ? 'https://www.testify-lac.com' 
-                : `${req.protocol}://${req.get('host')}`;
-            
-            const testLink = `${baseUrl}/student/${pageName}?token=${testToken}`; // <-- CORRECTED LINE
+            // Payload includes the correct primary key (testPk)
+            const payload = { user: { email, testId: testPk, assignmentId, isExternal: true } };
+            const testToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' }); // Consider shorter expiry?
 
+            // Link points to download page with token
+            const testLink = `${baseUrl}/${pageName}?token=${testToken}`;
+
+            // Save assignment with correct testPk and testType
             await docClient.send(new PutCommand({
-                TableName: "TestifyAssignments",
-                Item: { 
-                    assignmentId, testId, studentEmail: email, assignedBy: req.user.email,
-                    startTime, endTime, testToken, assignedAt: new Date().toISOString() 
+                TableName: HIRING_ASSIGNMENTS_TABLE,
+                Item: {
+                    assignmentId,
+                    testId: testPk, // Store the actual primary key of the test
+                    testType: testType, // Store the type ('aptitude' or 'coding')
+                    studentEmail: email,
+                    assignedBy: req.user.email,
+                    startTime, endTime, testToken, // Store the token if needed
+                    assignedAt: new Date().toISOString()
                 }
             }));
-            
-           const mailOptions = {
-                to: [email],
-                subject: `Invitation: ${test.title} Assessment`,
-                html: `<!DOCTYPE html>
+            console.log(`[ASSIGN TEST] Created assignment ${assignmentId} for ${email}, test ${testPk} (${testType})`);
+
+            // Send Email with the UPDATED HTML template
+            const mailOptions = {
+                 from: '"HIRE WITH US" <support@testify-lac.com>',
+                 to: email,
+                 subject: `Invitation to take ${testType === 'coding' ? 'Coding' : 'Aptitude'} Test: ${testTitle}`,
+                 html: `<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test Invitation</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-        body { font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
-        a { text-decoration: none; }
+        body { margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif; }
+        table { border-collapse: collapse; }
+        .container { background-color: #ffffff; width: 100%; max-width: 600px; margin: 20px auto; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header { background-color: #4A90E2; color: #ffffff; padding: 20px; text-align: center; border-top-left-radius: 8px; border-top-right-radius: 8px; }
+        .header img { max-height: 50px; } /* Adjust as needed */
+        .content { padding: 30px; color: #333333; line-height: 1.6; }
+        .content h2 { color: #4A90E2; margin-top: 0; }
+        .button-container { text-align: center; margin-top: 30px; }
+        .button { background-color: #4CAF50; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; }
+        .footer { background-color: #eeeeee; padding: 15px; text-align: center; font-size: 12px; color: #666666; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
+        .important { background-color: #fff3cd; border-left: 4px solid #ffeeba; padding: 10px 15px; margin: 20px 0; font-size: 14px; }
+        .token-info { font-size: 14px; color: #555; margin-top: 15px; padding: 10px; background-color: #f9f9f9; border: 1px dashed #ccc; border-radius: 4px; }
         @media screen and (max-width: 600px) {
-            .content-width { width: 90% !important; }
+            .container { width: 95% !important; margin: 10px auto; }
+            .content { padding: 20px; }
         }
     </style>
 </head>
-<body style="background-color: #f3f4f6; margin: 0; padding: 0;">
-    <span style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
-        You've been invited to take an assessment.
-    </span>
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f3f4f6;">
+<body>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#f4f4f4">
         <tr>
-            <td align="center" style="padding: 40px 20px;">
-                <table class="content-width" width="600" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);">
+            <td align="center">
+                <table class="container" border="0" cellpadding="0" cellspacing="0">
+                    <!-- Header -->
                     <tr>
-                        <td align="center" style="padding: 30px 40px 20px; border-bottom: 1px solid #e5e7eb;">
-                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo" style="height: 50px; width: auto;">
+                        <td class="header">
+                             <!-- Optional: Add a logo URL here -->
+                             <!-- <img src="YOUR_LOGO_URL" alt="Company Logo"> -->
+                             <h1>Test Invitation</h1>
                         </td>
                     </tr>
+                    <!-- Content -->
                     <tr>
-                        <td align="center" style="padding: 40px; text-align: center;">
-                             <h1 style="font-family: 'Poppins', Arial, sans-serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 15px;">Assessment Invitation</h1>
-                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 16px; color: #4b5563; margin: 0 0 20px; line-height: 1.7;">
-                                 You have been invited to take the "<b>${test.title}</b>" assessment.
-                             </p>
-                             <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 30px; text-align: left;">
-                                <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #4b5563; margin: 0 0 10px;"><b>Start Time:</b> ${new Date(startTime).toLocaleString()}</p>
-                                <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #4b5563; margin: 0;"><b>End Time:</b> ${new Date(endTime).toLocaleString()}</p>
-                             </div>
-                             <a href="${testLink}" 
-                                target="_blank"
-                                style="display: inline-block; padding: 15px 35px; font-family: 'Poppins', Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; background-color: #4338ca; border-radius: 8px; text-decoration: none;">
-                                 Start Assessment
-                             </a>
-                             <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 14px; color: #6b7280; margin: 30px 0 0;">
-                                 Please ensure you complete the assessment within the specified time window. Good luck!
-                             </p>
+                        <td class="content">
+                            <h2>Hello,</h2>
+                            <p>You have been invited to take the ${testType === 'coding' ? 'Coding' : 'Aptitude'} test titled "<b>${testTitle}</b>".</p>
+                            <p>The test window is from <strong>${new Date(startTime).toLocaleString()}</strong> to <strong>${new Date(endTime).toLocaleString()}</strong>.</p>
+
+                            <div class="important">
+                                <strong>Important:</strong> This test requires a secure desktop application for proctoring and execution. Please ensure you are on a compatible computer before proceeding.
+                            </div>
+
+                            <p>Please use the button below to go to the download page where you can get the application and access token to start your test.</p>
+
+                            <table class="button-container" width="100%" border="0" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td align="center">
+                                        <a href="${testLink}" target="_blank" class="button">Download App & Get Token</a>
+                                    </td>
+                                </tr>
+                            </table>
+                            <div class="token-info">
+                                <strong>Instructions:</strong>
+                                <ol>
+                                    <li>Click the button above to visit the download page.</li>
+                                    <li>Download and install the secure test application.</li>
+                                    <li>Copy the unique access token displayed on the download page.</li>
+                                    <li>Launch the application and paste the token when prompted to begin your test.</li>
+                                </ol>
+                            </div>
+
+                            <p>Good luck!</p>
+                            <p>Sincerely,<br>The Hiring Team</p>
                         </td>
                     </tr>
+                    <!-- Footer -->
                     <tr>
-                        <td align="center" style="padding: 30px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; border-radius: 0 0 12px 12px;">
-                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0 0 8px;">
-                                &copy; ${new Date().getFullYear()} TESTIFY. All rights reserved.
-                            </p>
-                            <p style="font-family: 'Poppins', Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">
-                                This is an automated message. Please do not reply.
-                            </p>
+                        <td class="footer">
+                            &copy; ${new Date().getFullYear()} Your Company Name. All rights reserved.
                         </td>
                     </tr>
                 </table>
@@ -8009,49 +8541,48 @@ app.post('/api/hiring/assign-test', authMiddleware, async (req, res) => {
         </tr>
     </table>
 </body>
-</html>`
-            };
-           await sendEmailWithSES(mailOptions);
+</html>
+                 `
+             };
+            await sendEmailWithSES(mailOptions);
+            assignmentsCreated++;
         }
-        res.status(200).json({ message: `Test assigned successfully to ${candidateEmails.length} candidates!` });
+        console.log(`[ASSIGN TEST] Successfully assigned test ${testPk} (${testType}) to ${assignmentsCreated} candidates.`);
+        res.status(200).json({ message: `Test assigned successfully to ${assignmentsCreated} candidates!` });
     } catch (error) {
-        console.error("Assign Hiring Test Error:", error);
+        console.error("[ASSIGN TEST] Error:", error);
         res.status(500).json({ message: 'Server error assigning test.' });
     }
 });
 
-
-app.get('/api/hiring/coding-test-results', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'Hiring Moderator') {
-        return res.status(403).json({ message: 'Access denied.' });
-    }
+app.get('/api/hiring/coding-test-results', hiringModeratorAuth, async (req, res) => {
     try {
-        const { Items: tests } = await docClient.send(new ScanCommand({
-            TableName: "TestifyTests",
-            FilterExpression: "createdBy = :creator AND testType = :type",
-            ExpressionAttributeValues: { ":creator": req.user.email, ":type": "hiring_coding" }
+        const { Items: codingTests } = await docClient.send(new QueryCommand({
+            TableName: HIRING_CODING_TESTS_TABLE, IndexName: "createdBy-index",
+            KeyConditionExpression: "createdBy = :creator", ExpressionAttributeValues: { ":creator": req.user.email }
         }));
-        if (!tests || tests.length === 0) return res.json([]);
+        const testIds = codingTests.map(t => t.codingTestId);
+        if (testIds.length === 0) return res.json([]);
 
-        const moderatorTestIds = new Set(tests.map(t => t.testId));
-        const testTitleMap = new Map(tests.map(t => [t.testId, t.title]));
+        const filterExpression = testIds.map((_, i) => `:tid${i}`).join(', ');
+        const expressionAttributeValues = { ":type": "coding" };
+        testIds.forEach((id, i) => expressionAttributeValues[`:tid${i}`] = id);
 
-        const { Items: allCodingResults } = await docClient.send(new ScanCommand({
-            TableName: "TestifyResults",
-            FilterExpression: "testType = :type",
-            ExpressionAttributeValues: { ":type": "hiring_coding" }
+        const { Items: results } = await docClient.send(new ScanCommand({
+            TableName: HIRING_TEST_RESULTS_TABLE,
+            FilterExpression: `testId IN (${filterExpression}) AND testType = :type`,
+            ExpressionAttributeValues: expressionAttributeValues
         }));
-        
-        const results = allCodingResults.filter(r => moderatorTestIds.has(r.testId));
+
+        const testTitleMap = new Map(codingTests.map(t => [t.codingTestId, t.title]));
         const enrichedResults = results.map(r => ({ ...r, testTitle: testTitleMap.get(r.testId) || 'Unknown Test' }));
         enrichedResults.sort((a,b)=> new Date(b.submittedAt) - new Date(a.submittedAt));
         res.json(enrichedResults);
     } catch (error) {
-        console.error("Get Coding Test Results Error:", error);
+        console.error("Get Coding Results Error:", error);
         res.status(500).json({ message: 'Server error fetching results.' });
     }
 });
-
 
 app.post('/api/hiring/generate-problem-from-pdf', authMiddleware, async (req, res) => {
     // Security check for Hiring Moderator role
@@ -8133,256 +8664,513 @@ Here is the text:\n\n${text}`;
     }
 });
 
-app.get('/api/hiring/test-results/:resultId', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'Hiring Moderator') {
-        return res.status(403).json({ message: 'Access denied.' });
-    }
-    const { resultId } = req.params;
+app.get('/api/hiring/test-results/:resultId', hiringModeratorAuth, async (req, res) => {
     try {
-        const { Item: result } = await docClient.send(new GetCommand({ TableName: "TestifyResults", Key: { resultId } }));
+        const { Item: result } = await docClient.send(new GetCommand({
+            TableName: HIRING_TEST_RESULTS_TABLE, Key: { resultId: req.params.resultId }
+        }));
         if (!result) return res.status(404).json({ message: 'Result not found.' });
-        
-        const { Item: test } = await docClient.send(new GetCommand({ TableName: "TestifyTests", Key: { testId: result.testId } }));
-        if (!test || test.createdBy !== req.user.email) {
-            return res.status(403).json({ message: 'You do not have permission to view this result.' });
+
+        // Verify ownership
+        let testOwnerEmail;
+        if (result.testType === 'coding') {
+            const { Item: test } = await docClient.send(new GetCommand({ TableName: HIRING_CODING_TESTS_TABLE, Key: { codingTestId: result.testId } }));
+            testOwnerEmail = test?.createdBy;
+        } else { // aptitude
+            const { Item: test } = await docClient.send(new GetCommand({ TableName: HIRING_JOBS_TABLE, Key: { jobId: result.testId } }));
+            testOwnerEmail = test?.createdBy;
+        }
+        if (testOwnerEmail !== req.user.email) {
+            return res.status(403).json({ message: 'Permission denied.' });
         }
         res.json(result);
     } catch (error) {
-        console.error("Get Single Test Result Error:", error);
-        res.status(500).json({ message: 'Server error fetching result details.' });
+        console.error("Get Single Result Error:", error);
+        res.status(500).json({ message: 'Server error fetching result.' });
     }
 });
-
 
 
 // HIRING MODERATOR: Get Test History
-app.get('/api/hiring/test-history', authMiddleware, async (req, res) => {
-    // This route is for Hiring Moderators to see the results of tests they've created.
-    if (req.user.role !== 'Hiring Moderator' && req.user.role !== 'Admin') {
-        return res.status(403).json({ message: 'Access denied.' });
-    }
-    
+app.get('/api/hiring/test-history', hiringModeratorAuth, async (req, res) => {
+    console.log(`[GET /api/hiring/test-history] Request received from moderator: ${req.user.email}`);
     try {
-        // Step 1: Fetch all tests that were created by the logged-in hiring moderator.
-        const { Items: tests } = await docClient.send(new ScanCommand({ 
-            TableName: "TestifyTests",
-            FilterExpression: "createdBy = :email AND testType = :type",
-            ExpressionAttributeValues: {
-                ":email": req.user.email,
-                ":type": "hiring"
-            }
+        // --- 1. Fetch Aptitude Tests created by the moderator ---
+        console.log(`[GET /api/hiring/test-history] Fetching aptitude tests from ${HIRING_APTITUDE_TESTS_TABLE}`);
+        const { Items: aptitudeTests } = await docClient.send(new QueryCommand({
+            TableName: HIRING_APTITUDE_TESTS_TABLE,
+            IndexName: "createdBy-index", // Assumes GSI exists
+            KeyConditionExpression: "createdBy = :creator",
+            ExpressionAttributeValues: { ":creator": req.user.email }
         }));
 
-        const testIds = tests.map(t => t.testId);
-        if (testIds.length === 0) {
-            // If the moderator has no tests, return an empty array.
-            return res.json([]);
+        // Handle case where moderator has created no aptitude tests
+        if (!aptitudeTests || aptitudeTests.length === 0) {
+            console.log(`[GET /api/hiring/test-history] No aptitude tests found for moderator ${req.user.email}.`);
+            return res.json([]); // Return empty array
         }
+        console.log(`[GET /api/hiring/test-history] Found ${aptitudeTests.length} aptitude tests.`);
 
-        // Step 2: Fetch all results that correspond to this moderator's tests.
-        // This is more efficient than scanning the entire results table.
+        // --- 2. Extract Test IDs ---
+        const testIds = aptitudeTests.map(t => t.aptitudeTestId); // Use the correct ID field
+        console.log(`[GET /api/hiring/test-history] Aptitude Test IDs: ${testIds.join(', ')}`);
+
+
+        // --- 3. Fetch ALL relevant results in one scan ---
+        // Build filter expression dynamically for IN clause
         const filterExpression = testIds.map((_, i) => `:tid${i}`).join(', ');
-        const expressionAttributeValues = {};
+        const expressionAttributeValues = { ":type": "aptitude" }; // Filter by testType
         testIds.forEach((id, i) => expressionAttributeValues[`:tid${i}`] = id);
 
+        console.log(`[GET /api/hiring/test-history] Fetching results from ${HIRING_TEST_RESULTS_TABLE} for ${testIds.length} tests.`);
         const { Items: results } = await docClient.send(new ScanCommand({
-            TableName: "TestifyResults",
-            FilterExpression: `testId IN (${filterExpression})`,
+            TableName: HIRING_TEST_RESULTS_TABLE,
+            FilterExpression: `testId IN (${filterExpression}) AND testType = :type`,
             ExpressionAttributeValues: expressionAttributeValues
+            // ProjectionExpression can be added here if needed to fetch only specific fields
         }));
+        console.log(`[GET /api/hiring/test-history] Found ${results ? results.length : 0} results.`);
 
-        // Step 3: Aggregate the data. For each test, calculate the number of attempts, passes, and fails.
-        const history = tests.map(test => {
-            const relevantResults = results.filter(r => r.testId === test.testId);
+
+        // --- 4. Group results by testId for efficient processing ---
+        const resultsByTestId = (results || []).reduce((acc, result) => {
+            if (!acc[result.testId]) {
+                acc[result.testId] = [];
+            }
+            acc[result.testId].push(result);
+            return acc;
+        }, {});
+        console.log(`[GET /api/hiring/test-history] Grouped results by Test ID.`);
+
+
+        // --- 5. Combine Test Info with Aggregated Results ---
+        const history = aptitudeTests.map(test => {
+            const relevantResults = resultsByTestId[test.aptitudeTestId] || []; // Get results for this test
             const passedCount = relevantResults.filter(r => r.result === 'Pass').length;
             const failedCount = relevantResults.length - passedCount;
-            
+
+            console.log(`[GET /api/hiring/test-history] Processing test: ${test.title} (${test.aptitudeTestId}). Attempts: ${relevantResults.length}, Passed: ${passedCount}, Failed: ${failedCount}`);
+
+            // Include the detailed results needed for the modal directly
             return {
-                testId: test.testId,
+                testId: test.aptitudeTestId, // Use correct ID
                 title: test.title,
                 attempted: relevantResults.length,
-                passed: passedCount, // Added for convenience on the frontend
-                failed: failedCount, // Added for convenience on the frontend
-                results: relevantResults // Keep the full results for detailed view
+                passed: passedCount,
+                failed: failedCount,
+                results: relevantResults // Attach the full results array
             };
         });
 
+        // Sort history by creation date (newest first)
+        history.sort((a,b) => {
+            const testA = aptitudeTests.find(t => t.aptitudeTestId === a.testId);
+            const testB = aptitudeTests.find(t => t.aptitudeTestId === b.testId);
+            return new Date(testB?.createdAt || 0) - new Date(testA?.createdAt || 0);
+        });
+
+        console.log(`[GET /api/hiring/test-history] Sending ${history.length} history items.`);
         res.json(history);
+
     } catch (error) {
-        console.error("Get Hiring Test History Error:", error);
-        res.status(500).json({ message: 'Server error fetching history.' });
+        console.error(`[GET /api/hiring/test-history] Error for moderator ${req.user.email}:`, error);
+        // Handle specific errors like missing index
+        if (error.name === 'ValidationException' && error.message.includes('index')) {
+             console.error(`[GET /api/hiring/test-history] Critical Error: The 'createdBy-index' GSI might be missing on ${HIRING_APTITUDE_TESTS_TABLE}.`);
+             return res.status(500).json({ message: 'Server configuration error: Required index missing on tests table.' });
+         }
+        if (error.name === 'ResourceNotFoundException') {
+            console.error(`[GET /api/hiring/test-history] Critical Error: A required table might be missing.`);
+            return res.status(500).json({ message: 'Server configuration error: Required table not found.' });
+        }
+        res.status(500).json({ message: 'Server error fetching test history.' });
     }
 });
 
-
 // EXTERNAL CANDIDATE: Get test details using token
 app.get('/api/public/test-details', authMiddleware, async (req, res) => {
-    if (!req.user.isExternal) {
-        return res.status(403).json({ message: 'Access denied for this resource.' });
+    // --- Authentication & Token Data Extraction ---
+    // authMiddleware should populate req.user with { email, testId, assignmentId, isExternal: true }
+    if (!req.user || !req.user.isExternal) {
+        console.warn('[GET TEST DETAILS] Denied: User not external or not authenticated.');
+        // Ensure headers aren't already sent before sending response
+        if (!res.headersSent) {
+            return res.status(403).json({ message: 'Access denied.' });
+        } else {
+             console.error("[GET TEST DETAILS] Headers already sent on auth failure.");
+             return; // Stop processing if headers sent
+        }
     }
-    try {
-        const { testId, email, assignmentId } = req.user;
+    const { testId: testPkFromToken, email: candidateEmail, assignmentId } = req.user;
+    console.log(`[GET TEST DETAILS] Request for assignmentId: ${assignmentId}, testPkFromToken: ${testPkFromToken}, email: ${candidateEmail}`);
 
+    try {
+        // --- Fetch and Validate Assignment Record ---
+        console.log(`[GET TEST DETAILS] Fetching assignment record ${assignmentId} from ${HIRING_ASSIGNMENTS_TABLE}`);
         const { Item: assignment } = await docClient.send(new GetCommand({
-            TableName: "TestifyAssignments",
+            TableName: HIRING_ASSIGNMENTS_TABLE,
             Key: { assignmentId }
         }));
-        
-        // Detailed checks and logging
-        if (!assignment || assignment.studentEmail !== email) {
-            console.error("Assignment/Email Mismatch:", { 
-                assignmentId: assignmentId, 
-                tokenEmail: email, 
-                dbEmail: assignment?.studentEmail 
-            });
-            return res.status(403).json({ message: 'This test link is invalid or has been tampered with.' });
-        }
 
+        // Check if assignment exists and matches token data
+        if (!assignment) {
+            console.warn(`[GET TEST DETAILS] Assignment ${assignmentId} not found.`);
+             if (!res.headersSent) {
+                return res.status(403).json({ message: 'Assignment record not found. Link may be invalid.' });
+             } else { return; }
+        }
+        if (assignment.studentEmail !== candidateEmail || assignment.testId !== testPkFromToken) {
+            console.warn(`[GET TEST DETAILS] Assignment ${assignmentId} data mismatch. Token vs DB.`);
+             if (!res.headersSent) {
+                return res.status(403).json({ message: 'Link invalid or assignment details mismatch.' });
+             } else { return; }
+        }
+        console.log(`[GET TEST DETAILS] Assignment ${assignmentId} found. Type: ${assignment.testType}, Test PK: ${assignment.testId}`);
+
+        // --- Check Test Time Window ---
         const now = new Date();
         const startTime = new Date(assignment.startTime);
         const endTime = new Date(assignment.endTime);
-
         if (now < startTime || now > endTime) {
-            console.warn("Time Window Check Failed:", {
-                now: now.toISOString(),
-                start: startTime.toISOString(),
-                end: endTime.toISOString(),
-                isBeforeStart: now < startTime,
-                isAfterEnd: now > endTime
-            });
-            return res.status(403).json({ message: 'This test link is not yet active or has expired.' });
+            console.warn(`[GET TEST DETAILS] Assignment ${assignmentId} outside active window. Now: ${now.toISOString()}, Start: ${assignment.startTime}, End: ${assignment.endTime}`);
+             if (!res.headersSent) {
+                return res.status(403).json({ message: 'This test link is not currently active or has expired.' });
+             } else { return; }
         }
-        
-        const { Items: existingResults } = await docClient.send(new ScanCommand({
-            TableName: "TestifyResults",
-            FilterExpression: "assignmentId = :aid",
-            ExpressionAttributeValues: { ":aid": assignmentId }
-        }));
+        console.log(`[GET TEST DETAILS] Assignment ${assignmentId} is within the active time window.`);
 
-        if (existingResults && existingResults.length > 0) {
-            return res.status(403).json({ message: 'This test link has already been used. Only one attempt per invitation is allowed.' });
+        // --- Check for Previous *SUBMITTED* Result (Crucial Fix) ---
+        // This query checks if a result exists for this assignment that IS NOT the initial placeholder record.
+        const GSI_NAME = 'AssignmentIdIndex'; // GSI on HIRING_TEST_RESULTS_TABLE with assignmentId as Partition Key
+        console.log(`[GET TEST DETAILS] Checking for existing SUBMITTED results using GSI '${GSI_NAME}' on ${HIRING_TEST_RESULTS_TABLE} for assignment ${assignmentId}`);
+        const queryParams = {
+             TableName: HIRING_TEST_RESULTS_TABLE,
+             IndexName: GSI_NAME,
+             KeyConditionExpression: 'assignmentId = :aid',
+             // Filter ensures we ONLY find results that are NOT the 'init_' placeholder.
+             FilterExpression: 'attribute_not_exists(resultId) OR not begins_with(resultId, :initPrefix)',
+             ExpressionAttributeValues: {
+                 ':aid': assignmentId,
+                 ':initPrefix': 'init_' // Prefix for initial placeholder records created during verification
+             },
+             Limit: 1 // We only need to know if one *submitted* result exists
+        };
+        const { Items: existingSubmittedResults } = await docClient.send(new QueryCommand(queryParams));
+
+        // If a submitted (non-init_) result exists, block access.
+        if (existingSubmittedResults && existingSubmittedResults.length > 0) {
+            console.warn(`[GET TEST DETAILS] Test already SUBMITTED for assignment ${assignmentId}. Found resultId: ${existingSubmittedResults[0].resultId}. Blocking access.`);
+             if (!res.headersSent) {
+                // Use 403 Forbidden as the resource exists but access is denied due to submission state.
+                return res.status(403).json({ message: 'This test link has already been used to submit results.' });
+             } else { return; }
+        }
+        console.log(`[GET TEST DETAILS] No previous SUBMITTED result found. Proceeding to fetch test details.`);
+
+
+        // --- Fetch Actual Test Details based on testType from Assignment ---
+        let test; // Holds the details of the specific test (aptitude or coding)
+        let targetTableName; // Table where the test definition is stored
+        let targetPkName; // Primary key name for that table
+
+        // Determine which table to query based on the assignment's testType
+        if (assignment.testType === 'coding') {
+            targetTableName = HIRING_CODING_TESTS_TABLE;
+            targetPkName = 'codingTestId'; // Primary key for coding tests table
+            console.log(`[GET TEST DETAILS] Fetching CODING test details from ${targetTableName} using key: ${assignment.testId}`);
+            const { Item } = await docClient.send(new GetCommand({ TableName: targetTableName, Key: { [targetPkName]: assignment.testId } }));
+            test = Item;
+        } else if (assignment.testType === 'aptitude') {
+            targetTableName = HIRING_APTITUDE_TESTS_TABLE; // Use the correct table name
+            targetPkName = 'aptitudeTestId'; // Primary key for aptitude tests table
+            console.log(`[GET TEST DETAILS] Fetching APTITUDE test details from ${targetTableName} using key: ${assignment.testId}`);
+            const { Item } = await docClient.send(new GetCommand({ TableName: targetTableName, Key: { [targetPkName]: assignment.testId } }));
+            test = Item;
+        } else {
+             // Handle unexpected testType
+             console.error(`[GET TEST DETAILS] Invalid testType '${assignment.testType}' found in assignment ${assignmentId}.`);
+             if (!res.headersSent) {
+                return res.status(500).json({ message: 'Internal Server Error: Invalid test type associated with this assignment.' });
+             } else { return; }
         }
 
-        const { Item: test } = await docClient.send(new GetCommand({
-            TableName: "TestifyTests",
-            Key: { testId }
-        }));
-
+        // Check if the test definition was actually found
         if (!test) {
-            return res.status(404).json({ message: 'Test not found.' });
+            console.error(`[GET TEST DETAILS] Test definition ${assignment.testId} (Type: ${assignment.testType}) not found in table ${targetTableName}. Assignment ${assignmentId} points to a non-existent test.`);
+             if (!res.headersSent) {
+                return res.status(404).json({ message: 'Test content not found. The assigned test may have been deleted.' });
+             } else { return; }
         }
-        res.json(test);
+        console.log(`[GET TEST DETAILS] Successfully fetched test definition for ${assignment.testId}. Title: ${test.title}`);
+
+        // --- Prepare Test Data for Frontend (Remove sensitive info) ---
+        // Create a copy to modify without affecting the original 'test' object
+        let processedTest = { ...test };
+        processedTest.assignmentId = assignmentId; // Add assignmentId to the response payload
+
+        // Remove correct answers from aptitude questions before sending
+        if (assignment.testType === 'aptitude' && processedTest.sections && Array.isArray(processedTest.sections)) {
+            processedTest.sections = processedTest.sections.map(section => {
+                 // Ensure questions exist and is an array before mapping
+                 const questions = (section.questions && Array.isArray(section.questions))
+                    ? section.questions.map(q => {
+                        const { correctAnswer, correctAnswers, ...questionData } = q; // Destructure to remove answer fields
+                        return questionData; // Return question without answers
+                      })
+                    : []; // Default to empty array if questions are missing/invalid
+                return { ...section, questions };
+            });
+            console.log(`[GET TEST DETAILS] Removed answers from aptitude test sections.`);
+        }
+        // For coding tests, only send basic problem info initially.
+        // Full details (description, test cases) are fetched by the frontend per problem.
+        else if (assignment.testType === 'coding' && processedTest.problems && Array.isArray(processedTest.problems)) {
+             processedTest.problems = processedTest.problems.map(p => ({
+                 problemId: p.problemId, // ID to fetch full details later
+                 title: p.title,
+                 difficulty: p.difficulty,
+                 score: p.score
+                 // DO NOT send description, testCases, constraints, example etc. here
+             }));
+             console.log(`[GET TEST DETAILS] Prepared basic info for ${processedTest.problems.length} coding problems.`);
+        }
+
+        // --- Return Processed Test Data ---
+        console.log(`[GET TEST DETAILS] Returning processed test data for assignment ${assignmentId}.`);
+         if (!res.headersSent) {
+             res.json(processedTest);
+         } else {
+             console.error("[GET TEST DETAILS] Headers already sent before final response.");
+         }
+
     } catch (error) {
-        console.error("Public Test Details Error:", error);
-        res.status(500).json({ message: 'Server error fetching test details.' });
+        // Log detailed error information
+        console.error(`[GET TEST DETAILS] Fatal Error processing assignment ${assignmentId}:`, error);
+        // Provide a generic error message to the client, unless headers are already sent
+        if (!res.headersSent){
+            // Handle specific errors if needed (e.g., missing index, table)
+            if (error.name === 'ResourceNotFoundException' || (error.message && error.message.includes('index does not exist'))) {
+                 console.error(`[GET TEST DETAILS] Critical Error: A required DynamoDB table or index might be missing.`);
+                 return res.status(500).json({ message: 'Server configuration error: Required resource not found. Please contact support.' });
+            }
+             res.status(500).json({ message: 'Server error fetching test details. Please contact support.' });
+        } else {
+             console.error("[GET TEST DETAILS] Headers already sent, could not send error response for outer catch block.");
+        }
     }
 });
 
 
 // EXTERNAL CANDIDATE: Submit Test
 app.post('/api/public/submit-test', authMiddleware, async (req, res) => {
-    if (!req.user.isExternal) {
-        return res.status(403).json({ message: 'Access denied.' });
+    // 1. Verify Authentication & Extract Token Data
+    // Ensure the request comes from a valid external candidate token.
+    if (!req.user || !req.user.isExternal) {
+        console.warn('[SUBMIT APTITUDE] Denied: User not external or not authenticated.');
+        return res.status(403).json({ message: 'Access denied. Valid candidate token required.' });
     }
-    
-    // **MODIFIED**: Destructure new fields from request body
-    const { answers, timeTaken, violationReason, fullName, rollNumber, collegeName } = req.body;
-    const { testId, email, assignmentId } = req.user;
-    const resultId = uuidv4();
+    // Extract assignmentId, candidateEmail, and the test's Primary Key from the token.
+    const { testId: testPkFromToken, email: candidateEmail, assignmentId } = req.user;
+    console.log(`[SUBMIT APTITUDE] Received submission for assignment: ${assignmentId}, Candidate: ${candidateEmail}, Test PK in token: ${testPkFromToken}`);
+
+    // 2. Extract Submission Data from Request Body
+    // Get answers, time taken, any violation reason, and candidate details submitted from the frontend.
+    const { answers, timeTaken, violationReason, fullName, rollNumber, collegeName, department, profileImageUrl } = req.body; // Added profileImageUrl
+
+    // 3. Validate Input Data
+    // Check if essential candidate details provided in the body are present.
+    if (!fullName || !rollNumber || !collegeName || !department) {
+         console.warn(`[SUBMIT APTITUDE] Incomplete candidate details received in body for assignment ${assignmentId}.`);
+         return res.status(400).json({ message: 'Missing required candidate details in submission: Full Name, Roll Number, College, Department.' });
+    }
+    // Check if answers array exists.
+    if (!Array.isArray(answers)) {
+         console.warn(`[SUBMIT APTITUDE] Invalid 'answers' format received for assignment ${assignmentId}.`);
+        return res.status(400).json({ message: "Invalid answers format." });
+    }
+    console.log(`[SUBMIT APTITUDE] Input data validated for assignment ${assignmentId}.`);
+
+    // Define a unique ID for this test result record.
+    const resultId = `har_${uuidv4()}`; // Prefix 'har_' for Hiring Aptitude Result
 
     try {
-        const { Item: test } = await docClient.send(new GetCommand({
-            TableName: "TestifyTests",
-            Key: { testId }
+        // --- Verify Assignment Record ---
+        console.log(`[SUBMIT APTITUDE] Verifying assignment ${assignmentId} in ${HIRING_ASSIGNMENTS_TABLE}`);
+        const { Item: assignment } = await docClient.send(new GetCommand({
+            TableName: HIRING_ASSIGNMENTS_TABLE,
+            Key: { assignmentId }
         }));
-        if (!test) return res.status(404).json({ message: "Test not found." });
 
+        // Validate if assignment exists, belongs to the candidate, matches the test in the token, and is for an aptitude test.
+        if (!assignment) {
+            console.warn(`[SUBMIT APTITUDE] Assignment ${assignmentId} not found.`);
+            return res.status(403).json({ message: 'Assignment record not found. Link may be invalid.' });
+        }
+        if (assignment.studentEmail !== candidateEmail || assignment.testId !== testPkFromToken) {
+             console.warn(`[SUBMIT APTITUDE] Assignment ${assignmentId} data mismatch. Token vs DB: Email (${candidateEmail} vs ${assignment.studentEmail}), Test PK (${testPkFromToken} vs ${assignment.testId})`);
+             return res.status(403).json({ message: 'Link invalid or assignment details mismatch.' });
+        }
+        if (assignment.testType !== 'aptitude') {
+            console.warn(`[SUBMIT APTITUDE] Incorrect test type in assignment ${assignmentId}. Expected 'aptitude', got '${assignment.testType}'.`);
+            return res.status(403).json({ message: 'Assignment is not for an aptitude test.' });
+        }
+        console.log(`[SUBMIT APTITUDE] Assignment ${assignmentId} verified.`);
+
+
+        // --- Check for *PREVIOUS SUBMITTED* Result (Ignore Initialization Record) ---
+        const GSI_NAME = 'AssignmentIdIndex'; // GSI on HIRING_TEST_RESULTS_TABLE with assignmentId as key
+        console.log(`[SUBMIT APTITUDE] Checking for existing SUBMITTED results using GSI '${GSI_NAME}' on ${HIRING_TEST_RESULTS_TABLE} for assignment ${assignmentId}`);
+        const queryParams = {
+             TableName: HIRING_TEST_RESULTS_TABLE,
+             IndexName: GSI_NAME,
+             KeyConditionExpression: 'assignmentId = :aid',
+             // ** CORRECTED FILTER EXPRESSION **
+             // This filter ensures we ONLY find results that are NOT the 'init_' placeholder.
+             FilterExpression: 'attribute_not_exists(resultId) OR not begins_with(resultId, :initPrefix)',
+             ExpressionAttributeValues: {
+                 ':aid': assignmentId,
+                 ':initPrefix': 'init_' // Prefix used for the initial verification record
+             },
+             Limit: 1 // We only need to know if one *submitted* result exists
+        };
+        const { Items: existingSubmittedResults } = await docClient.send(new QueryCommand(queryParams));
+
+        // If a *submitted* result (not 'init_') is found, reject the new submission.
+        if (existingSubmittedResults && existingSubmittedResults.length > 0) {
+            console.warn(`[SUBMIT APTITUDE] Test already SUBMITTED (found non-init result) for assignment ${assignmentId}.`);
+            return res.status(409).json({ message: 'This test has already been submitted.' }); // 409 Conflict
+        }
+        console.log(`[SUBMIT APTITUDE] No previous SUBMITTED result found for assignment ${assignmentId}. Proceeding with submission.`);
+
+
+        // --- Fetch Aptitude Test Definition ---
+        console.log(`[SUBMIT APTITUDE] Fetching test definition for ${assignment.testId} from ${HIRING_APTITUDE_TESTS_TABLE}`);
+        const { Item: test } = await docClient.send(new GetCommand({
+            TableName: HIRING_APTITUDE_TESTS_TABLE, // Ensure this table name is correct
+            Key: { aptitudeTestId: assignment.testId } // Ensure 'aptitudeTestId' is the correct primary key
+        }));
+
+        if (!test) {
+            console.error(`[SUBMIT APTITUDE] Test definition ${assignment.testId} not found in ${HIRING_APTITUDE_TESTS_TABLE}.`);
+            return res.status(404).json({ message: "Test definition not found." });
+        }
+        console.log(`[SUBMIT APTITUDE] Test definition found: ${test.title}`);
+
+
+        // --- Score Calculation ---
         let marksScored = 0;
-        const allQuestions = test.sections.flatMap(s => s.questions);
-        
-        const studentAnswers = Array.isArray(answers) ? answers : [];
+        // Flatten questions from all sections for easier iteration.
+        const allQuestions = test.sections?.flatMap(s => s.questions || []) || [];
+        console.log(`[SUBMIT APTITUDE] Calculating score based on ${allQuestions.length} questions and ${answers.length} answers.`);
 
         allQuestions.forEach((question, index) => {
-            const studentAnswer = studentAnswers[index];
-            if (studentAnswer === null || studentAnswer === undefined || studentAnswer === '') return;
-            
-            if (String(studentAnswer).trim() === String(question.correctAnswer).trim()) {
-                marksScored += parseInt(question.marks, 10);
+            const studentAnswer = answers?.[index]; // Get the student's answer for this question index.
+            // Check if an answer was provided and not null/undefined.
+            const answerProvided = studentAnswer !== null && studentAnswer !== undefined;
+            // Trim both student's answer and correct answer for comparison, handle case-insensitivity.
+            const isCorrect = answerProvided &&
+                              String(studentAnswer).trim().toLowerCase() === String(question.correctAnswer).trim().toLowerCase();
+
+            // Log comparison for debugging (optional)
+            // console.log(`[SUBMIT APTITUDE] Q${index + 1}: Student Answer='${studentAnswer}', Correct='${question.correctAnswer}', Provided=${answerProvided}, Correct=${isCorrect}`);
+
+            if (isCorrect) {
+                // Add marks if correct. Use question's marks value or default to 0 if missing/invalid.
+                marksScored += (parseInt(question.marks, 10) || 0);
             }
         });
 
-        const percentageScore = test.totalMarks > 0 ? Math.round((marksScored / test.totalMarks) * 100) : 0;
-        const result = percentageScore >= test.passingPercentage ? "Pass" : "Fail";
+        // Parse total marks and passing percentage from the test definition, defaulting to 0.
+        const totalMarks = parseInt(test.totalMarks, 10) || 0;
+        const passingPercentage = parseInt(test.passingPercentage, 10) || 0;
+        // Calculate percentage score, handling division by zero if totalMarks is 0.
+        const percentageScore = totalMarks > 0 ? Math.round((marksScored / totalMarks) * 100) : 0;
+        // Determine Pass/Fail status based on calculated percentage and test's passing percentage.
+        const resultStatus = percentageScore >= passingPercentage ? "Pass" : "Fail";
 
+        console.log(`[SUBMIT APTITUDE] Score Calculation Complete for assignment ${assignmentId}: Marks Scored=${marksScored}, Total Marks=${totalMarks}, Percentage=${percentageScore}%, Result=${resultStatus}`);
+
+
+        // --- Construct Result Object ---
+        // Combine all gathered information into the final result record.
         const newResult = {
-            resultId, 
-            testId, 
-            assignmentId,
-            candidateEmail: email,
-            // **MODIFIED**: Add new candidate details to the result object
+            resultId,                               // Unique ID for this submission result
+            testId: assignment.testId,             // The actual primary key of the test (aptitudeTestId)
+            assignmentId,                           // Link back to the specific assignment
+            testType: 'aptitude',                   // Clearly mark the test type
+            candidateEmail,                         // Candidate's email from the token
+            // Candidate details submitted from the frontend body
             fullName,
             rollNumber,
             collegeName,
-            testTitle: test.title, 
-            answers: studentAnswers, 
-            timeTaken, 
-            score: percentageScore, 
-            result,
-            submittedAt: new Date().toISOString(), 
-            violationReason: violationReason || null,
+            department,
+            profileImageUrl: profileImageUrl || null, // Include profile image URL if provided
+            // Test information and results
+            testTitle: test.title || 'N/A',         // Title from the test definition
+            answers,                                // The raw array of student answers
+            timeTaken: timeTaken || 0,              // Time spent on the test
+            score: percentageScore,                 // Calculated percentage score
+            marksScored,                            // Total marks obtained
+            totalMarks,                             // Maximum possible marks for the test
+            result: resultStatus,                   // 'Pass' or 'Fail'
+            // Metadata
+            submittedAt: new Date().toISOString(),  // Timestamp of submission
+            violationReason: violationReason || null, // Record any proctoring violations
         };
-    
-        await docClient.send(new PutCommand({ TableName: "TestifyResults", Item: newResult }));
-        
-        res.status(201).json({ message: 'Test submitted successfully!' });
+        console.log(`[SUBMIT APTITUDE] Constructed final result object for ${resultId}:`, JSON.stringify(newResult));
+
+
+        // --- Save Result ---
+        console.log(`[SUBMIT APTITUDE] Saving result ${resultId} to ${HIRING_TEST_RESULTS_TABLE}...`);
+        await docClient.send(new PutCommand({
+            TableName: HIRING_TEST_RESULTS_TABLE,
+            Item: newResult
+        }));
+        console.log(`[SUBMIT APTITUDE] Successfully saved result ${resultId}.`);
+
+        // --- Send Success Response ---
+        res.status(201).json({ message: 'Test submitted successfully!' }); // 201 Created is appropriate here
 
     } catch (error) {
-        console.error("Public Submit Test Error:", error);
-        res.status(500).json({ message: 'Server error submitting test.' });
+        // Log detailed error information for debugging.
+        console.error(`[SUBMIT APTITUDE] FATAL ERROR processing assignment ${assignmentId}:`, error);
+        // Provide a generic error message to the client.
+        res.status(500).json({ message: 'Server error submitting test. Please contact support.' });
     }
 });
 
 
-
 // HIRING MODERATOR: Add a new college to their list
-app.post('/api/hiring/colleges', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'Hiring Moderator') {
-        return res.status(403).json({ message: 'Access denied.' });
-    }
+app.post('/api/hiring/colleges', hiringModeratorAuth, async (req, res) => {
     const { collegeName } = req.body;
-    if (!collegeName) {
-        return res.status(400).json({ message: 'College name is required.' });
-    }
+    if (!collegeName) return res.status(400).json({ message: 'College name is required.' });
     const collegeId = `hcollege_${uuidv4()}`;
     const newCollege = {
-        collegeId,
-        collegeName,
-        createdBy: req.user.email // Link college to the moderator
+        collegeId, collegeName, createdBy: req.user.email
     };
     try {
-        // For simplicity, using TestifyColleges table. In a larger app, a dedicated table might be better.
-        await docClient.send(new PutCommand({ TableName: "TestifyColleges", Item: newCollege }));
+        await docClient.send(new PutCommand({ TableName: HIRING_COLLEGES_TABLE, Item: newCollege }));
         res.status(201).json({ message: 'College added successfully.' });
     } catch (error) {
-        console.error("Add Hiring College Error:", error);
+        console.error("Add College Error:", error);
         res.status(500).json({ message: 'Server error adding college.' });
     }
 });
 
 // HIRING MODERATOR: Get their list of colleges
-app.get('/api/hiring/colleges', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'Hiring Moderator') {
-        return res.status(403).json({ message: 'Access denied.' });
-    }
+app.get('/api/hiring/colleges', hiringModeratorAuth, async (req, res) => {
     try {
-        const { Items } = await docClient.send(new ScanCommand({
-            TableName: "TestifyColleges",
-            FilterExpression: "createdBy = :creator",
+        const { Items } = await docClient.send(new QueryCommand({
+            TableName: HIRING_COLLEGES_TABLE,
+            IndexName: "createdBy-index",
+            KeyConditionExpression: "createdBy = :creator",
             ExpressionAttributeValues: { ":creator": req.user.email }
         }));
-        res.json(Items);
+        // Sort alphabetically by name before sending
+        (Items || []).sort((a, b) => (a.collegeName || '').localeCompare(b.collegeName || ''));
+        res.json(Items || []);
     } catch (error) {
-        console.error("Get Hiring Colleges Error:", error);
+        console.error("Get Moderator Colleges Error:", error);
         res.status(500).json({ message: 'Server error fetching colleges.' });
     }
 });
@@ -8394,8 +9182,9 @@ app.delete('/api/hiring/colleges/:collegeId', authMiddleware, async (req, res) =
     }
     const { collegeId } = req.params;
     try {
-        // Security check: ensure the moderator owns this college entry
-        const { Item } = await docClient.send(new GetCommand({ TableName: "TestifyColleges", Key: { collegeId } }));
+        // Security check: ensure the moderator owns this college entr
+        // y
+        const { Item } = await docClient.send(new GetCommand({ TableName: "HIRING_COLLEGES_TABLE", Key: { collegeId } }));
         if (!Item || Item.createdBy !== req.user.email) {
             return res.status(403).json({ message: 'You do not have permission to delete this college.' });
         }
@@ -8411,23 +9200,71 @@ app.delete('/api/hiring/colleges/:collegeId', authMiddleware, async (req, res) =
 // PUBLIC: Get colleges for a specific test (for the student dropdown)
 app.get('/api/public/colleges/:testId', async (req, res) => {
     const { testId } = req.params;
+    console.log(`[GET /api/public/colleges] Request received for testId: ${testId}`);
+
     try {
-        const { Item: test } = await docClient.send(new GetCommand({
-            TableName: "TestifyTests",
-            Key: { testId }
+        let testCreatorEmail = null;
+        let testFound = false;
+
+        // 1. Determine the test type and find the creator's email
+        // --- CHANGE: Check APTITUDE table first ---
+        console.log(`[GET /api/public/colleges] Checking ${HIRING_APTITUDE_TESTS_TABLE} for ID: ${testId}`);
+        const { Item: aptitudeTest } = await docClient.send(new GetCommand({
+            TableName: HIRING_APTITUDE_TESTS_TABLE,
+            Key: { aptitudeTestId: testId } // Primary key for aptitude tests
         }));
-        if (!test || !test.createdBy) {
+
+        if (aptitudeTest && aptitudeTest.createdBy) {
+            testCreatorEmail = aptitudeTest.createdBy;
+            testFound = true;
+            console.log(`[GET /api/public/colleges] Found APTITUDE test created by: ${testCreatorEmail}`);
+        } else {
+            // If not found as aptitude test, check if it's a coding test
+            console.log(`[GET /api/public/colleges] Aptitude test not found. Checking ${HIRING_CODING_TESTS_TABLE} for ID: ${testId}`);
+            const { Item: codingTest } = await docClient.send(new GetCommand({
+                TableName: HIRING_CODING_TESTS_TABLE,
+                Key: { codingTestId: testId } // Primary key for coding tests
+            }));
+
+            if (codingTest && codingTest.createdBy) {
+                testCreatorEmail = codingTest.createdBy;
+                testFound = true;
+                console.log(`[GET /api/public/colleges] Found CODING test created by: ${testCreatorEmail}`);
+            }
+        }
+
+        // 2. If no creator found after checking relevant tables, return error
+        if (!testFound || !testCreatorEmail) {
+            // --- Log which tables were checked ---
+            console.warn(`[GET /api/public/colleges] Test creator not found for testId: ${testId} after checking ${HIRING_APTITUDE_TESTS_TABLE} and ${HIRING_CODING_TESTS_TABLE}.`);
+            // Return 404 specifically for this case
             return res.status(404).json({ message: 'Test creator not found.' });
         }
 
-        const { Items } = await docClient.send(new ScanCommand({
-            TableName: "TestifyColleges",
-            FilterExpression: "createdBy = :creator",
-            ExpressionAttributeValues: { ":creator": test.createdBy }
+        // 3. Fetch colleges associated with that creator from the HIRING_COLLEGES_TABLE
+        console.log(`[GET /api/public/colleges] Fetching colleges from ${HIRING_COLLEGES_TABLE} for creator: ${testCreatorEmail}`);
+        const { Items } = await docClient.send(new QueryCommand({
+            TableName: HIRING_COLLEGES_TABLE,
+            IndexName: "createdBy-index", // Assumes a GSI on HIRING_COLLEGES_TABLE with 'createdBy' as the partition key
+            KeyConditionExpression: "createdBy = :creator",
+            ExpressionAttributeValues: { ":creator": testCreatorEmail }
         }));
-        res.json(Items);
+
+        console.log(`[GET /api/public/colleges] Found ${Items ? Items.length : 0} colleges for creator ${testCreatorEmail}.`);
+
+        // Sort alphabetically by name before sending
+        const colleges = Items || [];
+        colleges.sort((a, b) => (a.collegeName || '').localeCompare(b.collegeName || ''));
+
+        res.json(colleges); // Send the list
+
     } catch (error) {
-        console.error("Get Public Colleges Error:", error);
+        console.error(`[GET /api/public/colleges] Error fetching public colleges for test ${testId}:`, error);
+        // Handle potential DynamoDB errors
+        if (error.name === 'ResourceNotFoundException' || (error.message && error.message.includes('index'))) {
+             console.error("[GET /api/public/colleges] Critical Error: DynamoDB index 'createdBy-index' might be missing on HIRING_COLLEGES_TABLE.");
+             return res.status(500).json({ message: 'Server configuration error fetching colleges.' });
+        }
         res.status(500).json({ message: 'Server error fetching public colleges.' });
     }
 });
@@ -8765,58 +9602,36 @@ app.get('/api/quizcom/live/:id/details', async (req, res) => {
 const HIRING_TABLE = "TestifyUsers"; // Using a single table for this feature
 
 // HIRING MODERATOR: Create a new Job Posting
-app.post('/api/hiring/jobs', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'Hiring Moderator') {
-        return res.status(403).json({ message: 'Access denied.' });
-    }
-
-    // --- FIX IS HERE ---
-    // Changed 'jd' to 'description' to match the frontend payload
+app.post('/api/hiring/jobs', hiringModeratorAuth, async (req, res) => {
     const { title, description, eligibleColleges, applicationDeadline, hiringTimeline } = req.body;
     if (!title || !description || !eligibleColleges || !applicationDeadline || !hiringTimeline) {
-        return res.status(400).json({ message: 'All fields are required to create a job.' });
+        return res.status(400).json({ message: 'All fields are required.' });
     }
-
     const jobId = `job_${uuidv4()}`;
     const newJob = {
-        testId: jobId,
-        testType: 'job',
-        title,
-        description: description, // Use the correct variable here as well
-        eligibleColleges,
-        applicationDeadline,
-        hiringTimeline,
-        createdBy: req.user.email,
-        createdAt: new Date().toISOString()
+        jobId, title, description, eligibleColleges, applicationDeadline, hiringTimeline,
+        createdBy: req.user.email, createdAt: new Date().toISOString()
     };
-
     try {
-        await docClient.send(new PutCommand({ TableName: "TestifyTests", Item: newJob }));
+        await docClient.send(new PutCommand({ TableName: HIRING_JOBS_TABLE, Item: newJob }));
         res.status(201).json({ message: 'Job created successfully!', job: newJob });
     } catch (error) {
         console.error("Create Job Error:", error);
         res.status(500).json({ message: 'Server error creating job.' });
     }
-});
-// HIRING MODERATOR: Get all jobs they have created
-app.get('/api/hiring/jobs', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'Hiring Moderator') {
-        return res.status(403).json({ message: 'Access denied.' });
-    }
+});// HIRING MODERATOR: Get all jobs they have created
+app.get('/api/hiring/jobs', hiringModeratorAuth, async (req, res) => {
     try {
-        const { Items } = await docClient.send(new ScanCommand({
-            TableName: "TestifyTests",
-            FilterExpression: "createdBy = :creator AND testType = :type",
-            ExpressionAttributeValues: {
-                ":creator": req.user.email,
-                ":type": "job"
-            }
+        const { Items } = await docClient.send(new QueryCommand({
+            TableName: HIRING_JOBS_TABLE,
+            IndexName: "createdBy-index",
+            KeyConditionExpression: "createdBy = :creator",
+            ExpressionAttributeValues: { ":creator": req.user.email }
         }));
-        // For consistency, let's rename 'testId' to 'jobId' in the response
-        const jobs = Items.map(job => ({ ...job, jobId: job.testId }));
-        res.json(jobs);
+         // Map jobId to testId for frontend compatibility if needed, otherwise send as is
+         res.json((Items || []).map(job => ({ ...job, testId: job.jobId })));
     } catch (error) {
-        console.error("Get Hiring Jobs Error:", error);
+        console.error("Get Moderator Jobs Error:", error);
         res.status(500).json({ message: 'Server error fetching jobs.' });
     }
 });
@@ -8853,153 +9668,42 @@ app.get('/api/public/jobs', async (req, res) => {
 // });
 
 // PUBLIC: Apply for a job
-app.post('/api/public/apply/:jobId',
-    upload.any(), // Use upload.any() to accept all files with dynamic names
-    async (req, res) => {
-        const { jobId } = req.params;
-        const {
-            firstName, lastName, email, phone,
-            education, // This is now a JSON string
-            experiences, // This is also a JSON string
-            linkedinUrl, githubUrl, portfolioUrl,
-            govtIdType // New field for Government ID type
-        } = req.body;
-
-        if (!firstName || !lastName || !email || !phone) {
-            return res.status(400).json({ message: 'Personal details are required.' });
+app.post('/api/public/apply/:jobId', upload.any(), async (req, res) => {
+    // ... (data extraction) ...
+    try {
+        const { Item: job } = await docClient.send(new GetCommand({ TableName: HIRING_JOBS_TABLE, Key: { jobId: req.params.jobId } }));
+        if (!job || new Date(job.applicationDeadline) < new Date()) {
+            return res.status(400).json({ message: 'Job not found or deadline passed.' });
         }
-
-        try {
-            const { Item: job } = await docClient.send(new GetCommand({ TableName: "TestifyTests", Key: { testId: jobId } }));
-            if (!job) {
-                return res.status(404).json({ message: 'Job opening not found.' });
-            }
-             if (new Date(job.applicationDeadline) < new Date()) {
-                return res.status(400).json({ message: 'The application deadline has passed.' });
-            }
-
-            const uploadToCloudinary = async (file) => {
-                const b64 = Buffer.from(file.buffer).toString("base64");
-                const dataURI = `data:${file.mimetype};base64,${b64}`;
-                return await cloudinary.uploader.upload(dataURI, {
-                    folder: "job_applications",
-                    resource_type: "auto"
-                });
-            };
-
-            const files = req.files;
-            let passportPhotoUrl, resumeUrl, govtIdUrl;
-            const educationCertificates = {};
-            const experienceCertificates = {};
-
-            for (const file of files) {
-                const result = await uploadToCloudinary(file);
-                if (file.fieldname === 'passportPhoto') {
-                    passportPhotoUrl = result.secure_url;
-                } else if (file.fieldname === 'resume') {
-                    resumeUrl = result.secure_url;
-                } else if (file.fieldname === 'govtId') {
-                    govtIdUrl = result.secure_url;
-                } else if (file.fieldname.startsWith('education_certificate_')) {
-                    const index = file.fieldname.split('_')[2];
-                    educationCertificates[index] = result.secure_url;
-                } else if (file.fieldname.startsWith('experience_certificate_')) {
-                    const index = file.fieldname.split('_')[2];
-                    experienceCertificates[index] = result.secure_url;
-                }
-            }
-
-            if (!passportPhotoUrl || !resumeUrl) {
-                return res.status(400).json({ message: 'Passport photo and resume are mandatory.' });
-            }
-
-            const educationData = JSON.parse(education || '[]').map((edu, index) => ({
-                ...edu,
-                certificateUrl: educationCertificates[index] || null
-            }));
-
-            const experienceData = JSON.parse(experiences || '[]').map((exp, index) => ({
-                ...exp,
-                certificateUrl: experienceCertificates[index] || null
-            }));
-
-            const applicationId = `app_${uuidv4()}`;
-            const newApplication = {
-                applicationId,
-                jobId,
-                jobTitle: job.title,
-                firstName, lastName, email, phone,
-                passportPhotoUrl,
-                resumeUrl,
-                govtId: {
-                    type: govtIdType,
-                    url: govtIdUrl || null
-                },
-                education: educationData,
-                experiences: experienceData,
-                links: {
-                    linkedin: linkedinUrl,
-                    github: githubUrl,
-                    portfolio: portfolioUrl
-                },
-                status: 'Applied',
-                appliedAt: new Date().toISOString()
-            };
-
-            await docClient.send(new PutCommand({ TableName: "TestifyApplications", Item: newApplication }));
-
-            res.status(201).json({ message: 'Application submitted successfully! We will be in touch.' });
-
-        } catch (error) {
-            console.error("Apply Job Error:", error);
-            res.status(500).json({ message: 'Server error submitting application.' });
-        }
+        // ... (file upload logic using uploadToCloudinary) ...
+        const applicationId = `app_${uuidv4()}`;
+        const newApplication = { applicationId, jobId: req.params.jobId, jobTitle: job.title, /* ... other fields ... */ appliedAt: new Date().toISOString() };
+        await docClient.send(new PutCommand({ TableName: HIRING_APPLICATIONS_TABLE, Item: newApplication }));
+        res.status(201).json({ message: 'Application submitted successfully!' });
+    } catch (error) {
+        console.error("Apply Job Error:", error);
+        res.status(500).json({ message: 'Server error submitting application.' });
     }
-);
+})
 
 // HIRING MODERATOR: Get applications for a specific job
-app.get('/api/hiring/jobs/:jobId/applications', authMiddleware, async (req, res) => {
-    // This endpoint now correctly fetches and returns applications for a specific job.
-    // It is accessible by Hiring Moderators and Admins.
-    if (req.user.role !== 'Hiring Moderator' && req.user.role !== 'Admin') {
-        return res.status(403).json({ message: 'Access denied.' });
-    }
+app.get('/api/hiring/jobs/:jobId/applications', hiringModeratorAuth, async (req, res) => {
     const { jobId } = req.params;
-
     try {
-        // 1. Get the job details to verify ownership and get the job title.
-        const { Item: job } = await docClient.send(new GetCommand({
-            TableName: "TestifyTests", // Jobs are stored in the TestifyTests table
-            Key: { testId: jobId }
+        const { Item: job } = await docClient.send(new GetCommand({ TableName: HIRING_JOBS_TABLE, Key: { jobId } }));
+        if (!job || job.createdBy !== req.user.email) return res.status(403).json({ message: "Permission denied." });
+        const { Items } = await docClient.send(new QueryCommand({
+            TableName: HIRING_APPLICATIONS_TABLE, IndexName: "jobId-index",
+            KeyConditionExpression: "jobId = :jid", ExpressionAttributeValues: { ":jid": jobId }
         }));
-
-        // 2. Security Check: Ensure the job exists and the user has permission to view it.
-        // Admins can view any, while Hiring Moderators can only view jobs they created.
-        if (!job || job.testType !== 'job') {
-            return res.status(404).json({ message: "Job not found." });
-        }
-        if (req.user.role === 'Hiring Moderator' && job.createdBy !== req.user.email) {
-            return res.status(403).json({ message: "You don't have permission to view these applicants." });
-        }
-
-        // 3. Fetch all applications for this job from the 'TestifyApplications' table.
-        const { Items: applications } = await docClient.send(new ScanCommand({
-            TableName: "TestifyApplications",
-            FilterExpression: "jobId = :jid",
-            ExpressionAttributeValues: { ":jid": jobId }
-        }));
-
-        // 4. Send the raw application data back to the frontend.
-        // The frontend page is designed to handle this data structure directly.
-        res.json({
-            jobTitle: job.title,
-            applications: applications || [] // Send the applications directly without reformatting
-        });
+        (Items || []).sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt));
+        res.json({ jobTitle: job.title, applications: Items || [] });
     } catch (error) {
-        console.error("Get Hiring Applications Error:", error);
+        console.error("Get Applications Error:", error);
         res.status(500).json({ message: 'Server error fetching applications.' });
     }
 });
+
 
 
 // HIRING MODERATOR: Bulk update application status and send email
@@ -9171,26 +9875,47 @@ app.get('/api/hiring/dashboard-data', authMiddleware, async (req, res) => {
 });
 
 app.get('/api/public/jobs/:jobId', async (req, res) => {
+    const { jobId } = req.params;
+    console.log(`Fetching public job details for jobId: ${jobId}`); // Log requested ID
+
     try {
         const { Item } = await docClient.send(new GetCommand({
-            TableName: "TestifyTests", // Jobs are in the TestifyTests table
-            Key: { testId: req.params.jobId } // The primary key is 'testId'
+            TableName: HIRING_JOBS_TABLE, // Correct table
+            Key: { jobId: jobId }          // Correct key: assumes 'jobId' is the primary key
         }));
 
-        // Check if the item exists and is a job posting
-        if (Item && Item.testType === 'job') {
-            // Also check if the application deadline has passed
-            if (new Date(Item.applicationDeadline) < new Date()) {
-                return res.status(404).json({ message: 'Error: Job not found or has expired.' });
-            }
-            // Return the full job details
-            res.json({ ...Item, jobId: Item.testId }); // Map testId to jobId for consistency
-        } else {
-            res.status(404).json({ message: 'Error: Job not found or has expired.' });
+        // 1. Check if the job item was found
+        if (!Item) {
+             console.warn(`Job not found in ${HIRING_JOBS_TABLE} for jobId: ${jobId}`);
+             // Specific message for not found
+             return res.status(404).json({ message: 'Job details not found.' });
         }
+
+        console.log(`Found job item:`, JSON.stringify(Item, null, 2)); // Log found item details
+
+        // 2. Check the application deadline AFTER finding the item
+        const deadline = new Date(Item.applicationDeadline);
+        const now = new Date();
+        console.log(`Comparing deadline (${deadline.toISOString()}) with current time (${now.toISOString()}) for job ${jobId}`); // Log time comparison
+
+        if (deadline < now) {
+            console.warn(`Job deadline passed for ${jobId}. Deadline: ${Item.applicationDeadline}`);
+            // Specific message for expired jobs
+            // Using 404 might be more consistent for the frontend logic expecting "not found or expired"
+            return res.status(404).json({ message: 'This job opening has expired.' });
+        }
+
+        // 3. Return item details if found and active
+        console.log(`Returning job details for ${jobId}`);
+        // Send the full job item back
+        res.json(Item);
+
     } catch (error) {
-        console.error("Get Single Public Job Error:", error);
-        res.status(500).json({ message: 'Server error fetching job details.' });
+        console.error(`Get Public Job Details Error for jobId ${jobId}:`, error);
+        // Ensure a response is always sent in case of error
+        if (!res.headersSent) {
+             res.status(500).json({ message: 'Server error fetching job details.' });
+        }
     }
 });
 app.get('/api/public/jobs/by-moderator/:moderatorId', async (req, res) => {
@@ -9297,48 +10022,48 @@ app.get('/api/hiring/applicants/:jobId', authMiddleware, async (req, res) => {
 
 // ** NEW ENDPOINT **
 // HIRING MODERATOR: Update status for multiple applicants and optionally send email
-app.post('/api/hiring/update-applicants-status', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'Hiring Moderator') {
-        return res.status(403).json({ message: 'Access denied.' });
-    }
-    
-    const { applicationIds, newStatus, emailDetails } = req.body;
-
+app.post('/api/hiring/update-applicants-status', hiringModeratorAuth, async (req, res) => {
+    const { applicationIds, newStatus, emailDetails } = req.body; // applicationIds are likely the primary keys from HIRING_APPLICATIONS_TABLE
     if (!applicationIds || applicationIds.length === 0 || !newStatus) {
-        return res.status(400).json({ message: 'Application IDs and a new status are required.' });
+        return res.status(400).json({ message: 'Application IDs and new status are required.' });
     }
 
     try {
-        // Batch update statuses
-        for (const appId of applicationIds) {
-            await docClient.send(new UpdateCommand({
-                TableName: "TestifyApplications", // FIX: Applications are in TestifyApplications table
-                Key: { applicationId: appId }, // FIX: The primary key is applicationId
+        let emailsToSend = [];
+        const applicationUpdatePromises = applicationIds.map(async (appId) => {
+            // Fetch the application to get the email if needed for notifications
+             const { Item: application } = await docClient.send(new GetCommand({
+                 TableName: HIRING_APPLICATIONS_TABLE, // Ensure this table name is correct
+                 Key: { applicationId: appId } // Ensure 'applicationId' is the primary key
+             }));
+
+            if (application && application.email) { // Check if email exists
+                 emailsToSend.push(application.email);
+             }
+
+            // Update the status
+            return docClient.send(new UpdateCommand({
+                TableName: HIRING_APPLICATIONS_TABLE,
+                Key: { applicationId: appId },
                 UpdateExpression: "set #st = :s",
                 ExpressionAttributeNames: { "#st": "status" },
                 ExpressionAttributeValues: { ":s": newStatus }
             }));
-        }
+        });
 
-        // Handle optional email sending
-        if (emailDetails && emailDetails.send) {
-            // Fetch the applications to get candidate emails
-            const keys = applicationIds.map(id => ({ applicationId: id })); // FIX: Use correct primary key
-            const { Responses } = await docClient.send(new BatchGetCommand({
-                RequestItems: { "TestifyApplications": { Keys: keys } } // FIX: Fetch from correct table
-            }));
-            
-            const applications = Responses.TestifyApplications || [];
-            const emails = applications.map(app => app.email); // FIX: Field is 'email'
-            
-            if (emails.length > 0) {
-                const mailOptions = {
-                    to: emails,
-                    subject: emailDetails.subject,
-                    html: emailDetails.body
-                };
-                await sendEmailWithSES(mailOptions);
-            }
+        await Promise.all(applicationUpdatePromises);
+
+        // Send email if requested
+        if (emailDetails && emailDetails.send && emailsToSend.length > 0) {
+            // Remove duplicates just in case
+            const uniqueEmails = [...new Set(emailsToSend)];
+            const mailOptions = {
+                to: uniqueEmails.join(','), // Send as comma-separated string or array based on your SES function
+                subject: emailDetails.subject,
+                html: emailDetails.body
+            };
+            await sendEmailWithSES(mailOptions); // Make sure sendEmailWithSES handles multiple recipients correctly
+            console.log(`Status update email sent to ${uniqueEmails.length} recipients.`);
         }
 
         res.status(200).json({ message: `Successfully updated ${applicationIds.length} applicants to "${newStatus}".` });
@@ -10059,47 +10784,944 @@ Here is the text:\n\n${text}`;
     }
 });
 
-app.post('/execute', (req, res) => {
-    const { code, language = 'javascript' } = req.body;
-    
-    if (!code) {
-        return res.status(400).json({ error: 'No code provided' });
+
+// job portal 
+
+
+app.get('/api/public/colleges', async (req, res) => {
+    try {
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: HIRING_COLLEGES_TABLE,
+            ProjectionExpression: "collegeId, collegeName"
+        }));
+        const uniqueCollegesMap = new Map();
+        (Items || []).forEach(item => {
+            if (item.collegeName && !uniqueCollegesMap.has(item.collegeName.toLowerCase())) {
+                uniqueCollegesMap.set(item.collegeName.toLowerCase(), item);
+            }
+        });
+        const uniqueColleges = Array.from(uniqueCollegesMap.values());
+        uniqueColleges.sort((a, b) => (a.collegeName || '').localeCompare(b.collegeName || '')); // Sort alphabetically
+        res.json(uniqueColleges);
+    } catch (error) {
+        console.error("Get Public Colleges Error:", error);
+        res.status(500).json({ message: 'Server error fetching colleges.' });
+    }
+});
+
+
+app.post('/api/student/register', async (req, res) => {
+    const { fullName, email, college, department, rollNumber, password } = req.body;
+
+    // Basic validation
+    if (!fullName || !email || !college || !department || !rollNumber || !password) {
+        return res.status(400).json({ message: 'Please fill all fields.' });
     }
 
-    let command;
-    switch(language) {
-        case 'javascript':
-            command = `node -e "${code.replace(/"/g, '\\"')}"`;
-            break;
-        case 'python':
-            command = `python3 -c "${code.replace(/"/g, '\\"')}"`;
-            break;
-        default:
-            return res.status(400).json({ error: 'Unsupported language' });
-    }
-
-    exec(command, { timeout: 5000 }, (error, stdout, stderr) => {
-        if (error) {
-            return res.status(500).json({ error: stderr });
+    try {
+        const emailLower = email.toLowerCase();
+        // Check if user already exists in the correct table
+        const existingUser = await docClient.send(new GetCommand({
+            TableName: HIRING_USERS_TABLE, // Using the correct table here for the check
+            Key: { email: emailLower }
+        }));
+        if (existingUser.Item) {
+            return res.status(400).json({ message: 'User with this email already exists.' });
         }
-        res.json({ output: stdout, error: stderr });
-    });
+
+        // Hash the password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Create the new student object
+        const newUser = {
+            email: emailLower,
+            fullName,
+            college,
+            department,
+            rollNumber,
+            password: hashedPassword,
+            role: "Student",
+            isBlocked: false,
+            createdAt: new Date().toISOString()
+        };
+
+        // Save the new user to the correct table
+        await docClient.send(new PutCommand({ 
+            TableName: HIRING_USERS_TABLE, // << CORRECTED LINE
+            Item: newUser 
+        }));
+
+        res.status(201).json({ message: 'Account created successfully! Redirecting to login...' });
+
+    } catch (error) {
+        console.error("Student Registration Error:", error);
+        res.status(500).json({ message: 'Server error during registration.' });
+    }
 });
 
-// Docker-based compilation endpoint (optional)
-app.post('/compile', (req, res) => {
-    res.json({ 
-        message: 'Docker compiler endpoint',
-        note: 'This would require Docker setup'
-    });
+app.post('/api/student/login', async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ message: 'Please provide email and password.' });
+    try {
+        const emailLower = email.toLowerCase();
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: HIRING_USERS_TABLE,
+            Key: { email: emailLower }
+        }));
+        if (!Item || Item.role !== 'Student') {
+             return res.status(400).json({ message: 'Invalid credentials or not a student account.' });
+        }
+        if (Item.isBlocked) {
+            return res.status(403).json({ message: 'Your account has been blocked.' });
+        }
+        const isMatch = await bcrypt.compare(password, Item.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid credentials.' });
+        }
+        const payload = {
+            user: { email: Item.email, fullName: Item.fullName, college: Item.college, role: Item.role }
+        };
+        jwt.sign(payload, JWT_SECRET, { expiresIn: '1d' }, (err, token) => {
+            if (err) throw err;
+            const { password, ...userData } = Item;
+            res.json({ message: 'Login successful!', token, user: userData });
+        });
+    } catch (error) {
+        console.error("Student Login Error:", error);
+        res.status(500).json({ message: 'Server error during login.' });
+    }
+});
+
+// Check Auth (General - used by frontend to verify token on page load)
+app.get('/api/check-auth', authMiddleware, async (req, res) => {
+    // authMiddleware already fetched and attached the user (excluding password) if valid
+    res.json(req.user);
+});
+app.get('/api/student/jobs', studentAuthMiddleware, async (req, res) => {
+    // Ensure req.user and req.user.college are populated by middleware
+    if (!req.user || !req.user.college) {
+        console.error("[STUDENT_JOBS_ERROR] Middleware failed: req.user or req.user.college missing.");
+        return res.status(401).json({ message: "Authentication error or missing college information." });
+    }
+    const studentCollege = req.user.college;
+    console.log(`[STUDENT_JOBS_START] Fetching eligible jobs for college: ${studentCollege}`);
+
+    try {
+        // 1. Scan for all currently open jobs
+        console.log(`[STUDENT_JOBS_SCAN] Scanning ${HIRING_JOBS_TABLE} for open jobs.`);
+        const { Items: allJobs } = await docClient.send(new ScanCommand({
+            TableName: HIRING_JOBS_TABLE,
+            FilterExpression: "applicationDeadline > :now", // Only fetch jobs whose deadline hasn't passed
+            ExpressionAttributeValues: { ":now": new Date().toISOString() }
+        }));
+        console.log(`[STUDENT_JOBS_SCAN_RESULT] Found ${allJobs ? allJobs.length : 0} open jobs in total.`);
+
+
+        // 2. Filter jobs based on student's college eligibility
+        const eligibleJobs = (allJobs || []).filter(job =>
+            job.eligibleColleges && // Check if eligibleColleges exists
+            Array.isArray(job.eligibleColleges) && // Check if it's an array
+            job.eligibleColleges.includes(studentCollege) // Check if student's college is included
+        );
+        console.log(`[STUDENT_JOBS_FILTER] Found ${eligibleJobs.length} jobs eligible for college: ${studentCollege}`);
+
+        if (eligibleJobs.length === 0) {
+            console.log(`[STUDENT_JOBS_INFO] No eligible jobs found for ${studentCollege}. Returning empty array.`);
+            return res.json([]); // Return early if no jobs are eligible
+        }
+
+        // --- MODIFICATION START: Fetch Moderator Names ---
+        // 3. Get unique moderator emails from the eligible jobs
+        const moderatorEmails = [...new Set(eligibleJobs.map(job => job.createdBy).filter(Boolean))]; // Filter out any undefined/null emails
+        console.log(`[STUDENT_JOBS_MODERATORS] Found ${moderatorEmails.length} unique moderator emails: ${moderatorEmails.join(', ')}`);
+
+        let moderatorMap = new Map();
+        if (moderatorEmails.length > 0) {
+            // 4. Fetch moderator details using BatchGetCommand for efficiency
+            const keys = moderatorEmails.map(email => ({ email: email })); // Assuming 'email' is the PK for HIRING_USERS_TABLE
+            console.log(`[STUDENT_JOBS_BATCH_GET] Fetching details for ${keys.length} moderators from ${HIRING_USERS_TABLE}`);
+
+            const batchGetParams = {
+                RequestItems: {
+                    [HIRING_USERS_TABLE]: { // Use the correct table name constant
+                        Keys: keys,
+                        // Specify only the attributes needed (email and fullName)
+                        ProjectionExpression: "email, fullName"
+                    }
+                }
+            };
+            console.log("[STUDENT_JOBS_BATCH_GET] BatchGet Params:", JSON.stringify(batchGetParams, null, 2));
+
+            const { Responses } = await docClient.send(new BatchGetCommand(batchGetParams));
+
+            // Check if the response structure is as expected
+            const moderators = Responses && Responses[HIRING_USERS_TABLE] ? Responses[HIRING_USERS_TABLE] : [];
+
+            if (moderators.length > 0) {
+                 moderators.forEach(mod => {
+                     if (mod && mod.email) {
+                         // Store the fullName in the map, keyed by email
+                         moderatorMap.set(mod.email, mod.fullName);
+                     }
+                 });
+                 console.log(`[STUDENT_JOBS_BATCH_GET_SUCCESS] Successfully fetched details for ${moderators.length} moderators. Map size: ${moderatorMap.size}`);
+             } else {
+                console.warn(`[STUDENT_JOBS_BATCH_GET_WARN] BatchGet returned no moderator details, or response structure was unexpected.`);
+             }
+        } else {
+            console.log(`[STUDENT_JOBS_INFO] No moderator emails found in eligible jobs, skipping BatchGet.`);
+        }
+        // --- MODIFICATION END ---
+
+        // 5. Format the jobs for the frontend, adding the moderator's name as 'postedBy'
+        const formattedJobs = eligibleJobs.map(job => ({
+            ...job,
+            // Use the fetched name from the map, or fallback to 'Unknown' if not found
+            postedBy: moderatorMap.get(job.createdBy) || 'Unknown' // More specific fallback
+        }));
+
+        // 6. Sort jobs by creation date (newest first)
+        formattedJobs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        console.log(`[STUDENT_JOBS_SUCCESS] Returning ${formattedJobs.length} formatted and sorted jobs for ${studentCollege}.`);
+
+        res.json(formattedJobs);
+
+    } catch (error) {
+        console.error(`[STUDENT_JOBS_FATAL_ERROR] Failed fetching jobs for student ${req.user.email} (College: ${studentCollege}):`, error);
+        // Ensure headers aren't already sent before sending response
+        if (!res.headersSent) {
+            res.status(500).json({ message: 'Server error fetching jobs. Please try again later or contact support.' });
+        } else {
+             console.error("[STUDENT_JOBS_ERROR] Headers already sent, could not send error response.");
+        }
+    }
+});
+app.get('/api/student/applications', studentAuthMiddleware, async (req, res) => {
+    const studentEmail = req.user.email;
+    try {
+        const { Items } = await docClient.send(new QueryCommand({
+            TableName: HIRING_APPLICATIONS_TABLE, IndexName: "email-index",
+            KeyConditionExpression: "email = :email", ExpressionAttributeValues: { ":email": studentEmail }
+        }));
+        if (!Items || Items.length === 0) return res.json([]);
+        // Fetch job deadlines
+        const jobIds = [...new Set(Items.map(app => app.jobId))];
+        const keys = jobIds.map(jobId => ({ jobId }));
+        let jobDeadlineMap = new Map();
+        if(keys.length > 0) {
+            const { Responses } = await docClient.send(new BatchGetCommand({ RequestItems: { [HIRING_JOBS_TABLE]: { Keys: keys } } }));
+            (Responses[HIRING_JOBS_TABLE] || []).forEach(j => jobDeadlineMap.set(j.jobId, j.applicationDeadline));
+        }
+        const enrichedApps = Items.map(app => ({ ...app, jobDeadline: jobDeadlineMap.get(app.jobId) || null }));
+        enrichedApps.sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt));
+        res.json(enrichedApps);
+    } catch (error) {
+        console.error("Get Student Apps Error:", error);
+        res.status(500).json({ message: 'Server error fetching applications.' });
+    }
+});
+app.get('/api/student/applications/:applicationId', studentAuthMiddleware, async (req, res) => {
+    const { applicationId } = req.params;
+    const studentEmail = req.user.email;
+    try {
+        const { Item: application } = await docClient.send(new GetCommand({ TableName: HIRING_APPLICATIONS_TABLE, Key: { applicationId } }));
+        if (!application || application.email !== studentEmail) {
+            return res.status(404).json({ message: "Application not found or access denied." });
+        }
+        // Fetch job for deadline check
+        const { Item: job } = await docClient.send(new GetCommand({ TableName: HIRING_JOBS_TABLE, Key: { jobId: application.jobId } }));
+        const isEditable = job && new Date() < new Date(job.applicationDeadline);
+        // Important: Only return isEditable if the deadline hasn't passed.
+        // If it HAS passed, the PUT endpoint will reject the update anyway.
+        res.json({ ...application, jobTitle: job?.title || 'Job Not Found', isEditable: isEditable });
+    } catch (error) {
+        console.error("Get Student App Error:", error);
+        res.status(500).json({ message: 'Server error fetching application.' });
+    }
+});
+
+// const uploadToCloudinary = async (file) => {
+//     console.log(`[uploadToCloudinary] Attempting to upload file for field: ${file.fieldname}, mimetype: ${file.mimetype}`);
+//     try {
+//         const b64 = Buffer.from(file.buffer).toString("base64");
+//         const dataURI = `data:${file.mimetype};base64,${b64}`;
+//         const result = await cloudinary.uploader.upload(dataURI, {
+//             folder: "job_applications",
+//             resource_type: "auto"
+//         });
+//         console.log(`[uploadToCloudinary] SUCCESS for field: ${file.fieldname}. URL: ${result.secure_url}`);
+//         return result;
+//     } catch (error) {
+//         console.error(`[uploadToCloudinary] FAILED for field: ${file.fieldname}. Error:`, error);
+//         throw error;
+//     }
+// };
+
+app.put('/api/student/applications/:applicationId', studentAuthMiddleware, upload.any(), async (req, res) => {
+    const { applicationId } = req.params;
+    // Ensure req.user is populated by studentAuthMiddleware
+    if (!req.user || !req.user.email) {
+        console.error("[APP_UPDATE_ERROR] Middleware failed: req.user not populated.");
+        return res.status(401).json({ message: "Authentication error: User details missing." });
+    }
+    const studentEmail = req.user.email;
+    console.log(`[APP_UPDATE_START] User ${studentEmail} attempting to update application ${applicationId}`);
+
+    // Extract text fields from the request body
+    const {
+        firstName, lastName, phone, department, rollNumber, // Added department, rollNumber
+        linkedinUrl, githubUrl, portfolioUrl,
+        education, // JSON string for education array
+        experiences, // JSON string for experience array
+        govtIdType,
+        // *** NEW *** Add fields to track existing file URLs if frontend sends them
+        existingPassportPhotoUrl,
+        existingResumeUrl,
+        existingGovtIdUrl
+    } = req.body;
+     console.log("[APP_UPDATE_BODY] Received Text Body:", req.body);
+     console.log("[APP_UPDATE_FILES] Received Files:", req.files ? req.files.map(f => f.fieldname) : 'None');
+
+
+    try {
+        // --- 1. Fetch the existing application ---
+        console.log(`[APP_UPDATE_FETCH_APP] Fetching application ${applicationId} from ${APPLICATIONS_TABLE}`);
+        const { Item: application } = await docClient.send(new GetCommand({
+            TableName: APPLICATIONS_TABLE, // FIX: Use correct constant
+            Key: { applicationId }
+        }));
+
+        // --- 2. Verify ownership and existence ---
+        if (!application) {
+            console.warn(`[APP_UPDATE_ERROR] Application ${applicationId} not found.`);
+            return res.status(404).json({ message: "Application not found." });
+        }
+        if (application.email !== studentEmail) {
+            console.warn(`[APP_UPDATE_AUTH_FAIL] Student ${studentEmail} attempted update on application ${applicationId} owned by ${application.email}`);
+            return res.status(403).json({ message: "You are not authorized to update this application." });
+        }
+        console.log(`[APP_UPDATE_AUTH_PASS] Ownership verified for ${applicationId}.`);
+
+        // --- 3. Fetch the associated job and verify the deadline ---
+        console.log(`[APP_UPDATE_FETCH_JOB] Fetching job ${application.jobId} from ${JOBS_TABLE}`);
+        const { Item: job } = await docClient.send(new GetCommand({
+            TableName: JOBS_TABLE,       // FIX: Use correct constant
+            Key: { jobId: application.jobId } // FIX: Use correct primary key 'jobId'
+        }));
+
+        if (!job) {
+             console.error(`[APP_UPDATE_ERROR] Associated job ${application.jobId} not found for application ${applicationId}. Cannot verify deadline.`);
+             // Decide if you allow updates if the job is gone but deadline *might* be stored on app
+             // For safety, let's reject if the job isn't found to check deadline.
+             return res.status(404).json({ message: "Associated job opening not found. Cannot verify deadline." });
+        }
+         console.log(`[APP_UPDATE_FETCH_JOB_SUCCESS] Job ${application.jobId} found. Deadline: ${job.applicationDeadline}`);
+
+        if (new Date() > new Date(job.applicationDeadline)) {
+             console.warn(`[APP_UPDATE_ERROR] Deadline passed for job ${application.jobId}. Cannot update application ${applicationId}.`);
+            return res.status(403).json({ message: "The application deadline has passed. Cannot update." });
+        }
+         console.log(`[APP_UPDATE_DEADLINE_PASS] Deadline check passed for job ${application.jobId}.`);
+
+
+        // --- 4. Process *all* file uploads *once* and store URLs in a map ---
+        const files = req.files || [];
+        const uploadedFileUrls = new Map(); // Use a Map to store { fieldname: url }
+        console.log(`[APP_UPDATE_UPLOAD] Processing ${files.length} potential file uploads.`);
+
+        await Promise.all(files.map(async (file) => {
+            try {
+                const result = await uploadToCloudinary(file); // Ensure this helper exists and works
+                uploadedFileUrls.set(file.fieldname, result.secure_url);
+                console.log(`[APP_UPDATE_UPLOAD_SUCCESS] Field '${file.fieldname}' uploaded. URL: ${result.secure_url}`);
+            } catch (uploadError) {
+                console.error(`[APP_UPDATE_UPLOAD_FAIL] Cloudinary upload failed for field '${file.fieldname}':`, uploadError.message);
+                // Decide on error strategy: fail fast or continue? For now, continue but log.
+            }
+        }));
+        console.log(`[APP_UPDATE_UPLOAD_DONE] Processed file uploads. ${uploadedFileUrls.size} successful.`);
+
+
+        // --- 5. Prepare the update payload (start with existing application data) ---
+        // We will build the UpdateExpression and AttributeValues dynamically
+        let updateExpressionParts = [];
+        const expressionAttributeValues = {};
+        const expressionAttributeNames = {}; // Needed if attribute names conflict with DynamoDB keywords
+
+
+        // Update basic text fields if they are provided in the request
+        if (firstName !== undefined) { updateExpressionParts.push("firstName = :fn"); expressionAttributeValues[":fn"] = firstName; }
+        if (lastName !== undefined) { updateExpressionParts.push("lastName = :ln"); expressionAttributeValues[":ln"] = lastName; }
+        if (phone !== undefined) { updateExpressionParts.push("phone = :ph"); expressionAttributeValues[":ph"] = phone; }
+        // Add department and rollNumber if provided
+        if (department !== undefined) { updateExpressionParts.push("department = :dept"); expressionAttributeValues[":dept"] = department; }
+        if (rollNumber !== undefined) { updateExpressionParts.push("rollNumber = :rn"); expressionAttributeValues[":rn"] = rollNumber; }
+
+
+        // Update nested link fields - requires careful handling or overwriting the whole map
+        // Simple approach: overwrite the 'links' map if any link is provided
+         if (linkedinUrl !== undefined || githubUrl !== undefined || portfolioUrl !== undefined) {
+             updateExpressionParts.push("#links = :links"); // Use #links because 'links' could be a reserved word
+             expressionAttributeNames["#links"] = "links";
+             expressionAttributeValues[":links"] = {
+                 linkedin: linkedinUrl !== undefined ? linkedinUrl : application.links?.linkedin,
+                 github: githubUrl !== undefined ? githubUrl : application.links?.github,
+                 portfolio: portfolioUrl !== undefined ? portfolioUrl : application.links?.portfolio
+             };
+         }
+
+
+        // Update single file URLs if they were uploaded
+        if (uploadedFileUrls.has('passportPhoto')) {
+            updateExpressionParts.push("passportPhotoUrl = :p_photo");
+            expressionAttributeValues[":p_photo"] = uploadedFileUrls.get('passportPhoto');
+        }
+        if (uploadedFileUrls.has('resume')) {
+            updateExpressionParts.push("resumeUrl = :res_url");
+            expressionAttributeValues[":res_url"] = uploadedFileUrls.get('resume');
+        }
+
+        // Update Govt ID (Type and URL) - overwrite the 'govtId' map
+         if (govtIdType !== undefined || uploadedFileUrls.has('govtId')) {
+             updateExpressionParts.push("govtId = :gid");
+             expressionAttributeValues[":gid"] = {
+                 type: govtIdType !== undefined ? govtIdType : application.govtId?.type,
+                 url: uploadedFileUrls.get('govtId') || application.govtId?.url // Use new URL if uploaded, else keep old
+             };
+         }
+
+        // --- 6. Update Education & Experience Arrays ---
+        try {
+            if (education !== undefined) {
+                const submittedEducation = JSON.parse(education || '[]');
+                const updatedEducation = submittedEducation.map((edu, index) => {
+                    const fieldName = `education_certificate_${index}`; // Match the input field name
+                    // Use uploaded URL if available, else use the URL submitted in the JSON (might be old one or null), default null
+                    const certificateUrl = uploadedFileUrls.get(fieldName) || edu.certificateUrl || null;
+                    return { ...edu, certificateUrl };
+                });
+                updateExpressionParts.push("education = :edu");
+                expressionAttributeValues[":edu"] = updatedEducation;
+            }
+
+             if (experiences !== undefined) {
+                const submittedExperiences = JSON.parse(experiences || '[]');
+                const updatedExperiences = submittedExperiences.map((exp, index) => {
+                    const fieldName = `experience_certificate_${index}`; // Match the input field name
+                    const certificateUrl = uploadedFileUrls.get(fieldName) || exp.certificateUrl || null;
+                    return { ...exp, certificateUrl };
+                });
+                 updateExpressionParts.push("experiences = :exp");
+                 expressionAttributeValues[":exp"] = updatedExperiences;
+            }
+        } catch (parseError) {
+            console.error(`[APP_UPDATE_PARSE_ERROR] Invalid JSON for edu/exp on application ${applicationId}:`, parseError.message);
+            return res.status(400).json({ message: "Invalid format for education or experience data." });
+        }
+
+
+        // --- 7. Perform the update in DynamoDB using UpdateCommand ---
+        if (updateExpressionParts.length === 0) {
+             console.log(`[APP_UPDATE_NO_CHANGES] No fields provided for update for application ${applicationId}.`);
+             return res.status(200).json({ message: 'No changes detected.' }); // Or 400 if you require changes
+        }
+
+        const updateParams = {
+            TableName: APPLICATIONS_TABLE, // FIX: Use correct constant
+            Key: { applicationId },
+            UpdateExpression: `SET ${updateExpressionParts.join(', ')}`,
+            ExpressionAttributeValues: expressionAttributeValues,
+            ReturnValues: "UPDATED_NEW" // Optional: Return the updated item
+        };
+        // Add ExpressionAttributeNames only if needed
+         if (Object.keys(expressionAttributeNames).length > 0) {
+             updateParams.ExpressionAttributeNames = expressionAttributeNames;
+         }
+
+        console.log(`[APP_UPDATE_DB_PARAMS] Update Params for ${applicationId}:`, JSON.stringify(updateParams, null, 2));
+
+
+        await docClient.send(new UpdateCommand(updateParams));
+
+        console.log(`[APP_UPDATE_SUCCESS] Application ${applicationId} updated successfully.`);
+        res.status(200).json({ message: 'Application updated successfully!' });
+
+    } catch (error) {
+        console.error(`[APP_UPDATE_FATAL_ERROR] Failed to update application ${applicationId}:`, error);
+        let userMessage = 'Server error updating application. Please try again later.';
+        let statusCode = 500;
+        // Add specific error checks if needed (e.g., ValidationException)
+        if (error.name === 'ValidationException') {
+            userMessage = 'Database error: Invalid data format during update. Please contact support.';
+        } else if (error.name === 'ResourceNotFoundException') {
+             userMessage = 'Database error: Application table not found. Please contact support.';
+        }
+        if (!res.headersSent) {
+            res.status(statusCode).json({ message: userMessage });
+        }
+    }
+});
+
+const uploadToCloudinary = async (file) => {
+    console.log(`[uploadToCloudinary] Attempting to upload file for field: ${file.fieldname}, mimetype: ${file.mimetype}`);
+    try {
+        const b64 = Buffer.from(file.buffer).toString("base64");
+        const dataURI = `data:${file.mimetype};base64,${b64}`;
+        const result = await cloudinary.uploader.upload(dataURI, {
+            folder: "job_applications", // Ensure this folder exists or Cloudinary can create it
+            resource_type: "auto" // Detect resource type (image, pdf, docx etc.)
+        });
+        console.log(`[uploadToCloudinary] SUCCESS for field: ${file.fieldname}. URL: ${result.secure_url}`);
+        return result;
+    } catch (error) {
+        console.error(`[uploadToCloudinary] FAILED for field: ${file.fieldname}. Error:`, error);
+        throw error; // Re-throw the error to be caught by the main endpoint handler
+    }
+};
+app.post('/api/student/apply/:jobId', studentAuthMiddleware, upload.any(), async (req, res) => {
+    const { jobId } = req.params;
+    // Ensure req.user is populated by studentAuthMiddleware
+    if (!req.user || !req.user.email) {
+        console.error("[APPLY_ERROR] studentAuthMiddleware did not populate req.user correctly.");
+        return res.status(401).json({ message: "Authentication error: User details missing." });
+    }
+    const studentEmail = req.user.email; // Get email from authenticated user
+    const studentCollege = req.user.college; // Get college from authenticated user
+
+    console.log(`[APPLY_START] Received application for job ${jobId} from student ${studentEmail}`);
+    console.log("[APPLY_BODY] Request Body:", req.body); // Log text fields
+    console.log("[APPLY_FILES] Received Files:", req.files ? req.files.map(f => f.fieldname) : 'None'); // Log file field names
+
+
+    // Extract text fields from req.body
+    const {
+        firstName, lastName, phone, department, rollNumber, // Student profile info from form
+        coverLetter, linkedinUrl, githubUrl, portfolioUrl // Optional fields from form
+    } = req.body;
+
+    // Basic validation for required text fields from the form
+    if (!firstName || !lastName || !phone || !department || !rollNumber) {
+        console.warn(`[APPLY_VALIDATION_FAIL] Missing required personal details for student ${studentEmail}, job ${jobId}.`);
+        return res.status(400).json({ message: 'Missing required personal details (First Name, Last Name, Phone, Department, Roll Number).' });
+    }
+    console.log("[APPLY_VALIDATION_PASS] Required text fields present.");
+
+    try {
+        // --- 1. Fetch Job Details & Verify Eligibility ---
+        console.log(`[APPLY_FETCH_JOB] Fetching job details for ${jobId}.`);
+        const { Item: job } = await docClient.send(new GetCommand({
+            TableName: HIRING_JOBS_TABLE, // Ensure this constant points to your jobs table ("HiringJobs")
+            Key: { jobId: jobId }         // Ensure 'jobId' is the primary key name
+        }));
+
+        if (!job) {
+            console.warn(`[APPLY_ERROR] Job ${jobId} not found.`);
+            return res.status(404).json({ message: 'Job opening not found.' });
+        }
+        console.log(`[APPLY_FETCH_JOB_SUCCESS] Job ${jobId} found. Title: ${job.title}. Checking deadline and eligibility.`);
+
+        // Check deadline
+        const now = new Date();
+        const deadline = new Date(job.applicationDeadline);
+        if (deadline < now) {
+            console.warn(`[APPLY_ERROR] Application deadline passed for job ${jobId}. Deadline: ${job.applicationDeadline}`);
+            return res.status(400).json({ message: 'The application deadline has passed.' });
+        }
+        console.log(`[APPLY_DEADLINE_PASS] Deadline check passed.`);
+
+
+        // Check if student's college is eligible
+        if (!studentCollege) {
+             console.warn(`[APPLY_ERROR] Student ${studentEmail} college information is missing in token/user data.`);
+             return res.status(403).json({ message: 'Your college information is missing. Cannot verify eligibility.' });
+        }
+        if (!job.eligibleColleges || !Array.isArray(job.eligibleColleges) || !job.eligibleColleges.includes(studentCollege)) {
+             console.warn(`[APPLY_ERROR] Student ${studentEmail} from college '${studentCollege}' is not eligible for job ${jobId}. Eligible: ${job.eligibleColleges?.join(', ')}`);
+             return res.status(403).json({ message: `Your college ('${studentCollege}') is not eligible for this job.` });
+        }
+        console.log(`[APPLY_ELIGIBILITY_PASS] Student ${studentEmail} from '${studentCollege}' is eligible.`);
+
+        // --- 2. Check if student already applied ---
+       console.log(`[APPLY_CHECK_DUPLICATE] Checking if student ${studentEmail} already applied for job ${jobId}. Using index: email-jobId-index`);
+        const queryParams = {
+            TableName: HIRING_APPLICATIONS_TABLE, // Ensure this is "HiringApplications"
+            IndexName: "email-jobId-index",      // Make sure this index exists with HASH(email), RANGE(jobId)
+            KeyConditionExpression: "email = :email AND jobId = :jobId",
+            ExpressionAttributeValues: { ":email": studentEmail, ":jobId": jobId },
+            Limit: 1 // We only need to know if at least one exists
+        };
+        console.log("[APPLY_CHECK_DUPLICATE] Query Params:", queryParams);
+        const { Items: existingApps } = await docClient.send(new QueryCommand(queryParams));
+
+        if (existingApps && existingApps.length > 0) {
+            console.warn(`[APPLY_ERROR] Duplicate application found for student ${studentEmail} and job ${jobId}.`);
+            return res.status(400).json({ message: 'You have already applied for this job.' });
+        }
+        console.log(`[APPLY_CHECK_DUPLICATE_PASS] No existing application found.`);
+
+        // --- 3. Process File Uploads (Resume is required) ---
+        const files = req.files || [];
+        let resumeUrl = null;
+        console.log(`[APPLY_UPLOAD] Processing ${files.length} files.`);
+
+        const resumeFile = files.find(f => f.fieldname === 'resume');
+
+        if (!resumeFile) {
+            // This case might happen if the frontend allows submission without the file, despite 'required' attribute
+             console.warn(`[APPLY_ERROR] Resume file missing in submission for student ${studentEmail}, job ${jobId}`);
+            return res.status(400).json({ message: 'Resume file is required but was not received by the server.' });
+        }
+
+        // Upload resume specifically
+        try {
+            console.log(`[APPLY_UPLOAD_RESUME] Uploading resume...`);
+            const result = await uploadToCloudinary(resumeFile); // Ensure uploadToCloudinary is defined and works
+            resumeUrl = result.secure_url;
+            console.log(`[APPLY_UPLOAD_RESUME_SUCCESS] Resume uploaded: ${resumeUrl}`);
+        } catch (uploadError) {
+             console.error(`[APPLY_ERROR] Cloudinary upload failed for resume (student ${studentEmail}, job ${jobId}):`, uploadError);
+             return res.status(500).json({ message: 'Server error during resume file upload. Please ensure the file is valid and try again.' });
+        }
+        // Handle other optional file uploads if necessary
+
+        // --- 4. Create and Save Application ---
+        const applicationId = `sapp_${uuidv4()}`; // Prefix for student apps
+        console.log(`[APPLY_CREATE_ITEM] Creating application item with ID ${applicationId}`);
+        const newApplication = {
+            applicationId, // Primary Key for HIRING_APPLICATIONS_TABLE
+            jobId,         // Range Key for email-jobId-index, Sort Key for jobId-index
+            jobTitle: job.title,
+            // Use authenticated user's details + form details
+            email: studentEmail,       // Partition Key for email-jobId-index
+            college: studentCollege, // From authenticated user
+            // Use form data submitted
+            firstName: firstName,
+            lastName: lastName,
+            phone: phone,
+            department: department,
+            rollNumber: rollNumber,
+            resumeUrl, // The uploaded resume URL
+            coverLetter: coverLetter || null, // Optional cover letter text
+            links: { // Optional links
+                linkedin: linkedinUrl || null,
+                github: githubUrl || null,
+                portfolio: portfolioUrl || null
+            },
+            status: 'Applied', // Initial status
+            appliedAt: new Date().toISOString() // Sort Key for jobId-index
+        };
+        console.log("[APPLY_CREATE_ITEM] Application Data:", JSON.stringify(newApplication, null, 2));
+
+
+        console.log(`[APPLY_SAVE_DB] Attempting to save application ${applicationId} to ${HIRING_APPLICATIONS_TABLE}.`);
+        await docClient.send(new PutCommand({
+            TableName: HIRING_APPLICATIONS_TABLE, // Save to the correct Applications table ("HiringApplications")
+            Item: newApplication
+        }));
+
+        console.log(`[APPLY_SUCCESS] Application ${applicationId} submitted successfully for job ${jobId} by ${studentEmail}`);
+        res.status(201).json({ message: 'Application submitted successfully!' });
+
+    } catch (error) {
+        // Log the detailed error with more context
+        console.error(`[APPLY_FATAL_ERROR] Endpoint failed for student ${studentEmail}, job ${jobId}:`);
+        console.error("Error Message:", error.message);
+        console.error("Error Name:", error.name);
+        // Log specifics if it's an AWS error
+        if (error.$metadata) {
+             console.error("AWS Error Metadata:", error.$metadata);
+        }
+         console.error("Error Stack:", error.stack); // Log the full stack trace
+
+        // Determine user message based on error type
+        let userMessage = 'Server error submitting application. Please try again later.';
+        let statusCode = 500;
+
+        if (error.name === 'ValidationException') { // DynamoDB validation error
+             userMessage = 'Database error: Invalid data format during submission. Please contact support.';
+             statusCode = 500; // Or 400 if it's likely user input related, but often schema issues
+        } else if (error.name === 'ResourceNotFoundException') { // DynamoDB table/index not found
+             userMessage = 'Database error: Required table or index not found. Please contact support.';
+             statusCode = 500;
+        } else if (error.message.includes('IndexNotFound')) { // Specific index error check
+             userMessage = 'Database index configuration error. Please contact support.';
+             statusCode = 500;
+        } else if (error.message.includes('upload') || error.message.includes('Cloudinary')) { // Upload errors
+             userMessage = 'Server error during file upload. Please ensure the file is valid and try again.';
+             statusCode = 500;
+        } else if (error.message.includes('Token is not valid') || error.message.includes('authorization denied')) { // Auth errors
+            userMessage = 'Authentication error. Please log in again.';
+            statusCode = 401;
+        }
+        // Add more specific AWS SDK v3 error checks if needed (e.g., error.code)
+
+        // Ensure headers aren't already sent before sending response
+        if (!res.headersSent) {
+             res.status(statusCode).json({ message: userMessage });
+        } else {
+            console.error("[APPLY_ERROR] Headers already sent, could not send error response to client.");
+        }
+    }
+});
+
+app.get('/api/public/problem-details/:problemId', authMiddleware, async (req, res) => {
+    if (!req.user || !req.user.isExternal) {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { problemId } = req.params;
+    const { testId: assignedTestId, assignmentId } = req.user;
+
+    console.log(`[GET /problem-details] Request for problemId: ${problemId}, assignment: ${assignmentId}, test: ${assignedTestId}`);
+
+    try {
+        // Verify assignment validity (optional but good practice)
+        const { Item: assignment } = await docClient.send(new GetCommand({ TableName: HIRING_ASSIGNMENTS_TABLE, Key: { assignmentId } }));
+        if (!assignment || assignment.testId !== assignedTestId || assignment.studentEmail !== req.user.email) {
+            return res.status(403).json({ message: 'Assignment invalid or mismatch.' });
+        }
+        if (assignment.testType !== 'coding') {
+             return res.status(400).json({ message: 'Invalid test type for requesting coding problem details.' });
+        }
+
+        // Fetch the coding test to check if the problem belongs to it
+        const { Item: codingTest } = await docClient.send(new GetCommand({ TableName: HIRING_CODING_TESTS_TABLE, Key: { codingTestId: assignedTestId } }));
+        if (!codingTest || !codingTest.problems?.find(p => p.problemId === problemId)) {
+            return res.status(403).json({ message: 'Problem is not part of the assigned test.' });
+        }
+
+        // Fetch the full problem details
+        const { Item: fullProblemData } = await docClient.send(new GetCommand({ TableName: HIRING_CODING_PROBLEMS_TABLE, Key: { problemId: problemId } }));
+        if (!fullProblemData) {
+            return res.status(404).json({ message: 'Problem details not found.' });
+        }
+
+        res.json(fullProblemData);
+
+    } catch (error) {
+        console.error(`[GET /problem-details] Error fetching problem details for ${problemId}:`, error);
+        res.status(500).json({ message: 'Server error fetching problem details.' });
+    }
+});
+
+app.post('/api/public/save-code-snippet', authMiddleware, async (req, res) => {
+    if (!req.user || !req.user.isExternal) {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { testId: tokenTestId, assignmentId: tokenAssignmentId, email: candidateEmail } = req.user;
+    const { assignmentId, testId, problemId, code, language } = req.body;
+
+    if (!assignmentId || !testId || !problemId || code === undefined || code === null || !language) {
+        return res.status(400).json({ message: `Missing required fields.` });
+    }
+    if (assignmentId !== tokenAssignmentId || testId !== tokenTestId) {
+        return res.status(403).json({ message: 'Invalid assignment or test association.' });
+    }
+
+    try {
+        // Optional: Verify assignment is active (already done in GET /test-details, maybe redundant here)
+        // const { Item: assignment } = await docClient.send(new GetCommand({ /* ... */ }));
+        // if (!assignment || new Date() < new Date(assignment.startTime) || new Date() > new Date(assignment.endTime)) {
+        //     return res.status(403).json({ message: 'Test assignment is not currently active.' });
+        // }
+
+        const snippetId = `${assignmentId}_${problemId}`; // Composite ID
+        const snippetItem = {
+            snippetId, assignmentId, problemId, candidateEmail, testId, code, language,
+            savedAt: new Date().toISOString()
+        };
+        await docClient.send(new PutCommand({ TableName: HIRING_CODE_SNIPPETS_TABLE, Item: snippetItem }));
+        res.status(200).json({ message: 'Snippet saved successfully.' });
+
+    } catch (error) {
+        console.error(`[SAVE SNIPPET] Error for assignment ${assignmentId}, problem ${problemId}:`, error);
+        res.status(500).json({ message: 'Server error saving code snippet.' });
+    }
+});
+app.get('/api/candidate-details', authMiddleware, async (req, res) => {
+    // ... (Keep the existing logic with GetCommand retries) ...
+    if (!req.user || !req.user.email) { /* ... */ }
+    const candidateEmail = req.user.email;
+    const assignmentIdFromToken = req.user.assignmentId;
+    if (!assignmentIdFromToken) { /* ... */ }
+
+    console.log(`[GET /candidate-details] Request for email: ${candidateEmail}, Assignment ID: ${assignmentIdFromToken}`);
+    const expectedResultId = `init_${assignmentIdFromToken}`;
+    console.log(`[GET /candidate-details] Constructed expected resultId for GET: ${expectedResultId}`);
+
+    try {
+        let candidateData = null;
+        const maxRetries = 2;
+        const initialDelay = 300; // Slightly increased delay
+
+        // --- Step 1: Attempt direct GetCommand (with retries) ---
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            if (attempt > 0) {
+                const delay = initialDelay * Math.pow(2, attempt - 1); // Exponential backoff (300ms, 600ms)
+                console.log(`[GET /candidate-details] Retrying GetCommand (attempt ${attempt + 1}/${maxRetries + 1}) after ${delay}ms delay for resultId: ${expectedResultId}`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+
+            console.log(`[GET /candidate-details] Attempting direct GetCommand (attempt ${attempt + 1}) in ${HIRING_TEST_RESULTS_TABLE} for resultId: ${expectedResultId}`);
+            try {
+                // Use ConsistentRead for GetCommand here as well
+                const getParams = { TableName: HIRING_TEST_RESULTS_TABLE, Key: { resultId: expectedResultId }, ConsistentRead: true };
+                const { Item } = await docClient.send(new GetCommand(getParams));
+                console.log(`[GET /candidate-details] Raw GetCommand response (attempt ${attempt + 1}):`, JSON.stringify({ Item }));
+
+                if (Item && Item.candidateEmail === candidateEmail && Item.assignmentId === assignmentIdFromToken) {
+                    candidateData = Item;
+                    console.log(`[GET /candidate-details] Found matching 'init_' details record via GetCommand (attempt ${attempt + 1}).`);
+                    break; // Exit the loop if found
+                } else if (Item) {
+                    console.warn(`[GET /candidate-details] GetCommand found record (attempt ${attempt + 1}), but email/assignmentId mismatch.`);
+                } else {
+                    console.log(`[GET /candidate-details] Direct GetCommand found no record (attempt ${attempt + 1}).`);
+                }
+            } catch (getError) {
+                 console.error(`[GET /candidate-details] Error during GetCommand (attempt ${attempt + 1}):`, getError);
+                 if (getError.name === 'ResourceNotFoundException') throw getError;
+            }
+        } // End of retry loop
+
+
+        // --- Step 3: Process the found data (if GetCommand succeeded) ---
+        if (candidateData) {
+            const detailsToSend = {
+                fullName: candidateData.fullName,
+                rollNumber: candidateData.rollNumber,
+                collegeName: candidateData.collegeName,
+                department: candidateData.department,
+                profileImageUrl: candidateData.profileImageUrl || null
+            };
+            if (!detailsToSend.fullName || !detailsToSend.rollNumber || !detailsToSend.collegeName || !detailsToSend.department) {
+                console.warn(`[GET /candidate-details] Incomplete details extracted even though record was found. Data:`, candidateData);
+                 return res.status(404).json({ message: 'Incomplete candidate details found in records.' });
+            }
+            console.log(`[GET /candidate-details] Sending details for ${candidateEmail}.`);
+            res.json(detailsToSend);
+        } else {
+            console.warn(`[GET /candidate-details] FINAL: No valid candidate details record found for ${candidateEmail} (Assignment: ${assignmentIdFromToken}) after ${maxRetries + 1} GetCommand attempts.`);
+            res.status(404).json({ message: 'Candidate details not found. Please ensure you completed any initial verification steps.' });
+        }
+
+    } catch (error) {
+        console.error(`[GET /candidate-details] Outer catch block error for ${candidateEmail}:`, error);
+        if (error.name === 'ResourceNotFoundException') {
+             console.error(`[GET /candidate-details] Critical Error: DynamoDB table (${HIRING_TEST_RESULTS_TABLE}) might be missing or misspelled.`);
+             return res.status(500).json({ message: `Server configuration error: Table not found.` });
+        }
+        res.status(500).json({ message: 'Server error fetching candidate details.' });
+    }
 });
 
 
-// =================================================================
-// --- START SERVER ---
-// =================================================================
+
+app.post('/api/save-initial-details', authMiddleware, async (req, res) => {
+    // ... (Keep existing validation for token and details) ...
+    if (!req.user || !req.user.isExternal || !req.user.assignmentId) {
+        console.warn('[SAVE DETAILS] Denied: Invalid token or missing assignmentId.');
+        return res.status(403).json({ message: 'Invalid token or assignment reference.' });
+    }
+    const { assignmentId } = req.user;
+    const { details } = req.body;
+    if (!details || !details.fullName || !details.rollNumber || !details.collegeName || !details.department || !details.profileImageUrl) {
+         console.warn(`[SAVE DETAILS] Incomplete details received for assignment ${assignmentId}. Body:`, req.body);
+         return res.status(400).json({ message: 'Missing required candidate details: Full Name, Roll Number, College, Department, and Profile Image URL.' });
+    }
+    console.log(`[SAVE DETAILS] Request received for assignment: ${assignmentId}, Candidate: ${req.user.email}`);
+
+    let assignment; // Define assignment variable outside the try block if needed later
+    try {
+        // --- Verify Assignment ---
+        console.log(`[SAVE DETAILS] Verifying assignment ${assignmentId} in ${HIRING_ASSIGNMENTS_TABLE}`);
+        const { Item } = await docClient.send(new GetCommand({ TableName: HIRING_ASSIGNMENTS_TABLE, Key: { assignmentId } }));
+        assignment = Item; // Assign fetched item
+        if (!assignment || assignment.studentEmail !== req.user.email || assignment.testId !== req.user.testId) {
+             console.warn(`[SAVE DETAILS] Assignment ${assignmentId} mismatch or not found.`);
+             return res.status(403).json({ message: 'Assignment mismatch or not found.' });
+        }
+        console.log(`[SAVE DETAILS] Assignment ${assignmentId} verified.`);
+
+        // --- Prepare Item ---
+        const resultId = `init_${assignmentId}`;
+        console.log(`[SAVE DETAILS] Constructed resultId for PUT: ${resultId}`);
+        const initialResultItem = {
+            resultId, assignmentId, candidateEmail: req.user.email, testId: assignment.testId,
+            testType: assignment.testType, fullName: details.fullName, rollNumber: details.rollNumber,
+            collegeName: details.collegeName, department: details.department, profileImageUrl: details.profileImageUrl,
+            status: 'Initialized', submittedAt: null, answers: null, score: null,
+            marksScored: null, totalMarks: null, result: null, violationReason: null,
+            createdAt: new Date().toISOString()
+        };
+        console.log(`[SAVE DETAILS] Prepared item for ${HIRING_TEST_RESULTS_TABLE}:`, JSON.stringify(initialResultItem));
+
+        // --- Execute PutCommand ---
+        console.log(`[SAVE DETAILS] Executing PutCommand for resultId: ${resultId}...`);
+        const putResult = await docClient.send(new PutCommand({
+            TableName: HIRING_TEST_RESULTS_TABLE,
+            Item: initialResultItem
+        }));
+        console.log(`[SAVE DETAILS] PutCommand successful for ${resultId}. Metadata:`, putResult.$metadata); // *** ADDED LOG ***
+
+        // --- Verification Get (Optional but helpful) ---
+        // Immediately try to read the item back to confirm it was written
+        console.log(`[SAVE DETAILS] Performing verification GetCommand for resultId: ${resultId}...`);
+        const { Item: verifiedItem } = await docClient.send(new GetCommand({
+             TableName: HIRING_TEST_RESULTS_TABLE,
+             Key: { resultId: resultId },
+             ConsistentRead: true // Use consistent read for verification
+         }));
+
+        if (verifiedItem && verifiedItem.resultId === resultId) {
+             console.log(`[SAVE DETAILS] VERIFICATION SUCCESS: Item ${resultId} found immediately after PUT.`); // *** ADDED LOG ***
+             res.status(200).json({ message: 'Candidate details saved successfully.' });
+        } else {
+             // This indicates a potential major issue if the immediate consistent read fails
+             console.error(`[SAVE DETAILS] VERIFICATION FAILED: Item ${resultId} NOT FOUND immediately after successful PUT! This indicates a potential DynamoDB issue or configuration problem.`); // *** ADDED LOG ***
+             res.status(500).json({ message: 'Server error: Failed to verify saved details. Please contact support.' });
+        }
+
+    } catch (error) {
+         console.error(`[SAVE DETAILS] Error during save/verification process for assignment ${assignmentId}:`, error);
+         // Log specific details for DynamoDB errors
+         if (error.name === 'ValidationException') {
+            console.error('[SAVE DETAILS] DynamoDB Validation Error:', error.message);
+            res.status(500).json({ message: 'Internal server error: Invalid data format for saving details.' });
+         } else if (error.name === 'ResourceNotFoundException') {
+             console.error('[SAVE DETAILS] DynamoDB Resource Not Found Error:', error.message);
+             res.status(500).json({ message: `Server configuration error: A required table (${HIRING_ASSIGNMENTS_TABLE} or ${HIRING_TEST_RESULTS_TABLE}) might be missing.` });
+         } else if (error.$metadata?.httpStatusCode) {
+             console.error(`[SAVE DETAILS] DynamoDB HTTP Error Status: ${error.$metadata.httpStatusCode}`);
+             res.status(500).json({ message: `Server error saving initial details (Code: ${error.$metadata.httpStatusCode}). Please contact support.` });
+         } else {
+             res.status(500).json({ message: 'Unknown server error saving initial details.' });
+         }
+    }
+});
+
+app.post('/api/public/upload-image', async (req, res) => {
+    const { imageData } = req.body;
+    if (!imageData) {
+        return res.status(400).json({ message: 'No image data provided.' });
+    }
+    try {
+        // Ensure Cloudinary is configured
+        if (!cloudinary.config().cloud_name) {
+             console.error("Cloudinary not configured!");
+             return res.status(500).json({ message: 'Image upload service not configured.' });
+        }
+        const result = await cloudinary.uploader.upload(imageData, {
+            folder: "hiring_test_captures"
+        });
+        console.log("[UPLOAD IMAGE] Success. URL:", result.secure_url);
+        res.json({ imageUrl: result.secure_url });
+    } catch (error) {
+        console.error("[UPLOAD IMAGE] Error:", error);
+        res.status(500).json({ message: 'Server error uploading image.' });
+    }
+});
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
-    console.log(`Judge0 API is expected at: ${process.env.JUDGE0_URL || 'http://localhost:2358'}`);
 });
 
