@@ -8,13 +8,22 @@ let validatedTestData = null; // Store the full test details after validation
 let currentToken = null; // Store the validated token
 let isTestSubmitted = false; // --- NEW FLAG to allow closing ---
 
-// Ensure this URL matches your running backend server
-const BACKEND_URL = 'http://localhost:3000';
+// --- !!! DYNAMIC URL & ENVIRONMENT !!! ---
+// isDev will be TRUE when you run `npm start` (app is not packaged)
+// isDev will be FALSE when you run the final .exe (app is packaged)
+const isDev = !app.isPackaged;
+
+// Set the backend URL based on the environment
+const BACKEND_URL = isDev
+    ? 'http://localhost:3000'         // Use localhost for development (`npm start`)
+    : 'https://www.testify-lac.com'; // Use live URL for production (the built .exe)
+// --- !!! END OF DYNAMIC URL & ENVIRONMENT !!! ---
+
 
 // --- !!! KEY CHANGE !!! ---
-// We are forcing the app into "production" mode to enable lockdown features.
-// `isDev` will now be FALSE, even when you run `npm start`.
-const isDev = false; // !app.isPackaged;
+// The `isDev` variable now dynamically controls lockdown.
+// It is no longer forced to `false`.
+// const isDev = false; // !app.isPackaged; // <-- This hardcoded line is replaced by the logic above
 // --- !!! END OF KEY CHANGE !!! ---
 
 
@@ -43,15 +52,14 @@ function createLockdownWindow() {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: false,
             contextIsolation: true,
-            devTools: isDev, // This will be false
-            sandbox: !isDev, // This will be true
+            devTools: isDev, // This will now be TRUE during `npm start`
+            sandbox: !isDev, // This will be TRUE in the final .exe
             webSecurity: true,
         }
     });
 
     // --- Relax settings IF in development mode for debugging ---
-    // This block is now SKIPPED because isDev is false.
-    /*
+    // This block will NOW RUN when you use `npm start`
     if (isDev) {
         console.log("[Dev Mode] Relaxing lockdown for debugging.");
         lockdownWindow.setKiosk(false); // Allow exiting kiosk in dev
@@ -59,13 +67,14 @@ function createLockdownWindow() {
         lockdownWindow.setClosable(true);
         lockdownWindow.webContents.openDevTools();
     }
-    */
-
+    
     // --- Attach all lockdown listeners to the new window ---
     lockdownWindow.setMenu(null); // Remove menu
 
     lockdownWindow.on('close', (e) => {
         // --- This logic now correctly blocks unauthorized closes ---
+        // In dev (isDev=true), it will return (allowing close)
+        // In prod (isDev=false), it will check isTestSubmitted
         if (isDev || isTestSubmitted) return; // Allow close if dev or test submitted
         // --- END MODIFICATION ---
 
@@ -75,7 +84,7 @@ function createLockdownWindow() {
     });
 
     lockdownWindow.on('blur', () => {
-        if (isDev) return; // This will be skipped
+        if (isDev) return; // This will be skipped in dev
         console.log('[Lockdown] Window lost focus. Triggering violation.');
         lockdownWindow.flashFrame(true);
         lockdownWindow.webContents.send('proctoring-violation', 'Window lost focus. Attempts to switch applications are monitored.');
@@ -83,7 +92,7 @@ function createLockdownWindow() {
     });
 
     lockdownWindow.on('leave-full-screen', () => {
-        if (isDev) return; // This will be skipped
+        if (isDev) return; // This will be skipped in dev
         console.log('[Lockdown] Attempted to leave full-screen. Re-entering and triggering violation.');
         lockdownWindow.setKiosk(true);
         lockdownWindow.webContents.send('proctoring-violation', 'Exiting full-screen mode is not allowed during the test.');
@@ -100,7 +109,7 @@ function createLockdownWindow() {
         }
         // --- !!! END ESCAPE HATCH !!! ---
 
-        if (isDev) return; // This will be skipped, lockdown logic will RUN
+        if (isDev) return; // This will be skipped in dev, allowing copy/paste etc.
 
         const isShortcut = (input.control || input.meta) && !input.alt && !input.shift;
         const key = input.key.toLowerCase();
@@ -133,7 +142,7 @@ function createWindow() {
         height: 600,
         center: true,
         frame: true, // Show frame for token entry
-        resizable: isDev, // This will be false
+        resizable: isDev, // This will now be TRUE during `npm start`
         movable: true,
         minimizable: true,
         closable: true,
@@ -142,21 +151,19 @@ function createWindow() {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: false,
             contextIsolation: true,
-            devTools: isDev, // This will be false
-            sandbox: !isDev, // This will be true
+            devTools: isDev, // This will now be TRUE during `npm start`
+            sandbox: !isDev, // This will be TRUE in the final .exe
             webSecurity: true,
         }
     });
     // --- END OF MODIFICATION ---
 
     // This block is still useful for debugging the *initial* window
-    // This block is now SKIPPED
-    /*
+    // This block will NOW RUN when you use `npm start`
     if (isDev) {
         mainWindow.webContents.openDevTools();
     }
-    */
-
+    
     // Load the initial token entry page
     mainWindow.loadFile('token-entry.html');
 
@@ -340,4 +347,6 @@ ipcMain.on('test-submitted-successfully', () => {
     // --- END MODIFICATION ---
     app.quit();
 });
+
+
 

@@ -10,7 +10,7 @@
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
         font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com;
         img-src 'self' https://res.cloudinary.com data:;
-        connect-src 'self' http://localhost:3000;
+        connect-src 'self' https://www.testify-lac.com;
     ">
     <title>Hiring Coding Test - TESTIFY</title>
     <!-- Favicon, Tailwind, Fonts, CodeMirror CSS, Font Awesome, etc. -->
@@ -247,7 +247,7 @@
             const AUTOSAVE_DELAY = 3000;
             let currentAssignmentId = null; // Needed for autosave
             let currentTestId = null; // Needed for autosave
-            const BACKEND_URL = 'http://localhost:3000'; // Define backend URL
+            const BACKEND_URL = 'https://www.testify-lac.com'; // Define backend URL
 
             // --- CodeMirror Editor ---
             const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), { lineNumbers: true, mode: 'text/x-csrc', theme: 'material-darker', placeholder: 'Write your solution here...', indentUnit: 4, tabSize: 4, indentWithTabs: false, lineWrapping: true, matchBrackets: true, autoCloseBrackets: true });
