@@ -1,179 +1,174 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
-  <!-- Main Marketing & Root Pages -->
   <url>
-    <loc>https://testify.io/index.html</loc>
+    <loc>https://www.testify-lac.com/index.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.00</priority>
   </url>
   <url>
-    <loc>https://testify.io/pricing.html</loc>
+    <loc>https://www.testify-lac.com/pricing.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.90</priority>
   </url>
   <url>
-    <loc>https://testify.io/blog.html</loc>
+    <loc>https://www.testify-lac.com/blog.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.90</priority>
   </url>
     <url>
-    <loc>https://testify.io/contact.html</loc>
+    <loc>https://www.testify-lac.com/contact.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
-    <loc>https://testify.io/about.html</loc>
+    <loc>https://www.testify-lac.com/about.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
-    <loc>https://testify.io/career.html</loc>
+    <loc>https://www.testify-lac.com/career.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.80</priority>
   </url>
   <url>
-    <loc>https://testify.io/all-tests.html</loc>
+    <loc>https://www.testify-lac.com/all-tests.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
-  
-  <!-- Authentication Pages -->
+
   <url>
-    <loc>https://testify.io/auth/login.html</loc>
+    <loc>https://www.testify-lac.com/auth/login.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
   </url>
   <url>
-    <loc>https://testify.io/auth/register.html</loc>
+    <loc>https://www.testify-lac.com/auth/register.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
   </url>
   <url>
-    <loc>https://testify.io/auth/reset-password.html</loc>
+    <loc>https://www.testify-lac.com/auth/reset-password.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.65</priority>
   </url>
 
-  <!-- Hiring Portal Pages -->
   <url>
-    <loc>https://testify.io/hiring-portal/hiring-dashboard.html</loc>
+    <loc>https://www.testify-lac.com/hiring-portal/hiring-dashboard.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.70</priority>
   </url>
   <url>
-    <loc>https://testify.io/hiring-portal/view-job-postings.html</loc>
+    <loc>https://www.testify-lac.com/hiring-portal/view-job-postings.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.65</priority>
   </url>
   <url>
-    <loc>https://testify.io/hiring-portal/job-posting.html</loc>
+    <loc>https://www.testify-lac.com/hiring-portal/job-posting.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.65</priority>
   </url>
   <url>
-    <loc>https://testify.io/hiring-portal/invite-candidate.html</loc>
+    <loc>https://www.testify-lac.com/hiring-portal/invite-candidate.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.60</priority>
   </url>
   <url>
-    <loc>https://testify.io/hiring-portal/candidate-dashboard.html</loc>
+    <loc>https://www.testify-lac.com/hiring-portal/candidate-dashboard.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.60</priority>
   </url>
   <url>
-    <loc>https://testify.io/hiring-portal/create-mcq-test.html</loc>
+    <loc>https://www.testify-lac.com/hiring-portal/create-mcq-test.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.50</priority>
   </url>
   <url>
-    <loc>https://testify.io/hiring-portal/create-coding-test.html</loc>
+    <loc>https://www.testify-lac.com/hiring-portal/create-coding-test.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.50</priority>
   </url>
   <url>
-    <loc>https://testify.io/hiring-portal/mcq-test-report.html</loc>
+    <loc>https://www.testify-lac.com/hiring-portal/mcq-test-report.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.50</priority>
   </url>
   <url>
-    <loc>https://testify.io/hiring-portal/coding-test-report.html</loc>
+    <loc>https://www.testify-lac.com/hiring-portal/coding-test-report.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.50</priority>
   </url>
 
-  <!-- Student Portal Pages -->
   <url>
-    <loc>https://testify.io/student-portal/student-dashboard.html</loc>
+    <loc>https://www.testify-lac.com/student-portal/student-dashboard.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.70</priority>
   </url>
   <url>
-    <loc>https://testify.io/student-portal/available-tests.html</loc>
+    <loc>https://www.testify-lac.com/student-portal/available-tests.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.65</priority>
   </url>
   <url>
-    <loc>https://testify.io/student-portal/test-result.html</loc>
+    <loc>https://www.testify-lac.com/student-portal/test-result.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.65</priority>
   </url>
   <url>
-    <loc>https://testify.io/student-portal/verification.html</loc>
+    <loc>https://www.testify-lac.com/student-portal/verification.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.60</priority>
   </url>
   <url>
-    <loc>https://testify.io/student-portal/mcq-test.html</loc>
+    <loc>https://www.testify-lac.com/student-portal/mcq-test.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.50</priority>
   </url>
   <url>
-    <loc>https://testify.io/student-portal/coding-test.html</loc>
+    <loc>https://www.testify-lac.com/student-portal/coding-test.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.50</priority>
   </url>
 
-  <!-- Legal & Other Pages -->
   <url>
-    <loc>https://testify.io/admin.html</loc>
+    <loc>https://www.testify-lac.com/admin.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.40</priority>
   </url>
   <url>
-    <loc>https://testify.io/privacy-policy.html</loc>
+    <loc>https://www.testify-lac.com/privacy-policy.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.30</priority>
   </url>
   <url>
-    <loc>https://testify.io/terms-of-service.html</loc>
+    <loc>https://www.testify-lac.com/terms-of-service.html</loc>
     <lastmod>2025-10-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.30</priority>
