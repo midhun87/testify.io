@@ -14,6 +14,9 @@
         .problem-card { transition: all 0.2s ease-in-out; }
         .problem-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .problem-card.selected { border-color: #4F46E5; background-color: #EEF2FF; }
+        .section-container { border: 1px solid #e5e7eb; border-radius: 0.5rem; background-color: #f9fafb;}
+        .section-header { border-bottom: 1px solid #e5e7eb; }
+        .problem-placeholder { border: 2px dashed #d1d5db; min-height: 50px; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -29,40 +32,61 @@
 
         <!-- Main content -->
         <div class="flex flex-col flex-1 overflow-y-auto">
-            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6 sticky top-0 z-10">
                 <h1 class="text-2xl font-bold text-gray-800">Create New Coding Test</h1>
                 <div id="user-menu-container"></div>
             </div>
 
             <div class="p-6">
                 <form id="create-coding-test-form" class="space-y-6">
+                    <!-- Test Details Section -->
                     <div class="bg-white p-6 rounded-xl shadow-md">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Test Configuration</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label for="testTitle" class="block text-sm font-medium text-gray-700">Test Title</label>
-                                <input type="text" id="testTitle" required class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm">
+                                <input type="text" id="testTitle" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                             <div>
                                 <label for="duration" class="block text-sm font-medium text-gray-700">Duration (Minutes)</label>
-                                <input type="number" id="duration" required class="mt-1 block w-full px-3 py-2 border rounded-md shadow-sm">
+                                <input type="number" id="duration" required min="1" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                         </div>
                     </div>
 
+                    <!-- Available Problems Section -->
                     <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-xl font-bold text-gray-800 mb-4">Select Problems for the Test</h2>
-                        <div id="problem-selection-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <!-- Problems will be loaded here -->
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Available Problems</h2>
+                        <div id="available-problems-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-h-96 overflow-y-auto pr-2">
+                            <!-- Available problems will be loaded here -->
                         </div>
-                        <div id="problems-loader" class="text-center py-8">Loading problems...</div>
+                        <div id="problems-loader" class="text-center py-8 text-gray-500">Loading problems...</div>
                     </div>
-                    
+
+                    <!-- Test Sections Builder -->
+                    <div class="bg-white p-6 rounded-xl shadow-md space-y-4">
+                         <h2 class="text-xl font-semibold text-gray-800 border-b pb-2">Test Structure (Sections)</h2>
+                         <!-- Section Creation -->
+                         <div class="flex items-center gap-3">
+                            <input type="text" id="new-section-title" placeholder="Enter new section title" class="flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            <button type="button" id="add-section-btn" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-sm hover:bg-blue-700 transition whitespace-nowrap">
+                                + Add Section
+                            </button>
+                        </div>
+                        <!-- Sections Area -->
+                        <div id="sections-container" class="space-y-4 mt-4">
+                            <!-- Sections will be added here -->
+                        </div>
+                         <p id="no-sections-placeholder" class="text-center text-gray-500 py-6 italic">Add sections to start building your test structure.</p>
+                    </div>
+
+                    <!-- Submission Footer -->
                     <div class="flex justify-end items-center pt-4">
                         <div class="text-right mr-6">
                             <p class="text-sm text-gray-500">Total Marks</p>
                             <p id="total-marks-display" class="text-2xl font-bold text-indigo-600">0</p>
                         </div>
-                        <button type="submit" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700">
+                        <button type="submit" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700 transition">
                             Create Coding Test
                         </button>
                     </div>
@@ -74,95 +98,324 @@
     <script src="common.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const hiringSidebarLinks = [
-                { href: "hiring-dashboard.html", text: "Dashboard" },
-                { href: "hiring-create-job.html", text: "Create Job" },
-                { href: "hiring-jobs.html", text: "Manage Jobs" },
-                { href: "hiring-create-test.html", text: "Create Aptitude Test" },
-                 { href: "hiring-create-problem.html", text: "Manage Coding Problems"},
-                 { href: "hiring-create-coding-test.html", text: "Create Coding Test"},
-                { href: "hiring-assign-test.html", text: "Assign Test" },
-                { href: "hiring-test-history.html", text: "Test History" },
-            ];
+            // ... (initializePage and sidebar links setup - keep as is) ...
             initializePage('Create Coding Test');
 
             const token = localStorage.getItem('token');
-            const problemContainer = document.getElementById('problem-selection-container');
+            const availableProblemsContainer = document.getElementById('available-problems-container');
             const problemsLoader = document.getElementById('problems-loader');
+            const sectionsContainer = document.getElementById('sections-container');
+            const addSectionBtn = document.getElementById('add-section-btn');
+            const newSectionTitleInput = document.getElementById('new-section-title');
             const totalMarksDisplay = document.getElementById('total-marks-display');
-            let allProblems = [];
+            const noSectionsPlaceholder = document.getElementById('no-sections-placeholder');
+            const form = document.getElementById('create-coding-test-form');
 
+            let allProblems = []; // Store fetched problems
+            let testSections = []; // Array to hold section data [{ title: '...', problems: [...] }]
+
+            // Fetch all available coding problems created by the moderator
             const fetchProblems = async () => {
                 try {
                     const response = await fetch('/api/hiring/coding-problems', { headers: { 'x-auth-token': token } });
+                    if (!response.ok) throw new Error('Failed to fetch problems');
                     allProblems = await response.json();
-                    renderProblems(allProblems);
+                    renderAvailableProblems(allProblems);
                 } catch (error) {
-                    problemContainer.innerHTML = `<p class="text-red-500 col-span-full">Failed to load problems.</p>`;
+                    availableProblemsContainer.innerHTML = `<p class="text-red-500 col-span-full">Error loading problems: ${error.message}</p>`;
                 } finally {
                     problemsLoader.style.display = 'none';
                 }
             };
 
-            const renderProblems = (problems) => {
+            // Render the list of available problems (selectable cards)
+            const renderAvailableProblems = (problems) => {
                 if (problems.length === 0) {
-                    problemContainer.innerHTML = `<p class="text-gray-500 col-span-full">No coding problems found. Please create some first.</p>`;
+                    availableProblemsContainer.innerHTML = `<p class="text-gray-500 col-span-full">No coding problems found. Please create some first.</p>`;
                     return;
                 }
-                problemContainer.innerHTML = problems.map(p => `
-                    <div class="problem-card border rounded-lg p-4 cursor-pointer" data-problem-id="${p.id}">
-                        <h3 class="font-bold text-md text-gray-800">${p.title}</h3>
-                        <p class="text-sm text-gray-600">${p.difficulty} - <span class="font-semibold">${p.score} Points</span></p>
+                availableProblemsContainer.innerHTML = problems.map(p => `
+                    <div class="problem-card border rounded-lg p-3 cursor-pointer bg-white" data-problem-id="${p.id}" draggable="true">
+                        <h3 class="font-semibold text-sm text-gray-800">${p.title}</h3>
+                        <p class="text-xs text-gray-500">${p.difficulty} - <span class="font-medium">${p.score} Points</span></p>
                     </div>
                 `).join('');
+                addProblemDragListeners();
             };
 
+            // Add a new section UI element
+            const addSectionUI = (title, sectionIndex, problemsInSection = []) => {
+                noSectionsPlaceholder.style.display = 'none'; // Hide placeholder
+                const sectionId = `section-${sectionIndex}`;
+                const sectionEl = document.createElement('div');
+                sectionEl.className = 'section-container p-4 space-y-3';
+                sectionEl.dataset.sectionIndex = sectionIndex;
+                sectionEl.innerHTML = `
+                    <div class="section-header flex justify-between items-center pb-2">
+                        <h3 class="text-lg font-semibold text-gray-700">${title}</h3>
+                        <button type="button" class="remove-section-btn text-red-500 hover:text-red-700 font-bold text-xl">&times;</button>
+                    </div>
+                    <div class="section-problems min-h-[60px] space-y-2 problem-placeholder flex flex-col items-center justify-center text-gray-400 text-sm" data-section-id="${sectionId}">
+                        Drop problems here or click available problems to add
+                    </div>
+                `;
+                sectionsContainer.appendChild(sectionEl);
+
+                // Add existing problems if provided (e.g., when loading/editing)
+                const problemsContainer = sectionEl.querySelector('.section-problems');
+                if (problemsInSection.length > 0) {
+                    problemsContainer.innerHTML = ''; // Clear placeholder
+                     problemsContainer.classList.remove('problem-placeholder', 'items-center', 'justify-center', 'text-gray-400', 'text-sm');
+                    problemsInSection.forEach(problem => {
+                        renderProblemInSection(problemsContainer, problem);
+                    });
+                }
+
+
+                sectionEl.querySelector('.remove-section-btn').addEventListener('click', () => {
+                    removeSection(sectionIndex);
+                });
+
+                // Add drop listeners for the problems area
+                addSectionDropListeners(problemsContainer);
+            };
+
+            // Render a problem card within a section
+            const renderProblemInSection = (container, problem) => {
+                 // Remove placeholder if it exists
+                if (container.classList.contains('problem-placeholder')) {
+                    container.innerHTML = '';
+                    container.classList.remove('problem-placeholder', 'items-center', 'justify-center', 'text-gray-400', 'text-sm');
+                }
+
+                const problemEl = document.createElement('div');
+                problemEl.className = 'problem-card border rounded-md p-2 bg-indigo-50 flex justify-between items-center';
+                problemEl.dataset.problemId = problem.id;
+                problemEl.innerHTML = `
+                    <div>
+                        <span class="font-medium text-sm text-indigo-800">${problem.title}</span>
+                        <span class="text-xs text-indigo-600 ml-2">(${problem.score} pts)</span>
+                    </div>
+                    <button type="button" class="remove-problem-btn text-red-500 hover:text-red-700 font-semibold text-lg">&times;</button>
+                `;
+                container.appendChild(problemEl);
+                problemEl.querySelector('.remove-problem-btn').addEventListener('click', () => {
+                     removeProblemFromSection(container.closest('.section-container').dataset.sectionIndex, problem.id);
+                     problemEl.remove();
+                     // Re-enable the problem in the available list
+                    const availableCard = availableProblemsContainer.querySelector(`.problem-card[data-problem-id="${problem.id}"]`);
+                    if (availableCard) {
+                        availableCard.classList.remove('opacity-50', 'cursor-not-allowed');
+                        availableCard.draggable = true;
+                    }
+                    if (container.children.length === 0) { // Add placeholder back if section becomes empty
+                        container.innerHTML = 'Drop problems here or click available problems to add';
+                        container.classList.add('problem-placeholder', 'items-center', 'justify-center', 'text-gray-400', 'text-sm');
+                    }
+                     updateTotalMarks();
+                });
+            };
+
+            // Add a problem to a specific section's data
+            const addProblemToSection = (sectionIndex, problemId) => {
+                const problem = allProblems.find(p => p.id === problemId);
+                if (!problem || !testSections[sectionIndex]) return;
+
+                // Prevent adding the same problem multiple times to the test (across all sections)
+                const isAlreadyAdded = testSections.some(sec => sec.problems.some(p => p.id === problemId));
+                if (isAlreadyAdded) {
+                    alert(`${problem.title} is already added to the test.`);
+                    return;
+                }
+
+
+                testSections[sectionIndex].problems.push(problem);
+
+                // Visually add to the section UI
+                const sectionContainer = sectionsContainer.querySelector(`.section-container[data-section-index="${sectionIndex}"] .section-problems`);
+                if(sectionContainer) {
+                    renderProblemInSection(sectionContainer, problem);
+                }
+
+                // Visually disable in available list
+                const availableCard = availableProblemsContainer.querySelector(`.problem-card[data-problem-id="${problemId}"]`);
+                 if (availableCard) {
+                    availableCard.classList.add('opacity-50', 'cursor-not-allowed');
+                    availableCard.draggable = false;
+                }
+
+                updateTotalMarks();
+            };
+
+            // Remove a problem from a specific section's data
+            const removeProblemFromSection = (sectionIndex, problemId) => {
+                if (!testSections[sectionIndex]) return;
+                testSections[sectionIndex].problems = testSections[sectionIndex].problems.filter(p => p.id !== problemId);
+                updateTotalMarks();
+            };
+
+            // Add new section to data and UI
+            addSectionBtn.addEventListener('click', () => {
+                const title = newSectionTitleInput.value.trim();
+                if (title) {
+                    const newIndex = testSections.length;
+                    testSections.push({ title: title, problems: [] });
+                    addSectionUI(title, newIndex);
+                    newSectionTitleInput.value = ''; // Clear input
+                } else {
+                    alert('Please enter a title for the section.');
+                }
+            });
+
+            // Remove section from data and UI
+            const removeSection = (indexToRemove) => {
+                 // Re-enable any problems that were in this section
+                testSections[indexToRemove].problems.forEach(problem => {
+                    const availableCard = availableProblemsContainer.querySelector(`.problem-card[data-problem-id="${problem.id}"]`);
+                    if (availableCard) {
+                        availableCard.classList.remove('opacity-50', 'cursor-not-allowed');
+                        availableCard.draggable = true;
+                    }
+                });
+
+                testSections.splice(indexToRemove, 1); // Remove from data array
+                sectionsContainer.innerHTML = ''; // Clear UI
+                // Re-render sections with updated indices
+                testSections.forEach((section, newIndex) => {
+                    addSectionUI(section.title, newIndex, section.problems);
+                });
+                 if (testSections.length === 0) {
+                     noSectionsPlaceholder.style.display = 'block';
+                 }
+                updateTotalMarks(); // Recalculate marks
+            };
+
+            // Calculate and display total marks
             const updateTotalMarks = () => {
                 let total = 0;
-                document.querySelectorAll('.problem-card.selected').forEach(card => {
-                    const problem = allProblems.find(p => p.id === card.dataset.problemId);
-                    if (problem) total += (problem.score || 0);
+                testSections.forEach(section => {
+                    section.problems.forEach(problem => {
+                        total += (problem.score || 0);
+                    });
                 });
                 totalMarksDisplay.textContent = total;
             };
 
-            problemContainer.addEventListener('click', (e) => {
-                const card = e.target.closest('.problem-card');
-                if (card) {
-                    card.classList.toggle('selected');
-                    updateTotalMarks();
-                }
-            });
+            // --- Drag and Drop Logic ---
+            let draggedProblemId = null;
 
-            document.getElementById('create-coding-test-form').addEventListener('submit', async (e) => {
+            function addProblemDragListeners() {
+                availableProblemsContainer.querySelectorAll('.problem-card').forEach(card => {
+                    card.addEventListener('dragstart', (e) => {
+                         // Only allow dragging if not already added
+                        if (!card.classList.contains('opacity-50')) {
+                             draggedProblemId = card.dataset.problemId;
+                             e.dataTransfer.effectAllowed = 'copy';
+                             // Optional: slightly dim the card being dragged
+                             card.classList.add('opacity-75');
+                        } else {
+                            e.preventDefault(); // Prevent dragging if already added
+                        }
+
+                    });
+                    card.addEventListener('dragend', (e) => {
+                        draggedProblemId = null;
+                        card.classList.remove('opacity-75'); // Reset opacity
+                        // Reset styles on drop zones
+                         sectionsContainer.querySelectorAll('.section-problems').forEach(dropZone => {
+                             dropZone.classList.remove('bg-indigo-100', 'border-indigo-400');
+                         });
+                    });
+
+                    // --- Click to Add Logic ---
+                     card.addEventListener('click', (e) => {
+                        // Check if the problem is already added
+                        const problemId = card.dataset.problemId;
+                        const isAlreadyAdded = testSections.some(sec => sec.problems.some(p => p.id === problemId));
+                        if(isAlreadyAdded) return; // Do nothing if already added
+
+                        // Find the last section added, or default to the first if none exist yet
+                        let targetSectionIndex = testSections.length > 0 ? testSections.length - 1 : -1;
+
+                        if (targetSectionIndex === -1) {
+                            alert("Please add a section first before adding problems.");
+                            return;
+                        }
+
+                        addProblemToSection(targetSectionIndex, problemId);
+                    });
+                });
+            }
+
+            function addSectionDropListeners(dropZone) {
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault(); // Necessary to allow drop
+                    e.dataTransfer.dropEffect = 'copy';
+                    dropZone.classList.add('bg-indigo-100', 'border-indigo-400'); // Highlight drop zone
+                });
+                dropZone.addEventListener('dragleave', (e) => {
+                    dropZone.classList.remove('bg-indigo-100', 'border-indigo-400'); // Remove highlight
+                });
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('bg-indigo-100', 'border-indigo-400'); // Remove highlight on drop
+                    if (draggedProblemId) {
+                        const sectionIndex = dropZone.closest('.section-container').dataset.sectionIndex;
+                        addProblemToSection(sectionIndex, draggedProblemId);
+                        draggedProblemId = null; // Clear after drop
+                    }
+                });
+            }
+
+            // --- Form Submission ---
+            form.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const selectedProblemIds = Array.from(document.querySelectorAll('.problem-card.selected')).map(card => card.dataset.problemId);
-                const selectedProblems = allProblems.filter(p => selectedProblemIds.includes(p.id));
 
-                if (selectedProblems.length === 0) {
-                    alert('Please select at least one problem for the test.');
+                if (testSections.length === 0) {
+                    alert('Please add at least one section to the test.');
                     return;
                 }
+                const hasEmptySection = testSections.some(section => section.problems.length === 0);
+                if (hasEmptySection) {
+                     alert('Please ensure all sections contain at least one problem.');
+                     return;
+                }
 
+                // Prepare payload in the new format
                 const payload = {
                     testTitle: document.getElementById('testTitle').value,
                     duration: document.getElementById('duration').value,
-                    problems: selectedProblems
+                    // Map sections to include only necessary problem data
+                    sections: testSections.map(section => ({
+                        title: section.title,
+                        problems: section.problems.map(p => ({
+                             id: p.id, // Or problemId if that's the key
+                             title: p.title,
+                             difficulty: p.difficulty,
+                             score: p.score
+                         }))
+                    }))
                 };
 
+                 console.log("Submitting Payload:", JSON.stringify(payload, null, 2));
+
+
                 try {
-                    await fetch('/api/hiring/coding-tests', {
+                    const response = await fetch('/api/hiring/coding-tests', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                         body: JSON.stringify(payload)
                     });
+                     const result = await response.json();
+                     if (!response.ok) throw new Error(result.message || 'Failed to create test');
                     alert('Coding test created successfully!');
-                    window.location.href = 'hiring-dashboard.html';
+                    window.location.href = 'hiring-dashboard.html'; // Or redirect to a test management page
                 } catch (error) {
                     alert(`Error creating test: ${error.message}`);
                 }
             });
 
+            // Initial Fetch
             fetchProblems();
         });
     </script>

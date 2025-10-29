@@ -15,7 +15,7 @@
         .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
         .modal-overlay { background-color: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
         .CodeMirror { height: 40vh; border-radius: 0.5rem; font-size: 14px; }
-        
+
         /* Accordion Styles */
         .accordion-content {
             max-height: 0;
@@ -36,6 +36,9 @@
         @keyframes rotate {
             to { transform: rotate(360deg); }
         }
+         /* Progress Bar */
+        .progress-bar-bg { background-color: #e5e7eb; /* gray-200 */ }
+        .progress-bar-fg { background-color: #4f46e5; /* indigo-600 */ transition: width 0.3s ease-in-out; }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -73,7 +76,7 @@
             </main>
         </div>
     </div>
-    
+
     <!-- Details Modal -->
     <div id="details-modal" class="hidden fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
@@ -86,7 +89,9 @@
                     <button id="close-modal-btn" class="text-gray-500 hover:text-gray-800 text-3xl font-bold">&times;</button>
                 </div>
             </div>
-            <div id="modal-content" class="p-6 overflow-y-auto bg-gray-50"></div>
+            <div id="modal-content" class="p-6 overflow-y-auto bg-gray-50">
+                <!-- Detailed content injected here -->
+            </div>
         </div>
     </div>
 
@@ -106,91 +111,103 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            initializePage('Coding Test Results'); 
+            initializePage('Coding Test Results'); // Ensure correct page title
             const token = localStorage.getItem('token');
             const resultsContainer = document.getElementById('results-container');
             const loader = document.getElementById('loader');
-            
+
             const detailsModal = document.getElementById('details-modal');
             const codeModal = document.getElementById('code-modal');
             const downloadReportBtn = document.getElementById('download-report-btn');
 
             let codeViewer = null;
             let groupedResults = {};
-            let currentDetailedResult = null;
+            let currentDetailedResult = null; // Store fetched detailed result for PDF generation
 
+            // --- Helper to convert image URL to Base64 (for PDF embedding) ---
             async function imageToBase64(url) {
-                try {
+                // ... (keep existing imageToBase64 function) ...
+                 try {
+                    // Use fetch with a cache policy that might help in some environments
                     const response = await fetch(url, { cache: "force-cache" });
+                    if (!response.ok) throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
                     const blob = await response.blob();
                     return new Promise((resolve, reject) => {
                         const reader = new FileReader();
-                        reader.onloadend = () => resolve(reader.result);
-                        reader.onerror = reject;
+                        reader.onloadend = () => resolve(reader.result); // result is the base64 string
+                        reader.onerror = (error) => reject(new Error("FileReader error: " + error));
                         reader.readAsDataURL(blob);
                     });
                 } catch(e) {
-                    console.error("Image to Base64 conversion failed:", e);
-                    return null;
+                    console.error(`Image to Base64 conversion failed for ${url}:`, e);
+                    // Return a placeholder or null instead of throwing, so PDF generation can continue
+                    return null; // Or return a placeholder base64 string if you have one
                 }
             }
-            
+
+            // --- Fetch and Render Results List ---
             async function fetchResults() {
-                try {
+                // ... (keep existing fetchResults function) ...
+                 try {
+                    loader.style.display = 'block';
+                    resultsContainer.innerHTML = ''; // Clear previous results
+
                     const response = await fetch('/api/hiring/coding-test-results', { headers: { 'x-auth-token': token } });
-                    if (!response.ok) throw new Error((await response.json()).message);
+                    if (!response.ok) throw new Error((await response.json()).message || `HTTP error! status: ${response.status}`);
                     const results = await response.json();
                     renderResults(results);
                 } catch (error) {
-                    resultsContainer.innerHTML = `<p class="text-red-500 text-center">Error: ${error.message}</p>`;
+                    resultsContainer.innerHTML = `<p class="text-red-500 text-center py-8">Error loading results: ${error.message}</p>`;
+                     console.error("Fetch Results Error:", error);
                 } finally {
                     loader.style.display = 'none';
                 }
             }
 
             function renderResults(results) {
+                // ... (keep existing logic for empty results) ...
                 if (results.length === 0) {
                     resultsContainer.innerHTML = `
                         <div class="text-center py-16 bg-white rounded-lg shadow-sm">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
+                           <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
                             <h3 class="mt-2 text-lg font-medium text-gray-900">No results found</h3>
                             <p class="mt-1 text-sm text-gray-500">There are currently no coding test submissions to display.</p>
                         </div>`;
                     return;
                 }
-
+                // Group results by testId
                 groupedResults = results.reduce((acc, result) => {
-                    (acc[result.testId] = acc[result.testId] || { title: result.testTitle, results: [] }).results.push(result);
+                    (acc[result.testId] = acc[result.testId] || { title: result.testTitle || 'Unknown Test', results: [] }).results.push(result);
                     return acc;
                 }, {});
 
                 resultsContainer.innerHTML = Object.entries(groupedResults).map(([testId, data]) => `
-                    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
                         <div class="accordion-header flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200">
                             <h3 class="text-lg font-bold text-gray-800">${data.title} <span class="text-sm font-medium text-gray-500">(${data.results.length} submissions)</span></h3>
                             <svg class="chevron-icon w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </div>
                         <div class="accordion-content">
-                            <div class="p-4 border-t border-gray-200">
+                            <div class="p-4 border-t border-gray-200 bg-gray-50">
                                 <div class="flex justify-end items-center mb-4 space-x-3">
-                                    <button class="export-pdf-btn flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-2 px-4 rounded-lg text-sm transition-colors duration-200" data-testid="${testId}" data-test-title="${data.title}">
+                                    <button class="export-pdf-btn flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-2 px-4 rounded-lg text-sm transition-colors duration-200 border border-red-200" data-testid="${testId}" data-test-title="${data.title}">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                        Export PDF
+                                        Export PDF Summary
                                     </button>
-                                    <button class="export-excel-btn flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 font-semibold py-2 px-4 rounded-lg text-sm transition-colors duration-200" data-testid="${testId}" data-test-title="${data.title}">
+                                    <button class="export-excel-btn flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 font-semibold py-2 px-4 rounded-lg text-sm transition-colors duration-200 border border-green-200" data-testid="${testId}" data-test-title="${data.title}">
                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                                        Export Excel
+                                        Export Excel Summary
                                     </button>
                                 </div>
-                                <div class="overflow-x-auto">
+                                <div class="overflow-x-auto rounded-md border border-gray-200">
                                     <table class="min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-gray-50">
+                                        <thead class="bg-gray-100">
                                             <tr>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Candidate</th>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">College</th>
@@ -202,11 +219,11 @@
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200">
                                             ${data.results.map((r, index) => `
-                                                <tr class="${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-indigo-50 transition-colors duration-200">
-                                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${r.fullName || r.candidateEmail}</td>
+                                                <tr class="${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-indigo-50 transition-colors duration-150">
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${r.fullName || r.candidateEmail || 'N/A'}</td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${r.collegeName || 'N/A'}</td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${r.department || 'N/A'}</td>
-                                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold">${r.score} / ${r.totalMarks || 0}</td>
+                                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-indigo-700">${r.score} / ${r.totalMarks || 0}</td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(r.submittedAt).toLocaleString()}</td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                                                         <button class="view-details-btn text-indigo-600 hover:text-indigo-900 font-semibold" data-result-id="${r.resultId}">View Details</button>
@@ -221,6 +238,7 @@
                     </div>
                 `).join('');
 
+                // Re-attach accordion listeners
                 resultsContainer.querySelectorAll('.accordion-header').forEach(header => {
                     header.addEventListener('click', () => {
                         header.classList.toggle('open');
@@ -230,6 +248,7 @@
                 });
             }
 
+            // --- Event Delegation for Buttons ---
             resultsContainer.addEventListener('click', (e) => {
                 const button = e.target.closest('button');
                 if (!button) return;
@@ -243,55 +262,126 @@
                 }
             });
 
+             // --- Show Detailed Modal (MODIFIED FOR SECTIONS) ---
             async function showDetailsModal(resultId) {
                 const modalTitle = document.getElementById('modal-title');
                 const content = document.getElementById('modal-content');
                 modalTitle.textContent = 'Loading details...';
-                content.innerHTML = '<p class="text-center">Loading...</p>';
+                content.innerHTML = '<div class="text-center py-6"><svg class="spinner h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></div>';
                 detailsModal.classList.remove('hidden');
+                currentDetailedResult = null; // Reset for PDF generation check
 
                 try {
                     const response = await fetch(`/api/hiring/test-results/${resultId}`, { headers: { 'x-auth-token': token } });
-                    if (!response.ok) throw new Error((await response.json()).message);
-                    
-                    currentDetailedResult = await response.json();
-                    
-                    modalTitle.textContent = `Details for ${currentDetailedResult.fullName || currentDetailedResult.candidateEmail}`;
-                    
-                    content.innerHTML = `
-                        <div class="mb-6 pb-6 border-b">
-                            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                                <img src="${currentDetailedResult.profileImageUrl || 'https://placehold.co/400x400/E2E8F0/4A5568?text=Photo'}" alt="Candidate Photo" class="w-32 h-32 object-cover rounded-full shadow-md flex-shrink-0">
-                                <div class="w-full grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
-                                    <div><strong class="block text-gray-500">Name</strong> <span class="text-gray-800">${currentDetailedResult.fullName || 'N/A'}</span></div>
-                                    <div><strong class="block text-gray-500">Roll Number</strong> <span class="text-gray-800">${currentDetailedResult.rollNumber || 'N/A'}</span></div>
-                                    <div><strong class="block text-gray-500">College</strong> <span class="text-gray-800">${currentDetailedResult.collegeName || 'N/A'}</span></div>
-                                    <div><strong class="block text-gray-500">Department</strong> <span class="text-gray-800">${currentDetailedResult.department || 'N/A'}</span></div>
-                                    <div class="col-span-2"><strong class="block text-gray-500">Email</strong> <span class="text-gray-800">${currentDetailedResult.candidateEmail}</span></div>
-                                    <div class="col-span-2"><strong class="block text-gray-500">Submitted</strong> <span class="text-gray-800">${new Date(currentDetailedResult.submittedAt).toLocaleString()}</span></div>
+                    if (!response.ok) throw new Error((await response.json()).message || `HTTP error! status: ${response.status}`);
+
+                    currentDetailedResult = await response.json(); // Store for PDF export
+                    const result = currentDetailedResult; // Use 'result' locally for clarity
+
+                    modalTitle.textContent = `Details for ${result.fullName || result.candidateEmail}`;
+
+                    let sectionsHtml = '';
+                    const submissions = result.submissions || [];
+
+                    // --- Render Section Scores (if available) ---
+                    if (result.sectionScores && Array.isArray(result.sectionScores) && result.sectionScores.length > 0) {
+                        sectionsHtml += `<h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">Section Scores</h3>`;
+                        sectionsHtml += `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">`;
+                        result.sectionScores.forEach(sec => {
+                             const percentage = sec.maxScore > 0 ? Math.round((sec.score / sec.maxScore) * 100) : 0;
+                            sectionsHtml += `
+                                <div class="p-4 border rounded-lg bg-white shadow-sm">
+                                    <div class="flex justify-between items-center mb-1">
+                                         <h4 class="font-semibold text-gray-700">${sec.title}</h4>
+                                         <span class="font-bold text-lg ${percentage >= 50 ? 'text-green-600' : 'text-red-600'}">${sec.score} / ${sec.maxScore}</span>
+                                    </div>
+                                     <div class="w-full progress-bar-bg rounded-full h-2.5">
+                                        <div class="progress-bar-fg h-2.5 rounded-full" style="width: ${percentage}%"></div>
+                                    </div>
+                                </div>`;
+                        });
+                        sectionsHtml += `</div>`;
+                        sectionsHtml += `<h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">Problem Breakup</h3>`;
+
+                        // Group submissions by section for display
+                         const submissionsBySection = result.sectionScores.reduce((acc, sec) => {
+                             acc[sec.title] = submissions.filter(sub => sub.sectionTitle === sec.title);
+                             return acc;
+                         }, {});
+
+                         result.sectionScores.forEach(sec => {
+                             sectionsHtml += `<div class="mb-5">`;
+                             sectionsHtml += `<h4 class="text-md font-semibold text-gray-600 mb-3">${sec.title}</h4>`;
+                             if (submissionsBySection[sec.title] && submissionsBySection[sec.title].length > 0) {
+                                 sectionsHtml += submissionsBySection[sec.title].map(sub => renderProblemSubmissionCard(sub)).join('');
+                             } else {
+                                 sectionsHtml += `<p class="text-sm text-gray-500 italic">No submissions for this section.</p>`;
+                             }
+                             sectionsHtml += `</div>`;
+                         });
+
+                    } else {
+                         // Fallback for older results or tests without explicit sections
+                         sectionsHtml += `<h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">Problem Breakup</h3>`;
+                         if (submissions.length > 0) {
+                            sectionsHtml += submissions.map(sub => renderProblemSubmissionCard(sub)).join('');
+                         } else {
+                            sectionsHtml += `<p class="text-gray-600 italic">Detailed submission data is not available.</p>`;
+                         }
+                    }
+
+                    // --- Candidate Info ---
+                    const candidateInfoHtml = `
+                        <div class="mb-6 pb-6 border-b border-gray-200">
+                             <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                                <img src="${result.profileImageUrl || 'https://placehold.co/128x128/E2E8F0/4A5568?text=Photo'}" alt="Candidate Photo" onerror="this.onerror=null; this.src='https://placehold.co/128x128/E2E8F0/4A5568?text=Photo';" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-full shadow-md flex-shrink-0 border-2 border-white">
+                                <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                                    <div><strong class="block text-gray-500 uppercase text-xs tracking-wider">Name</strong> <span class="text-gray-800 font-medium">${result.fullName || 'N/A'}</span></div>
+                                    <div><strong class="block text-gray-500 uppercase text-xs tracking-wider">Roll No</strong> <span class="text-gray-800 font-medium">${result.rollNumber || 'N/A'}</span></div>
+                                    <div class="sm:col-span-2"><strong class="block text-gray-500 uppercase text-xs tracking-wider">College</strong> <span class="text-gray-800 font-medium">${result.collegeName || 'N/A'}</span></div>
+                                    <div><strong class="block text-gray-500 uppercase text-xs tracking-wider">Department</strong> <span class="text-gray-800 font-medium">${result.department || 'N/A'}</span></div>
+                                    <div class="sm:col-span-2"><strong class="block text-gray-500 uppercase text-xs tracking-wider">Email</strong> <span class="text-gray-800 font-medium">${result.candidateEmail}</span></div>
+                                    <div class="sm:col-span-2"><strong class="block text-gray-500 uppercase text-xs tracking-wider">Submitted</strong> <span class="text-gray-800 font-medium">${new Date(result.submittedAt).toLocaleString()}</span></div>
+                                     <div class="sm:col-span-2"><strong class="block text-gray-500 uppercase text-xs tracking-wider">Overall Score</strong> <span class="text-xl font-bold text-indigo-700">${result.score} / ${result.totalMarks || 0}</span></div>
                                 </div>
                             </div>
-                        </div>
-                        <h3 class="text-lg font-bold mb-4">Submission Breakup</h3>
-                        ${(currentDetailedResult.submissions && currentDetailedResult.submissions.length > 0) ? currentDetailedResult.submissions.map(sub => `
-                            <div class="mb-4 p-4 border rounded-lg bg-white">
-                                <div class="flex justify-between items-center">
-                                    <h4 class="font-bold text-gray-800">${sub.problemTitle || 'Unnamed Problem'}</h4>
-                                    <span class="font-semibold text-lg text-indigo-600">${sub.calculatedScore} / ${sub.score || 0}</span>
-                                </div>
-                                <p class="text-sm text-gray-600">Passed ${sub.passedCases} of ${sub.totalCases} test cases.</p>
-                                <button class="view-code-btn mt-2 text-sm text-blue-600 hover:underline font-semibold" data-submission='${JSON.stringify(sub)}'>View Code</button>
-                            </div>
-                        `).join('') : '<p class="text-gray-600">Detailed submission data is not available.</p>'}`;
+                            ${result.violationReason ? `<div class="mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700 text-sm rounded-r-md"><strong class="font-semibold">Violation Recorded:</strong> ${result.violationReason}</div>` : ''}
+                        </div>`;
+
+                    content.innerHTML = candidateInfoHtml + sectionsHtml;
 
                 } catch (error) {
-                    content.innerHTML = `<p class="text-red-500 text-center">Error: ${error.message}</p>`;
+                    content.innerHTML = `<p class="text-red-500 text-center py-6">Error loading details: ${error.message}</p>`;
+                     console.error("Show Details Modal Error:", error);
                 }
             }
-            
+
+            // Helper to render individual problem card in modal
+             function renderProblemSubmissionCard(sub) {
+                const isCorrect = sub.passedCases === sub.totalCases && sub.totalCases > 0;
+                const statusColor = isCorrect ? 'green' : (sub.passedCases > 0 ? 'yellow' : 'red');
+                return `
+                    <div class="mb-3 p-4 border border-gray-200 rounded-lg bg-white shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 class="font-bold text-gray-800">${sub.problemTitle || 'Unnamed Problem'}</h4>
+                                <span class="text-xs font-medium text-gray-500">Language: ${sub.language || 'N/A'}</span>
+                             </div>
+                            <span class="font-semibold text-lg text-indigo-600 ml-4">${sub.calculatedScore} / ${sub.score || 0}</span>
+                        </div>
+                         <p class="text-sm text-${statusColor}-700 font-medium mb-2">
+                            <i class="fas fa-${isCorrect ? 'check' : 'times'}-circle mr-1"></i> Passed ${sub.passedCases} of ${sub.totalCases} test cases.
+                         </p>
+                        <button class="view-code-btn text-sm text-blue-600 hover:underline font-semibold" data-submission='${JSON.stringify(sub)}'>View Code</button>
+                    </div>`;
+            }
+
+
+            // --- PDF and Excel Export (Summary - keep existing functions) ---
             async function exportToPdf(testId, testTitle) {
-                const testData = groupedResults[testId];
-                if (!testData) return;
+                // ... (keep existing summary PDF export logic) ...
+                 const testData = groupedResults[testId];
+                if (!testData) { alert("No data available for this test."); return; }
 
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({ orientation: 'landscape' });
@@ -304,11 +394,9 @@
 
                     if (testifyLogo) doc.addImage(testifyLogo, 'PNG', 15, 12, 25, 25);
                     if (hireWithUsLogo) doc.addImage(hireWithUsLogo, 'PNG', doc.internal.pageSize.getWidth() - 40, 12, 25, 25);
-                    doc.setFontSize(20);
-                    doc.setFont('helvetica', 'bold');
-                    doc.text('Coding Test Report', doc.internal.pageSize.getWidth() / 2, 25, { align: 'center' });
-                    doc.setFontSize(14);
-                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(20); doc.setFont('helvetica', 'bold');
+                    doc.text('Coding Test Summary Report', doc.internal.pageSize.getWidth() / 2, 25, { align: 'center' });
+                    doc.setFontSize(14); doc.setFont('helvetica', 'normal');
                     doc.text(testTitle, doc.internal.pageSize.getWidth() / 2, 35, { align: 'center' });
 
                     const tableColumn = ["Candidate", "Email", "College", "Department", "Score", "Submitted At"];
@@ -319,166 +407,265 @@
 
                     doc.autoTable({
                         head: [tableColumn], body: tableRows, startY: 50, theme: 'grid',
-                        headStyles: { fillColor: [79, 70, 229] }
+                        headStyles: { fillColor: [79, 70, 229] } // Indigo color
                     });
 
+                    // Add footer to each page
                     const pageCount = doc.internal.getNumberOfPages();
                     for (let i = 1; i <= pageCount; i++) {
-                        doc.setPage(i);
-                        doc.setFontSize(10);
+                        doc.setPage(i); doc.setFontSize(10);
                         doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.getWidth() - 15, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
                         doc.text(`Report Generated: ${new Date().toLocaleDateString()}`, 15, doc.internal.pageSize.getHeight() - 10);
                     }
-                    doc.save(`${testTitle.replace(/\s/g, '_')}_Results.pdf`);
+                    doc.save(`${testTitle.replace(/\s/g, '_')}_Summary_Results.pdf`);
                 } catch (error) {
-                    console.error("Error generating PDF:", error);
-                    alert("Failed to generate PDF. Could not load required resources.");
+                    console.error("Error generating PDF Summary:", error);
+                    alert("Failed to generate PDF summary. Could not load required resources.");
                 }
             }
-            
+
             function exportToExcel(testId, testTitle) {
+                // ... (keep existing summary Excel export logic) ...
                 const testData = groupedResults[testId];
-                if (!testData) return;
+                if (!testData) { alert("No data available for this test."); return; }
 
                 const worksheetData = [
-                    ["Candidate", "Email", "College", "Department", "Score", "Total Marks", "Submitted At"],
+                    ["Candidate", "Email", "College", "Department", "Score", "Total Marks", "Submitted At", "Violation Reason"],
                     ...testData.results.map(r => [
-                        r.fullName || 'N/A', r.candidateEmail, r.collegeName || 'N/A', r.department || 'N/A',
-                        r.score, r.totalMarks || 0, new Date(r.submittedAt).toLocaleString()
+                        r.fullName || 'N/A',
+                        r.candidateEmail,
+                        r.collegeName || 'N/A',
+                        r.department || 'N/A',
+                        r.score,
+                        r.totalMarks || 0,
+                        new Date(r.submittedAt).toLocaleString(),
+                        r.violationReason || ''
                     ])
                 ];
 
                 const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+                // Set column widths (optional, adjust numbers as needed)
+                ws['!cols'] = [ {wch:25}, {wch:30}, {wch:30}, {wch:20}, {wch:10}, {wch:12}, {wch:22}, {wch:30} ];
+
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Results");
-                XLSX.writeFile(wb, `${testTitle.replace(/\s/g, '_')}_Results.xlsx`);
+                XLSX.utils.book_append_sheet(wb, ws, "Results Summary");
+                XLSX.writeFile(wb, `${testTitle.replace(/\s/g, '_')}_Summary_Results.xlsx`);
             }
 
+             // --- PDF Export for INDIVIDUAL Candidate Report ---
             async function generateIndividualPdfReport() {
                 if (!currentDetailedResult) {
-                    alert("Candidate data has not been loaded. Please close and reopen the details view.");
+                    alert("Candidate data has not been loaded. Please wait or reopen the details view.");
                     return;
                 }
-                
                 const result = currentDetailedResult;
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
-                
-                try {
+                 const pageHeight = doc.internal.pageSize.height;
+                const pageWidth = doc.internal.pageSize.width;
+                const margin = 15;
+                let yPosition = margin; // Start position
+
+                 try {
+                     // Add Header (Logos & Title)
                     const [hireWithUsLogo, testifyLogo, profileImage] = await Promise.all([
                         imageToBase64('https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png'),
                         imageToBase64('https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png'),
-                        imageToBase64(result.profileImageUrl || 'https://placehold.co/400x400/E2E8F0/4A5568?text=Photo')
+                        imageToBase64(result.profileImageUrl || 'https://placehold.co/128x128/E2E8F0/4A5568?text=Photo')
                     ]);
 
-                    // Header
-                    if (testifyLogo) doc.addImage(testifyLogo, 'PNG', 15, 12, 25, 25);
-                    if (hireWithUsLogo) doc.addImage(hireWithUsLogo, 'PNG', doc.internal.pageSize.getWidth() - 40, 12, 25, 25);
-                    doc.setFontSize(18);
-                    doc.setFont('helvetica', 'bold');
-                    doc.text('Candidate Detailed Report', doc.internal.pageSize.getWidth() / 2, 25, { align: 'center' });
-                    
-                    // Candidate Info
-                    if(profileImage) doc.addImage(profileImage, 'PNG', 15, 45, 40, 40);
-                    
-                    doc.setFontSize(11);
-                    doc.setFont('helvetica', 'bold');
-                    doc.text('Name:', 65, 50);
-                    doc.text('Roll Number:', 65, 57);
-                    doc.text('College:', 65, 64);
-                    doc.text('Department:', 65, 71);
-                    doc.text('Email:', 65, 78);
-                    
+                    const addHeader = (pageNum) => {
+                         if (testifyLogo) doc.addImage(testifyLogo, 'PNG', margin, margin - 3, 20, 20);
+                         if (hireWithUsLogo) doc.addImage(hireWithUsLogo, 'PNG', pageWidth - margin - 20, margin - 3, 20, 20);
+                         doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+                         doc.text('Candidate Detailed Report', pageWidth / 2, margin + 8, { align: 'center' });
+                         if(pageNum > 1) yPosition = margin + 20; // Reset yPos for new page header
+                         else yPosition = margin + 25;
+                    };
+                    addHeader(1);
+
+                    // Add Candidate Info Section
+                    const imgSize = 35;
+                    if (profileImage) doc.addImage(profileImage, 'PNG', margin, yPosition, imgSize, imgSize);
+                    const textStartX = margin + imgSize + 8;
+                    const fieldWidth = (pageWidth - textStartX - margin) / 2;
+
+                    doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+                    doc.text('Name:', textStartX, yPosition + 5);
+                    doc.text('Roll Number:', textStartX + fieldWidth, yPosition + 5);
+                    doc.text('College:', textStartX, yPosition + 12);
+                    doc.text('Department:', textStartX + fieldWidth, yPosition + 12);
+                    doc.text('Email:', textStartX, yPosition + 19);
+                    doc.text('Submitted:', textStartX + fieldWidth, yPosition + 19);
+                    doc.text('Overall Score:', textStartX, yPosition + 26);
+
+
                     doc.setFont('helvetica', 'normal');
-                    doc.text(result.fullName || 'N/A', 95, 50);
-                    doc.text(result.rollNumber || 'N/A', 95, 57);
-                    doc.text(result.collegeName || 'N/A', 95, 64);
-                    doc.text(result.department || 'N/A', 95, 71);
-                    doc.text(result.candidateEmail || 'N/A', 95, 78);
+                    doc.text(result.fullName || 'N/A', textStartX + 25, yPosition + 5);
+                    doc.text(result.rollNumber || 'N/A', textStartX + fieldWidth + 28, yPosition + 5);
+                    doc.text(result.collegeName || 'N/A', textStartX + 25, yPosition + 12, {maxWidth: fieldWidth - 28});
+                    doc.text(result.department || 'N/A', textStartX + fieldWidth + 28, yPosition + 12);
+                    doc.text(result.candidateEmail || 'N/A', textStartX + 25, yPosition + 19);
+                    doc.text(new Date(result.submittedAt).toLocaleString(), textStartX + fieldWidth + 28, yPosition + 19);
+                    doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+                    doc.text(`${result.score} / ${result.totalMarks || 0}`, textStartX + 28, yPosition + 26);
 
-                    doc.setLineWidth(0.5);
-                    doc.line(15, 95, 195, 95);
+                    yPosition += imgSize + 8; // Move below image and text
 
-                    // Submissions
-                    let yPosition = 105;
-                    doc.setFontSize(14);
-                    doc.setFont('helvetica', 'bold');
-                    doc.text('Submission Breakup', 15, yPosition);
-                    yPosition += 10;
-                    
-                    if (result.submissions && result.submissions.length > 0) {
-                        for (const sub of result.submissions) {
-                             if (yPosition > 260) {
-                                doc.addPage();
-                                yPosition = 20;
-                            }
-                            doc.setFontSize(12);
-                            doc.setFont('helvetica', 'bold');
-                            doc.text(sub.problemTitle || 'Unnamed Problem', 15, yPosition);
-                            doc.text(`Score: ${sub.calculatedScore} / ${sub.score || 0}`, 195, yPosition, { align: 'right' });
-                            yPosition += 7;
-
-                            doc.setFontSize(10);
-                            doc.setFont('helvetica', 'normal');
-                            doc.text(`Passed ${sub.passedCases} of ${sub.totalCases} test cases | Language: ${sub.language}`, 15, yPosition);
-                            yPosition += 10;
-                            
-                            doc.setFontSize(9);
-                            doc.setFont('Courier', 'normal');
-                            const code = sub.code || '// No code submitted.';
-                            const codeLines = doc.splitTextToSize(code, 175);
-                             if (yPosition + (codeLines.length * 3.5) > 280) {
-                                doc.addPage();
-                                yPosition = 20;
-                            }
-                            doc.setFillColor(243, 244, 246); // gray-100
-                            doc.rect(15, yPosition - 3, 180, (codeLines.length * 3.5) + 4, 'F');
-                            doc.setTextColor(55, 65, 81); // gray-700
-                            doc.text(codeLines, 17, yPosition);
-                            doc.setTextColor(0, 0, 0);
-                            yPosition += (codeLines.length * 3.5) + 10;
-                        }
-                    } else {
-                         doc.setFontSize(10);
-                         doc.setFont('helvetica', 'normal');
-                         doc.text('No detailed submission data available for this candidate.', 15, yPosition);
+                    if (result.violationReason) {
+                         doc.setFontSize(9); doc.setTextColor(185, 28, 28); // Red-700
+                         doc.text(`Violation Recorded: ${result.violationReason}`, margin, yPosition);
+                         doc.setTextColor(0, 0, 0); // Reset color
+                         yPosition += 8;
                     }
 
-                    doc.save(`Report_${(result.fullName || result.candidateEmail).replace(/\s/g, '_')}.pdf`);
-                } catch (error) {
-                    console.error("Error generating individual PDF:", error);
-                    alert("Failed to generate PDF. Could not load required resources.");
-                }
+                    doc.setLineWidth(0.3); doc.line(margin, yPosition, pageWidth - margin, yPosition); yPosition += 8;
+
+                    // Add Section/Problem Breakup
+                     doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+                     doc.text('Submission Breakup', margin, yPosition); yPosition += 8;
+
+                    const addProblemToPdf = (sub) => {
+                         const problemHeaderHeight = 6;
+                         const detailsHeight = 5;
+                         const codeLineHeight = 3.5;
+                         const padding = 2;
+                         const codeBlockWidth = pageWidth - 2 * margin - 2 * padding;
+                         const codeFontSize = 8;
+                         const maxCodeLinesPerPage = Math.floor((pageHeight - yPosition - margin - problemHeaderHeight - detailsHeight - 10) / codeLineHeight); // Estimate lines left
+
+                         // Check if the header fits, add page if not
+                         if (yPosition + problemHeaderHeight + detailsHeight > pageHeight - margin) {
+                             doc.addPage(); addHeader(doc.internal.getNumberOfPages());
+                         }
+
+                         doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+                         doc.text(sub.problemTitle || 'Unnamed Problem', margin, yPosition);
+                         doc.text(`Score: ${sub.calculatedScore} / ${sub.score || 0}`, pageWidth - margin, yPosition, { align: 'right' });
+                         yPosition += problemHeaderHeight;
+
+                         doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+                         const statusText = `Passed ${sub.passedCases} of ${sub.totalCases} cases | Language: ${sub.language || 'N/A'}`;
+                         doc.text(statusText, margin, yPosition);
+                         yPosition += detailsHeight;
+
+                         const code = sub.code || '// No code submitted.';
+                         doc.setFontSize(codeFontSize); doc.setFont('Courier', 'normal');
+                         const codeLines = doc.splitTextToSize(code, codeBlockWidth);
+
+                         let lineIndex = 0;
+                         while(lineIndex < codeLines.length) {
+                             const linesOnThisPage = Math.min(codeLines.length - lineIndex, maxCodeLinesPerPage);
+                              // Check if *any* code fits on current page
+                             if (linesOnThisPage <= 0 || yPosition + padding + (linesOnThisPage * codeLineHeight) + padding > pageHeight - margin) {
+                                 doc.addPage(); addHeader(doc.internal.getNumberOfPages());
+                                 // Recalculate max lines for the new page
+                                 // maxCodeLinesPerPage = Math.floor((pageHeight - yPosition - margin - 10) / codeLineHeight);
+                                 // continue; // Re-evaluate the loop
+                             }
+                             const currentChunk = codeLines.slice(lineIndex, lineIndex + linesOnThisPage);
+                             const blockHeight = (currentChunk.length * codeLineHeight) + 2 * padding;
+
+                             doc.setFillColor(243, 244, 246); // gray-100
+                             doc.rect(margin, yPosition - padding, codeBlockWidth + 2 * padding, blockHeight, 'F');
+                             doc.setTextColor(55, 65, 81); // gray-700
+                             doc.text(currentChunk, margin + padding, yPosition + codeLineHeight - 1); // Adjust for baseline
+                             doc.setTextColor(0, 0, 0); // Reset text color
+
+                             yPosition += blockHeight + 5; // Add spacing after code block
+                             lineIndex += linesOnThisPage;
+                         }
+                         yPosition += 5; // Extra space between problems
+                    };
+
+                     // Iterate through sections or flat list
+                     if (result.sectionScores && result.sectionScores.length > 0) {
+                         result.sectionScores.forEach(sec => {
+                             if (yPosition + 15 > pageHeight - margin) { doc.addPage(); addHeader(doc.internal.getNumberOfPages()); }
+                             doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+                             doc.setFillColor(243, 244, 246); // Light gray background for section header
+                             doc.rect(margin, yPosition - 5, pageWidth - 2 * margin, 8, 'F');
+                             doc.text(sec.title, margin + 2, yPosition);
+                             doc.text(`Section Score: ${sec.score} / ${sec.maxScore}`, pageWidth - margin - 2, yPosition, { align: 'right' });
+                             yPosition += 10;
+
+                             const sectionSubmissions = (result.submissions || []).filter(sub => sub.sectionTitle === sec.title);
+                             if (sectionSubmissions.length > 0) {
+                                 sectionSubmissions.forEach(addProblemToPdf);
+                             } else {
+                                  if (yPosition + 10 > pageHeight - margin) { doc.addPage(); addHeader(doc.internal.getNumberOfPages()); }
+                                 doc.setFontSize(10); doc.setFont('helvetica', 'italic'); doc.setTextColor(107, 114, 128); // gray-500
+                                 doc.text('No submissions for this section.', margin + 5, yPosition); yPosition += 8;
+                                 doc.setTextColor(0,0,0);
+                             }
+                         });
+                     } else if (result.submissions && result.submissions.length > 0) {
+                         // Fallback for flat submissions
+                         result.submissions.forEach(addProblemToPdf);
+                     } else {
+                         if (yPosition + 10 > pageHeight - margin) { doc.addPage(); addHeader(doc.internal.getNumberOfPages()); }
+                         doc.setFontSize(10); doc.setFont('helvetica', 'italic'); doc.setTextColor(107, 114, 128); // gray-500
+                         doc.text('No detailed submission data available.', margin, yPosition); yPosition += 8;
+                          doc.setTextColor(0,0,0);
+                     }
+
+                    // Add Footer to the last page
+                    const finalPageCount = doc.internal.getNumberOfPages();
+                    for(let i=1; i<= finalPageCount; i++) {
+                        doc.setPage(i);
+                        doc.setFontSize(8); doc.setTextColor(156, 163, 175); // gray-400
+                        doc.text(`Page ${i} of ${finalPageCount}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+                        doc.text(`Report Generated: ${new Date().toLocaleString()}`, margin, pageHeight - 8);
+                         doc.setTextColor(0,0,0);
+                    }
+
+
+                    doc.save(`Report_${(result.fullName || result.candidateEmail).replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+                 } catch (error) {
+                    console.error("Error generating individual PDF report:", error);
+                    alert("Failed to generate PDF report. Could not load required resources or encountered an error.");
+                 }
             }
-            
+
+
+            // --- Code Viewer Modal ---
             document.getElementById('modal-content').addEventListener('click', (e) => {
                  if (e.target.classList.contains('view-code-btn')) {
-                    const submission = JSON.parse(e.target.dataset.submission);
-                    showCodeModal(submission);
+                    // Use try-catch for JSON parsing as data attribute might be malformed
+                    try {
+                        const submission = JSON.parse(e.target.dataset.submission);
+                        showCodeModal(submission);
+                    } catch (parseError) {
+                         console.error("Error parsing submission data for code modal:", parseError);
+                         alert("Could not load code: Invalid data format.");
+                    }
                 }
             });
 
             function showCodeModal(submission) {
-                document.getElementById('code-modal-title').textContent = `Code for: ${submission.problemTitle}`;
+                document.getElementById('code-modal-title').textContent = `Code for: ${submission.problemTitle || 'Unknown Problem'}`;
                 if (!codeViewer) {
                     codeViewer = CodeMirror.fromTextArea(document.getElementById('code-viewer'), {
-                        lineNumbers: true, theme: 'material-darker', readOnly: true
+                        lineNumbers: true, theme: 'material-darker', readOnly: true, lineWrapping: true
                     });
                 }
-                const modes = { 'python': 'python', 'java': 'text/x-java', 'c': 'text/x-csrc', 'cpp': 'text/x-c++src' };
-                codeViewer.setOption('mode', modes[submission.language] || 'text/x-csrc');
-                codeViewer.setValue(submission.code || '// No code submitted.');
+                // Map languages to CodeMirror modes
+                const modes = { 'python': 'python', 'java': 'text/x-java', 'c': 'text/x-csrc', 'cpp': 'text/x-c++src', 'javascript': 'javascript' };
+                codeViewer.setOption('mode', modes[submission.language] || 'text/plain'); // Default to plain text
+                codeViewer.setValue(submission.code || '// No code submitted or available.');
                 codeModal.classList.remove('hidden');
+                // Refresh needed after modal becomes visible
                 setTimeout(() => codeViewer.refresh(), 1);
             }
 
+            // --- Modal Close Buttons ---
             downloadReportBtn.addEventListener('click', generateIndividualPdfReport);
             document.getElementById('close-modal-btn').onclick = () => detailsModal.classList.add('hidden');
             document.getElementById('close-code-modal-btn').onclick = () => codeModal.classList.add('hidden');
 
+            // --- Initial Fetch ---
             fetchResults();
         });
     </script>
 </body>
 </html>
-
