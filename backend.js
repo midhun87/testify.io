@@ -8114,6 +8114,9 @@ app.get('/api/hiring/tests', hiringModeratorAuth, async (req, res) => {
 //  * @desc    External Candidate: Submits final answers for a coding test.
 //  * @access  Private (External Candidate Token Required)
 //  */
+// Assuming docClient and HIRING_CODE_SNIPPETS_TABLE are defined elsewhere
+// Assuming authMiddleware is correctly populating req.user
+
 app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
     // ... (Keep existing authentication, input validation, assignment check, previous submission check) ...
     if (!req.user || !req.user.isExternal) { /* ... */ return res.status(403).json({ message: 'Access denied.' }); }
@@ -8995,6 +8998,7 @@ app.get('/api/public/test-details', authMiddleware, async (req, res) => {
         if (!assignment || assignment.studentEmail !== candidateEmail || assignment.testId !== testPkFromToken) { /* ... */ return res.status(403).json({ message: 'Link invalid or assignment details mismatch.' }); }
         console.log(`[GET TEST DETAILS] Assignment ${assignmentId} found. Type: ${assignment.testType}, Test PK: ${assignment.testId}`);
 
+        // ... (Keep existing time window and previous submission checks) ...
         // --- Check Test Time Window (Assume TIMEZONE FIX is applied) ---
         const now = new Date();
         const startTime = new Date(`${assignment.startTime}+05:30`); // Assuming IST
@@ -9024,7 +9028,6 @@ app.get('/api/public/test-details', authMiddleware, async (req, res) => {
        }
        console.log(`[GET TEST DETAILS] No previous SUBMITTED result found.`);
 
-
         // --- Fetch Actual Test Details based on testType from Assignment ---
         let test;
         let targetTableName;
@@ -9045,6 +9048,10 @@ app.get('/api/public/test-details', authMiddleware, async (req, res) => {
              return res.status(500).json({ message: 'Internal Server Error: Invalid test type.' });
         }
 
+        // *** ADDED LOGGING HERE ***
+        console.log(`[GET TEST DETAILS] RAW ${assignment.testType.toUpperCase()} TEST DATA FETCHED FROM DB:`, JSON.stringify(test, null, 2));
+        // *** END ADDED LOGGING ***
+
         if (!test) {
             console.error(`[GET TEST DETAILS] Test definition ${assignment.testId} (Type: ${assignment.testType}) not found in ${targetTableName}.`);
              return res.status(404).json({ message: 'Test content not found.' });
@@ -9058,66 +9065,72 @@ app.get('/api/public/test-details', authMiddleware, async (req, res) => {
 
         // ** MODIFICATION for CODING TEST **
         if (assignment.testType === 'coding') {
-            // Check if it uses the new 'sections' structure
+            // Ensure sections exist and process them
+            console.log(`[GET TEST DETAILS] Processing CODING test. Sections type: ${typeof processedTest.sections}, Is Array: ${Array.isArray(processedTest.sections)}`);
             if (processedTest.sections && Array.isArray(processedTest.sections)) {
-                console.log(`[GET TEST DETAILS] Processing CODING test with SECTIONS structure.`);
-                // Prepare sections with basic problem info (exclude full details like description, test cases)
-                processedTest.sections = processedTest.sections.map(section => ({
-                    title: section.title,
-                    problems: section.problems.map(p => ({
-                        problemId: p.problemId,
-                        title: p.title,
-                        difficulty: p.difficulty,
-                        score: p.score
-                    }))
-                }));
-                // Remove the old flat 'problems' array if it exists to avoid confusion
-                delete processedTest.problems;
+                console.log(`[GET TEST DETAILS] Processing CODING test with SECTIONS structure (${processedTest.sections.length} sections).`);
+                processedTest.sections = processedTest.sections.map(section => {
+                    // Ensure section.problems is an array, default to empty if not
+                    const problemsArray = (section.problems && Array.isArray(section.problems)) ? section.problems : [];
+                    console.log(`[GET TEST DETAILS]   Section "${section.title}" has ${problemsArray.length} problems.`);
+                    return {
+                        title: section.title,
+                        problems: problemsArray.map(p => ({
+                            problemId: p.problemId,
+                            title: p.title,
+                            difficulty: p.difficulty,
+                            score: p.score
+                        }))
+                    };
+                });
+                delete processedTest.problems; // Remove old flat structure if sections are present
                  console.log(`[GET TEST DETAILS] Prepared basic info for coding problems within sections.`);
-
-            } else if (processedTest.problems && Array.isArray(processedTest.problems)) {
-                 // ** BACKWARDS COMPATIBILITY ** (Handle old tests without sections)
-                 console.log(`[GET TEST DETAILS] Processing CODING test with old flat PROBLEMS structure (creating default section).`);
-                 // Create a default section containing the old flat problems list
+            }
+            // ** BACKWARDS COMPATIBILITY ** (Handle old tests without sections)
+            else if (processedTest.problems && Array.isArray(processedTest.problems)) {
+                 console.log(`[GET TEST DETAILS] Processing CODING test with old flat PROBLEMS structure (${processedTest.problems.length} problems). Creating default section.`);
                  processedTest.sections = [{
-                     title: "Coding Problems", // Default section title
+                     title: "Coding Problems",
                      problems: processedTest.problems.map(p => ({
-                         problemId: p.problemId,
-                         title: p.title,
-                         difficulty: p.difficulty,
-                         score: p.score
+                         problemId: p.problemId, title: p.title, difficulty: p.difficulty, score: p.score
                      }))
                  }];
-                 // Remove the old flat 'problems' array
                  delete processedTest.problems;
                  console.log(`[GET TEST DETAILS] Created default section for old coding test structure.`);
-            } else {
-                // If neither 'sections' nor 'problems' exist, it's an invalid coding test definition
-                 console.error(`[GET TEST DETAILS] Invalid CODING test definition for ${assignment.testId}: Missing 'sections' or 'problems' array.`);
-                 return res.status(500).json({ message: 'Internal Server Error: Invalid coding test structure.' });
+            }
+             // ** ADDED: Handle case where NEITHER sections NOR problems exist **
+            else {
+                 console.warn(`[GET TEST DETAILS] Invalid CODING test structure for ${assignment.testId}: Neither 'sections' nor 'problems' array found. Returning empty sections.`);
+                 processedTest.sections = []; // Return empty sections array to prevent frontend error
+                 delete processedTest.problems;
             }
         }
-        // Aptitude test processing (removing answers) remains the same
+        // Aptitude test processing (removing answers)
         else if (assignment.testType === 'aptitude' && processedTest.sections && Array.isArray(processedTest.sections)) {
             processedTest.sections = processedTest.sections.map(section => {
-                 const questions = (section.questions || []).map(q => { const { correctAnswer, correctAnswers, ...qData } = q; return qData; });
+                 // Ensure section.questions is an array before mapping
+                 const questionsArray = (section.questions && Array.isArray(section.questions)) ? section.questions : [];
+                 const questions = questionsArray.map(q => { const { correctAnswer, correctAnswers, ...qData } = q; return qData; });
                  return { ...section, questions };
             });
             console.log(`[GET TEST DETAILS] Removed answers from aptitude test sections.`);
         }
+         // ** ADDED: Handle aptitude tests with missing sections **
+         else if (assignment.testType === 'aptitude' && (!processedTest.sections || !Array.isArray(processedTest.sections))) {
+             console.warn(`[GET TEST DETAILS] Invalid APTITUDE test structure for ${assignment.testId}: 'sections' array missing or invalid. Returning empty sections.`);
+             processedTest.sections = []; // Return empty sections array
+         }
 
 
         // --- Return Processed Test Data ---
-        console.log(`[GET TEST DETAILS] Returning processed test data for assignment ${assignmentId}.`);
+        console.log(`[GET TEST DETAILS] Returning processed test data for assignment ${assignmentId}. Final sections count: ${processedTest.sections?.length ?? 0}`);
         res.json(processedTest);
 
     } catch (error) {
         console.error(`[GET TEST DETAILS] Fatal Error processing assignment ${assignmentId}:`, error);
-        // ... (existing error handling) ...
         res.status(500).json({ message: 'Server error fetching test details. Please contact support.' });
     }
 });
-
 
 // EXTERNAL CANDIDATE: Submit Test
 app.post('/api/public/submit-test', authMiddleware, async (req, res) => {
@@ -11908,6 +11921,125 @@ app.post('/api/public/upload-image', async (req, res) => {
         res.status(500).json({ message: 'Server error uploading image.' });
     }
 });
+
+app.post('/api/public/save-code-snippet', authMiddleware, async (req, res) => {
+    const assignmentIdFromToken = req.user?.assignmentId;
+    const testIdFromToken = req.user?.testId;
+    const emailFromToken = req.user?.email;
+    const isExternal = req.user?.isExternal || false;
+
+    const { assignmentId, testId, problemId, code, language } = req.body;
+
+    console.log('[SAVE SNIPPET] Request received. Body:', req.body, 'User:', req.user);
+
+    // --- Validation ---
+    if (!problemId || code === undefined || code === null || !language) {
+        console.warn('[SAVE SNIPPET] Validation failed: Missing problemId, code, or language.');
+        return res.status(400).json({ message: 'Missing problemId, code, or language.' });
+    }
+
+    // Determine the correct IDs
+    const effectiveAssignmentId = isExternal ? assignmentIdFromToken : assignmentId;
+    const effectiveTestId = isExternal ? testIdFromToken : testId;
+    const effectiveEmail = emailFromToken;
+
+    if (!effectiveAssignmentId || !effectiveTestId || !effectiveEmail) {
+        console.error(`[SAVE SNIPPET] Critical ID missing: effectiveAssignmentId=${effectiveAssignmentId}, effectiveTestId=${effectiveTestId}, effectiveEmail=${effectiveEmail}`);
+        return res.status(400).json({ message: 'Could not determine required assignment/test/user identifiers.' });
+    }
+    console.log(`[SAVE SNIPPET] Effective IDs: Assignment=${effectiveAssignmentId}, Test=${effectiveTestId}, Email=${effectiveEmail}, Problem=${problemId}`);
+
+    // --- Generate snippetId (Partition Key) ---
+    const snippetId = `snip_${effectiveAssignmentId}_${problemId}`;
+    const primaryKey = { snippetId: snippetId };
+    console.log('[SAVE SNIPPET] Using Primary Key:', primaryKey);
+
+    try {
+        // --- Check for existing snippet ---
+        console.log(`[SAVE SNIPPET] Checking for existing snippet...`);
+        const { Item: existingSnippet } = await docClient.send(new GetCommand({
+            TableName: HIRING_CODE_SNIPPETS_TABLE,
+            Key: primaryKey
+        }));
+
+        // --- Prepare full item data ---
+        const snippetData = {
+            snippetId: snippetId,
+            assignmentId: effectiveAssignmentId,
+            problemId: problemId,
+            testId: effectiveTestId,
+            userEmail: effectiveEmail,
+            code: code,
+            language: language,
+            savedAt: new Date().toISOString()
+        };
+
+        if (existingSnippet) {
+            // --- Update existing snippet ---
+            console.log(`[SAVE SNIPPET] Existing snippet found. Updating...`);
+
+            // *** REVISED: Using ExpressionAttributeNames for ALL attributes ***
+            await docClient.send(new UpdateCommand({
+                TableName: HIRING_CODE_SNIPPETS_TABLE,
+                Key: primaryKey,
+                UpdateExpression: "SET #c = :c, #l = :l, #ts = :ts, #tid = :tid, #email = :email, #aid = :aid, #pid = :pid",
+                ExpressionAttributeNames: {
+                    "#c": "code",
+                    "#l": "language",
+                    "#ts": "savedAt",
+                    "#tid": "testId",
+                    "#email": "userEmail",
+                    "#aid": "assignmentId",
+                    "#pid": "problemId"
+                },
+                ExpressionAttributeValues: {
+                    ":c": code,
+                    ":l": language,
+                    ":ts": snippetData.savedAt,
+                    ":tid": effectiveTestId,
+                    ":email": effectiveEmail,
+                    ":aid": effectiveAssignmentId,
+                    ":pid": problemId
+                }
+            }));
+            // *** END REVISION ***
+
+            console.log(`[SAVE SNIPPET] Update successful.`);
+            res.status(200).json({ message: 'Code snippet updated successfully.' });
+
+        } else {
+            // --- Create new snippet ---
+            console.log(`[SAVE SNIPPET] No existing snippet found. Creating new...`);
+            await docClient.send(new PutCommand({
+                TableName: HIRING_CODE_SNIPPETS_TABLE,
+                Item: snippetData
+            }));
+            console.log(`[SAVE SNIPPET] Creation successful.`);
+            res.status(201).json({ message: 'Code snippet saved successfully.' });
+        }
+
+    } catch (error) {
+        // Log the specific error from DynamoDB or other sources
+        console.error(`[SAVE SNIPPET] Error saving/updating snippet with ID ${snippetId} (Assignment ${effectiveAssignmentId}, Problem ${problemId}):`, error);
+
+        let errorMessage = 'Server error saving code snippet.'; // Default message
+        if (error.name === 'ValidationException') {
+            console.error('[SAVE SNIPPET] DynamoDB Validation Error:', error.message);
+            // Provide a slightly more specific message if possible, but avoid exposing too much detail
+            errorMessage = 'Data validation failed during save.';
+        } else if (error.name === 'ResourceNotFoundException') {
+            console.error(`[SAVE SNIPPET] DynamoDB Resource Not Found Error: Table ${HIRING_CODE_SNIPPETS_TABLE} might be missing.`);
+            errorMessage = 'Server configuration error (table not found).';
+        } else if (error.$metadata?.httpStatusCode) {
+             console.error(`[SAVE SNIPPET] DynamoDB HTTP Error Status: ${error.$metadata.httpStatusCode}`);
+             errorMessage = `Server error communicating with database (Code: ${error.$metadata.httpStatusCode}).`;
+        }
+
+        // Send the potentially more specific error message back
+        res.status(500).json({ message: errorMessage });
+    }
+});
+
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
