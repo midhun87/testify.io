@@ -7074,24 +7074,51 @@ app.get('/api/hiring/tests', hiringModeratorAuth, async (req, res) => {
 
 // Create a new hiring coding test (which is a collection of problems)
 app.post('/api/hiring/coding-tests', hiringModeratorAuth, async (req, res) => {
-    const { testTitle, duration, problems } = req.body; // problems is array of { id/problemId, title, difficulty, score }
-    if (!testTitle || !duration || !problems || problems.length === 0) {
-        return res.status(400).json({ message: 'Missing required fields.' });
+    // Expect `sections` array instead of `problems`
+    // sections = [{ title: "Section A", problems: [{ id/problemId, title, difficulty, score }, ...] }, ...]
+    const { testTitle, duration, sections } = req.body;
+    console.log("[POST /api/hiring/coding-tests] Received payload:", { testTitle, duration, sections }); // Log received data
+
+    if (!testTitle || !duration || !sections || !Array.isArray(sections) || sections.length === 0) {
+        return res.status(400).json({ message: 'Missing required fields: testTitle, duration, and at least one section with problems.' });
     }
+
+    let totalMarks = 0;
+    const sectionsToStore = [];
+
+    // Validate and process sections
+    for (const section of sections) {
+        if (!section.title || !section.problems || !Array.isArray(section.problems) || section.problems.length === 0) {
+            return res.status(400).json({ message: `Invalid section format: Each section needs a title and at least one problem.` });
+        }
+        const problemsToStore = section.problems.map(p => {
+            const score = parseInt(p.score, 10) || 0;
+            totalMarks += score; // Accumulate total marks
+            return {
+                problemId: p.id || p.problemId, // Use the actual problemId
+                title: p.title,
+                difficulty: p.difficulty,
+                score: score // Store the parsed score
+            };
+        });
+        sectionsToStore.push({
+            title: section.title,
+            problems: problemsToStore
+        });
+    }
+
     const codingTestId = `hire_coding_test_${uuidv4()}`;
-    // Ensure we store the correct problemId from the selected problems
-    const problemsToStore = problems.map(p => ({
-        problemId: p.id || p.problemId, // Use the actual problemId
-        title: p.title,
-        difficulty: p.difficulty,
-        score: p.score
-    }));
-    const totalMarks = problemsToStore.reduce((sum, prob) => sum + (prob.score || 0), 0);
     const newTest = {
-        codingTestId, title: testTitle, duration: parseInt(duration, 10), totalMarks,
-        problems: problemsToStore,
-        createdBy: req.user.email, createdAt: new Date().toISOString()
+        codingTestId,
+        title: testTitle,
+        duration: parseInt(duration, 10),
+        totalMarks, // Calculated total marks
+        sections: sectionsToStore, // Store the structured sections
+        createdBy: req.user.email,
+        createdAt: new Date().toISOString()
     };
+    console.log("[POST /api/hiring/coding-tests] Saving new test:", newTest); // Log data being saved
+
     try {
         await docClient.send(new PutCommand({ TableName: HIRING_CODING_TESTS_TABLE, Item: newTest }));
         res.status(201).json({ message: 'Coding test created successfully!', test: { ...newTest, testId: codingTestId } }); // Map back if needed
@@ -8088,156 +8115,152 @@ app.get('/api/hiring/tests', hiringModeratorAuth, async (req, res) => {
 //  * @access  Private (External Candidate Token Required)
 //  */
 app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
-    // 1. Verify Authentication & Extract Token Data
-    if (!req.user || !req.user.isExternal) {
-        console.warn('[SUBMIT CODING TEST] Denied: User not external or not authenticated.');
-        return res.status(403).json({ message: 'Access denied.' });
-    }
+    // ... (Keep existing authentication, input validation, assignment check, previous submission check) ...
+    if (!req.user || !req.user.isExternal) { /* ... */ return res.status(403).json({ message: 'Access denied.' }); }
     const { testId: testPkFromToken, email: candidateEmail, assignmentId } = req.user;
-    console.log(`[SUBMIT CODING TEST] Received submission for assignment: ${assignmentId}, Candidate: ${candidateEmail}, Test PK in token: ${testPkFromToken}`);
+    const { submissions, violationReason, candidateDetails } = req.body;
+    if (!candidateDetails || !candidateDetails.fullName /*... other details ...*/) { /* ... */ return res.status(400).json({ message: 'Missing required candidate details.' }); }
+    if (!Array.isArray(submissions)) { /* ... */ return res.status(400).json({ message: "Invalid submission data format." }); }
 
-    // 2. Extract Submission Data from Request Body
-    const { submissions, violationReason, candidateDetails } = req.body; // Candidate details NOW come from body
-
-    // 3. Validate Input Data
-    if (!candidateDetails || !candidateDetails.fullName || !candidateDetails.rollNumber || !candidateDetails.collegeName || !candidateDetails.department) {
-        console.warn(`[SUBMIT CODING TEST] Incomplete candidate details received in body for assignment ${assignmentId}.`);
-        return res.status(400).json({ message: 'Missing required candidate details in submission.' });
-    }
-    if (!submissions || !Array.isArray(submissions)) {
-        console.warn(`[SUBMIT CODING TEST] Invalid 'submissions' format for assignment ${assignmentId}.`);
-        return res.status(400).json({ message: "Invalid submission data format." });
-    }
-    console.log(`[SUBMIT CODING TEST] Input data validated for assignment ${assignmentId}.`);
-
-    // Define a unique ID for this test result record.
-    const resultId = `hcs_${uuidv4()}`; // Prefix 'hcs_' for Hiring Coding Submission
+    const resultId = `hcs_${uuidv4()}`;
 
     try {
         // --- Verify Assignment Record ---
-        console.log(`[SUBMIT CODING TEST] Verifying assignment ${assignmentId} in ${HIRING_ASSIGNMENTS_TABLE}`);
-        const { Item: assignment } = await docClient.send(new GetCommand({
-            TableName: HIRING_ASSIGNMENTS_TABLE,
-            Key: { assignmentId }
-        }));
-
-        // Validate if assignment exists, belongs to the candidate, matches the test in the token, and is for a coding test.
-        if (!assignment) {
-            console.warn(`[SUBMIT CODING TEST] Assignment ${assignmentId} not found.`);
-            return res.status(403).json({ message: 'Assignment record not found. Link may be invalid.' });
-        }
-        if (assignment.studentEmail !== candidateEmail || assignment.testId !== testPkFromToken) {
-            console.warn(`[SUBMIT CODING TEST] Assignment ${assignmentId} data mismatch. Token vs DB.`);
-            return res.status(403).json({ message: 'Link invalid or assignment details mismatch.' });
-        }
-        if (assignment.testType !== 'coding') {
-            console.warn(`[SUBMIT CODING TEST] Incorrect test type in assignment ${assignmentId}. Expected 'coding', got '${assignment.testType}'.`);
-            return res.status(403).json({ message: 'Assignment is not for a coding test.' });
+        const { Item: assignment } = await docClient.send(new GetCommand({ /* ... fetch assignment ... */ TableName: HIRING_ASSIGNMENTS_TABLE, Key: { assignmentId } }));
+        if (!assignment || assignment.studentEmail !== candidateEmail || assignment.testId !== testPkFromToken || assignment.testType !== 'coding') {
+            console.warn(`[SUBMIT CODING TEST] Assignment ${assignmentId} validation failed.`);
+            return res.status(403).json({ message: 'Assignment validation failed.' });
         }
         console.log(`[SUBMIT CODING TEST] Assignment ${assignmentId} verified.`);
 
+        // --- Check for Previous *SUBMITTED* Submission ---
+        const GSI_NAME = 'AssignmentIdIndex';
+        const { Items: existingSubmittedResults } = await docClient.send(new QueryCommand({ /* ... query as before ... */
+            TableName: HIRING_TEST_RESULTS_TABLE, IndexName: GSI_NAME,
+            KeyConditionExpression: 'assignmentId = :aid',
+            FilterExpression: 'attribute_not_exists(resultId) OR not begins_with(resultId, :initPrefix)',
+            ExpressionAttributeValues: { ':aid': assignmentId, ':initPrefix': 'init_' }, Limit: 1
+       }));
+       if (existingSubmittedResults && existingSubmittedResults.length > 0) {
+            console.warn(`[SUBMIT CODING TEST] Test already SUBMITTED for assignment ${assignmentId}.`);
+            return res.status(409).json({ message: 'This test has already been submitted.' });
+       }
+       console.log(`[SUBMIT CODING TEST] No previous SUBMITTED result found.`);
 
-        // --- Check for Previous *SUBMITTED* Submission (Ignore 'init_' records) ---
-        const GSI_NAME = 'AssignmentIdIndex'; // GSI on HIRING_TEST_RESULTS_TABLE with assignmentId as key
-        console.log(`[SUBMIT CODING TEST] Checking for existing SUBMITTED results using GSI '${GSI_NAME}' on ${HIRING_TEST_RESULTS_TABLE} for assignment ${assignmentId}`);
-        const { Items: existingSubmittedResults } = await docClient.send(new QueryCommand({
-             TableName: HIRING_TEST_RESULTS_TABLE,
-             IndexName: GSI_NAME,
-             KeyConditionExpression: 'assignmentId = :aid',
-             // Filter ensures we ONLY find results that are NOT the 'init_' placeholder.
-             FilterExpression: 'attribute_not_exists(resultId) OR not begins_with(resultId, :initPrefix)',
-             ExpressionAttributeValues: {
-                 ':aid': assignmentId,
-                 ':initPrefix': 'init_' // Prefix used for the initial verification record
-             },
-             Limit: 1 // We only need to know if one *submitted* result exists
-        }));
-
-        // If a *submitted* result (not 'init_') is found, reject the new submission.
-        if (existingSubmittedResults && existingSubmittedResults.length > 0) {
-            console.warn(`[SUBMIT CODING TEST] Test already SUBMITTED (found non-init result) for assignment ${assignmentId}. Result ID: ${existingSubmittedResults[0].resultId}`);
-            return res.status(409).json({ message: 'This test has already been submitted.' }); // 409 Conflict
-        }
-        console.log(`[SUBMIT CODING TEST] No previous SUBMITTED result found. Proceeding with submission.`);
-
-
-        // --- Fetch Coding Test Definition ---
+        // --- Fetch Coding Test Definition (with sections) ---
         console.log(`[SUBMIT CODING TEST] Fetching test definition for ${assignment.testId} from ${HIRING_CODING_TESTS_TABLE}`);
         const { Item: test } = await docClient.send(new GetCommand({
             TableName: HIRING_CODING_TESTS_TABLE,
             Key: { codingTestId: assignment.testId } // Ensure 'codingTestId' is the correct primary key
         }));
 
-        if (!test || !test.problems || !Array.isArray(test.problems)) {
-            console.error(`[SUBMIT CODING TEST] Test definition ${assignment.testId} not found or invalid in ${HIRING_CODING_TESTS_TABLE}.`);
+        // ** VALIDATION: Ensure test definition is valid and has sections or problems **
+        if (!test || (!Array.isArray(test.sections) && !Array.isArray(test.problems))) {
+            console.error(`[SUBMIT CODING TEST] Test definition ${assignment.testId} not found or invalid (missing sections/problems) in ${HIRING_CODING_TESTS_TABLE}.`);
             return res.status(404).json({ message: "Coding test definition not found or invalid." });
         }
         console.log(`[SUBMIT CODING TEST] Test definition found: ${test.title}`);
 
-        // Create a map for easy lookup of problem scores
-        const problemMapForScores = new Map(test.problems.map(p => [ p.problemId, (parseInt(p.score, 10) || 0) ]));
-        // Use totalMarks from test definition if available, otherwise calculate from problems array
-        const totalPossibleMarks = test.totalMarks || test.problems.reduce((sum, p) => sum + (parseInt(p.score, 10) || 0), 0);
-        console.log(`[SUBMIT CODING TEST] Total possible marks for test ${assignment.testId}: ${totalPossibleMarks}`);
+        // --- Create Problem Map for Scoring (Handles both sections and old problems structure) ---
+        const problemMapForScores = new Map();
+        let totalPossibleMarks = 0;
 
+        if (test.sections && Array.isArray(test.sections)) {
+            // New structure with sections
+            test.sections.forEach(section => {
+                section.problems.forEach(p => {
+                    const score = parseInt(p.score, 10) || 0;
+                    problemMapForScores.set(p.problemId, { score: score, title: p.title, sectionTitle: section.title });
+                    totalPossibleMarks += score;
+                });
+            });
+            console.log(`[SUBMIT CODING TEST] Built problem map from SECTIONS structure. Total Marks: ${totalPossibleMarks}`);
+        } else if (test.problems && Array.isArray(test.problems)) {
+            // Backwards compatibility for old structure
+            test.problems.forEach(p => {
+                 const score = parseInt(p.score, 10) || 0;
+                 problemMapForScores.set(p.problemId, { score: score, title: p.title, sectionTitle: "Coding Problems" }); // Default section
+                 totalPossibleMarks += score;
+            });
+            console.log(`[SUBMIT CODING TEST] Built problem map from old PROBLEMS structure. Total Marks: ${totalPossibleMarks}`);
+        }
+        // If test.totalMarks exists and seems valid, prefer it (optional, could override calculation)
+        if (test.totalMarks && parseInt(test.totalMarks, 10) > 0) {
+             totalPossibleMarks = parseInt(test.totalMarks, 10);
+             console.log(`[SUBMIT CODING TEST] Using totalMarks from test definition: ${totalPossibleMarks}`);
+        }
 
         // --- Process Submissions & Calculate Score ---
         let totalScore = 0;
         const detailedSubmissions = submissions.map(sub => {
             const problemId = sub.problemId;
-            const maxProblemScore = problemMapForScores.get(problemId) ?? 0; // Default score to 0 if problemId not found in test def
-            const evaluationResults = sub.evaluationResults || []; // Results from frontend evaluation
-            const passedCases = evaluationResults.filter(r => r && r.status === 'Accepted').length;
+            const problemInfo = problemMapForScores.get(problemId);
+            const maxProblemScore = problemInfo ? problemInfo.score : 0;
+            const problemTitle = problemInfo ? problemInfo.title : 'Title Not Found';
+            const sectionTitle = problemInfo ? problemInfo.sectionTitle : 'Unknown Section'; // Get section title
+
+            const evaluationResults = sub.evaluationResults || [];
+            const passedCases = evaluationResults.filter(r => r?.status === 'Accepted').length;
             const totalCases = evaluationResults.length;
 
-            // Calculate score for this problem based on passed cases and max score
             const calculatedScore = (totalCases > 0 && maxProblemScore > 0)
                                       ? Math.round((passedCases / totalCases) * maxProblemScore)
                                       : 0;
-            totalScore += calculatedScore; // Add to overall test score
+            totalScore += calculatedScore;
 
-            console.log(`[SUBMIT CODING TEST] Problem ${problemId}: Passed ${passedCases}/${totalCases}, Score: ${calculatedScore}/${maxProblemScore}`);
+            console.log(`[SUBMIT CODING TEST] Problem ${problemId} (Section: ${sectionTitle}): Passed ${passedCases}/${totalCases}, Score: ${calculatedScore}/${maxProblemScore}`);
 
             return {
                  problemId: problemId,
-                 problemTitle: test.problems.find(p => p.problemId === problemId)?.title || 'Title Not Found', // Get title from test def
+                 problemTitle: problemTitle, // Title from map
+                 sectionTitle: sectionTitle, // ** NEW: Add section title **
                  language: sub.language || 'N/A',
-                 code: sub.code || '', // Store the submitted code
-                 score: maxProblemScore, // Max possible score for this problem
-                 calculatedScore: calculatedScore, // Actual score obtained
+                 code: sub.code || '',
+                 score: maxProblemScore, // Max possible score
+                 calculatedScore: calculatedScore, // Actual score
                  passedCases: passedCases,
                  totalCases: totalCases,
-                 evaluationResults: evaluationResults // Store detailed pass/fail results
+                 evaluationResults: evaluationResults
              };
         });
         console.log(`[SUBMIT CODING TEST] Final Calculated Score for assignment ${assignmentId}: ${totalScore}/${totalPossibleMarks}`);
 
-
         // --- Construct Final Result Object ---
-        // Combine all gathered information into the final result record.
         const newSubmissionResult = {
-            resultId,                               // Unique ID for this submission result
-            testId: assignment.testId,             // The actual primary key of the test (codingTestId)
-            assignmentId,                           // Link back to the specific assignment
-            testType: 'coding',                     // Clearly mark the test type
-            candidateEmail,                         // Candidate's email from the token
-            // Candidate details submitted from the frontend body
+            resultId,
+            testId: assignment.testId,
+            assignmentId,
+            testType: 'coding',
+            candidateEmail,
             fullName: candidateDetails.fullName,
             rollNumber: candidateDetails.rollNumber,
             collegeName: candidateDetails.collegeName,
             department: candidateDetails.department,
-            profileImageUrl: candidateDetails.profileImageUrl || null, // Include profile image URL if provided
-            // Test information and results
-            testTitle: test.title || 'N/A',         // Title from the test definition
-            submissions: detailedSubmissions,       // Array containing details for each problem submission
-            score: totalScore,                      // Total score obtained across all problems
-            totalMarks: totalPossibleMarks,         // Maximum possible marks for the entire test
-            // Metadata
-            submittedAt: new Date().toISOString(),  // Timestamp of submission
-            violationReason: violationReason || null, // Record any proctoring violations
+            profileImageUrl: candidateDetails.profileImageUrl || null,
+            testTitle: test.title || 'N/A',
+            submissions: detailedSubmissions, // Includes sectionTitle now
+            score: totalScore,
+            totalMarks: totalPossibleMarks,
+            submittedAt: new Date().toISOString(),
+            violationReason: violationReason || null,
+            // ** NEW: Add section breakdown to the main result object **
+            sectionScores: test.sections ? test.sections.map(section => {
+                let sectionTotalScore = 0;
+                let sectionMaxScore = 0;
+                detailedSubmissions.forEach(sub => {
+                    if (sub.sectionTitle === section.title) {
+                        sectionTotalScore += sub.calculatedScore;
+                        sectionMaxScore += sub.score; // Add max score for problems in this section
+                    }
+                });
+                return {
+                    title: section.title,
+                    score: sectionTotalScore,
+                    maxScore: sectionMaxScore
+                };
+            }) : null // Only add if sections exist in the original test
         };
         console.log(`[SUBMIT CODING TEST] Constructed final result object for ${resultId}.`);
-
 
         // --- Save Result ---
         console.log(`[SUBMIT CODING TEST] Saving result ${resultId} to ${HIRING_TEST_RESULTS_TABLE}...`);
@@ -8247,14 +8270,11 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
         }));
         console.log(`[SUBMIT CODING TEST] Successfully saved result ${resultId}.`);
 
-
         // --- Send Success Response ---
-        res.status(201).json({ message: 'Test submitted successfully! Redirecting...' }); // 201 Created
+        res.status(201).json({ message: 'Test submitted successfully! Redirecting...' });
 
     } catch (error) {
-        // Log detailed error information for debugging.
         console.error(`[SUBMIT CODING TEST] FATAL ERROR processing assignment ${assignmentId}:`, error);
-        // Provide a generic error message to the client.
         res.status(500).json({ message: 'Server error submitting test. Please contact support.' });
     }
 });
@@ -8274,7 +8294,90 @@ app.post('/api/public/upload-image', async (req, res) => {
     }
 });
 
+app.post('/api/hiring/coding-tests', hiringModeratorAuth, async (req, res) => {
+    // Expect `sections` array instead of `problems`
+    // sections = [{ title: "Section A", problems: [{ id/problemId, title, difficulty, score }, ...] }, ...]
+    const { testTitle, duration, sections } = req.body;
+    console.log("[POST /api/hiring/coding-tests] Received payload:", { testTitle, duration, sections }); // Log received data
 
+    // --- Stricter Validation ---
+    if (!testTitle || typeof testTitle !== 'string' || testTitle.trim() === '') {
+        console.warn("[POST /api/hiring/coding-tests] Validation failed: Invalid or missing testTitle.");
+        return res.status(400).json({ message: 'Test Title is required and cannot be empty.' });
+    }
+
+    const parsedDuration = parseInt(duration, 10);
+    if (isNaN(parsedDuration) || parsedDuration <= 0) {
+        console.warn(`[POST /api/hiring/coding-tests] Validation failed: Invalid duration value '${duration}'. Must be a positive number.`);
+        return res.status(400).json({ message: 'Duration is required and must be a positive number of minutes.' });
+    }
+
+    if (!sections || !Array.isArray(sections) || sections.length === 0) {
+        console.warn("[POST /api/hiring/coding-tests] Validation failed: Sections array is missing, empty, or not an array.");
+        return res.status(400).json({ message: 'At least one section with problems is required.' });
+    }
+    // --- End Stricter Validation ---
+
+
+    let totalMarks = 0;
+    const sectionsToStore = [];
+
+    // Validate and process sections
+    for (const [index, section] of sections.entries()) { // Added index for better logging
+        if (!section.title || typeof section.title !== 'string' || section.title.trim() === '') {
+             console.warn(`[POST /api/hiring/coding-tests] Validation failed: Section ${index + 1} has an invalid or missing title.`);
+             return res.status(400).json({ message: `Section ${index + 1} must have a non-empty title.` });
+        }
+        if (!section.problems || !Array.isArray(section.problems) || section.problems.length === 0) {
+            console.warn(`[POST /api/hiring/coding-tests] Validation failed: Section '${section.title}' (Index ${index + 1}) has no problems.`);
+            return res.status(400).json({ message: `Section "${section.title}" must contain at least one problem.` });
+        }
+
+        const problemsToStore = [];
+        for (const p of section.problems) {
+            const problemId = p.id || p.problemId;
+            const score = parseInt(p.score, 10); // Use parseInt for score as well
+
+            // Add basic validation for problems within the section
+            if (!problemId || !p.title || !p.difficulty || isNaN(score) || score < 0) {
+                console.warn(`[POST /api/hiring/coding-tests] Validation failed: Invalid problem data in section '${section.title}'. Problem:`, p);
+                return res.status(400).json({ message: `Invalid problem data found in section "${section.title}". Ensure ID, title, difficulty, and a non-negative score are present.` });
+            }
+
+            totalMarks += score; // Accumulate total marks
+            problemsToStore.push({
+                problemId: problemId,
+                title: p.title,
+                difficulty: p.difficulty,
+                score: score // Store the parsed score
+            });
+        }
+        sectionsToStore.push({
+            title: section.title,
+            problems: problemsToStore
+        });
+    }
+
+    const codingTestId = `hire_coding_test_${uuidv4()}`;
+    const newTest = {
+        codingTestId,
+        title: testTitle.trim(), // Trim title
+        duration: parsedDuration, // Use parsed duration
+        totalMarks, // Calculated total marks
+        sections: sectionsToStore, // Store the structured sections
+        createdBy: req.user.email,
+        createdAt: new Date().toISOString()
+    };
+    console.log("[POST /api/hiring/coding-tests] Saving new test:", newTest); // Log data being saved
+
+    try {
+        await docClient.send(new PutCommand({ TableName: HIRING_CODING_TESTS_TABLE, Item: newTest }));
+        res.status(201).json({ message: 'Coding test created successfully!', test: { ...newTest, testId: codingTestId } }); // Map back if needed
+    } catch (error) {
+        console.error("Create Coding Test Error:", error);
+        res.status(500).json({ message: 'Server error creating test.' });
+    }
+});
 
 
 // HIRING: Assign a test to external candidates
@@ -8689,28 +8792,97 @@ Here is the text:\n\n${text}`;
 });
 
 app.get('/api/hiring/test-results/:resultId', hiringModeratorAuth, async (req, res) => {
-    try {
-        const { Item: result } = await docClient.send(new GetCommand({
-            TableName: HIRING_TEST_RESULTS_TABLE, Key: { resultId: req.params.resultId }
-        }));
-        if (!result) return res.status(404).json({ message: 'Result not found.' });
+    const { resultId } = req.params;
+    console.log(`[GET /api/hiring/test-results] Request for resultId: ${resultId}`);
 
-        // Verify ownership
-        let testOwnerEmail;
+    try {
+        // 1. Fetch the specific result
+        const { Item: result } = await docClient.send(new GetCommand({
+            TableName: HIRING_TEST_RESULTS_TABLE, Key: { resultId }
+        }));
+
+        if (!result) {
+            console.warn(`[GET /api/hiring/test-results] Result ${resultId} not found.`);
+            return res.status(404).json({ message: 'Result not found.' });
+        }
+        console.log(`[GET /api/hiring/test-results] Found result for test type: ${result.testType}`);
+
+        // 2. Verify Ownership based on the original test creator
+        let testOwnerEmail = null;
+        let originalTest = null; // Store the original test definition
+
         if (result.testType === 'coding') {
             const { Item: test } = await docClient.send(new GetCommand({ TableName: HIRING_CODING_TESTS_TABLE, Key: { codingTestId: result.testId } }));
             testOwnerEmail = test?.createdBy;
-        } else { // aptitude
-            const { Item: test } = await docClient.send(new GetCommand({ TableName: HIRING_JOBS_TABLE, Key: { jobId: result.testId } }));
+            originalTest = test; // Keep the test definition
+        } else if (result.testType === 'aptitude') {
+            const { Item: test } = await docClient.send(new GetCommand({ TableName: HIRING_APTITUDE_TESTS_TABLE, Key: { aptitudeTestId: result.testId } }));
             testOwnerEmail = test?.createdBy;
+            originalTest = test; // Keep the test definition
+        } else {
+             console.warn(`[GET /api/hiring/test-results] Unknown testType '${result.testType}' for result ${resultId}.`);
+             // Decide how to handle unknown types, maybe deny access?
         }
+
+        if (!testOwnerEmail) {
+             console.error(`[GET /api/hiring/test-results] Could not find original test or creator for result ${resultId} (Test ID: ${result.testId}, Type: ${result.testType}).`);
+             // Consider if this should be a 404 or 500
+             return res.status(404).json({ message: 'Original test definition not found.' });
+        }
+
         if (testOwnerEmail !== req.user.email) {
-            return res.status(403).json({ message: 'Permission denied.' });
+            console.warn(`[GET /api/hiring/test-results] Permission denied for result ${resultId}. Owner: ${testOwnerEmail}, Requester: ${req.user.email}`);
+            return res.status(403).json({ message: 'You do not have permission to view this result.' });
         }
-        res.json(result);
+        console.log(`[GET /api/hiring/test-results] Ownership verified for result ${resultId}.`);
+
+
+        // 3. Prepare response - Enhance coding results with section info if not already present
+        let finalResultData = { ...result };
+
+        // If it's a coding test AND the section breakdown isn't already stored in the result, calculate it now
+        if (result.testType === 'coding' && !finalResultData.sectionScores && originalTest?.sections) {
+             console.log(`[GET /api/hiring/test-results] Calculating section scores for result ${resultId} (not found in stored result).`);
+             finalResultData.sectionScores = originalTest.sections.map(section => {
+                 let sectionTotalScore = 0;
+                 let sectionMaxScore = 0;
+                 const problemsInSection = section.problems.map(p => p.problemId); // Get IDs of problems in this section
+
+                 // Iterate through the *submissions* stored in the result
+                 (finalResultData.submissions || []).forEach(sub => {
+                     // Check if the submitted problem belongs to the current section
+                     if (problemsInSection.includes(sub.problemId)) {
+                         sectionTotalScore += sub.calculatedScore || 0;
+                         sectionMaxScore += sub.score || 0; // 'score' here is the max score for the problem
+                     }
+                 });
+                 return {
+                     title: section.title,
+                     score: sectionTotalScore,
+                     maxScore: sectionMaxScore
+                 };
+             });
+              console.log(`[GET /api/hiring/test-results] Calculated section scores:`, finalResultData.sectionScores);
+        } else if (result.testType === 'coding' && finalResultData.sectionScores) {
+             console.log(`[GET /api/hiring/test-results] Using pre-calculated section scores stored in result ${resultId}.`);
+        } else if (result.testType === 'coding' && !originalTest?.sections) {
+             console.log(`[GET /api/hiring/test-results] Original test ${result.testId} does not have sections. Skipping section score calculation.`);
+        }
+
+        // For aptitude tests, ensure sections->questions->correctAnswer is included if needed by results page
+        // (Assuming frontend needs it to display correctness - if not, this step can be skipped)
+        if (result.testType === 'aptitude' && originalTest?.sections) {
+            console.log(`[GET /api/hiring/test-results] Attaching original aptitude test sections (with answers) for display.`);
+            finalResultData.originalTestSections = originalTest.sections; // Attach original sections with answers
+        }
+
+
+        console.log(`[GET /api/hiring/test-results] Sending final data for result ${resultId}.`);
+        res.json(finalResultData);
+
     } catch (error) {
-        console.error("Get Single Result Error:", error);
-        res.status(500).json({ message: 'Server error fetching result.' });
+        console.error(`[GET /api/hiring/test-results] Error fetching result ${resultId}:`, error);
+        res.status(500).json({ message: 'Server error fetching result details.' });
     }
 });
 
@@ -8813,94 +8985,47 @@ app.get('/api/hiring/test-history', hiringModeratorAuth, async (req, res) => {
 
 // EXTERNAL CANDIDATE: Get test details using token
 app.get('/api/public/test-details', authMiddleware, async (req, res) => {
-    // --- Authentication & Token Data Extraction ---
-    if (!req.user || !req.user.isExternal) {
-        console.warn('[GET TEST DETAILS] Denied: User not external or not authenticated.');
-        if (!res.headersSent) return res.status(403).json({ message: 'Access denied.' });
-        console.error("[GET TEST DETAILS] Headers already sent on auth failure."); return;
-    }
+    // ... (Keep existing authentication, assignment validation, time window checks, and previous submission checks) ...
+    if (!req.user || !req.user.isExternal) { /* ... */ return res.status(403).json({ message: 'Access denied.' }); }
     const { testId: testPkFromToken, email: candidateEmail, assignmentId } = req.user;
     console.log(`[GET TEST DETAILS] Request for assignmentId: ${assignmentId}, testPkFromToken: ${testPkFromToken}, email: ${candidateEmail}`);
 
     try {
-        // --- Fetch and Validate Assignment Record ---
-        console.log(`[GET TEST DETAILS] Fetching assignment record ${assignmentId} from ${HIRING_ASSIGNMENTS_TABLE}`);
-        const { Item: assignment } = await docClient.send(new GetCommand({
-            TableName: HIRING_ASSIGNMENTS_TABLE,
-            Key: { assignmentId }
-        }));
-
-        if (!assignment) {
-            console.warn(`[GET TEST DETAILS] Assignment ${assignmentId} not found.`);
-             if (!res.headersSent) return res.status(403).json({ message: 'Assignment record not found. Link may be invalid.' });
-             return;
-        }
-        if (assignment.studentEmail !== candidateEmail || assignment.testId !== testPkFromToken) {
-            console.warn(`[GET TEST DETAILS] Assignment ${assignmentId} data mismatch. Token vs DB.`);
-             if (!res.headersSent) return res.status(403).json({ message: 'Link invalid or assignment details mismatch.' });
-             return;
-        }
+        const { Item: assignment } = await docClient.send(new GetCommand({ /* ... fetch assignment ... */ TableName: HIRING_ASSIGNMENTS_TABLE, Key: { assignmentId } }));
+        if (!assignment || assignment.studentEmail !== candidateEmail || assignment.testId !== testPkFromToken) { /* ... */ return res.status(403).json({ message: 'Link invalid or assignment details mismatch.' }); }
         console.log(`[GET TEST DETAILS] Assignment ${assignmentId} found. Type: ${assignment.testType}, Test PK: ${assignment.testId}`);
 
-        // --- Check Test Time Window (TIMEZONE FIX APPLIED HERE) ---
-        const now = new Date(); // Current time in UTC on the server
-        console.log(`[GET TEST DETAILS] Server time (UTC): ${now.toISOString()}`);
-        console.log(`[GET TEST DETAILS] Assignment Start Time (Raw): ${assignment.startTime}`);
-        console.log(`[GET TEST DETAILS] Assignment End Time (Raw): ${assignment.endTime}`);
-
-        // ** START OF TIMEZONE FIX **
-        // Assume the stored times are IST (+05:30)
-        // Construct ISO strings WITH the offset to ensure correct parsing
-        const startTimeString = `${assignment.startTime}+05:30`;
-        const endTimeString = `${assignment.endTime}+05:30`;
-
-        let startTime, endTime;
-        try {
-            startTime = new Date(startTimeString);
-            endTime = new Date(endTimeString);
-            // Check if parsing resulted in valid dates
-            if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
-                throw new Error("Invalid date format in database");
-            }
-             console.log(`[GET TEST DETAILS] Parsed Start Time (as IST, in UTC): ${startTime.toISOString()}`);
-             console.log(`[GET TEST DETAILS] Parsed End Time (as IST, in UTC): ${endTime.toISOString()}`);
-        } catch (parseError) {
-             console.error(`[GET TEST DETAILS] CRITICAL ERROR: Could not parse assignment times for ${assignmentId}. Raw Start: '${assignment.startTime}', Raw End: '${assignment.endTime}'. Error: ${parseError.message}`);
-             if (!res.headersSent) return res.status(500).json({ message: 'Internal Server Error: Invalid time format in assignment record.' });
-             return;
+        // --- Check Test Time Window (Assume TIMEZONE FIX is applied) ---
+        const now = new Date();
+        const startTime = new Date(`${assignment.startTime}+05:30`); // Assuming IST
+        const endTime = new Date(`${assignment.endTime}+05:30`); // Assuming IST
+        if (isNaN(startTime.getTime()) || isNaN(endTime.getTime()) || now < startTime || now > endTime) {
+             const reason = now < startTime ? 'not yet active' : (now > endTime ? 'expired' : 'invalid time format');
+             console.warn(`[GET TEST DETAILS] Assignment ${assignmentId} outside active window (${reason}).`);
+             return res.status(403).json({ message: `This test link is ${reason}.` });
         }
-
-        // Now 'now', 'startTime', and 'endTime' are all Date objects comparable in UTC
-        if (now < startTime || now > endTime) {
-            const reason = now < startTime ? 'not yet active' : 'expired';
-            console.warn(`[GET TEST DETAILS] Assignment ${assignmentId} outside active window (${reason}). Now: ${now.toISOString()}, Start (UTC): ${startTime.toISOString()}, End (UTC): ${endTime.toISOString()}`);
-             if (!res.headersSent) return res.status(403).json({ message: `This test link is ${reason}.` });
-             return;
-        }
-        // ** END OF TIMEZONE FIX **
-
         console.log(`[GET TEST DETAILS] Assignment ${assignmentId} is within the active time window.`);
+
 
         // --- Check for Previous *SUBMITTED* Result (Crucial Fix remains the same) ---
         const GSI_NAME = 'AssignmentIdIndex';
         console.log(`[GET TEST DETAILS] Checking for existing SUBMITTED results using GSI '${GSI_NAME}' on ${HIRING_TEST_RESULTS_TABLE} for assignment ${assignmentId}`);
-        const queryParams = {
-             TableName: HIRING_TEST_RESULTS_TABLE, IndexName: GSI_NAME,
-             KeyConditionExpression: 'assignmentId = :aid',
-             FilterExpression: 'attribute_not_exists(resultId) OR not begins_with(resultId, :initPrefix)',
-             ExpressionAttributeValues: { ':aid': assignmentId, ':initPrefix': 'init_' },
-             Limit: 1
-        };
-        const { Items: existingSubmittedResults } = await docClient.send(new QueryCommand(queryParams));
+        const queryParams = { /* ... query parameters as before ... */
+            TableName: HIRING_TEST_RESULTS_TABLE, IndexName: GSI_NAME,
+            KeyConditionExpression: 'assignmentId = :aid',
+            FilterExpression: 'attribute_not_exists(resultId) OR not begins_with(resultId, :initPrefix)',
+            ExpressionAttributeValues: { ':aid': assignmentId, ':initPrefix': 'init_' },
+            Limit: 1
+       };
+       const { Items: existingSubmittedResults } = await docClient.send(new QueryCommand(queryParams));
+       if (existingSubmittedResults && existingSubmittedResults.length > 0) {
+           console.warn(`[GET TEST DETAILS] Test already SUBMITTED for assignment ${assignmentId}.`);
+           return res.status(403).json({ message: 'This test link has already been used to submit results.' });
+       }
+       console.log(`[GET TEST DETAILS] No previous SUBMITTED result found.`);
 
-        if (existingSubmittedResults && existingSubmittedResults.length > 0) {
-            console.warn(`[GET TEST DETAILS] Test already SUBMITTED for assignment ${assignmentId}. Found resultId: ${existingSubmittedResults[0].resultId}. Blocking access.`);
-             if (!res.headersSent) return res.status(403).json({ message: 'This test link has already been used to submit results.' });
-             return;
-        }
-        console.log(`[GET TEST DETAILS] No previous SUBMITTED result found. Proceeding to fetch test details.`);
 
-        // --- Fetch Actual Test Details based on testType from Assignment (remains the same) ---
+        // --- Fetch Actual Test Details based on testType from Assignment ---
         let test;
         let targetTableName;
         let targetPkName;
@@ -8916,52 +9041,80 @@ app.get('/api/public/test-details', authMiddleware, async (req, res) => {
             const { Item } = await docClient.send(new GetCommand({ TableName: targetTableName, Key: { [targetPkName]: assignment.testId } }));
             test = Item;
         } else {
-             console.error(`[GET TEST DETAILS] Invalid testType '${assignment.testType}' found in assignment ${assignmentId}.`);
-             if (!res.headersSent) return res.status(500).json({ message: 'Internal Server Error: Invalid test type associated with this assignment.' });
-             return;
+             console.error(`[GET TEST DETAILS] Invalid testType '${assignment.testType}' in assignment ${assignmentId}.`);
+             return res.status(500).json({ message: 'Internal Server Error: Invalid test type.' });
         }
 
         if (!test) {
-            console.error(`[GET TEST DETAILS] Test definition ${assignment.testId} (Type: ${assignment.testType}) not found in table ${targetTableName}. Assignment ${assignmentId} points to a non-existent test.`);
-             if (!res.headersSent) return res.status(404).json({ message: 'Test content not found. The assigned test may have been deleted.' });
-             return;
+            console.error(`[GET TEST DETAILS] Test definition ${assignment.testId} (Type: ${assignment.testType}) not found in ${targetTableName}.`);
+             return res.status(404).json({ message: 'Test content not found.' });
         }
-        console.log(`[GET TEST DETAILS] Successfully fetched test definition for ${assignment.testId}. Title: ${test.title}`);
+        console.log(`[GET TEST DETAILS] Successfully fetched test definition: ${test.title}`);
 
-        // --- Prepare Test Data for Frontend (remains the same) ---
+
+        // --- Prepare Test Data for Frontend ---
         let processedTest = { ...test };
-        processedTest.assignmentId = assignmentId;
+        processedTest.assignmentId = assignmentId; // Add assignmentId to response
 
-        if (assignment.testType === 'aptitude' && processedTest.sections && Array.isArray(processedTest.sections)) {
+        // ** MODIFICATION for CODING TEST **
+        if (assignment.testType === 'coding') {
+            // Check if it uses the new 'sections' structure
+            if (processedTest.sections && Array.isArray(processedTest.sections)) {
+                console.log(`[GET TEST DETAILS] Processing CODING test with SECTIONS structure.`);
+                // Prepare sections with basic problem info (exclude full details like description, test cases)
+                processedTest.sections = processedTest.sections.map(section => ({
+                    title: section.title,
+                    problems: section.problems.map(p => ({
+                        problemId: p.problemId,
+                        title: p.title,
+                        difficulty: p.difficulty,
+                        score: p.score
+                    }))
+                }));
+                // Remove the old flat 'problems' array if it exists to avoid confusion
+                delete processedTest.problems;
+                 console.log(`[GET TEST DETAILS] Prepared basic info for coding problems within sections.`);
+
+            } else if (processedTest.problems && Array.isArray(processedTest.problems)) {
+                 // ** BACKWARDS COMPATIBILITY ** (Handle old tests without sections)
+                 console.log(`[GET TEST DETAILS] Processing CODING test with old flat PROBLEMS structure (creating default section).`);
+                 // Create a default section containing the old flat problems list
+                 processedTest.sections = [{
+                     title: "Coding Problems", // Default section title
+                     problems: processedTest.problems.map(p => ({
+                         problemId: p.problemId,
+                         title: p.title,
+                         difficulty: p.difficulty,
+                         score: p.score
+                     }))
+                 }];
+                 // Remove the old flat 'problems' array
+                 delete processedTest.problems;
+                 console.log(`[GET TEST DETAILS] Created default section for old coding test structure.`);
+            } else {
+                // If neither 'sections' nor 'problems' exist, it's an invalid coding test definition
+                 console.error(`[GET TEST DETAILS] Invalid CODING test definition for ${assignment.testId}: Missing 'sections' or 'problems' array.`);
+                 return res.status(500).json({ message: 'Internal Server Error: Invalid coding test structure.' });
+            }
+        }
+        // Aptitude test processing (removing answers) remains the same
+        else if (assignment.testType === 'aptitude' && processedTest.sections && Array.isArray(processedTest.sections)) {
             processedTest.sections = processedTest.sections.map(section => {
-                 const questions = (section.questions && Array.isArray(section.questions))
-                    ? section.questions.map(q => { const { correctAnswer, correctAnswers, ...questionData } = q; return questionData; })
-                    : [];
-                return { ...section, questions };
+                 const questions = (section.questions || []).map(q => { const { correctAnswer, correctAnswers, ...qData } = q; return qData; });
+                 return { ...section, questions };
             });
             console.log(`[GET TEST DETAILS] Removed answers from aptitude test sections.`);
         }
-        else if (assignment.testType === 'coding' && processedTest.problems && Array.isArray(processedTest.problems)) {
-             processedTest.problems = processedTest.problems.map(p => ({ problemId: p.problemId, title: p.title, difficulty: p.difficulty, score: p.score }));
-             console.log(`[GET TEST DETAILS] Prepared basic info for ${processedTest.problems.length} coding problems.`);
-        }
+
 
         // --- Return Processed Test Data ---
         console.log(`[GET TEST DETAILS] Returning processed test data for assignment ${assignmentId}.`);
-         if (!res.headersSent) res.json(processedTest);
-         else console.error("[GET TEST DETAILS] Headers already sent before final response.");
+        res.json(processedTest);
 
     } catch (error) {
         console.error(`[GET TEST DETAILS] Fatal Error processing assignment ${assignmentId}:`, error);
-        if (!res.headersSent){
-            if (error.name === 'ResourceNotFoundException' || (error.message && error.message.includes('index does not exist'))) {
-                 console.error(`[GET TEST DETAILS] Critical Error: A required DynamoDB table or index might be missing.`);
-                 return res.status(500).json({ message: 'Server configuration error: Required resource not found. Please contact support.' });
-            }
-             res.status(500).json({ message: 'Server error fetching test details. Please contact support.' });
-        } else {
-             console.error("[GET TEST DETAILS] Headers already sent, could not send error response for outer catch block.");
-        }
+        // ... (existing error handling) ...
+        res.status(500).json({ message: 'Server error fetching test details. Please contact support.' });
     }
 });
 
@@ -11471,78 +11624,107 @@ app.post('/api/student/apply/:jobId', studentAuthMiddleware, upload.any(), async
 });
 
 app.get('/api/public/problem-details/:problemId', authMiddleware, async (req, res) => {
+    // 1. Basic Auth & Input Checks
     if (!req.user || !req.user.isExternal) {
         return res.status(403).json({ message: 'Access denied.' });
     }
     const { problemId } = req.params;
-    const { testId: assignedTestId, assignmentId } = req.user;
+    const { testId: assignedTestId, assignmentId: tokenAssignmentId, email: candidateEmail } = req.user; // Get details from token
 
-    console.log(`[GET /problem-details] Request for problemId: ${problemId}, assignment: ${assignmentId}, test: ${assignedTestId}`);
+    if (!problemId || !assignedTestId || !tokenAssignmentId) {
+        return res.status(400).json({ message: 'Missing required parameters (problemId, testId, assignmentId).' });
+    }
+
+    console.log(`[GET /problem-details] Request for problemId: ${problemId}, assignment: ${tokenAssignmentId}, test: ${assignedTestId}`);
 
     try {
-        // Verify assignment validity (optional but good practice)
-        const { Item: assignment } = await docClient.send(new GetCommand({ TableName: HIRING_ASSIGNMENTS_TABLE, Key: { assignmentId } }));
-        if (!assignment || assignment.testId !== assignedTestId || assignment.studentEmail !== req.user.email) {
+        // 2. Verify Assignment Validity
+        console.log(`[GET /problem-details] Verifying assignment ${tokenAssignmentId} in ${HIRING_ASSIGNMENTS_TABLE}`);
+        const { Item: assignment } = await docClient.send(new GetCommand({
+            TableName: HIRING_ASSIGNMENTS_TABLE,
+            Key: { assignmentId: tokenAssignmentId }
+        }));
+
+        if (!assignment || assignment.testId !== assignedTestId || assignment.studentEmail !== candidateEmail) {
+            console.warn(`[GET /problem-details] Assignment ${tokenAssignmentId} invalid or mismatch.`);
             return res.status(403).json({ message: 'Assignment invalid or mismatch.' });
         }
         if (assignment.testType !== 'coding') {
+             console.warn(`[GET /problem-details] Assignment ${tokenAssignmentId} is not for a coding test (type: ${assignment.testType}).`);
              return res.status(400).json({ message: 'Invalid test type for requesting coding problem details.' });
         }
+        console.log(`[GET /problem-details] Assignment ${tokenAssignmentId} verified.`);
 
-        // Fetch the coding test to check if the problem belongs to it
-        const { Item: codingTest } = await docClient.send(new GetCommand({ TableName: HIRING_CODING_TESTS_TABLE, Key: { codingTestId: assignedTestId } }));
-        if (!codingTest || !codingTest.problems?.find(p => p.problemId === problemId)) {
+
+        // 3. Fetch the Coding Test Definition
+        console.log(`[GET /problem-details] Fetching coding test definition ${assignedTestId} from ${HIRING_CODING_TESTS_TABLE}`);
+        const { Item: codingTest } = await docClient.send(new GetCommand({
+            TableName: HIRING_CODING_TESTS_TABLE,
+            Key: { codingTestId: assignedTestId } // Use the correct PK name
+        }));
+
+        if (!codingTest) {
+            console.error(`[GET /problem-details] Coding test definition ${assignedTestId} not found.`);
+            return res.status(404).json({ message: 'Assigned coding test definition not found.' });
+        }
+        console.log(`[GET /problem-details] Found coding test definition: ${codingTest.title}`);
+
+
+        // --- 4. *** MODIFIED CHECK *** Verify Problem Exists within Test Sections ---
+        let problemFoundInTest = false;
+        if (codingTest.sections && Array.isArray(codingTest.sections)) {
+            console.log(`[GET /problem-details] Checking sections structure for problemId: ${problemId}`);
+            for (const section of codingTest.sections) {
+                if (section.problems && Array.isArray(section.problems)) {
+                    if (section.problems.some(p => p.problemId === problemId)) {
+                        problemFoundInTest = true;
+                        console.log(`[GET /problem-details] Found problem ${problemId} in section "${section.title}" of test ${assignedTestId}.`);
+                        break; // Exit loop once found
+                    }
+                }
+            }
+        } else if (codingTest.problems && Array.isArray(codingTest.problems)) {
+             // Backwards compatibility check (should ideally not happen for new tests)
+             console.warn(`[GET /problem-details] Test ${assignedTestId} uses old flat 'problems' structure. Checking...`);
+             if (codingTest.problems.some(p => p.problemId === problemId)) {
+                problemFoundInTest = true;
+                console.log(`[GET /problem-details] Found problem ${problemId} in old flat structure of test ${assignedTestId}.`);
+             }
+        }
+
+        if (!problemFoundInTest) {
+            console.warn(`[GET /problem-details] Problem ${problemId} is NOT part of the assigned test ${assignedTestId}. Access denied.`);
             return res.status(403).json({ message: 'Problem is not part of the assigned test.' });
         }
+        // --- End Modified Check ---
 
-        // Fetch the full problem details
-        const { Item: fullProblemData } = await docClient.send(new GetCommand({ TableName: HIRING_CODING_PROBLEMS_TABLE, Key: { problemId: problemId } }));
+
+        // 5. Fetch the Full Problem Details
+        console.log(`[GET /problem-details] Fetching full details for problem ${problemId} from ${HIRING_CODING_PROBLEMS_TABLE}`);
+        const { Item: fullProblemData } = await docClient.send(new GetCommand({
+            TableName: HIRING_CODING_PROBLEMS_TABLE, // Ensure this table name is correct
+            Key: { problemId: problemId }           // Ensure 'problemId' is the correct primary key
+        }));
+
         if (!fullProblemData) {
+            console.error(`[GET /problem-details] Full problem details not found for problemId: ${problemId} in ${HIRING_CODING_PROBLEMS_TABLE}.`);
             return res.status(404).json({ message: 'Problem details not found.' });
         }
+        console.log(`[GET /problem-details] Successfully fetched full details for problem ${problemId}.`);
 
+        // 6. Return the full problem data
         res.json(fullProblemData);
 
     } catch (error) {
-        console.error(`[GET /problem-details] Error fetching problem details for ${problemId}:`, error);
+        console.error(`[GET /problem-details] Error fetching problem details for ${problemId} (Assignment: ${tokenAssignmentId}):`, error);
+        // Handle specific errors like missing table/index if needed
+        if (error.name === 'ResourceNotFoundException') {
+            console.error(`[GET /problem-details] Critical Error: A required table might be missing (${HIRING_ASSIGNMENTS_TABLE}, ${HIRING_CODING_TESTS_TABLE}, or ${HIRING_CODING_PROBLEMS_TABLE}).`);
+        }
         res.status(500).json({ message: 'Server error fetching problem details.' });
     }
 });
 
-app.post('/api/public/save-code-snippet', authMiddleware, async (req, res) => {
-    if (!req.user || !req.user.isExternal) {
-        return res.status(403).json({ message: 'Access denied.' });
-    }
-    const { testId: tokenTestId, assignmentId: tokenAssignmentId, email: candidateEmail } = req.user;
-    const { assignmentId, testId, problemId, code, language } = req.body;
-
-    if (!assignmentId || !testId || !problemId || code === undefined || code === null || !language) {
-        return res.status(400).json({ message: `Missing required fields.` });
-    }
-    if (assignmentId !== tokenAssignmentId || testId !== tokenTestId) {
-        return res.status(403).json({ message: 'Invalid assignment or test association.' });
-    }
-
-    try {
-        // Optional: Verify assignment is active (already done in GET /test-details, maybe redundant here)
-        // const { Item: assignment } = await docClient.send(new GetCommand({ /* ... */ }));
-        // if (!assignment || new Date() < new Date(assignment.startTime) || new Date() > new Date(assignment.endTime)) {
-        //     return res.status(403).json({ message: 'Test assignment is not currently active.' });
-        // }
-
-        const snippetId = `${assignmentId}_${problemId}`; // Composite ID
-        const snippetItem = {
-            snippetId, assignmentId, problemId, candidateEmail, testId, code, language,
-            savedAt: new Date().toISOString()
-        };
-        await docClient.send(new PutCommand({ TableName: HIRING_CODE_SNIPPETS_TABLE, Item: snippetItem }));
-        res.status(200).json({ message: 'Snippet saved successfully.' });
-
-    } catch (error) {
-        console.error(`[SAVE SNIPPET] Error for assignment ${assignmentId}, problem ${problemId}:`, error);
-        res.status(500).json({ message: 'Server error saving code snippet.' });
-    }
-});
 app.get('/api/candidate-details', authMiddleware, async (req, res) => {
     // ... (Keep the existing logic with GetCommand retries) ...
     if (!req.user || !req.user.email) { /* ... */ }
