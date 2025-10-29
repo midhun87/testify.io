@@ -1,13 +1,18 @@
 // main.js
-// ... other requires ...
-const fetch = require('node-fetch');
-const { exec } = require('child_process');
+const { app, BrowserWindow, ipcMain, screen, dialog, systemPreferences } = require('electron');
+const path = require('path');
+const fetch = require('node-fetch'); // Use require for node-fetch v2
+const { exec } = require('child_process'); // For system checks
 
 // --- MOVED isDev TO THE TOP ---
-const isDev = !app.isPackaged; // Keep isDev for other conditional logic (devtools, etc.)
+const isDev = !app.isPackaged;
 
 let mainWindow;
-// ... other state variables ...
+let systemCheckWindow; // Window for the new pre-check
+let validatedTestData = null;
+let currentToken = null;
+let isTestSubmitted = false;
+
 
 // --- HARDCODED BACKEND_URL for Production ---
 const BACKEND_URL = 'https://www.testify-lac.com';
@@ -15,18 +20,18 @@ console.log(`[Startup] Using fixed PRODUCTION backend URL: ${BACKEND_URL}`);
 
 // --- FORBIDDEN APPS LIST ---
 const FORBIDDEN_APPS_WINDOWS = [
-// --- Window Creation Functions ---
-    'zoom.us', 'ms-teams', 'teams.exe', 'slack', 'discord',
-    'chrome.exe', 'firefox.exe', 'msedge.exe', // Block other browsers
-    'SnippingTool.exe', 'Snip & Sketch.exe', 'ScreenRec.exe',
-    'anydesk.exe', 'teamviewer.exe'
+    'obs', 'obs64', 'obs32', 'ScreenFlow', 'QuickTime Player', 'vlc', // Common recording/media players
+    'zoom.us', 'ms-teams', 'teams.exe', 'slack', 'discord', // Communication apps
+    'chrome.exe', 'firefox.exe', 'msedge.exe', // Block other browsers (consider adding more if needed)
+    'SnippingTool.exe', 'Snip & Sketch.exe', 'ScreenRec.exe', // Screenshot tools
+    'anydesk.exe', 'teamviewer.exe' // Remote desktop tools
 ];
 const FORBIDDEN_APPS_MACOS = [
     'OBS', 'ScreenFlow', 'QuickTime Player', 'VLC',
     'Zoom.us', 'Microsoft Teams', 'Slack', 'Discord',
     'Google Chrome', 'Firefox', 'Microsoft Edge', // Block other browsers
-    'Screenshot', 'Screenshot.app', 'Grab', 'Grab.app',
-    'AnyDesk', 'TeamViewer'
+    'Screenshot', 'Screenshot.app', 'Grab', 'Grab.app', // Screenshot tools
+    'AnyDesk', 'TeamViewer' // Remote desktop tools
 ];
 // --- END FORBIDDEN APPS ---
 
@@ -34,7 +39,7 @@ const FORBIDDEN_APPS_MACOS = [
 // --- 1. NEW System Check Window ---
 function createSystemCheckWindow() {
     console.log('[Startup] Creating system check window.');
-    // ** MODIFICATION: Matched window style to token-entry window **
+    // Matched window style to token-entry window
     systemCheckWindow = new BrowserWindow({
         width: 600, // Increased width
         height: 550, // Increased height
@@ -91,7 +96,6 @@ function createTokenWindow() {
 
 
 // --- 3. Create Secure Lockdown Window ---
-// This function is mostly from your original file, with enhancements
 function createLockdownWindow() {
     const primaryDisplay = screen.getPrimaryDisplay();
     const { width, height } = primaryDisplay.workAreaSize;
@@ -102,7 +106,7 @@ function createLockdownWindow() {
         width: width,
         height: height,
         fullscreen: true,
-        kiosk: true,
+        kiosk: !isDev, // Enable kiosk mode only in production
         frame: false,
         resizable: false,
         movable: false,
@@ -127,7 +131,7 @@ function createLockdownWindow() {
          lockdownWindow.setAppDetails({appId: appUserModelId});
          console.log(`[Lockdown Win32] Set AppUserModelId: ${appUserModelId}`);
 
-         // ** NEW: Add Content Protection to block screen capture on Windows **
+         // Add Content Protection to block screen capture on Windows
          if (!isDev) {
             lockdownWindow.setContentProtection(true);
             console.log('[Lockdown Win32] Content protection enabled.');
@@ -149,24 +153,29 @@ function createLockdownWindow() {
     lockdownWindow.show();
     lockdownWindow.setMenu(null); // Remove menu
 
-    // --- Event Handlers (From your original file, all correct) ---
+    // --- Event Handlers ---
     lockdownWindow.on('close', (e) => {
+        // Allow closing if in dev mode or if the test was successfully submitted
         if (isDev || isTestSubmitted) {
             console.log('[Lockdown] Window close allowed (Dev/Submitted).');
             return;
         }
+        // Prevent closing otherwise and notify the renderer process
         console.log('[Lockdown] Window close attempt prevented.');
         e.preventDefault();
+        dialog.showErrorBox('Action Denied', 'Closing the test window is not allowed during the test.');
         lockdownWindow.webContents.send('proctoring-violation', 'Attempted to close the test window.');
     });
 
     lockdownWindow.on('blur', () => {
+        // Don't interfere in development mode
         if (isDev) return;
         console.log('[Lockdown Prod] Window lost focus. Reasserting focus.');
-        lockdownWindow.flashFrame(true);
+        lockdownWindow.flashFrame(true); // Flash taskbar icon on Windows
+        // Notify the renderer process about the violation
         lockdownWindow.webContents.send('proctoring-violation', 'Window lost focus. Attempts to switch applications are monitored.');
 
-        // Re-assertion
+        // Forcefully regain focus and re-apply lockdown settings
         lockdownWindow.focus();
         lockdownWindow.setKiosk(true);
         lockdownWindow.setFullScreen(true);
@@ -174,33 +183,37 @@ function createLockdownWindow() {
     });
 
     lockdownWindow.on('leave-full-screen', () => {
+        // Prevent leaving fullscreen/kiosk in production
         if (isDev) return;
         console.log('[Lockdown Prod] Attempted to leave full-screen. Re-entering.');
+        // Re-apply settings
         lockdownWindow.setKiosk(true);
         lockdownWindow.setFullScreen(true);
         lockdownWindow.setAlwaysOnTop(true, 'screen-saver');
+        // Notify renderer
         lockdownWindow.webContents.send('proctoring-violation', 'Exiting full-screen mode is not allowed.');
     });
 
     lockdownWindow.webContents.on('before-input-event', (event, input) => {
-        // Escape hatch for dev
+        // Escape hatch for development (Ctrl+Shift+Alt+Q)
         if (isDev && input.control && input.shift && input.alt && input.key.toLowerCase() === 'q') {
             console.log('!!! DEV ESCAPE HATCH. QUITTING. !!!'); app.quit(); return;
         }
 
-        if (isDev) return; // Don't block shortcuts in dev mode
+        // Don't block shortcuts in dev mode
+        if (isDev) return;
 
-        // Block Ctrl+C, Ctrl+V, Ctrl+X
-        const isShortcut = (input.control || input.meta) && !input.alt && !input.shift;
+        // Block common clipboard shortcuts (Ctrl/Cmd + C/V/X)
+        const isClipboardShortcut = (input.control || input.meta) && !input.alt && !input.shift;
         const key = input.key.toLowerCase();
-        if (isShortcut && (key === 'c' || key === 'v' || key === 'x')) {
+        if (isClipboardShortcut && (key === 'c' || key === 'v' || key === 'x')) {
             console.log(`[Lockdown Prod] Blocked clipboard shortcut: ${input.meta ? 'Cmd' : 'Ctrl'}+${key}`);
-            event.preventDefault();
+            event.preventDefault(); // Prevent the default action
             lockdownWindow.webContents.send('proctoring-violation', 'Copy/paste/cut actions are disabled.');
             return;
         }
 
-        // Block Alt+Tab, Alt+F4, Ctrl+Shift+Esc, Windows Key (Meta), etc.
+        // Block system shortcuts like Alt+Tab, Windows Key, Task Manager, etc.
         if (input.alt || input.meta || (input.control && input.shift && key === 'escape')) {
              if (input.meta && (input.type === 'keyDown' || input.type === 'keyUp')) {
                  console.log(`[Lockdown Prod] Blocked Windows Key (Meta).`);
@@ -229,76 +242,82 @@ function createLockdownWindow() {
 
 
 // --- App Lifecycle ---
-// ** MODIFIED: Start with system check window **
+// Start with the system check window when the app is ready
 app.whenReady().then(createSystemCheckWindow);
 
+// Quit when all windows are closed (except on macOS)
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 
 app.on('activate', () => {
-    // On macOS, re-create the right window if none exist
+    // On macOS, re-create the window if the dock icon is clicked and no windows are open
     if (BrowserWindow.getAllWindows().length === 0) {
+        // Determine which window to create based on the current state (e.g., if a token was validated)
         if (!currentToken) {
-            createSystemCheckWindow(); // Start from scratch
+            createSystemCheckWindow(); // Start flow from the beginning if no token is active
         }
-        // If test was in progress, this logic would need to be more complex
-        // For now, we just restart the flow.
+        // Add more complex logic here if you need to resume a test (currently restarts)
     }
 });
 // --- End App Lifecycle ---
 
 // --- NEW IPC Handlers for System Check ---
 
+// Fired from system-check.html when all checks pass
 ipcMain.on('system-check-passed', () => {
     console.log('[IPC] System check passed.');
+    // Close the check window if it exists
     if (systemCheckWindow) {
         systemCheckWindow.close();
         systemCheckWindow = null;
     }
-    createTokenWindow(); // Proceed to token entry
+    // Proceed to the token entry window
+    createTokenWindow();
 });
 
+// Fired from system-check.html if the user clicks Quit
 ipcMain.on('quit-app', () => {
     console.log('[IPC] Quit app requested from system check.');
     app.quit();
 });
 
+// Handles the request from system-check.js to check running apps
 ipcMain.handle('check-running-apps', () => {
     console.log('[IPC check-running-apps] Checking for forbidden applications...');
     return new Promise((resolve) => {
         const platform = process.platform;
         let cmd = '';
         let forbiddenList = [];
-        const appName = app.getName(); // Get the name of *this* app
-        console.log(`[check-running-apps] Current app name: "${appName}"`); // Log the app name for debugging
+        const appName = app.getName(); // Get the name of *this* Electron app
+        console.log(`[check-running-apps] Current app name: "${appName}"`);
 
+        // Determine the command and forbidden list based on the OS
         if (platform === 'win32') {
-            // ** MODIFICATION: Use full path to bypass PATH issues **
-            // %WINDIR% is an environment variable (e.g., C:\Windows)
+            // Use full path to tasklist.exe to avoid PATH issues
             cmd = '"%WINDIR%\\System32\\tasklist.exe" /FO CSV /NH';
             forbiddenList = FORBIDDEN_APPS_WINDOWS;
         } else if (platform === 'darwin') {
-            cmd = 'ps -ax -o comm';
+            cmd = 'ps -ax -o comm'; // Get running process commands on macOS
             forbiddenList = FORBIDDEN_APPS_MACOS;
         } else {
             console.warn('[check-running-apps] Unsupported platform for app check.');
-            return resolve({ forbiddenApps: [] }); // Unsupported, so pass
+            return resolve({ forbiddenApps: [] }); // Assume pass on unsupported OS
         }
 
+        // Execute the command
         exec(cmd, (err, stdout, stderr) => {
             if (err) {
                 console.error('[check-running-apps] Error executing task list:', err);
-                // ** MODIFICATION: Pass the actual error message back **
+                // Return an error object if the command fails
                 return resolve({ error: `Could not check running apps. OS Error: ${err.message}` });
             }
 
-            const runningApps = stdout.toLowerCase();
+            const runningApps = stdout.toLowerCase(); // Convert output to lowercase for comparison
             const foundApps = [];
 
+            // Check if any forbidden app names are present in the output
             forbiddenList.forEach(appNameForbidden => {
-                // Check if the forbidden app is in the task list
                 if (runningApps.includes(appNameForbidden.toLowerCase())) {
-                    // CRITICAL: Make sure it's not *this* app
-                    // (e.g., if appName is 'ms-teams' and forbidden is 'ms-teams')
+                    // CRITICAL: Ensure the forbidden app isn't this Electron app itself
                     if (appName.toLowerCase() !== appNameForbidden.toLowerCase()) {
                          foundApps.push(appNameForbidden);
                     }
@@ -316,27 +335,26 @@ ipcMain.handle('check-running-apps', () => {
     });
 });
 
+// Handles the request from system-check.js to check screen recording status (macOS only)
 ipcMain.handle('check-screen-recording', () => {
     console.log('[IPC check-screen-recording] Checking media access...');
     let isRecording = false;
     let reason = 'No active screen recording detected.';
 
     if (process.platform === 'darwin') {
+        // On macOS, check the system preference for screen recording permission
         const status = systemPreferences.getMediaAccessStatus('screen');
         console.log(`[check-screen-recording] macOS screen capture status: ${status}`);
+        // 'granted' only means permission exists, not active recording. App check is primary.
+        // We flag 'granted' as a potential risk for the user to double-check.
         if (status === 'granted') {
-            // This just means an app *has* permission, not that it *is* recording.
-            // A running app check is more effective.
-            // For the demo, we'll flag 'granted' as a potential issue.
-            isRecording = true;
+            isRecording = true; // Flag as potential issue
             reason = 'An application has screen recording permissions. Please disable it in System Settings > Security & Privacy.';
         } else if (status === 'denied' || status === 'not-determined') {
             isRecording = false;
         }
     } else if (process.platform === 'win32') {
-        // No direct API on Windows.
-        // This check relies on the forbidden app list.
-        // setContentProtection() is the real security here.
+        // No direct API on Windows. Rely on app check and content protection.
         console.log('[check-screen-recording] Windows: Relying on app check and content protection.');
         isRecording = false;
     }
@@ -347,138 +365,198 @@ ipcMain.handle('check-screen-recording', () => {
 // --- End NEW System Check IPC ---
 
 
-// --- Existing IPC Handlers (Modified `validate-token` and `submit-verification-details`) ---
+// --- Existing IPC Handlers ---
+
+// Provides environment info (isDev, BACKEND_URL) to renderer processes
 ipcMain.handle('get-env', () => {
     console.log(`[IPC get-env] Providing environment. isDev: ${isDev}, BACKEND_URL: ${BACKEND_URL}`);
     return { isDev: isDev, BACKEND_URL: BACKEND_URL };
 });
 
+// Handles token validation requested from token-entry.js
 ipcMain.handle('validate-token', async (event, token) => {
     console.log(`[IPC validate-token] Received token: ${token ? '******' : '<empty>'}`);
     if (!token) return { isValid: false, error: 'Token cannot be empty.' };
+
     try {
+        // Call the backend API to validate the token and get test details
         const response = await fetch(`${BACKEND_URL}/api/public/test-details`, { headers: { 'x-auth-token': token } });
         const data = await response.json();
-        if (!response.ok) throw new Error(data?.message || `Validation failed (Status: ${response.status})`);
+
+        // Check if the backend response indicates success
+        if (!response.ok) {
+            throw new Error(data?.message || `Validation failed (Status: ${response.status})`);
+        }
 
         console.log(`[IPC validate-token] SUCCESS. Token valid for test: ${data?.title}`);
-        validatedTestData = data; // Store the fetched test data
-        currentToken = token;
+        validatedTestData = data; // Store fetched test data globally in main process
+        currentToken = token;     // Store the validated token globally
 
-        // Close token window, create lockdown window
+        // Close the current token entry window
         const currentWin = BrowserWindow.fromWebContents(event.sender);
         if (currentWin) {
             currentWin.close();
-            mainWindow = null; // Clear reference
+            mainWindow = null; // Clear the reference
         } else {
             console.warn('[IPC validate-token] Could not find token window to close.');
         }
 
-        // Create the NEW secure window
+        // Create the secure lockdown window for the next step
         mainWindow = createLockdownWindow();
 
+        // Load the candidate verification page into the new lockdown window
         console.log('[IPC validate-token] Loading candidate verification page...');
         await mainWindow.loadFile('candidate-verification.html');
 
+        // Return success to the original (now closed) token entry window's JS
         return { isValid: true, error: null };
 
     } catch (error) {
+        // Handle validation errors (network, invalid token, etc.)
         console.error('[IPC validate-token] Error:', error);
-        validatedTestData = null; currentToken = null;
+        validatedTestData = null; // Clear stored data on error
+        currentToken = null;
+        // Return failure details
         return { isValid: false, error: error.message || 'Network error or invalid response during validation.' };
     }
 });
 
 
+// Provides the stored token and test data to candidate-verification.html
 ipcMain.handle('get-initial-verification-data', (event) => {
     console.log('[IPC get-initial-verification-data] Providing token and test details.');
-    if (!mainWindow || event.sender !== mainWindow.webContents) { console.warn('[IPC get-initial-verification-data] Unauthorized request origin.'); return null; }
-    // Send the test data fetched during token validation
+    // Security check: Ensure the request comes from the current main window
+    if (!mainWindow || event.sender !== mainWindow.webContents) {
+        console.warn('[IPC get-initial-verification-data] Unauthorized request origin.');
+        return null;
+    }
+    // Return the data fetched during token validation
     return { token: currentToken, testDetails: validatedTestData };
 });
 
+// Handles photo upload request from candidate-verification.js
 ipcMain.handle('upload-photo', async (event, imageDataUrl) => {
     console.log('[IPC upload-photo] Received photo upload request...');
     if (!mainWindow || event.sender !== mainWindow.webContents) { console.warn('[IPC upload-photo] Unauthorized request origin.'); return { success: false, error: "Unauthorized request origin." }; }
     if (!imageDataUrl || !imageDataUrl.startsWith('data:image/jpeg;base64,')) return { success: false, error: "Invalid image data format." };
+
     try {
-        const response = await fetch(`${BACKEND_URL}/api/public/upload-image`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageData: imageDataUrl }) });
-        const result = await response.json(); if (!response.ok) throw new Error(result.message || `Backend upload failed (Status: ${response.status})`);
+        // Proxy the upload request to the backend API
+        const response = await fetch(`${BACKEND_URL}/api/public/upload-image`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageData: imageDataUrl })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || `Backend upload failed (Status: ${response.status})`);
         console.log('[IPC upload-photo] Backend upload successful. URL:', result.imageUrl);
-        return { success: true, imageUrl: result.imageUrl };
-    } catch (error) { console.error('[IPC upload-photo] Error during upload:', error); return { success: false, error: error.message || "Server error during upload." }; }
+        return { success: true, imageUrl: result.imageUrl }; // Return Cloudinary URL
+    } catch (error) {
+        console.error('[IPC upload-photo] Error during upload:', error);
+        return { success: false, error: error.message || "Server error during upload." };
+    }
 });
 
+// Handles college list fetch request from candidate-verification.js
 ipcMain.handle('fetch-colleges', async (event, testId) => {
     console.log(`[IPC fetch-colleges] Request for testId: ${testId}`);
     if (!mainWindow || event.sender !== mainWindow.webContents) { console.warn('[IPC fetch-colleges] Unauthorized request origin.'); return { success: false, error: "Unauthorized request." }; }
     if (!testId) return { success: false, error: "Test ID is required." };
+
     try {
-        const response = await fetch(`${BACKEND_URL}/api/public/colleges/${testId}`); const data = await response.json();
+        // Proxy the request to the backend API
+        const response = await fetch(`${BACKEND_URL}/api/public/colleges/${testId}`);
+        const data = await response.json();
         if (!response.ok) throw new Error(data.message || `Failed to fetch colleges (Status: ${response.status})`);
-        console.log(`[IPC fetch-colleges] Fetched ${data.length} colleges.`); return { success: true, colleges: data };
-    } catch (error) { console.error('[IPC fetch-colleges] Error:', error); return { success: false, error: error.message || 'Server error fetching colleges.' }; }
+        console.log(`[IPC fetch-colleges] Fetched ${data.length} colleges.`);
+        return { success: true, colleges: data };
+    } catch (error) {
+        console.error('[IPC fetch-colleges] Error:', error);
+        return { success: false, error: error.message || 'Server error fetching colleges.' };
+    }
 });
 
-// --- THIS IS THE UPDATED HANDLER ---
+// Handles submission of verification details from candidate-verification.js
 ipcMain.handle('submit-verification-details', async (event, receivedToken, details) => {
     console.log('[IPC submit-verification-details] Received details:', details);
     if (!mainWindow || event.sender !== mainWindow.webContents) { console.warn('[IPC submit-verification-details] Unauthorized request origin.'); return { success: false, error: "Unauthorized request." }; }
     if (receivedToken !== currentToken) { console.error('[IPC submit-verification-details] Token mismatch!'); return { success: false, error: "Token mismatch error." }; }
     if (!details || !validatedTestData) { console.error('[IPC submit-verification-details] Missing details or original test data.'); return { success: false, error: "Internal error: Missing data." }; }
-    try { // Save Initial Details
-        const assignmentId = validatedTestData?.assignmentId; if (!assignmentId) throw new Error("Missing assignment ID.");
-        const saveResponse = await fetch(`${BACKEND_URL}/api/save-initial-details`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-auth-token': currentToken }, body: JSON.stringify({ details }) });
-        const saveResult = await saveResponse.json(); if (!saveResponse.ok) throw new Error(saveResult.message || `Backend save failed (Status: ${saveResponse.status})`);
+
+    // Phase 1: Save Initial Details to Backend
+    try {
+        const assignmentId = validatedTestData?.assignmentId;
+        if (!assignmentId) throw new Error("Missing assignment ID in validated test data.");
+
+        // Call the backend API to save the initial verification record
+        const saveResponse = await fetch(`${BACKEND_URL}/api/save-initial-details`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-auth-token': currentToken },
+            body: JSON.stringify({ details }) // Send details object directly
+        });
+        const saveResult = await saveResponse.json();
+        if (!saveResponse.ok) throw new Error(saveResult.message || `Backend save failed (Status: ${saveResponse.status})`);
         console.log('[IPC submit-verification-details] Backend saved initial details successfully.');
-    } catch (saveError) { console.error('[IPC submit-verification-details] Error saving initial details:', saveError); dialog.showErrorBox('Initialization Error', `Failed to save verification details: ${saveError.message}. Please restart.`); return { success: false, error: `Save failed: ${saveError.message}` }; }
-    try { // Load Test Page
-        // --- MODIFIED CHECK ---
-        // Check if validatedTestData has a 'sections' array with at least one section,
-        // AND that the first section has a 'problems' array with at least one problem.
-        // This robustly identifies a coding test with the new structure.
+    } catch (saveError) {
+        // Handle errors during the save process
+        console.error('[IPC submit-verification-details] Error saving initial details:', saveError);
+        dialog.showErrorBox('Initialization Error', `Failed to save verification details: ${saveError.message}. Please restart the application.`);
+        return { success: false, error: `Save failed: ${saveError.message}` };
+    }
+
+    // Phase 2: Load the Correct Test Page
+    try {
+        // Determine if it's a coding test based on the structure of validatedTestData
+        // (Checks for sections array with a problems array inside the first section)
         const isCodingTest = !!(
             validatedTestData &&
             Array.isArray(validatedTestData.sections) &&
             validatedTestData.sections.length > 0 &&
-            validatedTestData.sections[0].problems && // Check if the first section has problems array
+            validatedTestData.sections[0].problems &&
             Array.isArray(validatedTestData.sections[0].problems) &&
             validatedTestData.sections[0].problems.length > 0
         );
-        console.log(`[IPC submit-verification-details] isCodingTest evaluated to: ${isCodingTest}`); // Log the result of the check
+        console.log(`[IPC submit-verification-details] isCodingTest evaluated to: ${isCodingTest}`);
 
+        // Select the appropriate HTML file
         const testPage = isCodingTest ? 'hiring-coding-test.html' : 'hiring-test.html';
-        // --- END MODIFIED CHECK ---
 
-        console.log(`[IPC submit-verification-details] Loading page: ${testPage}`); await mainWindow.loadFile(testPage);
-        console.log(`[IPC submit-verification-details] Test page ${testPage} loaded.`); return { success: true };
-    } catch (loadError) { console.error(`[IPC submit-verification-details] Error loading test page:`, loadError); dialog.showErrorBox('Loading Error', `Failed to load the test page: ${loadError.message}. Please restart.`); return { success: false, error: `Load failed: ${loadError.message}` }; }
+        // Load the selected test page into the current (lockdown) window
+        console.log(`[IPC submit-verification-details] Loading page: ${testPage}`);
+        await mainWindow.loadFile(testPage);
+        console.log(`[IPC submit-verification-details] Test page ${testPage} loaded.`);
+        return { success: true }; // Indicate success
+
+    } catch (loadError) {
+        // Handle errors loading the HTML file
+        console.error(`[IPC submit-verification-details] Error loading test page:`, loadError);
+        dialog.showErrorBox('Loading Error', `Failed to load the test page: ${loadError.message}. Please restart the application.`);
+        return { success: false, error: `Load failed: ${loadError.message}` };
+    }
 });
-// --- END OF UPDATED HANDLER ---
 
 
+// Provides the validated token to the actual test page (hiring-test.html or hiring-coding-test.html)
 ipcMain.handle('get-validated-token', (event) => {
-    if (!mainWindow || event.sender !== mainWindow.webContents) { console.warn('[IPC get-validated-token] Unauthorized request origin.'); return null; }
-    console.log('[IPC get-validated-token] Providing token to test page.'); return currentToken;
+    // Security check: Ensure request comes from the current main window
+    if (!mainWindow || event.sender !== mainWindow.webContents) {
+        console.warn('[IPC get-validated-token] Unauthorized request origin.');
+        return null;
+    }
+    console.log('[IPC get-validated-token] Providing token to test page.');
+    return currentToken; // Return the globally stored token
 });
 
+// Fired from the test page upon successful submission to the backend
 ipcMain.on('test-submitted-successfully', (event) => {
-    if (!mainWindow || event.sender !== mainWindow.webContents) { console.warn('[IPC test-submitted-successfully] Unauthorized signal origin.'); return; }
+    // Security check
+    if (!mainWindow || event.sender !== mainWindow.webContents) {
+        console.warn('[IPC test-submitted-successfully] Unauthorized signal origin.');
+        return;
+    }
     console.log('[IPC test-submitted-successfully] Signal received. Quitting application.');
-    isTestSubmitted = true;
-    app.quit();
+    isTestSubmitted = true; // Set flag to allow clean closing
+    app.quit(); // Quit the Electron application
 });
 // --- End IPC Handlers ---
-
-// --- IPC Handlers ---
-
-// **MODIFIED**: getEnv now only returns isDev, BACKEND_URL is fixed above
-ipcMain.handle('get-env', () => {
-    console.log(`[IPC get-env] Providing environment. isDev: ${isDev}`);
-    // No longer needs to return BACKEND_URL as it's fixed in both main and renderer
-    return { isDev: isDev };
-});
-
-// The rest of the IPC handlers use the fixed BACKEND_URL constant defined above
-// ... rest of main.js ...
 
