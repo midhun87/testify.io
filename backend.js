@@ -106,15 +106,15 @@ const PORT = 3000;
 const JWT_SECRET = 'your-super-secret-key-for-jwt-in-production';
 
 async function compileWithCustomCompiler(language, code, input) {
-    // --- IMPORTANT: Update this URL if your custom compiler is hosted elsewhere ---
+    // --- IMPORTANT: This is your custom compiler URL ---
     const compilerUrl = 'https://compiler-api-6k95.onrender.com';
 
     const languageMap = {
         'c': 'c',
         'cpp': 'cpp',
         'python': 'python',
-        'javascript': 'javascript'
-        // Add other languages supported by your custom compiler if needed
+        'javascript': 'javascript',
+        'java': 'java' // Assuming your compiler supports java
     };
 
     const compilerLanguage = languageMap[language];
@@ -125,6 +125,7 @@ async function compileWithCustomCompiler(language, code, input) {
 
     try {
         console.log(`[Custom Compiler] Sending request for ${language}. URL: ${compilerUrl}/api/compile`);
+        // --- This fetch now uses the correct URL and body structure for your service ---
         const compileResponse = await fetch(`${compilerUrl}/api/compile`, {
             method: 'POST',
             headers: {
@@ -141,7 +142,7 @@ async function compileWithCustomCompiler(language, code, input) {
 
         if (!compileResponse.ok) {
             console.error("[Custom Compiler] API Error:", compileResponse.status, result);
-            // Try to extract a meaningful error message
+            // Try to extract a meaningful error message from your service's response
             const errorMessage = result?.message || result?.error || result?.stderr || `Execution failed (Status: ${compileResponse.status})`;
             throw new Error(`Compiler Service Error: ${errorMessage}`);
         }
@@ -154,16 +155,24 @@ async function compileWithCustomCompiler(language, code, input) {
             output += (output ? '\nError:\n' : '') + result.stderr;
         }
 
+        // Note: Your original compiler did not return 'executionTime'.
+        // If it does, you can parse it from the 'result' object here.
+        // const executionTime = result.executionTime || 0;
+
         return {
-            output: output.trim() || 'Execution finished with no output.', // Provide default message
+            output: output.trim() || 'Execution finished with no output.',
             stdout: result.stdout || '',
             stderr: result.stderr || '',
-            status: result.status || 'unknown' // Status might be 'success', 'error', 'timeout' etc.
+            status: result.status || 'unknown'
+            // executionTime: executionTime // Add this back if your service provides it
         };
 
     } catch (error) {
         console.error("[Custom Compiler] Fetch or JSON Parsing Error:", error);
         // Don't expose internal URLs or stack traces directly to the client
+        if (error.message.startsWith('Compiler Service Error:')) {
+            throw error; // Re-throw compiler errors
+        }
         throw new Error(`Server error communicating with the compilation service.`);
     }
 }
@@ -12043,4 +12052,5 @@ app.post('/api/public/save-code-snippet', authMiddleware, async (req, res) => {
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
 
