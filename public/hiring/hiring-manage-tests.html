@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Tests - HIRE WITH US</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        .tab-btn {
+            padding: 0.75rem 1.25rem;
+            font-weight: 600;
+            color: #4b5563;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .tab-btn.active {
+            color: #4F46E5;
+            border-bottom-color: #4F46E5;
+        }
+        .tab-btn:hover {
+            background-color: #f3f4f6;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo">
+                <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
+            </div>
+            <nav class="flex-grow p-4 overflow-y-auto" id="sidebar-nav"></nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b px-6 sticky top-0 z-10">
+                <h1 class="text-2xl font-semibold text-gray-800">Manage Tests</h1>
+                <div id="user-menu-container"></div>
+            </div>
+            
+            <main class="p-6">
+                <!-- Tabs -->
+                <div class="mb-6 border-b border-gray-200">
+                    <nav class="flex -mb-px">
+                        <button class="tab-btn active" data-tab="aptitude">Aptitude Tests</button>
+                        <button class="tab-btn" data-tab="coding">Coding Tests</button>
+                    </nav>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="container mx-auto">
+                    <!-- Aptitude Tests Tab -->
+                    <div id="tab-aptitude" class="tab-content active">
+                        <div id="aptitude-loading" class="text-center py-12"><p>Loading Aptitude Tests...</p></div>
+                        <div id="no-aptitude-tests" class="hidden text-center py-12">
+                            <p class="text-gray-500">No aptitude tests found. <a href="hiring-create-test.html" class="text-indigo-600 hover:underline">Create one now</a>.</p>
+                        </div>
+                        <div id="aptitude-tests-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            <!-- Aptitude tests will be rendered here -->
+                        </div>
+                    </div>
+
+                    <!-- Coding Tests Tab -->
+                    <div id="tab-coding" class="tab-content">
+                        <div id="coding-loading" class="text-center py-12"><p>Loading Coding Tests...</p></div>
+                        <div id="no-coding-tests" class="hidden text-center py-12">
+                            <p class="text-gray-500">No coding tests found. <a href="hiring-create-coding-test.html" class="text-indigo-600 hover:underline">Create one now</a>.</p>
+                        </div>
+                        <div id="coding-tests-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            <!-- Coding tests will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal (for Delete) -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+            <h3 id="confirm-title" class="text-lg font-bold text-gray-900">Confirm Deletion</h3>
+            <p id="confirm-message" class="mt-2 text-sm text-gray-600">Are you sure you want to delete this?</p>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="confirm-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
+                <button id="confirm-ok-btn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initializePage('Manage Tests'); 
+
+            const token = localStorage.getItem('token');
+            
+            // Tab elements
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            // List containers
+            const aptitudeList = document.getElementById('aptitude-tests-list');
+            const codingList = document.getElementById('coding-tests-list');
+            
+            // Status indicators
+            const aptitudeLoading = document.getElementById('aptitude-loading');
+            const noAptitudeTests = document.getElementById('no-aptitude-tests');
+            const codingLoading = document.getElementById('coding-loading');
+            const noCodingTests = document.getElementById('no-coding-tests');
+            
+            // Confirm Modal Elements
+            const confirmModal = document.getElementById('confirm-modal');
+            const confirmTitle = document.getElementById('confirm-title');
+            const confirmMessage = document.getElementById('confirm-message');
+            const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+            const confirmOkBtn = document.getElementById('confirm-ok-btn');
+            let confirmCallback = null;
+
+            // --- Confirmation Modal Functions ---
+            const showConfirmModal = (title, message, onConfirm) => {
+                confirmTitle.textContent = title;
+                confirmMessage.textContent = message;
+                confirmCallback = onConfirm;
+                confirmModal.classList.remove('hidden');
+            };
+            
+            const hideConfirmModal = () => {
+                confirmModal.classList.add('hidden');
+                confirmCallback = null;
+            };
+            
+            confirmOkBtn.addEventListener('click', () => {
+                if (confirmCallback) {
+                    confirmCallback();
+                }
+                hideConfirmModal();
+            });
+            confirmCancelBtn.addEventListener('click', hideConfirmModal);
+
+            // --- Tab Switching Logic ---
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    const tab = button.dataset.tab;
+                    tabContents.forEach(content => {
+                        if (content.id === `tab-${tab}`) {
+                            content.classList.add('active');
+                        } else {
+                            content.classList.remove('active');
+                        }
+                    });
+                });
+            });
+
+            // --- Data Fetching ---
+            const fetchTests = async (type) => {
+                const isCoding = type === 'coding';
+                const listEl = isCoding ? codingList : aptitudeList;
+                const loadingEl = isCoding ? codingLoading : aptitudeLoading;
+                const noDataEl = isCoding ? noCodingTests : noAptitudeTests;
+                
+                loadingEl.style.display = 'block';
+                noDataEl.style.display = 'none';
+                listEl.innerHTML = '';
+                
+                try {
+                    const url = isCoding ? '/api/hiring/tests?type=coding' : '/api/hiring/tests';
+                    const response = await fetch(url, { headers: { 'x-auth-token': token } });
+                    
+                    if (!response.ok) throw new Error(`Failed to fetch ${type} tests.`);
+                    
+                    const tests = await response.json();
+                    renderTests(tests, listEl, noDataEl, type);
+                    
+                } catch (error) {
+                    listEl.innerHTML = `<p class="text-red-500 col-span-full">${error.message}</p>`;
+                } finally {
+                    loadingEl.style.display = 'none';
+                }
+            };
+            
+            const renderTests = (tests, container, noDataEl, type) => {
+                container.innerHTML = '';
+                if (tests.length === 0) {
+                    noDataEl.style.display = 'block';
+                    return;
+                }
+                
+                tests.forEach(test => {
+                    const card = document.createElement('div');
+                    card.className = "bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col";
+                    
+                    const testId = type === 'coding' ? test.codingTestId : test.aptitudeTestId;
+                    const editUrl = type === 'coding' 
+                        ? `hiring-create-coding-test.html?edit=true&id=${testId}`
+                        : `hiring-create-test.html?edit=true&id=${testId}`;
+
+                    card.innerHTML = `
+                        <div class="flex-grow">
+                            <h3 class="font-bold text-lg text-indigo-700">${test.title}</h3>
+                            <p class="text-sm text-gray-600 mt-1">${test.duration} Minutes - <span class="font-medium text-gray-800">${test.totalMarks} Points</span></p>
+                            <p class="text-xs text-gray-400 mt-2">ID: ${testId}</p>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-100 flex justify-end space-x-2">
+                            <a href="${editUrl}" class="edit-btn text-sm font-medium text-indigo-600 hover:text-indigo-800">Edit</a>
+                            <button class="delete-btn text-sm font-medium text-red-600 hover:text-red-800" data-id="${testId}" data-title="${test.title}" data-type="${type}">Delete</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+                
+                // Add delete listeners
+                container.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        handleDeleteTest(btn.dataset.id, btn.dataset.title, btn.dataset.type);
+                    });
+                });
+            };
+            
+            const handleDeleteTest = (testId, testTitle, type) => {
+                showConfirmModal(
+                    `Delete Test?`,
+                    `Are you sure you want to delete "${testTitle}"? This will not delete assigned tests but will prevent new assignments.`,
+                    async () => {
+                        const isCoding = type === 'coding';
+                        const url = isCoding 
+                            ? `/api/hiring/coding-tests/${testId}` 
+                            : `/api/hiring/aptitude-tests/${testId}`;
+                        
+                        try {
+                            const response = await fetch(url, {
+                                method: 'DELETE',
+                                headers: { 'x-auth-token': token }
+                            });
+                            if (!response.ok) {
+                                throw new Error('Failed to delete test.');
+                            }
+                            // Refresh the specific list
+                            fetchTests(type); 
+                        } catch (error) {
+                            alert(error.message);
+                        }
+                    }
+                );
+            };
+
+            // Initial Fetch
+            fetchTests('aptitude');
+            fetchTests('coding');
+        });
+    </script>
+</body>
+</html>

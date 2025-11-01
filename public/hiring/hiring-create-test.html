@@ -33,7 +33,7 @@
         <!-- Main content -->
         <div class="flex flex-col flex-1 overflow-y-auto">
             <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
-                <h1 class="text-2xl font-bold text-gray-800">Create Hiring Test</h1>
+                <h1 id="main-title" class="text-2xl font-bold text-gray-800">Create Hiring Test</h1>
                 <div id="user-menu-container"></div>
             </div>
 
@@ -87,7 +87,7 @@
                     </div>
                     
                     <div class="mt-8 flex justify-end">
-                        <button type="submit" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                        <button type="submit" id="submit-btn" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
                             Create Test
                         </button>
                     </div>
@@ -98,12 +98,48 @@
     
     <script src="common.js"></script>
     <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js`;
+
         document.addEventListener('DOMContentLoaded', () => {
             initializePage('Create Test');
             const token = localStorage.getItem('token');
 
             const sectionsContainer = document.getElementById('sections-container');
+            const mainTitle = document.getElementById('main-title');
+            const submitBtn = document.getElementById('submit-btn');
+            const form = document.getElementById('create-test-form');
+            
             let sectionCounter = 0;
+            let currentEditingTestId = null;
+
+            // --- Edit Mode Logic ---
+            const urlParams = new URLSearchParams(window.location.search);
+            const isEditMode = urlParams.get('edit') === 'true';
+            currentEditingTestId = urlParams.get('id');
+
+            if (isEditMode && currentEditingTestId) {
+                mainTitle.textContent = 'Edit Hiring Test';
+                submitBtn.textContent = 'Update Test';
+                submitBtn.classList.replace('bg-green-600', 'bg-blue-600');
+                submitBtn.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
+                loadTestData(currentEditingTestId);
+            }
+
+            async function loadTestData(testId) {
+                try {
+                    const response = await fetch(`/api/hiring/aptitude-tests/${testId}`, {
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch test data.');
+                    
+                    const testData = await response.json();
+                    populateTestFormWithAIData(testData); // Re-use the AI populator
+                    
+                } catch (err) {
+                    alert(`Error loading test data: ${err.message}`);
+                    window.location.href = 'hiring-manage-tests.html'; // Go back if load fails
+                }
+            }
 
             document.getElementById('add-section-btn').addEventListener('click', () => addSection());
 
@@ -158,7 +194,7 @@
             });
 
             function addQuestion(questionsContainer, data = {}) {
-                const questionCounter = Date.now(); // Unique ID for question
+                const questionCounter = Date.now() + Math.random(); // Unique ID for question
                 const questionId = `${questionsContainer.closest('.section-block').id}-q-${questionCounter}`;
                 const questionBlock = document.createElement('div');
                 questionBlock.className = 'question-block bg-gray-50 p-4 rounded-lg border';
@@ -206,17 +242,19 @@
                     `;
                     
                     let optionsToRender = data.options;
-                    if (!Array.isArray(optionsToRender) || optionsToRender.length === 0) {
+                    // In edit mode, if data.options is empty, render 0 options.
+                    // Only add default 2 options if it's not edit mode OR data.options is undefined.
+                    if (!isEditMode && (!Array.isArray(optionsToRender) || optionsToRender.length === 0)) {
                         optionsToRender = ['', '']; 
                     }
 
-                    optionsToRender.forEach((optText, i) => {
+                    (optionsToRender || []).forEach((optText, i) => {
                         let isChecked = false;
                         if (type === 'mcq-single' && data.correctAnswer !== null && data.correctAnswer !== undefined) {
                             isChecked = (String(data.correctAnswer) === String(i));
                         } 
                         else if (type === 'mcq-multiple' && Array.isArray(data.correctAnswers)) {
-                            isChecked = data.correctAnswers.includes(String(i));
+                            isChecked = data.correctAnswers.map(String).includes(String(i));
                         }
                         addOption(questionId, inputType, optText, isChecked);
                     });
@@ -244,7 +282,6 @@
                 optionsContainer.appendChild(optionDiv);
             }
 
-            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js`;
             document.getElementById('analyze-pdf-btn').addEventListener('click', async () => {
                 const file = document.getElementById('pdf-upload').files[0];
                 if (!file) return alert('Please select a PDF file.');
@@ -262,7 +299,6 @@
                             fullText += textContent.items.map(item => item.str).join(' ') + '\n';
                         }
                         
-                        // *** FIX: Corrected the API endpoint to the one for hiring moderators ***
                         const response = await fetch('/api/hiring/generate-test-from-pdf', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
@@ -281,7 +317,7 @@
             });
 
              function populateTestFormWithAIData(data) {
-                document.getElementById('testTitle').value = data.testTitle || '';
+                document.getElementById('testTitle').value = data.title || data.testTitle || '';
                 document.getElementById('duration').value = data.duration || '';
                 document.getElementById('totalMarks').value = data.totalMarks || '';
                 document.getElementById('passingPercentage').value = data.passingPercentage || '';
@@ -292,12 +328,12 @@
                 if (data.sections && data.sections.length > 0) {
                     data.sections.forEach(section => addSection(section));
                 } else if (data.questions && data.questions.length > 0) {
-                    // Fallback for older AI model that might return 'questions' directly
+                    // Fallback for older AI model or test data
                     addSection({ title: 'Main Section', questions: data.questions });
                 }
             }
 
-            document.getElementById('create-test-form').addEventListener('submit', async e => {
+            form.addEventListener('submit', async e => {
                 e.preventDefault();
                 
                 const sections = [];
@@ -334,17 +370,22 @@
                     passingPercentage: parseInt(document.getElementById('passingPercentage').value),
                     sections
                 };
+                
+                // Determine URL and Method for Create vs Update
+                const url = isEditMode ? `/api/hiring/aptitude-tests/${currentEditingTestId}` : '/api/hiring/tests';
+                const method = isEditMode ? 'PUT' : 'POST';
 
                 try {
-                    const response = await fetch('/api/hiring/tests', {
-                        method: 'POST',
+                    const response = await fetch(url, {
+                        method: method,
                         headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                         body: JSON.stringify(payload)
                     });
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.message);
-                    alert('Hiring test created successfully!');
-                    window.location.href = 'hiring-dashboard.html';
+                    
+                    alert(`Hiring test ${isEditMode ? 'updated' : 'created'} successfully!`);
+                    window.location.href = 'hiring-manage-tests.html'; // Redirect to the new manage page
                 } catch (error) {
                     alert(`Error: ${error.message}`);
                 }

@@ -9,38 +9,70 @@
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
     <style>
         body { font-family: 'Inter', sans-serif; }
+        /* --- Sidebar styles are untouched as requested --- */
         .sidebar-link:hover { background-color: #4338CA; }
         .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        
+        /* Added for line-clamp */
+        @supports (-webkit-line-clamp: 2) {
+            .line-clamp-2 {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: initial;
+                display: -webkit-box;
+                -webkit-box-orient: vertical;
+                -webkit-line-clamp: 2;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100">
 
     <div class="flex h-screen bg-gray-100">
-        <!-- Sidebar -->
+        <!-- Sidebar (Unchanged as requested) -->
         <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
             <div class="flex items-center justify-center h-20 border-b border-gray-700">
                 <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo">
                 <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
             </div>
             <nav class="flex-grow p-4 overflow-y-auto" id="sidebar-nav">
-                <!-- Links will be injected here -->
+                <!-- Links will be injected by common.js -->
             </nav>
         </div>
 
-        <!-- Main content -->
+        <!-- Main content (Redesigned) -->
         <div class="flex flex-col flex-1 overflow-y-auto">
+            <!-- Top Header Bar -->
             <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
-                <h1 class="text-2xl font-bold text-gray-800">Your Job Postings</h1>
-                 <a href="hiring-create-job.html" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                <h1 class="text-2xl font-bold text-gray-800">Manage Jobs</h1>
+                <!-- Restyled "Create New Job" Button -->
+                 <a href="hiring-create-job.html" class="inline-flex items-center px-5 py-2.5 border border-transparent text-sm font-semibold rounded-lg shadow-md text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300">
                     Create New Job
                 </a>
                 <div id="user-menu-container"></div>
             </div>
 
-            <div class="p-6">
-                <div id="jobs-container" class="space-y-6">
+            <!-- Main Content Area -->
+            <div class="p-6 lg:p-8">
+                <!-- Page Header & Filters -->
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                    <h2 class="text-2xl font-bold text-gray-800">Your Job Postings</h2>
+                    <!-- Optional Sort By Dropdown -->
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm font-medium text-gray-600">Sort by:</span>
+                        <select id="sort-select" class="text-sm rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition duration-150">
+                            <option value="recent">Most Recent</option>
+                            <option value="deadline">Deadline (Soonest)</option>
+                            <option value="title">Title (A-Z)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Job Cards Grid -->
+                <div id="jobs-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Job cards will be loaded here -->
                 </div>
+                <!-- Message Area (for loading, error, or empty state) -->
                  <div id="message-area" class="text-center mt-8"></div>
             </div>
         </div>
@@ -53,52 +85,122 @@
             const token = localStorage.getItem('token');
             const jobsContainer = document.getElementById('jobs-container');
             const messageArea = document.getElementById('message-area');
+            const sortSelect = document.getElementById('sort-select');
+            
+            let allJobs = []; // Store fetched jobs to allow sorting
 
-            messageArea.innerHTML = '<p class="text-gray-600">Loading your jobs...</p>';
+            // --- Function to render job cards ---
+            function renderJobs(jobs) {
+                jobsContainer.innerHTML = ''; // Clear existing jobs
+                
+                if (jobs.length === 0) {
+                    // Display new empty-state card
+                    messageArea.innerHTML = `
+                        <div class="bg-white rounded-xl shadow-lg p-8 md:p-12 text-center col-span-1 lg:col-span-2">
+                            <!-- Empty State Illustration -->
+                            <div class="flex justify-center mb-6">
+                                <svg class="w-32 h-32 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                </svg>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">No job postings yet</h3>
+                            <p class="text-gray-500 mb-6 max-w-md mx-auto">It looks like you haven't created any jobs. Get started by posting your first one now.</p>
+                            <a href="hiring-create-job.html" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-semibold rounded-lg shadow-md text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300">
+                                Create New Job
+                            </a>
+                        </div>
+                    `;
+                    // Hide sort controls if no jobs
+                    sortSelect.parentElement.parentElement.classList.add('hidden');
+                    return;
+                }
+                
+                messageArea.innerHTML = '';
+                // Show sort controls if jobs exist
+                sortSelect.parentElement.parentElement.classList.remove('hidden');
 
+                jobs.forEach(job => {
+                    const jobCard = document.createElement('div');
+                    // Card styling
+                    jobCard.className = 'bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 flex flex-col';
+                    const jobId = job.jobId; 
+                    
+                    // Card inner content
+                    jobCard.innerHTML = `
+                        <div class="flex flex-col justify-between h-full">
+                            <div>
+                                <!-- Job Title and Created Date -->
+                                <div class="mb-5">
+                                    <h2 class="text-xl font-bold text-gray-900 truncate" title="${job.title}">${job.title}</h2>
+                                    <p class="text-sm text-gray-500">Created: ${new Date(job.createdAt).toLocaleDateString()}</p>
+                                </div>
+
+                                <!-- Job Details (Deadline & Colleges) -->
+                                <div class="space-y-3 mb-6">
+                                    <!-- Deadline -->
+                                    <div class="flex items-center text-sm text-gray-700">
+                                        <!-- Calendar Icon -->
+                                        <svg class="w-5 h-5 text-gray-400 mr-2 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                                        </svg>
+                                        <span>Deadline: <span class="font-semibold">${new Date(job.applicationDeadline).toLocaleDateString()}</span></span>
+                                    </div>
+                                    <!-- Colleges -->
+                                    <div class="flex items-start text-sm text-gray-700">
+                                        <!-- College Icon -->
+                                        <svg class="w-5 h-5 text-gray-400 mr-2 mt-0.5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
+                                        </svg>
+                                        <!-- Used line-clamp-2 to prevent overflow -->
+                                        <span class="line-clamp-2" title="${job.eligibleColleges.join(', ')}">Colleges: <span class="font-semibold">${job.eligibleColleges.join(', ')}</span></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Button (Gradient) -->
+                            <div class="mt-auto">
+                                 <a href="hiring-view-applicants.html?jobId=${jobId}" class="block w-full text-center px-4 py-3 font-semibold rounded-lg text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300 ease-in-out transform hover:-translate-y-0.5">
+                                    View Applicants
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                    jobsContainer.appendChild(jobCard);
+                });
+            }
+
+            // --- Sorting logic ---
+            sortSelect.addEventListener('change', (e) => {
+                const sortBy = e.target.value;
+                let sortedJobs = [...allJobs]; // Create a new array copy
+
+                if (sortBy === 'recent') {
+                    sortedJobs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                } else if (sortBy === 'deadline') {
+                    sortedJobs.sort((a, b) => new Date(a.applicationDeadline) - new Date(b.applicationDeadline));
+                } else if (sortBy === 'title') {
+                    sortedJobs.sort((a, b) => a.title.localeCompare(b.title));
+                }
+                
+                renderJobs(sortedJobs); // Re-render with sorted jobs
+            });
+
+            // --- Initial Fetch ---
+            messageArea.innerHTML = '<p class="text-gray-600 text-center col-span-1 lg:col-span-2">Loading your jobs...</p>';
             try {
                 const response = await fetch('/api/hiring/jobs', {
                     headers: { 'x-auth-token': token }
                 });
                 if (!response.ok) throw new Error('Could not fetch jobs.');
 
-                const jobs = await response.json();
-
-                if (jobs.length === 0) {
-                     messageArea.innerHTML = '<div class="text-center py-10"><h3 class="text-lg font-semibold text-gray-700">No jobs found</h3><p class="text-gray-500 mt-2">You have not created any jobs yet. Get started by creating one now.</p><a href="hiring-create-job.html" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">Create a Job</a></div>';
-                     return;
-                }
+                allJobs = await response.json(); // Store in our global variable
                 
-                messageArea.innerHTML = '';
-                // Sort jobs by most recent first
-                jobs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                
-                jobs.forEach(job => {
-                    const jobCard = document.createElement('div');
-                    jobCard.className = 'bg-white p-6 rounded-xl shadow-md transition hover:shadow-lg';
-                    // *** FIX: Use job.jobId which is the correct unique identifier from the backend. ***
-                    const jobId = job.jobId; 
-                    
-                    jobCard.innerHTML = `
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h2 class="text-xl font-bold text-gray-800">${job.title}</h2>
-                                <p class="text-sm text-gray-500">Created on: ${new Date(job.createdAt).toLocaleDateString()}</p>
-                            </div>
-                             <a href="hiring-view-applicants.html?jobId=${jobId}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
-                                View Applicants
-                            </a>
-                        </div>
-                        <div class="mt-4 border-t pt-4">
-                            <p class="text-sm text-gray-600"><strong>Deadline:</strong> ${new Date(job.applicationDeadline).toLocaleString()}</p>
-                             <p class="text-sm text-gray-600 mt-2"><strong>Eligible Colleges:</strong> ${job.eligibleColleges.join(', ')}</p>
-                        </div>
-                    `;
-                    jobsContainer.appendChild(jobCard);
-                });
+                // Initial sort by recent (default)
+                let sortedJobs = [...allJobs].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                renderJobs(sortedJobs);
 
             } catch (error) {
-                messageArea.innerHTML = `<p class="text-red-600 font-semibold">Error: ${error.message}</p>`;
+                messageArea.innerHTML = `<p class="text-red-600 font-semibold text-center col-span-1 lg:col-span-2">Error: ${error.message}</p>`;
             }
         });
     </script>

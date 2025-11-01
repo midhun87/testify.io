@@ -33,7 +33,7 @@
         <!-- Main content -->
         <div class="flex flex-col flex-1 overflow-y-auto">
             <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6 sticky top-0 z-10">
-                <h1 class="text-2xl font-bold text-gray-800">Create New Coding Test</h1>
+                <h1 id="main-title" class="text-2xl font-bold text-gray-800">Create New Coding Test</h1>
                 <div id="user-menu-container"></div>
             </div>
 
@@ -86,7 +86,7 @@
                             <p class="text-sm text-gray-500">Total Marks</p>
                             <p id="total-marks-display" class="text-2xl font-bold text-indigo-600">0</p>
                         </div>
-                        <button type="submit" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700 transition">
+                        <button type="submit" id="submit-btn" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700 transition">
                             Create Coding Test
                         </button>
                     </div>
@@ -98,7 +98,6 @@
     <script src="common.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // ... (initializePage and sidebar links setup - keep as is) ...
             initializePage('Create Coding Test');
 
             const token = localStorage.getItem('token');
@@ -110,9 +109,26 @@
             const totalMarksDisplay = document.getElementById('total-marks-display');
             const noSectionsPlaceholder = document.getElementById('no-sections-placeholder');
             const form = document.getElementById('create-coding-test-form');
+            const mainTitle = document.getElementById('main-title');
+            const submitBtn = document.getElementById('submit-btn');
+            
+            const titleInput = document.getElementById('testTitle');
+            const durationInput = document.getElementById('duration');
 
             let allProblems = []; // Store fetched problems
             let testSections = []; // Array to hold section data [{ title: '...', problems: [...] }]
+            
+            // --- Edit Mode Logic ---
+            const urlParams = new URLSearchParams(window.location.search);
+            const isEditMode = urlParams.get('edit') === 'true';
+            const currentEditingTestId = urlParams.get('id');
+
+            if (isEditMode && currentEditingTestId) {
+                mainTitle.textContent = 'Edit Coding Test';
+                submitBtn.textContent = 'Update Coding Test';
+                submitBtn.classList.replace('bg-green-600', 'bg-blue-600');
+                submitBtn.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
+            }
 
             // Fetch all available coding problems created by the moderator
             const fetchProblems = async () => {
@@ -121,10 +137,69 @@
                     if (!response.ok) throw new Error('Failed to fetch problems');
                     allProblems = await response.json();
                     renderAvailableProblems(allProblems);
+                    
+                    // If in edit mode, load test data AFTER problems are available
+                    if (isEditMode && currentEditingTestId) {
+                        await loadTestData(currentEditingTestId);
+                    }
                 } catch (error) {
                     availableProblemsContainer.innerHTML = `<p class="text-red-500 col-span-full">Error loading problems: ${error.message}</p>`;
                 } finally {
                     problemsLoader.style.display = 'none';
+                }
+            };
+            
+            const loadTestData = async (testId) => {
+                try {
+                    const response = await fetch(`/api/hiring/coding-tests/${testId}`, {
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch test data.');
+                    
+                    const testData = await response.json();
+                    
+                    // Populate basic fields
+                    titleInput.value = testData.title;
+                    durationInput.value = testData.duration;
+                    
+                    // Clear existing UI and data
+                    sectionsContainer.innerHTML = '';
+                    testSections = [];
+                    
+                    if (testData.sections && testData.sections.length > 0) {
+                        noSectionsPlaceholder.style.display = 'none';
+                        
+                        testData.sections.forEach((section, index) => {
+                            // Find full problem details from allProblems
+                            const fullProblemData = section.problems.map(p => {
+                                return allProblems.find(ap => ap.problemId === p.problemId);
+                            }).filter(Boolean); // Filter out any problems not found
+                            
+                            // Add to data array
+                            testSections.push({
+                                title: section.title,
+                                problems: fullProblemData
+                            });
+                            
+                            // Add to UI
+                            addSectionUI(section.title, index, fullProblemData);
+                            
+                            // Disable added problems in the available list
+                            fullProblemData.forEach(p => {
+                                const availableCard = availableProblemsContainer.querySelector(`.problem-card[data-problem-id="${p.problemId}"]`);
+                                if (availableCard) {
+                                    availableCard.classList.add('opacity-50', 'cursor-not-allowed');
+                                    availableCard.draggable = false;
+                                }
+                            });
+                        });
+                        
+                        updateTotalMarks();
+                    }
+                    
+                } catch (err) {
+                    alert(`Error loading test data: ${err.message}`);
+                    window.location.href = 'hiring-manage-tests.html'; // Go back if load fails
                 }
             };
 
@@ -135,7 +210,7 @@
                     return;
                 }
                 availableProblemsContainer.innerHTML = problems.map(p => `
-                    <div class="problem-card border rounded-lg p-3 cursor-pointer bg-white" data-problem-id="${p.id}" draggable="true">
+                    <div class="problem-card border rounded-lg p-3 cursor-pointer bg-white" data-problem-id="${p.problemId}" draggable="true">
                         <h3 class="font-semibold text-sm text-gray-800">${p.title}</h3>
                         <p class="text-xs text-gray-500">${p.difficulty} - <span class="font-medium">${p.score} Points</span></p>
                     </div>
@@ -190,7 +265,7 @@
 
                 const problemEl = document.createElement('div');
                 problemEl.className = 'problem-card border rounded-md p-2 bg-indigo-50 flex justify-between items-center';
-                problemEl.dataset.problemId = problem.id;
+                problemEl.dataset.problemId = problem.problemId; // Use problemId
                 problemEl.innerHTML = `
                     <div>
                         <span class="font-medium text-sm text-indigo-800">${problem.title}</span>
@@ -200,10 +275,10 @@
                 `;
                 container.appendChild(problemEl);
                 problemEl.querySelector('.remove-problem-btn').addEventListener('click', () => {
-                     removeProblemFromSection(container.closest('.section-container').dataset.sectionIndex, problem.id);
+                     removeProblemFromSection(container.closest('.section-container').dataset.sectionIndex, problem.problemId); // Use problemId
                      problemEl.remove();
                      // Re-enable the problem in the available list
-                    const availableCard = availableProblemsContainer.querySelector(`.problem-card[data-problem-id="${problem.id}"]`);
+                    const availableCard = availableProblemsContainer.querySelector(`.problem-card[data-problem-id="${problem.problemId}"]`);
                     if (availableCard) {
                         availableCard.classList.remove('opacity-50', 'cursor-not-allowed');
                         availableCard.draggable = true;
@@ -218,11 +293,11 @@
 
             // Add a problem to a specific section's data
             const addProblemToSection = (sectionIndex, problemId) => {
-                const problem = allProblems.find(p => p.id === problemId);
+                const problem = allProblems.find(p => p.problemId === problemId);
                 if (!problem || !testSections[sectionIndex]) return;
 
                 // Prevent adding the same problem multiple times to the test (across all sections)
-                const isAlreadyAdded = testSections.some(sec => sec.problems.some(p => p.id === problemId));
+                const isAlreadyAdded = testSections.some(sec => sec.problems.some(p => p.problemId === problemId));
                 if (isAlreadyAdded) {
                     alert(`${problem.title} is already added to the test.`);
                     return;
@@ -250,7 +325,7 @@
             // Remove a problem from a specific section's data
             const removeProblemFromSection = (sectionIndex, problemId) => {
                 if (!testSections[sectionIndex]) return;
-                testSections[sectionIndex].problems = testSections[sectionIndex].problems.filter(p => p.id !== problemId);
+                testSections[sectionIndex].problems = testSections[sectionIndex].problems.filter(p => p.problemId !== problemId);
                 updateTotalMarks();
             };
 
@@ -271,7 +346,7 @@
             const removeSection = (indexToRemove) => {
                  // Re-enable any problems that were in this section
                 testSections[indexToRemove].problems.forEach(problem => {
-                    const availableCard = availableProblemsContainer.querySelector(`.problem-card[data-problem-id="${problem.id}"]`);
+                    const availableCard = availableProblemsContainer.querySelector(`.problem-card[data-problem-id="${problem.problemId}"]`);
                     if (availableCard) {
                         availableCard.classList.remove('opacity-50', 'cursor-not-allowed');
                         availableCard.draggable = true;
@@ -311,7 +386,6 @@
                         if (!card.classList.contains('opacity-50')) {
                              draggedProblemId = card.dataset.problemId;
                              e.dataTransfer.effectAllowed = 'copy';
-                             // Optional: slightly dim the card being dragged
                              card.classList.add('opacity-75');
                         } else {
                             e.preventDefault(); // Prevent dragging if already added
@@ -321,7 +395,6 @@
                     card.addEventListener('dragend', (e) => {
                         draggedProblemId = null;
                         card.classList.remove('opacity-75'); // Reset opacity
-                        // Reset styles on drop zones
                          sectionsContainer.querySelectorAll('.section-problems').forEach(dropZone => {
                              dropZone.classList.remove('bg-indigo-100', 'border-indigo-400');
                          });
@@ -329,19 +402,15 @@
 
                     // --- Click to Add Logic ---
                      card.addEventListener('click', (e) => {
-                        // Check if the problem is already added
                         const problemId = card.dataset.problemId;
-                        const isAlreadyAdded = testSections.some(sec => sec.problems.some(p => p.id === problemId));
+                        const isAlreadyAdded = testSections.some(sec => sec.problems.some(p => p.problemId === problemId));
                         if(isAlreadyAdded) return; // Do nothing if already added
 
-                        // Find the last section added, or default to the first if none exist yet
                         let targetSectionIndex = testSections.length > 0 ? testSections.length - 1 : -1;
-
                         if (targetSectionIndex === -1) {
                             alert("Please add a section first before adding problems.");
                             return;
                         }
-
                         addProblemToSection(targetSectionIndex, problemId);
                     });
                 });
@@ -349,16 +418,16 @@
 
             function addSectionDropListeners(dropZone) {
                 dropZone.addEventListener('dragover', (e) => {
-                    e.preventDefault(); // Necessary to allow drop
+                    e.preventDefault(); 
                     e.dataTransfer.dropEffect = 'copy';
-                    dropZone.classList.add('bg-indigo-100', 'border-indigo-400'); // Highlight drop zone
+                    dropZone.classList.add('bg-indigo-100', 'border-indigo-400');
                 });
                 dropZone.addEventListener('dragleave', (e) => {
-                    dropZone.classList.remove('bg-indigo-100', 'border-indigo-400'); // Remove highlight
+                    dropZone.classList.remove('bg-indigo-100', 'border-indigo-400');
                 });
                 dropZone.addEventListener('drop', (e) => {
                     e.preventDefault();
-                    dropZone.classList.remove('bg-indigo-100', 'border-indigo-400'); // Remove highlight on drop
+                    dropZone.classList.remove('bg-indigo-100', 'border-indigo-400');
                     if (draggedProblemId) {
                         const sectionIndex = dropZone.closest('.section-container').dataset.sectionIndex;
                         addProblemToSection(sectionIndex, draggedProblemId);
@@ -367,7 +436,7 @@
                 });
             }
 
-            // --- Form Submission ---
+            // --- Form Submission (Handles Create and Update) ---
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
 
@@ -383,13 +452,12 @@
 
                 // Prepare payload in the new format
                 const payload = {
-                    testTitle: document.getElementById('testTitle').value,
-                    duration: document.getElementById('duration').value,
-                    // Map sections to include only necessary problem data
+                    testTitle: titleInput.value,
+                    duration: durationInput.value,
                     sections: testSections.map(section => ({
                         title: section.title,
                         problems: section.problems.map(p => ({
-                             id: p.id, // Or problemId if that's the key
+                             problemId: p.problemId, // Use problemId
                              title: p.title,
                              difficulty: p.difficulty,
                              score: p.score
@@ -398,20 +466,23 @@
                 };
 
                  console.log("Submitting Payload:", JSON.stringify(payload, null, 2));
-
+                 
+                const url = isEditMode ? `/api/hiring/coding-tests/${currentEditingTestId}` : '/api/hiring/coding-tests';
+                const method = isEditMode ? 'PUT' : 'POST';
 
                 try {
-                    const response = await fetch('/api/hiring/coding-tests', {
-                        method: 'POST',
+                    const response = await fetch(url, {
+                        method: method,
                         headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                         body: JSON.stringify(payload)
                     });
                      const result = await response.json();
-                     if (!response.ok) throw new Error(result.message || 'Failed to create test');
-                    alert('Coding test created successfully!');
-                    window.location.href = 'hiring-dashboard.html'; // Or redirect to a test management page
+                     if (!response.ok) throw new Error(result.message || 'Failed to save test');
+                    
+                    alert(`Coding test ${isEditMode ? 'updated' : 'created'} successfully!`);
+                    window.location.href = 'hiring-manage-tests.html'; // Redirect to manage page
                 } catch (error) {
-                    alert(`Error creating test: ${error.message}`);
+                    alert(`Error saving test: ${error.message}`);
                 }
             });
 

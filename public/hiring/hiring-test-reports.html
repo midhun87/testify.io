@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Reports - HIRE WITH US</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material-darker.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        .modal-overlay { background-color: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
+        .CodeMirror { height: 40vh; border-radius: 0.5rem; font-size: 14px; }
+        
+        .tab-btn {
+            padding: 0.75rem 1.25rem;
+            font-weight: 600;
+            color: #4b5563;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .tab-btn.active {
+            color: #4F46E5;
+            border-bottom-color: #4F46E5;
+        }
+        .tab-btn:hover {
+            background-color: #f3f4f6;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease-in-out;
+        }
+        .accordion-header .chevron-icon {
+            transition: transform 0.35s ease-in-out;
+        }
+        .accordion-header.open .chevron-icon {
+            transform: rotate(180deg);
+        }
+        .spinner { animation: rotate 1s linear infinite; }
+        @keyframes rotate { to { transform: rotate(360deg); } }
+        .progress-bar-bg { background-color: #e5e7eb; }
+        .progress-bar-fg { background-color: #4f46e5; transition: width 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen bg-gray-50">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo">
+                <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
+            </div>
+            <nav class="flex-grow p-4 overflow-y-auto" id="sidebar-nav"></nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6 sticky top-0 z-10">
+                <h1 id="page-title" class="text-2xl font-bold text-gray-800">Test Reports</h1>
+                <div id="user-menu-container"></div>
+            </div>
+
+            <main class="p-4 sm:p-6 lg:p-8">
+                <div class="max-w-7xl mx-auto">
+                    <!-- Tabs -->
+                    <div class="mb-6 border-b border-gray-200">
+                        <nav class="flex -mb-px">
+                            <button class="tab-btn active" data-tab="aptitude">Aptitude Test Reports</button>
+                            <button class="tab-btn" data-tab="coding">Coding Test Reports</button>
+                        </nav>
+                    </div>
+
+                    <!-- Aptitude Reports Tab -->
+                    <div id="tab-aptitude" class="tab-content active">
+                        <div id="aptitude-loader" class="text-center py-10">
+                            <svg class="spinner h-12 w-12 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="mt-4 text-gray-600">Loading Aptitude Reports...</p>
+                        </div>
+                        <div id="aptitude-message" class="text-center py-16 bg-white rounded-lg shadow-sm hidden"></div>
+                        <div id="aptitude-reports-container" class="space-y-4"></div>
+                    </div>
+
+                    <!-- Coding Reports Tab -->
+                    <div id="tab-coding" class="tab-content">
+                        <div id="coding-loader" class="text-center py-10">
+                           <svg class="spinner h-12 w-12 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="mt-4 text-gray-600">Loading Coding Reports...</p>
+                        </div>
+                        <div id="coding-message" class="text-center py-16 bg-white rounded-lg shadow-sm hidden"></div>
+                        <div id="coding-reports-container" class="space-y-4"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Details Modal (Aptitude & Coding) -->
+    <div id="details-modal" class="hidden fixed inset-0 z-50 modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h2 id="modal-title" class="text-xl font-bold">Submission Details</h2>
+                <div class="flex items-center space-x-2">
+                    <button id="download-report-btn" class="p-2 rounded-full hover:bg-gray-200 transition-colors duration-200" title="Download Full Report (PDF)">
+                       <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    </button>
+                    <button id="close-modal-btn" class="text-gray-500 hover:text-gray-800 text-3xl font-bold">&times;</button>
+                </div>
+            </div>
+            <div id="modal-content" class="p-6 overflow-y-auto bg-gray-50">
+                <!-- Detailed content injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Code Viewer Modal (for Coding) -->
+     <div id="code-modal" class="hidden fixed inset-0 z-[60] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h2 id="code-modal-title" class="text-xl font-bold">Submitted Code</h2>
+                <button id="close-code-modal-btn" class="text-gray-500 hover:text-gray-800 text-3xl font-bold">&times;</button>
+            </div>
+            <div class="p-4 flex-grow"><textarea id="code-viewer"></textarea></div>
+        </div>
+    </div>
+
+    <script src="common.js"></script>
+    <!-- Libraries for Export Functionality -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <!-- CodeMirror Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initializePage('Test Reports');
+            const token = localStorage.getItem('token');
+            
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            // Modals
+            const detailsModal = document.getElementById('details-modal');
+            const codeModal = document.getElementById('code-modal');
+            const downloadReportBtn = document.getElementById('download-report-btn');
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+            
+            let codeViewer = null;
+            let allReportData = { aptitude: {}, coding: {} }; // Store all fetched data
+            let currentDetailedResult = null; // Store data for the open modal
+
+            // --- Tab Switching Logic ---
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    const tab = button.dataset.tab;
+                    tabContents.forEach(content => {
+                        content.style.display = content.id === `tab-${tab}` ? 'block' : 'none';
+                    });
+                });
+            });
+
+            // --- Helper to convert image URL to Base64 (for PDF embedding) ---
+            async function imageToBase64(url) {
+                 try {
+                    if (!url) return null; // Handle null or undefined URLs
+                    const response = await fetch(url, { cache: "force-cache" });
+                    if (!response.ok) throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
+                    const blob = await response.blob();
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = (error) => reject(new Error("FileReader error: " + error));
+                        reader.readAsDataURL(blob);
+                    });
+                } catch(e) {
+                    console.error(`Image to Base64 conversion failed for ${url}:`, e);
+                    return null;
+                }
+            }
+
+            // --- Fetch and Render Reports ---
+            async function fetchReports(type) {
+                const isCoding = type === 'coding';
+                const loader = document.getElementById(`${type}-loader`);
+                const messageEl = document.getElementById(`${type}-message`);
+                const container = document.getElementById(`${type}-reports-container`);
+                const endpoint = isCoding ? '/api/hiring/coding-test-results' : '/api/hiring/test-history';
+                
+                loader.style.display = 'block';
+                messageEl.style.display = 'none';
+                container.innerHTML = '';
+
+                try {
+                    const response = await fetch(endpoint, { headers: { 'x-auth-token': token } });
+                    if (!response.ok) throw new Error((await response.json()).message || `HTTP error! status: ${response.status}`);
+                    
+                    const reports = await response.json(); // This is the new report structure
+                    
+                    // Add a check to ensure 'reports' is an array
+                    if (!Array.isArray(reports)) {
+                         throw new Error("Invalid data format received from server.");
+                    }
+                    
+                    if (reports.length === 0) {
+                        messageEl.innerHTML = `
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
+                            <h3 class="mt-2 text-lg font-medium text-gray-900">No reports found</h3>
+                            <p class="mt-1 text-sm text-gray-500">No ${type} tests have been assigned or completed yet.</p>`;
+                        messageEl.style.display = 'block';
+                        return;
+                    }
+                    
+                    // Store data
+                    allReportData[type] = reports.reduce((acc, report) => {
+                        if (report && report.testId) { // Add safety check
+                            acc[report.testId] = report;
+                        }
+                        return acc;
+                    }, {});
+                    
+                    renderReportAccordions(reports, container, type);
+                    
+                } catch (error) {
+                    messageEl.innerHTML = `<p class="text-red-500 text-center py-8">Error loading ${type} reports: ${error.message}</p>`;
+                    messageEl.style.display = 'block';
+                } finally {
+                    loader.style.display = 'none';
+                }
+            }
+
+            function renderReportAccordions(reports, container, type) {
+                container.innerHTML = reports.map(report => {
+                    const reportArray = report?.report || []; 
+                    const totalAssigned = reportArray.length;
+                    const totalAttempted = reportArray.filter(r => r.status === 'Attempted').length;
+                    
+                    return `
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
+                        <div class="accordion-header flex justify-between items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors duration-200" data-testid="${report.testId}" data-type="${type}">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-800">${report.title || 'Untitled Test'}</h3>
+                                <p class="text-sm font-medium text-gray-500">${totalAttempted} / ${totalAssigned} Candidates Attempted</p>
+                            </div>
+                            <svg class="chevron-icon w-6 h-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                        <div class="accordion-content">
+                            <div class="p-4 border-t border-gray-200 bg-gray-50">
+                                <div class="flex justify-end items-center mb-4 space-x-3">
+                                    <button class="export-excel-btn flex items-center gap-2 bg-green-50 hover:bg-green-100 text-green-700 font-semibold py-2 px-4 rounded-lg text-sm transition-colors duration-200 border border-green-200" data-testid="${report.testId}" data-type="${type}">
+                                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                        Export Report (Excel)
+                                    </button>
+                                </div>
+                                <div class="overflow-x-auto rounded-md border border-gray-200">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-100">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Candidate Email</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                                                ${type === 'coding' ? '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section Scores</th>' : ''}
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="bg-white divide-y divide-gray-200">
+                                            ${reportArray.map(r => renderReportRow(r, type)).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `}).join('');
+            }
+            
+            function renderReportRow(reportEntry, type) {
+                const isAttempted = reportEntry.status === 'Attempted';
+                let scoreText = '';
+                let sectionScoreHtml = '';
+
+                if (isAttempted) {
+                    const scoreValue = reportEntry.score ?? 'N/A';
+                    const totalMarksValue = reportEntry.totalMarks || 0;
+                    const scoreSuffix = type === 'aptitude' ? '%' : ` / ${totalMarksValue}`;
+                    
+                    scoreText = `<span class="font-semibold text-indigo-700">${scoreValue}${scoreSuffix}</span>`;
+                    
+                    if (type === 'coding' && reportEntry.sectionScores && reportEntry.sectionScores.length > 0) {
+                        sectionScoreHtml = reportEntry.sectionScores.map(s => 
+                            `<div class="text-xs">
+                                <span class="font-medium text-gray-600">${s.title}:</span>
+                                <span class="font-semibold text-gray-800">${s.score}/${s.maxScore}</span>
+                             </div>`
+                        ).join('');
+                    } else if (type === 'aptitude') {
+                        // Aptitude section scores could be calculated here if needed
+                    }
+                } else {
+                    scoreText = `<span class="text-gray-500">N/A</span>`;
+                }
+
+                return `
+                    <tr class="${isAttempted ? 'hover:bg-indigo-50' : 'bg-gray-100 opacity-70'} transition-colors duration-150">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${reportEntry.candidateEmail}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${isAttempted ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                ${reportEntry.status}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">${scoreText}</td>
+                        ${type === 'coding' ? `<td class="px-6 py-4 whitespace-nowrap text-sm">${sectionScoreHtml}</td>` : ''}
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            ${isAttempted ? 
+                                `<button class="view-details-btn text-indigo-600 hover:text-indigo-900 font-semibold" 
+                                    data-result-id="${reportEntry.resultId}" 
+                                    data-test-id="${reportEntry.testId}" 
+                                    data-type="${type}">
+                                    View Report
+                                 </button>` : 
+                                '<span class="text-gray-400">No Report</span>'}
+                        </td>
+                    </tr>
+                `;
+            }
+
+            // --- Accordion & Action Listeners ---
+            document.body.addEventListener('click', (e) => {
+                const header = e.target.closest('.accordion-header');
+                if (header) {
+                    header.classList.toggle('open');
+                    const content = header.nextElementSibling;
+                    content.style.maxHeight = content.style.maxHeight ? null : content.scrollHeight + "px";
+                    return;
+                }
+                
+                const button = e.target.closest('button');
+                if (!button) return;
+
+                if (button.classList.contains('view-details-btn')) {
+                    showDetailsModal(button.dataset.resultId, button.dataset.type);
+                } else if (button.classList.contains('export-excel-btn')) {
+                    exportToExcel(button.dataset.testid, button.dataset.type);
+                } else if (button.classList.contains('view-code-btn')) {
+                    try {
+                        // *** FIX 1: Manually decode HTML entities before parsing ***
+                        const submissionJSON = button.dataset.submission.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+                        const submission = JSON.parse(submissionJSON);
+                        showCodeModal(submission);
+                    } catch (parseError) {
+                         console.error("Error parsing submission data for code modal:", parseError);
+                         console.log("Raw data-submission string:", button.dataset.submission); // Add this log for debugging
+                         alert("Could not load code: Invalid data format.");
+                    }
+                }
+            });
+
+            // --- Show Detailed Modal (Unified for Aptitude & Coding) ---
+            async function showDetailsModal(resultId, type) {
+                modalTitle.textContent = 'Loading details...';
+                modalContent.innerHTML = '<div class="text-center py-6"><svg class="spinner h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg></div>';
+                detailsModal.classList.remove('hidden');
+                currentDetailedResult = null; 
+
+                try {
+                    // This single endpoint now fetches all details
+                    const response = await fetch(`/api/hiring/test-results/${resultId}`, { headers: { 'x-auth-token': token } });
+                    if (!response.ok) throw new Error((await response.json()).message || `HTTP error! status: ${response.status}`);
+
+                    const result = await response.json();
+                    currentDetailedResult = result; // Store for PDF export
+
+                    modalTitle.textContent = `Details for ${result.fullName || result.candidateEmail}`;
+
+                    let sectionsHtml = '';
+                    
+                    if (type === 'coding') {
+                        // --- RENDER CODING REPORT ---
+                        const submissions = result.submissions || [];
+                        if (result.sectionScores && result.sectionScores.length > 0) {
+                            sectionsHtml += `<h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">Section Scores</h3>`;
+                            sectionsHtml += `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">`;
+                            result.sectionScores.forEach(sec => {
+                                const percentage = sec.maxScore > 0 ? Math.round((sec.score / sec.maxScore) * 100) : 0;
+                                sectionsHtml += `
+                                    <div class="p-4 border rounded-lg bg-white shadow-sm">
+                                        <div class="flex justify-between items-center mb-1">
+                                             <h4 class="font-semibold text-gray-700">${sec.title}</h4>
+                                             <span class="font-bold text-lg ${percentage >= 50 ? 'text-green-600' : 'text-red-600'}">${sec.score} / ${sec.maxScore}</span>
+                                        </div>
+                                         <div class="w-full progress-bar-bg rounded-full h-2.5">
+                                            <div class="progress-bar-fg h-2.5 rounded-full" style="width: ${percentage}%"></div>
+                                        </div>
+                                    </div>`;
+                            });
+                            sectionsHtml += `</div><h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">Problem Breakup</h3>`;
+
+                            const submissionsBySection = result.sectionScores.reduce((acc, sec) => {
+                                 acc[sec.title] = submissions.filter(sub => sub.sectionTitle === sec.title);
+                                 return acc;
+                             }, {});
+
+                             result.sectionScores.forEach(sec => {
+                                 sectionsHtml += `<div class="mb-5"><h4 class="text-md font-semibold text-gray-600 mb-3">${sec.title}</h4>`;
+                                 if (submissionsBySection[sec.title] && submissionsBySection[sec.title].length > 0) {
+                                     sectionsHtml += submissionsBySection[sec.title].map(renderProblemSubmissionCard).join('');
+                                 } else {
+                                     sectionsHtml += `<p class="text-sm text-gray-500 italic">No submissions for this section.</p>`;
+                                 }
+                                 sectionsHtml += `</div>`;
+                             });
+                        } else if (submissions.length > 0) {
+                            sectionsHtml += `<h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">Problem Breakup</h3>`;
+                            sectionsHtml += submissions.map(renderProblemSubmissionCard).join('');
+                        }
+                    
+                    } else {
+                        // --- RENDER APTITUDE REPORT ---
+                        sectionsHtml = `<h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">Answer Review</h3>`;
+                        if (result.originalTestSections && result.answers) {
+                            let qIndex = 0;
+                            result.originalTestSections.forEach(section => {
+                                sectionsHtml += `<div class="mb-5"><h4 class="text-md font-semibold text-gray-600 mb-3">${section.title}</h4>`;
+                                // Add check for section.questions
+                                if (section.questions && Array.isArray(section.questions)) {
+                                    section.questions.forEach(q => {
+                                        const studentAnswerIndex = result.answers[qIndex];
+                                        const studentAnswerText = (studentAnswerIndex !== null && q.options) ? q.options[studentAnswerIndex] : (studentAnswerIndex || "No Answer");
+                                        const correctIndex = q.correctAnswer;
+                                        const correctAnswerText = (q.options) ? q.options[correctIndex] : correctIndex;
+                                        const isCorrect = String(studentAnswerIndex) === String(correctIndex);
+                                        
+                                        sectionsHtml += `
+                                        <div class="mb-3 p-4 border rounded-lg bg-white shadow-sm">
+                                            <p class="font-medium text-gray-800">${qIndex + 1}. ${q.text}</p>
+                                            <p class="text-sm mt-2 ${isCorrect ? 'text-green-700' : 'text-red-700'}">
+                                                <strong>Your Answer:</strong> ${studentAnswerText || '(Skipped)'}
+                                            </p>
+                                            ${!isCorrect ? `
+                                            <p class="text-sm mt-1 text-green-800">
+                                                <strong>Correct Answer:</strong> ${correctAnswerText}
+                                            </p>` : ''}
+                                        </div>`;
+                                        qIndex++;
+                                    });
+                                }
+                                    sectionsHtml += `</div>`;
+                                });
+                        } else {
+                            sectionsHtml += `<p class="text-gray-500 italic">Detailed answer review is not available for this test.</p>`;
+                        }
+                    }
+
+                    // --- Candidate Info (Same for both) ---
+                    const candidateInfoHtml = `
+                        <div class="mb-6 pb-6 border-b border-gray-200">
+                             <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                                <img src="${result.profileImageUrl || 'https://placehold.co/128x128/E2E8F0/4A5568?text=Photo'}" alt="Candidate Photo" onerror="this.onerror=null; this.src='https://placehold.co/128x128/E2E8F0/4A5568?text=Photo';" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-full shadow-md flex-shrink-0 border-2 border-white">
+                                <div class="w-full grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                                    <div><strong class="block text-gray-500 uppercase text-xs tracking-wider">Name</strong> <span class="text-gray-800 font-medium">${result.fullName || 'N/A'}</span></div>
+                                    <div><strong class="block text-gray-500 uppercase text-xs tracking-wider">Roll No</strong> <span class="text-gray-800 font-medium">${result.rollNumber || 'N/A'}</span></div>
+                                    <div class="sm:col-span-2"><strong class="block text-gray-500 uppercase text-xs tracking-wider">College</strong> <span class="text-gray-800 font-medium">${result.collegeName || 'N/A'}</span></div>
+                                    <div><strong class="block text-gray-500 uppercase text-xs tracking-wider">Department</strong> <span class="text-gray-800 font-medium">${result.department || 'N/A'}</span></div>
+                                    <div class="sm:col-span-2"><strong class="block text-gray-500 uppercase text-xs tracking-wider">Email</strong> <span class="text-gray-800 font-medium">${result.candidateEmail}</span></div>
+                                    <div class="sm:col-span-2"><strong class="block text-gray-500 uppercase text-xs tracking-wider">Submitted</strong> <span class="text-gray-800 font-medium">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</span></div>
+                                     <div class="sm:col-span-2"><strong class="block text-gray-500 uppercase text-xs tracking-wider">Overall Score</strong> <span class="text-xl font-bold text-indigo-700">${result.score} ${type === 'aptitude' ? '%' : `/ ${result.totalMarks || 0}`}</span></div>
+                                </div>
+                            </div>
+                            ${result.violationReason ? `<div class="mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700 text-sm rounded-r-md"><strong class="font-semibold">Violation Recorded:</strong> ${result.violationReason}</div>` : ''}
+                        </div>`;
+
+                    modalContent.innerHTML = candidateInfoHtml + sectionsHtml;
+
+                } catch (error) {
+                    modalContent.innerHTML = `<p class="text-red-500 text-center py-6">Error loading details: ${error.message}</p>`;
+                     currentDetailedResult = null;
+                }
+            }
+
+            // Helper to render individual problem card in modal (for coding)
+             function renderProblemSubmissionCard(sub) {
+                const isCorrect = sub.passedCases === sub.totalCases && sub.totalCases > 0;
+                const statusColor = isCorrect ? 'green' : (sub.passedCases > 0 ? 'yellow' : 'red');
+                
+                // *** FIX 1: Escape single quotes in the JSON string for the data-submission attribute ***
+                const submissionString = JSON.stringify(sub).replace(/'/g, '&#39;');
+
+                return `
+                    <div class="mb-3 p-4 border border-gray-200 rounded-lg bg-white shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 class="font-bold text-gray-800">${sub.problemTitle || 'Unnamed Problem'}</h4>
+                                <span class="text-xs font-medium text-gray-500">Language: ${sub.language || 'N/A'}</span>
+                             </div>
+                            <span class="font-semibold text-lg text-indigo-600 ml-4">${sub.calculatedScore} / ${sub.score || 0}</span>
+                        </div>
+                         <p class="text-sm text-${statusColor}-700 font-medium mb-2">
+                            Passed ${sub.passedCases} of ${sub.totalCases} test cases.
+                         </p>
+                        <button class="view-code-btn text-sm text-blue-600 hover:underline font-semibold" data-submission='${submissionString}'>View Code</button>
+                    </div>`;
+            }
+
+            // --- Excel Export (Unified) ---
+            function exportToExcel(testId, type) {
+                const testData = allReportData[type][testId];
+                if (!testData || !testData.report || testData.report.length === 0) {
+                    alert("No results to export.");
+                    return;
+                }
+
+                const isCoding = type === 'coding';
+                const headers = [
+                    "Candidate Email", "Full Name", "College", "Department", "Roll Number", 
+                    "Status", "Score", "Total Marks", "Submitted At", "Violation Reason"
+                ];
+                
+                // Add section headers for coding tests
+                let sectionHeaders = [];
+                let masterSectionTitles = []; // <-- Store master list of titles
+                if (isCoding && testData.report.length > 0) {
+                    const firstAttempted = testData.report.find(r => r.status === 'Attempted' && r.sectionScores && r.sectionScores.length > 0);
+                    if (firstAttempted) {
+                        // *** FIX 2: Store master list of titles for correct mapping ***
+                        masterSectionTitles = firstAttempted.sectionScores.map(s => s.title);
+                        sectionHeaders = masterSectionTitles.map(title => `Section: ${title} (Score)`);
+                        headers.splice(8, 0, ...sectionHeaders); // Insert section scores after Total Marks
+                    }
+                }
+
+                const worksheetData = [
+                    headers,
+                    ...testData.report.map(r => {
+                        const row = [
+                            r.candidateEmail,
+                            r.fullName || 'N/A',
+                            r.collegeName || 'N/A',
+                            r.department || 'N/A',
+                            r.rollNumber || 'N/A',
+                            r.status,
+                            r.score,
+                            r.totalMarks || (isCoding ? r.maxScore : (type === 'aptitude' ? 100 : 0)), // Use 100 for aptitude total
+                            r.submittedAt ? new Date(r.submittedAt).toLocaleString() : 'N/A',
+                            r.violationReason || ''
+                        ];
+                        
+                        if (isCoding && sectionHeaders.length > 0) {
+                            // *** FIX 2: Use master list to map scores correctly ***
+                            const studentScoreMap = new Map((r.sectionScores || []).map(s => [s.title, s.score]));
+                            const orderedSectionScores = masterSectionTitles.map(title => studentScoreMap.get(title) ?? 'N/A');
+                            row.splice(8, 0, ...orderedSectionScores);
+                        }
+                        return row;
+                    })
+                ];
+
+                const ws = XLSX.utils.aoa_to_sheet(worksheetData);
+                ws['!cols'] = [ {wch:25}, {wch:25}, {wch:30}, {wch:20}, {wch:20}, {wch:15}, {wch:10}, {wch:12}, ...sectionHeaders.map(() => ({wch: 20})), {wch:22}, {wch:30} ];
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Results Report");
+                XLSX.writeFile(wb, `${testData.title.replace(/\s/g, '_')}_Report.xlsx`);
+            }
+
+            // --- PDF Export for INDIVIDUAL Candidate Report ---
+            async function generateIndividualPdfReport() {
+                if (!currentDetailedResult) {
+                    alert("Candidate data has not been loaded.");
+                    return;
+                }
+                const result = currentDetailedResult;
+                // Safely access testType, default to 'aptitude' if missing
+                const testType = result.testType || 'aptitude';
+                const testTitle = allReportData[testType]?.[result.testId]?.title || "Test Report";
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const pageHeight = doc.internal.pageSize.height;
+                const pageWidth = doc.internal.pageSize.width;
+                const margin = 15;
+                let yPosition = margin;
+
+                try {
+                    const [hireWithUsLogo, testifyLogo, profileImage] = await Promise.all([
+                        imageToBase64('https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png'),
+                        imageToBase64('https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png'),
+                        imageToBase64(result.profileImageUrl || 'https://placehold.co/128x128/E2E8F0/4A5568?text=Photo')
+                    ]);
+
+                    const addHeader = (pageNum) => {
+                         if (testifyLogo) doc.addImage(testifyLogo, 'PNG', margin, margin - 3, 20, 20);
+                         if (hireWithUsLogo) doc.addImage(hireWithUsLogo, 'PNG', pageWidth - margin - 20, margin - 3, 20, 20);
+                         doc.setFontSize(16); doc.setFont('helvetica', 'bold');
+                         doc.text('Candidate Detailed Report', pageWidth / 2, margin + 8, { align: 'center' });
+                         yPosition = (pageNum > 1) ? margin + 20 : margin + 25;
+                    };
+                    addHeader(1);
+
+                    // Candidate Info...
+                    const imgSize = 35;
+                    if (profileImage) doc.addImage(profileImage, 'PNG', margin, yPosition, imgSize, imgSize);
+                    const textStartX = margin + imgSize + 8;
+                    const fieldWidth = (pageWidth - textStartX - margin) / 2;
+
+                    doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+                    doc.text('Name:', textStartX, yPosition + 5);
+                    doc.text('Roll Number:', textStartX + fieldWidth, yPosition + 5);
+                    doc.text('College:', textStartX, yPosition + 12);
+                    doc.text('Department:', textStartX + fieldWidth, yPosition + 12);
+                    doc.text('Email:', textStartX, yPosition + 19);
+                    doc.text('Submitted:', textStartX + fieldWidth, yPosition + 19);
+                    doc.text('Overall Score:', textStartX, yPosition + 26);
+                    
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(result.fullName || 'N/A', textStartX + 25, yPosition + 5);
+                    doc.text(result.rollNumber || 'N/A', textStartX + fieldWidth + 28, yPosition + 5);
+                    doc.text(result.collegeName || 'N/A', textStartX + 25, yPosition + 12, {maxWidth: fieldWidth - 28});
+                    doc.text(result.department || 'N/A', textStartX + fieldWidth + 28, yPosition + 12);
+                    doc.text(result.candidateEmail || 'N/A', textStartX + 25, yPosition + 19);
+                    doc.text(result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A', textStartX + fieldWidth + 28, yPosition + 19);
+                    doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+                    doc.text(`${result.score} ${testType === 'aptitude' ? '%' : `/ ${result.totalMarks || 0}`}`, textStartX + 28, yPosition + 26);
+                    yPosition += imgSize + 8;
+
+                    if (result.violationReason) {
+                         doc.setFontSize(9); doc.setTextColor(185, 28, 28); // Red-700
+                         doc.text(`Violation Recorded: ${result.violationReason}`, margin, yPosition, { maxWidth: pageWidth - 2*margin });
+                         doc.setTextColor(0, 0, 0);
+                         yPosition += 8;
+                    }
+                    doc.setLineWidth(0.3); doc.line(margin, yPosition, pageWidth - margin, yPosition); yPosition += 8;
+
+                    // Report Content (Aptitude vs Coding)
+                    doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+                    doc.text('Submission Breakup', margin, yPosition); yPosition += 8;
+
+                    if (testType === 'coding') {
+                        if (result.sectionScores && result.sectionScores.length > 0) {
+                             result.sectionScores.forEach(sec => {
+                                 if (yPosition + 15 > pageHeight - margin) { doc.addPage(); addHeader(doc.internal.getNumberOfPages()); }
+                                 doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+                                 doc.setFillColor(243, 244, 246); doc.rect(margin, yPosition - 5, pageWidth - 2 * margin, 8, 'F');
+                                 doc.text(sec.title, margin + 2, yPosition);
+                                 doc.text(`Section Score: ${sec.score} / ${sec.maxScore}`, pageWidth - margin - 2, yPosition, { align: 'right' });
+                                 yPosition += 10;
+
+                                 const sectionSubmissions = (result.submissions || []).filter(sub => sub.sectionTitle === sec.title);
+                                 if (sectionSubmissions.length > 0) {
+                                     sectionSubmissions.forEach(sub => {
+                                        if (yPosition + 20 > pageHeight - margin) { doc.addPage(); addHeader(doc.internal.getNumberOfPages()); }
+                                        doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+                                        doc.text(sub.problemTitle || 'Unnamed', margin, yPosition);
+                                        doc.text(`Score: ${sub.calculatedScore} / ${sub.score || 0}`, pageWidth - margin, yPosition, { align: 'right' });
+                                        yPosition += 6;
+                                        doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+                                        doc.text(`Passed ${sub.passedCases} of ${sub.totalCases} cases | Language: ${sub.language || 'N/A'}`, margin, yPosition);
+                                        yPosition += 8;
+                                     });
+                                 }
+                             });
+                        }
+                    } else if (testType === 'aptitude') {
+                        if (result.originalTestSections && result.answers) {
+                            let qIndex = 0;
+                            result.originalTestSections.forEach(section => {
+                                if (yPosition + 10 > pageHeight - margin) { doc.addPage(); addHeader(doc.internal.getNumberOfPages()); }
+                                doc.setFontSize(12); doc.setFont('helvetica', 'bold');
+                                doc.text(section.title, margin, yPosition); yPosition += 8;
+
+                                if (section.questions && Array.isArray(section.questions)) {
+                                    section.questions.forEach(q => {
+                                        if (yPosition + 15 > pageHeight - margin) { doc.addPage(); addHeader(doc.internal.getNumberOfPages()); }
+                                        const studentAnswerIndex = result.answers[qIndex];
+                                        const studentAnswerText = (studentAnswerIndex !== null && q.options) ? q.options[studentAnswerIndex] : (studentAnswerIndex || "No Answer");
+                                        const correctIndex = q.correctAnswer;
+                                        const correctAnswerText = (q.options) ? q.options[correctIndex] : correctIndex;
+                                        const isCorrect = String(studentAnswerIndex) === String(correctIndex);
+
+                                        doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+                                        doc.text(`${qIndex + 1}. ${q.text}`, margin, yPosition, { maxWidth: pageWidth - 2*margin });
+                                        yPosition += 5;
+                                        
+                                        doc.setFontSize(9);
+                                        doc.setTextColor(isCorrect ? 22 : 220, 38, 38); // Green / Red
+                                        doc.text(`Your Answer: ${studentAnswerText || '(Skipped)'}`, margin + 5, yPosition);
+                                        if (!isCorrect) {
+                                            yPosition += 4;
+                                            doc.setTextColor(21, 128, 61); // Green
+                                            doc.text(`Correct Answer: ${correctAnswerText}`, margin + 5, yPosition);
+                                        }
+                                        doc.setTextColor(0, 0, 0);
+                                        yPosition += 8;
+                                        qIndex++;
+                                    });
+                                }
+                            });
+                        }
+                    }
+
+                    // Add Footer
+                    const finalPageCount = doc.internal.getNumberOfPages();
+                    for(let i=1; i<= finalPageCount; i++) {
+                        doc.setPage(i);
+                        doc.setFontSize(8); doc.setTextColor(156, 163, 175);
+                        doc.text(`Page ${i} of ${finalPageCount}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+                        doc.text(`Report Generated: ${new Date().toLocaleString()}`, margin, pageHeight - 8);
+                         doc.setTextColor(0,0,0);
+                    }
+
+                    doc.save(`Report_${(result.fullName || result.candidateEmail).replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+                 } catch (error) {
+                    console.error("Error generating individual PDF report:", error);
+                    alert("Failed to generate PDF report.");
+                 }
+            }
+
+            // --- Code Viewer Modal Logic ---
+            /* * This entire 'click' listener was a duplicate and caused the error.
+             * The logic is already handled in the main listener above.
+             * I have removed the buggy duplicate block from lines 935-942.
+             */
+
+            function showCodeModal(submission) {
+                document.getElementById('code-modal-title').textContent = `Code for: ${submission.problemTitle || 'Unknown Problem'}`;
+                if (!codeViewer) {
+                    codeViewer = CodeMirror.fromTextArea(document.getElementById('code-viewer'), {
+                        lineNumbers: true, theme: 'material-darker', readOnly: true, lineWrapping: true
+                    });
+                }
+                const modes = { 'python': 'python', 'java': 'text/x-java', 'c': 'text/x-csrc', 'cpp': 'text/x-c++src', 'javascript': 'javascript' };
+                codeViewer.setOption('mode', modes[submission.language] || 'text/plain');
+                codeViewer.setValue(submission.code || '// No code submitted or available.');
+                codeModal.classList.remove('hidden');
+                setTimeout(() => codeViewer.refresh(), 1);
+            }
+
+            // --- Modal Close Buttons ---
+            downloadReportBtn.addEventListener('click', generateIndividualPdfReport);
+            document.getElementById('close-modal-btn').onclick = () => detailsModal.classList.add('hidden');
+            document.getElementById('close-code-modal-btn').onclick = () => codeModal.classList.add('hidden');
+
+            // --- Initial Fetch ---
+            fetchReports('aptitude');
+            fetchReports('coding');
+        });
+    </script>
+</body>
+</html>
+
+
+

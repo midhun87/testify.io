@@ -3,21 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assign Hiring Test - HIRE WITH US</title>
+    <title>Assign Aptitude Test - HIRE WITH US</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
 
     <style>
         body { font-family: 'Inter', sans-serif; }
+        html { scroll-behavior: smooth; }
+        
+        /* --- Sidebar Styles (Unchanged) --- */
         .sidebar-link:hover { background-color: #4338CA; }
         .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        
+        /* --- New Form Styles --- */
+        /* Custom styled select arrow */
+        select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        /* Loading spinner for select boxes */
+        .select-loading {
+            background-image: url("data:image/svg+xml,%3Csvg class='animate-spin h-5 w-5 text-gray-400' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3E%3Ccircle class='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4'%3E%3C/circle%3E%3Cpath class='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1.25rem;
+        }
+
+        /* Style for datetime-local placeholder */
+        input[type="datetime-local"]:invalid::-webkit-calendar-picker-indicator {
+            filter: grayscale(1);
+        }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50"> <!-- Changed background to lighter gray-50 -->
 
     <div class="flex h-screen bg-gray-100">
-        <!-- Sidebar -->
+        <!-- Sidebar (Unchanged) -->
         <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
             <div class="flex items-center justify-center h-20 border-b border-gray-700">
                 <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo">
@@ -28,154 +57,352 @@
             </nav>
         </div>
 
-        <!-- Main content -->
+        <!-- Main content (Redesigned Area Starts Here) -->
         <div class="flex flex-col flex-1 overflow-y-auto">
+            <!-- Header (Unchanged) -->
             <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
-                <h1 class="text-2xl font-bold text-gray-800">Assign Test to Candidates</h1>
+                <h1 class="text-2xl font-bold text-gray-800">Assign Aptitude Test</h1>
                 <div id="user-menu-container"></div>
             </div>
 
-            <div class="p-6">
+            <!-- Redesigned Content Area -->
+            <main class="flex-1 p-6 md:p-10 bg-gray-50">
                 <div class="max-w-4xl mx-auto">
-                    <form id="assign-test-form" class="bg-white p-8 rounded-xl shadow-md space-y-6">
-                        <div>
-                            <label for="test-select" class="block text-sm font-medium text-gray-700">Select Test (Aptitude or Coding)</label>
-                            <select id="test-select" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"></select>
-                        </div>
+                    
+                    <form id="assign-test-form" class="relative">
+                        <!-- Vertical progress line -->
+                        <div class="absolute left-4 top-4 bottom-4 w-0.5 bg-gray-200" aria-hidden="true"></div>
 
-                        <div>
-                            <label for="candidate-emails" class="block text-sm font-medium text-gray-700">Candidate Emails</label>
-                            <textarea id="candidate-emails" rows="6" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md" placeholder="Paste email addresses here, one per line or separated by commas."></textarea>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="start-time" class="block text-sm font-medium text-gray-700">Attempt Window Start</label>
-                                <input type="datetime-local" id="start-time" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                        <!-- Step 1: Select Job -->
+                        <div class="relative pl-14 pb-10">
+                            <!-- Step Icon -->
+                            <div class="absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white">
+                                <span class="font-bold text-sm">1</span>
                             </div>
-                            <div>
-                                <label for="end-time" class="block text-sm font-medium text-gray-700">Attempt Window End</label>
-                                <input type="datetime-local" id="end-time" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                            <div class="flex flex-col">
+                                <label for="job-select" class="text-lg font-semibold text-gray-900">Select Job Posting</label>
+                                <p class="text-sm text-gray-500 mt-1">Choose the active job you want to assign this test to.</p>
+                                <select id="job-select" required class="mt-4 block w-full pl-3 pr-10 py-2.5 text-base bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg shadow-sm">
+                                    <option disabled selected value="">-- Loading jobs... --</option>
+                                </select>
                             </div>
                         </div>
 
-                        <div class="flex justify-end pt-4">
-                             <button type="submit" id="submit-btn" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <!-- Step 2: Select Candidate Pool -->
+                        <div class="relative pl-14 pb-10">
+                            <!-- Step Icon -->
+                            <div class="absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300 text-gray-700">
+                                <span class="font-bold text-sm">2</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <label for="pool-select" class="text-lg font-semibold text-gray-900">Select Candidate Pool</label>
+                                <p class="text-sm text-gray-500 mt-1">Filter candidates by their application stage or status.</p>
+                                <select id="pool-select" required disabled class="mt-4 block w-full pl-3 pr-10 py-2.5 text-base border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg shadow-sm bg-gray-100 cursor-not-allowed">
+                                    <option disabled selected value="">-- Select a job first --</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 3: Select Test -->
+                        <div class="relative pl-14 pb-10">
+                            <!-- Step Icon -->
+                            <div class="absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300 text-gray-700">
+                                <span class="font-bold text-sm">3</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <label for="test-select" class="text-lg font-semibold text-gray-900">Select Aptitude Test</label>
+                                <p class="text-sm text-gray-500 mt-1">Choose from your library of pre-made aptitude tests.</p>
+                                <select id="test-select" required class="mt-4 block w-full pl-3 pr-10 py-2.5 text-base bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg shadow-sm">
+                                    <option disabled selected value="">-- Loading aptitude tests... --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Candidate Emails -->
+                        <div class="relative pl-14 pb-10">
+                            <!-- Step Icon -->
+                            <div class="absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300 text-gray-700">
+                                <span class="font-bold text-sm">4</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <label for="candidate-emails" class="text-lg font-semibold text-gray-900">Candidate Emails</label>
+                                <p class="text-sm text-gray-500 mt-1">Emails are auto-filled from the pool. You can edit them if needed.</p>
+                                <textarea id="candidate-emails" rows="6" required class="mt-4 block w-full shadow-sm sm:text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Emails will appear here based on your pool selection..."></textarea>
+                                <p id="email-count" class="text-sm text-gray-500 mt-2">Found 0 emails.</p>
+                            </div>
+                        </div>
+
+                        <!-- Step 5 & 6: Attempt Window -->
+                        <div class="relative pl-14 pb-10">
+                            <!-- Step Icon -->
+                            <div class="absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-full bg-gray-300 text-gray-700">
+                                <span class="font-bold text-sm">5</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <label class="text-lg font-semibold text-gray-900">Set Attempt Window</label>
+                                <p class="text-sm text-gray-500 mt-1">Define the time frame during which candidates can take the test.</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                                    <div>
+                                        <label for="start-time" class="block text-sm font-medium text-gray-700 mb-1">Window Start</label>
+                                        <input type="datetime-local" id="start-time" required class="block w-full shadow-sm sm:text-sm border border-gray-300 rounded-lg bg-white py-2.5 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label for="end-time" class="block text-sm font-medium text-gray-700 mb-1">Window End</label>
+                                        <input type="datetime-local" id="end-time" required class="block w-full shadow-sm sm:text-sm border border-gray-300 rounded-lg bg-white py-2.5 px-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="flex justify-end pt-6 pl-14">
+                             <button type="submit" id="submit-btn" class="inline-flex justify-center py-2.5 px-8 border border-transparent shadow-md text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150 ease-in-out" disabled>
                                 Send Invitations
                             </button>
                         </div>
                     </form>
-                    <div id="message" class="mt-4 text-center"></div>
+
+                    <!-- Message Div (Unchanged) -->
+                    <div id="message" class="mt-6 text-center"></div>
                 </div>
-            </div>
+            </main>
+            <!-- End of Redesigned Content Area -->
+
         </div>
     </div>
 
+    <!-- Common JS (Unchanged) -->
     <script src="common.js"></script>
-     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            initializePage('Assign Test');
-            const token = localStorage.getItem('token');
+    
+    <!-- Page-specific JS (Unchanged) -->
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        initializePage('Assign Aptitude Test');
+        const token = localStorage.getItem('token');
 
-            const testSelect = document.getElementById('test-select');
-            const form = document.getElementById('assign-test-form');
-            const messageDiv = document.getElementById('message');
-            const submitBtn = document.getElementById('submit-btn');
+        // --- All element IDs are the same and will work with this JS ---
+        const jobSelect = document.getElementById('job-select');
+        const poolSelect = document.getElementById('pool-select');
+        const testSelect = document.getElementById('test-select');
+        const emailTextarea = document.getElementById('candidate-emails');
+        const emailCount = document.getElementById('email-count');
+        const form = document.getElementById('assign-test-form');
+        const messageDiv = document.getElementById('message');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        // --- All subsequent JS logic is identical to the original ---
 
-            // --- MODIFIED FETCH ---
-            // Fetch ALL tests (Aptitude/Jobs and Coding) created by this moderator
+        // --- 1. Fetch Aptitude Tests (Existing Logic) ---
+        async function fetchAptitudeTests() {
             try {
-                // The backend endpoint /api/hiring/tests now fetches both types
+                // This endpoint fetches Aptitude tests (type=aptitude is default)
                 const response = await fetch('/api/hiring/tests', {
                     headers: { 'x-auth-token': token }
                 });
-                if (!response.ok) throw new Error('Could not fetch tests.');
-                const tests = await response.json(); // Expecting an array like [{ testId: '...', title: '...', testType: 'aptitude/coding' }, ...]
+                if (!response.ok) throw new Error('Could not fetch aptitude tests.');
+                const tests = await response.json();
 
                 if (tests.length === 0) {
-                    testSelect.innerHTML = '<option disabled selected>No tests found. Please create one first.</option>';
+                    testSelect.innerHTML = '<option disabled selected>No aptitude tests found. Please create one first.</option>';
                     submitBtn.disabled = true;
                 } else {
-                    testSelect.innerHTML = '<option disabled selected value="">-- Select a test to assign --</option>';
+                    testSelect.innerHTML = '<option disabled selected value="">-- Select an aptitude test --</option>';
                     tests.forEach(test => {
                         const option = document.createElement('option');
-                        // Use the consistent testId (which is jobId or codingTestId)
-                        option.value = test.testId;
-                        // Display title and potentially the type for clarity
-                        option.textContent = `${test.title} (${test.testType === 'coding' ? 'Coding' : 'Aptitude'})`;
+                        option.value = test.testId; // This is aptitudeTestId
+                        option.textContent = `${test.title}`;
                         testSelect.appendChild(option);
                     });
+                    // Do not enable submitBtn here, wait for job/pool selection
                 }
             } catch (error) {
-                 testSelect.innerHTML = `<option disabled selected>Error loading tests: ${error.message}</option>`;
-                 submitBtn.disabled = true;
-            }
-            // --- END MODIFIED FETCH ---
-
-
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                messageDiv.textContent = '';
+                testSelect.innerHTML = `<option disabled selected>Error: ${error.message}</option>`;
                 submitBtn.disabled = true;
-                submitBtn.textContent = 'Assigning...';
+            }
+        }
 
-                const testId = testSelect.value;
-                const emailsText = document.getElementById('candidate-emails').value;
-                const startTime = document.getElementById('start-time').value;
-                const endTime = document.getElementById('end-time').value;
+        // --- 2. NEW: Fetch Jobs ---
+        async function fetchJobs() {
+            try {
+                const response = await fetch('/api/hiring/jobs', {
+                    headers: { 'x-auth-token': token }
+                });
+                if (!response.ok) throw new Error('Could not fetch jobs.');
+                const jobs = await response.json();
 
-                const candidateEmails = emailsText.split(/[\n, ]+/).map(email => email.trim()).filter(email => email);
-
-                if (!testId || candidateEmails.length === 0 || !startTime || !endTime) {
-                    messageDiv.textContent = 'Please fill all fields correctly.';
-                    messageDiv.className = 'mt-4 text-center text-red-600 font-semibold';
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Send Invitations';
-                    return;
-                }
-
-                if (new Date(startTime) >= new Date(endTime)) {
-                    messageDiv.textContent = 'The start time must be before the end time.';
-                    messageDiv.className = 'mt-4 text-center text-red-600 font-semibold';
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Send Invitations';
-                    return;
-                }
-
-                const payload = {
-                    testId, // This is now jobId or codingTestId
-                    candidateEmails,
-                    startTime,
-                    endTime
-                };
-
-                try {
-                    const response = await fetch('/api/hiring/assign-test', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'x-auth-token': token
-                        },
-                        body: JSON.stringify(payload)
+                if (jobs.length === 0) {
+                    jobSelect.innerHTML = '<option disabled selected>No jobs found. Please create one first.</option>';
+                    submitBtn.disabled = true;
+                } else {
+                    jobSelect.innerHTML = '<option disabled selected value="">-- Select a job posting --</option>';
+                    jobs.forEach(job => {
+                        const option = document.createElement('option');
+                        option.value = job.jobId; // Use jobId
+                        option.textContent = `${job.title}`;
+                        jobSelect.appendChild(option);
                     });
-
-                    const result = await response.json();
-                    if (!response.ok) throw new Error(result.message);
-
-                    messageDiv.textContent = result.message;
-                    messageDiv.className = 'mt-4 text-center text-green-600 font-semibold';
-                    form.reset();
-                    testSelect.selectedIndex = 0;
-
-                } catch (error) {
-                    messageDiv.textContent = `Error: ${error.message}`;
-                    messageDiv.className = 'mt-4 text-center text-red-600 font-semibold';
-                } finally {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Send Invitations';
+                    submitBtn.disabled = false; // Enable submit button container, but it will be re-checked on submit
                 }
-            });
+            } catch (error) {
+                jobSelect.innerHTML = `<option disabled selected>Error: ${error.message}</option>`;
+                submitBtn.disabled = true;
+            }
+        }
+
+        // --- 3. NEW: Fetch Candidate Pools when Job is selected ---
+        jobSelect.addEventListener('change', async () => {
+            const jobId = jobSelect.value;
+            if (!jobId) return;
+
+            poolSelect.disabled = true;
+            poolSelect.classList.add('select-loading');
+            poolSelect.classList.add('cursor-not-allowed');
+            emailTextarea.value = '';
+            emailCount.textContent = 'Found 0 emails.';
+            poolSelect.innerHTML = '<option disabled selected value="">-- Loading candidate pools... --</option>';
+
+            try {
+                const response = await fetch(`/api/hiring/job-applicant-pools/${jobId}`, {
+                    headers: { 'x-auth-token': token }
+                });
+                if (!response.ok) throw new Error('Could not fetch candidate pools.');
+                const pools = await response.json();
+
+                poolSelect.innerHTML = '<option disabled selected value="">-- Select a candidate pool --</option>';
+                pools.forEach(pool => {
+                    const option = document.createElement('option');
+                    option.value = pool.filterKey;
+                    option.textContent = pool.displayText;
+                    poolSelect.appendChild(option);
+                });
+                poolSelect.disabled = false;
+                poolSelect.classList.remove('cursor-not-allowed');
+
+            } catch (error) {
+                poolSelect.innerHTML = `<option disabled selected>Error: ${error.message}</option>`;
+            } finally {
+                poolSelect.classList.remove('select-loading');
+            }
         });
+
+        // --- 4. NEW: Fetch Emails when Pool is selected ---
+        poolSelect.addEventListener('change', async () => {
+            const jobId = jobSelect.value;
+            const filterKey = poolSelect.value;
+            if (!jobId || !filterKey) return;
+
+            emailTextarea.value = 'Loading emails...';
+            emailTextarea.disabled = true;
+            emailCount.textContent = '';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(`/api/hiring/job-applicants?jobId=${jobId}&filterKey=${filterKey}`, {
+                    headers: { 'x-auth-token': token }
+                });
+                if (!response.ok) throw new Error('Could not fetch applicant emails.');
+                const emails = await response.json(); // Expecting string[]
+
+                emailTextarea.value = emails.join('\n');
+                emailCount.textContent = `Found ${emails.length} emails.`;
+                emailTextarea.disabled = false;
+                submitBtn.disabled = false;
+
+            } catch (error) {
+                emailTextarea.value = `Error: ${error.message}`;
+                emailCount.textContent = 'Error loading emails.';
+            }
+        });
+
+        // --- 5. MODIFIED: Form Submission ---
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            messageDiv.textContent = '';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Assigning...';
+
+            // Get all values
+            const jobId = jobSelect.value;
+            const testId = testSelect.value;
+            const emailsText = emailTextarea.value;
+            const startTime = document.getElementById('start-time').value;
+            const endTime = document.getElementById('end-time').value;
+
+            const candidateEmails = emailsText.split(/[\n, ]+/)
+                .map(email => email.trim())
+                .filter(email => email);
+
+            // --- Validation ---
+            if (!jobId) {
+                messageDiv.textContent = 'Please select a job.';
+            } else if (!poolSelect.value) {
+                messageDiv.textContent = 'Please select a candidate pool.';
+            } else if (!testId) {
+                messageDiv.textContent = 'Please select an aptitude test to assign.';
+            } else if (candidateEmails.length === 0) {
+                messageDiv.textContent = 'There are no candidate emails to assign.';
+            } else if (!startTime || !endTime) {
+                messageDiv.textContent = 'Please select a valid start and end time.';
+            } else if (new Date(startTime) >= new Date(endTime)) {
+                messageDiv.textContent = 'The start time must be before the end time.';
+            }
+
+            if (messageDiv.textContent) {
+                messageDiv.className = 'mt-6 text-center text-red-600 font-semibold';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Invitations';
+                return;
+            }
+            
+            // --- NEW: Payload now includes jobId ---
+            const payload = {
+                jobId, // <-- THE NEW LINK
+                testId,
+                candidateEmails,
+                startTime,
+                endTime
+            };
+
+            try {
+                // This endpoint is now modified on the backend to accept 'jobId'
+                const response = await fetch('/api/hiring/assign-test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': token
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message);
+
+                messageDiv.textContent = result.message;
+                messageDiv.className = 'mt-6 text-center text-green-600 font-semibold';
+                
+                // Reset fields
+                form.reset();
+                emailTextarea.value = '';
+                emailCount.textContent = 'Found 0 emails.';
+                poolSelect.innerHTML = '<option disabled selected value="">-- Select a job first --</option>';
+                poolSelect.disabled = true;
+                poolSelect.classList.add('cursor-not-allowed');
+                jobSelect.selectedIndex = 0;
+                testSelect.selectedIndex = 0;
+
+            } catch (error) {
+                messageDiv.textContent = `Error: ${error.message}`;
+                messageDiv.className = 'mt-6 text-center text-red-600 font-semibold';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Invitations';
+            }
+        });
+
+        // --- Initial Page Load ---
+        fetchAptitudeTests();
+        fetchJobs();
+    });
     </script>
 </body>
 </html>

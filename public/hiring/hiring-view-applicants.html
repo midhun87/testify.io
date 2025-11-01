@@ -7,11 +7,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- jsPDF for PDF Exports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <!-- SheetJS (xlsx) for Excel Exports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .sidebar-link:hover { background-color: #4338CA; }
         .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
-        /* Styles for the new details modal */
+        
+        /* Modal Styles */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.6);
@@ -20,65 +29,201 @@
             z-index: 1000; opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
         }
         .modal-overlay.visible { opacity: 1; pointer-events: auto; }
-        .modal-container {
+        
+        /* Main Details Modal */
+        #details-modal .modal-container {
             background-color: white; border-radius: 1rem;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-            width: 90%; max-width: 4xl; max-height: 90vh;
+            width: 90%; max-width: 5xl; /* Wider modal */
+            max-height: 90vh;
             transform: scale(0.95); transition: transform 0.3s ease;
             display: flex; flex-direction: column;
         }
+        /* Status Update Modal */
+        #update-status-modal .modal-container {
+             background-color: white; border-radius: 1rem;
+             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+             width: 90%; max-width: lg; /* Smaller modal */
+             max-height: 90vh;
+             transform: scale(0.95); transition: transform 0.3s ease;
+             display: flex; flex-direction: column;
+        }
+
         .modal-overlay.visible .modal-container { transform: scale(1); }
+        .modal-header {
+            padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .modal-body { padding: 1.5rem 2rem; overflow-y: auto; background-color: #f9fafb; }
+        .modal-footer {
+            padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb;
+            background-color: #f9fafb; display: flex; justify-content: flex-end;
+        }
+        
+        /* Modal Content Styling */
+        #details-modal .modal-body h3 {
+            font-size: 1.125rem; font-weight: 600; color: #4f46e5;
+            border-bottom: 1px solid #c7d2fe; padding-bottom: 0.25rem;
+            margin-top: 1.25rem; margin-bottom: 0.75rem;
+        }
+        #details-modal .modal-body h3:first-child { margin-top: 0; }
+        #details-modal .modal-body .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem 1rem; }
+        #details-modal .modal-body .grid.grid-cols-1 { grid-template-columns: 1fr; }
+        #details-modal .modal-body .item { display: flex; flex-direction: column; padding: 0.25rem 0; }
+        #details-modal .modal-body .item-label { font-size: 0.75rem; color: #6b7280; font-weight: 500; text-transform: uppercase; }
+        #details-modal .modal-body .item-value { font-size: 0.9rem; color: #111827; word-break: break-word; }
+        #details-modal .modal-body .item-value.file { font-style: italic; color: #4f46e5; }
+        #details-modal .modal-body .block-item {
+            border: 1px solid #e5e7eb; border-radius: 0.5rem;
+            padding: 0.75rem 1rem; margin-bottom: 0.5rem; background: #ffffff;
+        }
+        #details-modal .modal-body .block-item .item-label { color: #4f46e5; }
+
+        /* Table Styles */
+        #applicants-table thead th {
+             background-color: #f9fafb;
+             padding: 0.75rem 1rem;
+             font-size: 0.75rem;
+             /* NEW: Added for dynamic headers */
+             white-space: nowrap; 
+        }
+        #applicants-table tbody tr:hover { background-color: #f9fafb; }
+        #applicants-table tbody td {
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            vertical-align: middle;
+        }
+        
+        /* Stat Card */
+        .stat-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 1rem 1.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.07), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .stat-card .icon-bg {
+            flex-shrink: 0;
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .stat-card .icon-bg i { font-size: 1.1rem; }
+
+        /* Form elements for modal */
+        .form-label {
+            @apply block text-sm font-medium text-gray-700 mb-1;
+        }
+        .form-input, .form-select, .form-textarea {
+            @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm;
+        }
+
+        /* NEW: Styles for test scores */
+        .score-not-attempted { color: #D97706; /* amber-600 */ font-style: italic; }
+        .score-na { color: #9CA3AF; /* gray-400 */ }
+        .score-pass { color: #166534; /* green-800 */ font-weight: 600; }
+        .score-fail { color: #B91C1C; /* red-800 */ font-weight: 600; }
+        .score-default { color: #374151; /* gray-700 */ font-weight: 500; }
     </style>
 </head>
 <body class="bg-gray-100">
 
     <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
         <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
             <div class="flex items-center justify-center h-20 border-b border-gray-700">
-                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="Logo">
                 <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
             </div>
             <nav class="flex-grow p-4 overflow-y-auto" id="sidebar-nav"></nav>
         </div>
 
+        <!-- Main content -->
         <div class="flex flex-col flex-1 overflow-y-auto">
-            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6 sticky top-0 z-50">
                 <h1 id="page-title" class="text-2xl font-bold text-gray-800">Loading Applicants...</h1>
                 <div id="user-menu-container"></div>
             </div>
 
-            <div class="p-6">
-                <div class="bg-white p-4 rounded-xl shadow-md mb-6">
-                    <div class="flex justify-between items-center">
-                         <div class="flex items-center space-x-4">
-                            <input type="number" id="score-filter" placeholder="Min CGPA (e.g., 7.5)" step="0.1" class="shadow-sm sm:text-sm border-gray-300 rounded-md">
-                            <button id="apply-filter-btn" class="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300">Apply Filter</button>
+            <!-- Main Content Area -->
+            <div class="p-4 md:p-6 lg:p-8">
+                
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="stat-card">
+                        <div class="icon-bg bg-blue-100 text-blue-600">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div>
+                            <span class="text-sm font-medium text-gray-500">Total Applicants</span>
+                            <p id="stat-total" class="text-2xl font-bold text-gray-800">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon-bg bg-green-100 text-green-600">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div>
+                            <span class="text-sm font-medium text-gray-500">Shortlisted</span>
+                            <p id="stat-shortlisted" class="text-2xl font-bold text-gray-800">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon-bg bg-yellow-100 text-yellow-600">
+                            <i class="fas fa-user-clock"></i>
+                        </div>
+                        <div>
+                            <span class="text-sm font-medium text-gray-500">In Review</span>
+                            <p id="stat-in-review" class="text-2xl font-bold text-gray-800">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control Panel -->
+                <div class="bg-white p-4 rounded-xl shadow-md mb-6 border border-gray-200">
+                    <div class="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                         <!-- Left Side: Filters -->
+                         <div class="flex items-center flex-wrap gap-3">
+                            <input type="number" id="score-filter" placeholder="Min CGPA (e.g., 7.5)" step="0.1" class="shadow-sm sm:text-sm border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <button id="apply-filter-btn" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 text-sm border border-gray-300">
+                                <i class="fas fa-filter"></i> Apply Filter
+                            </button>
                          </div>
-                         <div>
-                            <button id="update-status-btn" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 disabled:bg-gray-400" disabled>Update Status</button>
+                         <!-- Right Side: Actions -->
+                         <div class="flex items-center flex-wrap gap-3">
+                            <button id="export-excel-btn" class="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 font-semibold rounded-lg hover:bg-green-200 text-sm border border-green-200">
+                                <i class="fas fa-file-excel"></i> Export Excel
+                            </button>
+                            <button id="export-pdf-btn" class="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 font-semibold rounded-lg hover:bg-red-200 text-sm border border-red-200">
+                                <i class="fas fa-file-pdf"></i> Export PDF
+                            </button>
+                            <button id="update-status-btn" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 disabled:bg-gray-400 text-sm" disabled>
+                                <i class="fas fa-pencil-alt mr-2"></i> Update Status
+                            </button>
                          </div>
                     </div>
                 </div>
 
-                <div id="applicants-container" class="bg-white p-6 rounded-xl shadow-md">
+                <!-- Applicants Table Container -->
+                <div id="applicants-container" class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200" id="applicants-table">
+                            <!-- Table Head is now dynamically generated by JS -->
                             <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3"><input type="checkbox" id="select-all-checkbox"></th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">College</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">CGPA</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Applied On</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                                </tr>
+                                <!-- JS will populate this -->
                             </thead>
-                            <tbody id="applicants-tbody" class="bg-white divide-y divide-gray-200"></tbody>
+                            <tbody id="applicants-tbody" class="bg-white divide-y divide-gray-200">
+                                <!-- JS will populate this -->
+                            </tbody>
                         </table>
                     </div>
-                    <div id="message-area" class="text-center mt-4"></div>
+                    <div id="message-area" class="text-center p-6"></div>
                 </div>
             </div>
         </div>
@@ -87,13 +232,65 @@
     <!-- Applicant Details Modal -->
     <div id="details-modal" class="modal-overlay">
         <div class="modal-container">
-            <div class="flex justify-between items-center p-4 border-b">
+            <div class="modal-header">
                 <h2 id="modal-title" class="text-xl font-bold text-gray-800">Applicant Details</h2>
-                <button id="modal-close-btn" class="p-2 rounded-full hover:bg-gray-200">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <button id="modal-close-btn" class="p-2 rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
+            <div id="modal-content" class="modal-body">
+                <!-- JS will populate this -->
+            </div>
+            <div class="modal-footer">
+                <button id="download-report-btn" class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-200 text-sm border border-indigo-200 disabled:opacity-50 disabled:cursor-wait">
+                    <i class="fas fa-download"></i>
+                    <span>Download Full Report (PDF)</span>
                 </button>
             </div>
-            <div id="modal-content" class="p-6 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <!-- Update Status Modal -->
+    <div id="update-status-modal" class="modal-overlay">
+        <div class="modal-container">
+            <form id="update-status-form">
+                <div class="modal-header">
+                    <h2 id="update-modal-title" class="text-xl font-bold text-gray-800">Update Applicant Status</h2>
+                    <button id="update-modal-close-btn" type="button" class="p-2 rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+                </div>
+                <div class="modal-body space-y-4">
+                    <p>You are about to update the status for <strong id="selected-count" class="text-indigo-600">0</strong> applicant(s).</p>
+                    <div>
+                        <label for="new-status-select" class="form-label">New Status <span class="text-red-600">*</span></label>
+                        <select id="new-status-select" name="new-status-select" class="form-select" required>
+                            <option value="">Select a status...</option>
+                            <option value="Applied">Applied</option>
+                            <option value="In Review">In Review</option>
+                            <option value="Shortlisted">Shortlisted</option>
+                            <option value="Round 2">Round 2</option>
+                            <option value="Final Round">Final Round</option>
+                            <option value="Hired">Hired</option>
+                            <option value="Rejected">Rejected</option>
+                            <option value="custom">-- Custom Status --</option>
+                        </select>
+                    </div>
+                    <div id="custom-status-container" class="hidden mt-3">
+                        <label for="custom-status-input" class="form-label">Custom Status <span class="text-red-600">*</span></label>
+                        <input type="text" id="custom-status-input" name="custom-status-input" class="form-input" placeholder="e.g., Pending HR Interview">
+                    </div>
+                    <div>
+                        <input type="checkbox" id="send-email-checkbox" name="send-email-checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded">
+                        <label for="send-email-checkbox" class="ml-2 text-sm font-medium text-gray-700">Send email notification (uses static template)</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="update-modal-cancel-btn" type="button" class="px-4 py-2 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 text-sm mr-3">
+                        Cancel
+                    </button>
+                    <button id="update-modal-submit-btn" type="submit" class="inline-flex justify-center items-center px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg shadow-sm hover:bg-indigo-700 text-sm disabled:bg-gray-400">
+                        <i class="fas fa-spinner fa-spin mr-2 hidden"></i>
+                        <span>Update Status</span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -102,56 +299,129 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('token');
             if (!token) {
-                window.location.href = 'hiring-moderator-login.html';
-                return;
+                window.location.href = 'hiring-moderator-login.html'; return;
             }
 
             initializePage('Manage Jobs');
 
+            // --- Page Elements ---
             const urlParams = new URLSearchParams(window.location.search);
             const jobId = urlParams.get('jobId');
-
             const pageTitle = document.getElementById('page-title');
+            const applicantsTableHead = document.querySelector('#applicants-table thead'); // Get the thead element
             const applicantsTbody = document.getElementById('applicants-tbody');
             const messageArea = document.getElementById('message-area');
             const selectAllCheckbox = document.getElementById('select-all-checkbox');
             const updateStatusBtn = document.getElementById('update-status-btn');
             
+            // --- Main Details Modal Elements ---
             const detailsModal = document.getElementById('details-modal');
             const modalCloseBtn = document.getElementById('modal-close-btn');
             const modalTitle = document.getElementById('modal-title');
             const modalContent = document.getElementById('modal-content');
+            const downloadReportBtn = document.getElementById('download-report-btn');
 
-            let allApplicants = [];
+            // --- Status Update Modal Elements ---
+            const updateStatusModal = document.getElementById('update-status-modal');
+            const updateStatusForm = document.getElementById('update-status-form');
+            const updateModalCloseBtn = document.getElementById('update-modal-close-btn');
+            const updateModalCancelBtn = document.getElementById('update-modal-cancel-btn');
+            const updateModalSubmitBtn = document.getElementById('update-modal-submit-btn');
+            const selectedCountSpan = document.getElementById('selected-count');
+            const sendEmailCheckbox = document.getElementById('send-email-checkbox');
+            const newStatusSelect = document.getElementById('new-status-select');
+            const customStatusContainer = document.getElementById('custom-status-container');
+            const customStatusInput = document.getElementById('custom-status-input');
+
+            // --- Filter/Action Elements ---
+            const applyFilterBtn = document.getElementById('apply-filter-btn');
+            const scoreFilterInput = document.getElementById('score-filter');
+            const exportExcelBtn = document.getElementById('export-excel-btn');
+            const exportPdfBtn = document.getElementById('export-pdf-btn');
+
+            // --- Stat Card Elements ---
+            const statTotal = document.getElementById('stat-total');
+            const statShortlisted = document.getElementById('stat-shortlisted');
+            const statInReview = document.getElementById('stat-in-review');
+
+            // --- State Variables ---
+            let allApplicants = []; // Stores all fetched applicants
+            let currentApplicant = null; // Stores applicant for modal report
+            let currentFilteredApplicants = []; // Stores currently displayed applicants
+            let currentTestHeaders = []; // NEW: Stores the test names for columns
 
             if (!jobId || jobId === 'undefined') {
                 pageTitle.textContent = "Error: Invalid or missing Job ID.";
-                messageArea.innerHTML = `<p class="text-red-500 font-semibold">Could not load applicants because the Job ID is missing from the URL. Please go back to the Manage Jobs page and try again.</p>`;
+                messageArea.innerHTML = `<p class="text-red-500 font-semibold">Could not load applicants: Job ID is missing from the URL. Please go back and try again.</p>`;
                 return;
             }
 
+            // --- Main Data Fetch Function ---
             const fetchApplicants = async () => {
                  messageArea.innerHTML = '<p class="text-gray-600">Loading applicants...</p>';
                  try {
                     const response = await fetch(`/api/hiring/jobs/${jobId}/applications`, {
                         headers: { 'x-auth-token': token }
                     });
-
                     if (!response.ok) {
                          const err = await response.json();
                          throw new Error(err.message || 'Could not fetch applicants.');
                     }
                     const data = await response.json();
                     
+                    // NEW: Store all data
                     allApplicants = data.applications || [];
+                    currentTestHeaders = data.testHeaders || []; // Store the test headers
+                    currentFilteredApplicants = allApplicants; // Initially, all are visible
+                    
                     pageTitle.textContent = `Applicants for "${data.jobTitle}"`;
-                    renderTable(allApplicants);
+                    
+                    updateStats();
+                    renderTable(allApplicants); // Render with all data
+
                  } catch(error) {
                     messageArea.innerHTML = `<p class="text-red-500 font-semibold">Error: ${error.message}</p>`;
                  }
             };
             
+            // --- UI Render Functions ---
             const renderTable = (applicants) => {
+                // --- NEW: Dynamic Header Generation ---
+                applicantsTableHead.innerHTML = ''; // Clear existing header
+                const headerRow = document.createElement('tr');
+                
+                // Static columns first
+                let staticHeaders = [
+                    `<th class="px-4 py-3"><input type="checkbox" id="select-all-checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded"></th>`,
+                    `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applicant</th>`,
+                    `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>`,
+                    `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CGPA</th>`
+                ];
+                
+                // Dynamic Test Headers
+                const dynamicHeaders = currentTestHeaders.map(title => 
+                    `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${title}</th>`
+                );
+
+                // Static columns last
+                let staticHeadersEnd = [
+                    `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>`,
+                    `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applied On</th>`,
+                    `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>`
+                ];
+                
+                headerRow.innerHTML = [...staticHeaders, ...dynamicHeaders, ...staticHeadersEnd].join('');
+                applicantsTableHead.appendChild(headerRow);
+                
+                // Re-attach select-all listener
+                headerRow.querySelector('#select-all-checkbox').addEventListener('change', (e) => {
+                    document.querySelectorAll('#applicants-tbody .applicant-checkbox').forEach(cb => {
+                        cb.checked = e.target.checked;
+                    });
+                    updateStatusBtn.disabled = !e.target.checked;
+                });
+                // --- END Dynamic Header ---
+
                 applicantsTbody.innerHTML = '';
                 if (!applicants || applicants.length === 0) {
                      messageArea.innerHTML = '<p class="text-gray-600">No applicants yet for this job.</p>';
@@ -161,121 +431,283 @@
                 
                 applicantsTbody.innerHTML = applicants.map(app => {
                     const name = `${app.firstName} ${app.lastName}`;
-                    const college = app.education && app.education.length > 0 ? app.education[0].institute : 'N/A';
-                    const cgpa = app.education && app.education.length > 0 ? app.education[0].score : 'N/A';
+                    const primaryEdu = getPrimaryEducation(app.education);
+                    const cgpa = primaryEdu ? (parseFloat(primaryEdu.score) || 'N/A') : 'N/A';
+                    
+                    // --- NEW: Dynamic Score Cells ---
+                    const scoreCells = currentTestHeaders.map(testTitle => {
+                        const score = app.scores[testTitle] || 'N/A';
+                        return `<td class="px-4 py-3 whitespace-nowrap text-sm ${getScoreColor(score)}">${score}</td>`;
+                    }).join('');
                     
                     return `
-                        <tr data-cgpa="${parseFloat(cgpa) || 0}">
-                            <td class="px-6 py-4"><input type="checkbox" class="applicant-checkbox" value="${app.applicationId}"></td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${name}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.email}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${college}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${cgpa}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${app.status || 'Applied'}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(app.appliedAt).toLocaleDateString()}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button class="view-details-btn text-indigo-600 hover:text-indigo-900" data-applicant-id="${app.applicationId}">View Details</button>
+                        <tr>
+                            <td class="px-4 py-3"><input type="checkbox" class="applicant-checkbox h-4 w-4 text-indigo-600 border-gray-300 rounded" value="${app.applicationId}"></td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        <img class="h-10 w-10 rounded-full object-cover" src="${app.passportPhotoUrl || 'https://placehold.co/40x40/EFEFEF/CCCCCC?text=NA'}" alt="">
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">${name}</div>
+                                        <div class="text-sm text-gray-500">${app.college || 'No College'}</div>
+                                        <div class="text-sm text-gray-500">${app.department || 'No Dept.'} (${app.rollNumber || 'No Roll No.'})</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">${app.email}</div>
+                                <div class="text-sm text-gray-500">${app.phone}</div>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">${cgpa}</td>
+                            
+                            <!-- DYNAMIC SCORE CELLS INJECTED HERE -->
+                            ${scoreCells}
+                            
+                            <td class="px-4 py-3 whitespace-nowrap">
+                                <span class="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(app.status)}">
+                                    ${app.status || 'Applied'}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${new Date(app.appliedAt).toLocaleDateString()}</td>
+                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium space-x-3">
+                                <button class="view-details-btn text-indigo-600 hover:text-indigo-900" data-applicant-id="${app.applicationId}">View</button>
+                                <button class="delete-btn text-red-600 hover:text-red-900" data-applicant-id="${app.applicationId}" data-applicant-name="${name}">Delete</button>
                             </td>
                         </tr>
                     `;
                 }).join('');
             };
 
-            // *** FIX STARTS HERE ***
-            // This more robust function handles multiple types of incorrect Cloudinary URLs
-            // for non-image files like PDFs to prevent 404 errors.
-            const getCorrectDocumentUrl = (url) => {
-                if (!url || typeof url !== 'string') return '#';
-                
-                const isNonImageAsset = url.toLowerCase().endsWith('.pdf');
-
-                if (isNonImageAsset) {
-                    // Case 1: The URL was incorrectly stored with '/raw/' but the asset is an 'image' type.
-                    // This is indicated by the 404 error. We change it to an image URL with a flag
-                    // that forces it to be served as a file attachment.
-                    if (url.includes('/raw/upload/')) {
-                        return url.replace('/raw/upload/', '/image/upload/fl_attachment/');
-                    }
-                    
-                    // Case 2: The URL is an 'image' URL but needs the attachment flag
-                    // to prevent the browser from trying to render the PDF as a picture.
-                    if (url.includes('/image/upload/') && !url.includes('fl_attachment')) {
-                         return url.replace('/image/upload/', '/image/upload/fl_attachment/');
-                    }
-                }
-                
-                // For all other cases (actual images, correctly formed URLs), return the URL as is.
-                return url;
+            const updateStats = () => {
+                statTotal.textContent = allApplicants.length;
+                statShortlisted.textContent = allApplicants.filter(a => (a.status || '').toLowerCase() === 'shortlisted').length;
+                statInReview.textContent = allApplicants.filter(a => (a.status || '').toLowerCase().includes('review') || (a.status || '').toLowerCase().includes('round')).length;
             };
-            // *** FIX ENDS HERE ***
 
             const showDetailsModal = (applicantId) => {
-                const applicant = allApplicants.find(app => app.applicationId === applicantId);
-                if (!applicant) return;
+                currentApplicant = allApplicants.find(app => app.applicationId === applicantId);
+                if (!currentApplicant) return;
 
-                modalTitle.textContent = `Details for ${applicant.firstName} ${applicant.lastName}`;
+                const app = currentApplicant;
+                modalTitle.textContent = `Details for ${app.firstName} ${app.lastName}`;
                 
-                let educationHTML = 'Not provided';
-                if (applicant.education && applicant.education.length > 0) {
-                    educationHTML = applicant.education.map(edu => `
-                        <div class="p-3 bg-gray-50 rounded-md mb-2">
-                            <p><strong>${edu.type}</strong> - ${edu.institute}</p>
-                            <p class="text-sm text-gray-600">Stream: ${edu.stream} | Score: ${edu.score}</p>
-                            ${edu.certificateUrl ? `<a href="${getCorrectDocumentUrl(edu.certificateUrl)}" target="_blank" class="text-sm text-indigo-600">View Certificate</a>` : ''}
-                        </div>
-                    `).join('');
-                }
-
-                let experienceHTML = 'Not provided';
-                if (applicant.experiences && applicant.experiences.length > 0) {
-                    experienceHTML = applicant.experiences.map(exp => `
-                        <div class="p-3 bg-gray-50 rounded-md mb-2">
-                            <p><strong>${exp.title}</strong> at ${exp.company}</p>
-                            <p class="text-sm text-gray-600">${exp.description}</p>
-                            ${exp.certificateUrl ? `<a href="${getCorrectDocumentUrl(exp.certificateUrl)}" target="_blank" class="text-sm text-indigo-600">View Certificate</a>` : ''}
-                        </div>
-                    `).join('');
+                // Helper to format a block of items (e.g., education, experience)
+                const formatBlock = (items, type) => {
+                    if (!items || items.length === 0) return '<div class="item"><span class="item-value">N/A</span></div>';
+                    return items.map(item => {
+                        if (type === 'education') {
+                            return `<div class="block-item">
+                                <div class="item"><span class="item-label">Type</span><span class="item-value">${item.type}</span></div>
+                                <div class="item"><span class="item-label">Institute</span><span class="item-value">${item.institute}</span></div>
+                                <div class="item"><span class="item-label">Stream</span><span class="item-value">${item.stream}</span></div>
+                                <div class="item"><span class="item-label">Score/GPA</span><span class="item-value">${item.score}</span></div>
+                                ${item.certificateUrl ? `<div class="item"><span class="item-label">Certificate</span><span class="item-value"><a href="${item.certificateUrl}" target="_blank" class="text-indigo-600 hover:underline">View File</a></span></div>` : ''}
+                            </div>`;
+                        }
+                        if (type === 'experience') {
+                            return `<div class="block-item">
+                                <div class="item"><span class="item-label">Title</span><span class="item-value">${item.title}</span></div>
+                                <div class="item"><span class="item-label">Company</span><span class="item-value">${item.company}</span></div>
+                                <div class="item"><span class="item-label">Description</span><span class="item-value">${item.description || 'N/A'}</span></div>
+                                ${item.certificateUrl ? `<div class="item"><span class="item-label">Certificate</span><span class="item-value"><a href="${item.certificateUrl}" target="_blank" class="text-indigo-600 hover:underline">View File</a></span></div>` : ''}
+                            </div>`;
+                        }
+                         if (type === 'certification') {
+                            return `<div class="block-item">
+                                <div class="item"><span class="item-label">Name</span><span class="item-value">${item.name}</span></div>
+                                <div class="item"><span class="item-label">Provider</span><span class="item-value">${item.provider}</span></div>
+                                <div class="item"><span class="item-label">Date</span><span class="item-value">${item.dateIssued || 'N/A'}</span></div>
+                                <div class="item"><span class="item-label">ID</span><span class="item-value">${item.credentialId || 'N/A'}</span></div>
+                                ${item.certificateUrl ? `<div class="item"><span class="item-label">Certificate</span><span class="item-value"><a href="${item.certificateUrl}" target="_blank" class="text-indigo-600 hover:underline">View File</a></span></div>` : ''}
+                            </div>`;
+                        }
+                        return '';
+                    }).join('');
+                };
+                
+                // NEW: Generate Test Scores section for modal
+                let scoresHtml = '<h3>Test Scores</h3>';
+                if (currentTestHeaders.length > 0) {
+                    scoresHtml += '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+                    scoresHtml += currentTestHeaders.map(testTitle => {
+                        const score = app.scores[testTitle] || 'N/A';
+                        return `<div class="item">
+                                    <span class="item-label">${testTitle}</span>
+                                    <span class="item-value ${getScoreColor(score)}">${score}</span>
+                                </div>`;
+                    }).join('');
+                    scoresHtml += '</div>';
+                } else {
+                    scoresHtml += '<div class="grid grid-cols-1"><div class="item"><span class="item-value">No tests were assigned for this job.</span></div></div>';
                 }
 
                 modalContent.innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="md:col-span-1">
-                            <img src="${applicant.passportPhotoUrl}" alt="Passport Photo" class="w-40 h-40 object-cover rounded-lg shadow-md mx-auto">
-                        </div>
-                        <div class="md:col-span-2 space-y-4">
-                            <div><h4 class="font-semibold text-gray-700">Phone</h4><p>${applicant.phone}</p></div>
-                            <div>
-                                <h4 class="font-semibold text-gray-700">Documents</h4>
-                                <div class="flex space-x-4 mt-1">
-                                    <a href="${getCorrectDocumentUrl(applicant.resumeUrl)}" target="_blank" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">View Resume</a>
-                                    ${applicant.govtId && applicant.govtId.url ? `<a href="${getCorrectDocumentUrl(applicant.govtId.url)}" target="_blank" class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">View ID (${applicant.govtId.type || 'N/A'})</a>` : ''}
-                                </div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <!-- Left Column: Photo & Contact -->
+                        <div class="md:col-span-1 text-center">
+                            <img src="${app.passportPhotoUrl || 'https://placehold.co/160x160/EFEFEF/CCCCCC?text=NA'}" alt="Passport Photo" class="w-40 h-40 object-cover rounded-full shadow-md mx-auto border-4 border-white">
+                            <h3 class="mt-4 text-lg font-semibold text-gray-800">${app.firstName} ${app.lastName}</h3>
+                            <p class="text-sm text-gray-500">${app.rollNumber}</p>
+                            <div class="mt-4 space-y-2 text-sm text-left">
+                                <div class="flex items-center gap-2 text-gray-700"><i class="fas fa-envelope fa-fw w-4 text-gray-400"></i><span>${app.email}</span></div>
+                                <div class="flex items-center gap-2 text-gray-700"><i class="fas fa-phone fa-fw w-4 text-gray-400"></i><span>${app.phone}</span></div>
+                                <div class="flex items-center gap-2 text-gray-700"><i class="fas fa-university fa-fw w-4 text-gray-400"></i><span>${app.college}</span></div>
+                                <div class="flex items-center gap-2 text-gray-700"><i class="fas fa-book fa-fw w-4 text-gray-400"></i><span>${app.department}</span></div>
                             </div>
-                            <div>
-                                <h4 class="font-semibold text-gray-700">Links</h4>
-                                <div class="flex space-x-4 mt-1">
-                                    ${applicant.links.linkedin ? `<a href="${applicant.links.linkedin}" target="_blank" class="text-indigo-600">LinkedIn</a>` : ''}
-                                    ${applicant.links.github ? `<a href="${applicant.links.github}" target="_blank" class="text-indigo-600">GitHub</a>` : ''}
-                                    ${applicant.links.portfolio ? `<a href="${applicant.links.portfolio}" target="_blank" class="text-indigo-600">Portfolio</a>` : ''}
+                            <div class="mt-4 pt-4 border-t border-gray-200">
+                                <h4 class="font-semibold text-gray-700 text-left mb-2">Documents</h4>
+                                <div class="flex flex-col items-start space-y-2">
+                                    <a href="${app.resumeUrl}" target="_blank" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium hover:bg-blue-200 w-full text-left"><i class="fas fa-file-pdf fa-fw mr-2"></i>View Resume</a>
+                                    ${app.govtId && app.govtId.url ? `<a href="${app.govtId.url}" target="_blank" class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium hover:bg-green-200 w-full text-left"><i class="fas fa-id-card fa-fw mr-2"></i>View ID (${app.govtId.type || 'N/A'})</a>` : ''}
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="mt-6 border-t pt-4">
-                        <h4 class="font-semibold text-lg text-gray-800 mb-2">Education</h4>
-                        ${educationHTML}
-                    </div>
-                    <div class="mt-6 border-t pt-4">
-                        <h4 class="font-semibold text-lg text-gray-800 mb-2">Experience</h4>
-                        ${experienceHTML}
+
+                        <!-- Right Column: Details -->
+                        <div class="md:col-span-3 space-y-4">
+                            <!-- NEW: Injected Test Scores Section -->
+                            ${scoresHtml}
+
+                            <div>
+                                <h3>Full Address</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="item"><span class="item-label">Street</span><span class="item-value">${app.address?.street || 'N/A'}</span></div>
+                                    <div class="item"><span class="item-label">City</span><span class="item-value">${app.address?.city || 'N/A'}</span></div>
+                                    <div class="item"><span class="item-label">State</span><span class="item-value">${app.address?.state || 'N/A'}</span></div>
+                                    <div class="item"><span class="item-label">ZIP Code</span><span class="item-value">${app.address?.zip || 'N/A'}</span></div>
+                                    <div class="item md:col-span-2"><span class="item-label">Country</span><span class="item-value">${app.address?.country || 'N/A'}</span></div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3>Education</h3>
+                                ${formatBlock(app.education, 'education')}
+                            </div>
+                            <div>
+                                <h3>Work Experience</h3>
+                                ${formatBlock(app.experiences, 'experience')}
+                            </div>
+                             <div>
+                                <h3>Certifications</h3>
+                                ${formatBlock(app.certifications, 'certification')}
+                            </div>
+                            <div>
+                                <h3>Links & Extras</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="item"><span class="item-label">LinkedIn</span><span class="item-value"><a href="${app.links?.linkedin}" target="_blank" class="text-indigo-600 hover:underline">${app.links?.linkedin || 'N/A'}</a></span></div>
+                                    <div class="item"><span class="item-label">GitHub</span><span class="item-value"><a href="${app.links?.github}" target="_blank" class="text-indigo-600 hover:underline">${app.links?.github || 'N/A'}</a></span></div>
+                                    <div class="item"><span class="item-label">Portfolio</span><span class="item-value"><a href="${app.links?.portfolio}" target="_blank" class="text-indigo-600 hover:underline">${app.links?.portfolio || 'N/A'}</a></span></div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3>Extracurriculars</h3>
+                                <div class="grid grid-cols-1"><div class="item"><span class="item-value">${app.extracurricular || 'N/A'}</span></div></div>
+                            </div>
+                             <div>
+                                <h3>Cover Letter</h3>
+                                <div class="grid grid-cols-1"><div class="item"><span class="item-value">${app.coverLetter || 'N/A'}</span></div></div>
+                            </div>
+                        </div>
                     </div>
                 `;
                 detailsModal.classList.add('visible');
             };
             
+            // --- Helper Functions ---
+            const getStatusColor = (status) => {
+                status = (status || 'Applied').toLowerCase();
+                if (status === 'shortlisted') return 'bg-green-100 text-green-800';
+                if (status === 'rejected') return 'bg-red-100 text-red-800';
+                if (status.includes('review') || status.includes('round')) return 'bg-yellow-100 text-yellow-800';
+                return 'bg-blue-100 text-blue-800'; // Default for 'Applied'
+            };
+            
+            // NEW: Helper for score colors
+            const getScoreColor = (score) => {
+                if (!score) return 'score-na';
+                if (score === 'Not Attempted') return 'score-not-attempted';
+                if (score === 'N/A') return 'score-na';
+                // Check for pass/fail in aptitude (e.g., "75%")
+                if (score.includes('%')) {
+                    const val = parseFloat(score.replace('%', ''));
+                    if (isNaN(val)) return 'score-default';
+                    // Assuming 50% is passing for aptitude
+                    return val >= 50 ? 'score-pass' : 'score-fail';
+                }
+                // Check for pass/fail in coding (e.g., "10/20")
+                if (score.includes('/')) {
+                    const parts = score.split('/');
+                    const val = parseFloat(parts[0]);
+                    const total = parseFloat(parts[1]);
+                    if (isNaN(val) || isNaN(total) || total === 0) return 'score-default';
+                     // Assuming 50% is passing for coding
+                    return (val / total) >= 0.5 ? 'score-pass' : 'score-fail';
+                }
+                return 'score-default';
+            };
+
+
+            const getPrimaryEducation = (education) => {
+                if (!education || education.length === 0) return null;
+                // Prefer 'Bachelor's' or 'Master's', then fallback to the first one
+                return education.find(e => e.type === "Bachelor's" || e.type === "Master's") || education[0];
+            };
+
+            const imageToDataUrl = async (url) => {
+                if (!url) return null;
+                try {
+                    // Direct fetch (assuming S3 bucket has correct CORS policy)
+                    const response = await fetch(url); 
+                    
+                    if (!response.ok) {
+                        console.warn(`Failed to fetch image: ${url}. Status: ${response.status}`);
+                        return 'https://placehold.co/100x100/EFEFEF/CCCCCC?text=Image+Failed';
+                    }
+                    const blob = await response.blob();
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = (err) => {
+                            console.error('FileReader error:', err);
+                            reject(err);
+                        };
+                        reader.readAsDataURL(blob);
+                    });
+                } catch (error) {
+                    console.error('Error converting image to data URL:', error, url);
+                    return 'https://placehold.co/100x100/EFEFEF/CCCCCC?text=Image+Error';
+                }
+            };
+
+            // --- Event Listeners ---
             applicantsTbody.addEventListener('click', (event) => {
-                if (event.target && event.target.classList.contains('view-details-btn')) {
-                    showDetailsModal(event.target.dataset.applicantId);
+                const row = event.target.closest('tr');
+                if (!row) return;
+                
+                // Handle Checkbox clicks
+                if (event.target.type === 'checkbox') {
+                     const selected = document.querySelectorAll('.applicant-checkbox:checked').length;
+                     updateStatusBtn.disabled = selected === 0;
+                     // Check if all *visible* checkboxes are checked
+                     const allVisibleCheckboxes = document.querySelectorAll('#applicants-tbody .applicant-checkbox');
+                     document.querySelector('#select-all-checkbox').checked = selected === allVisibleCheckboxes.length && selected > 0;
+                     return;
+                }
+                // Handle View Details clicks
+                const viewBtn = event.target.closest('.view-details-btn');
+                if (viewBtn) {
+                    showDetailsModal(viewBtn.dataset.applicantId);
+                    return;
+                }
+                
+                const deleteBtn = event.target.closest('.delete-btn');
+                if (deleteBtn) {
+                    const applicantId = deleteBtn.dataset.applicantId;
+                    const applicantName = deleteBtn.dataset.applicantName;
+                    if (confirm(`Are you sure you want to delete the application for "${applicantName}"? This action cannot be undone.`)) {
+                        deleteApplicant(applicantId);
+                    }
+                    return;
                 }
             });
 
@@ -284,46 +716,83 @@
                 if (e.target === detailsModal) detailsModal.classList.remove('visible');
             });
 
-            document.getElementById('apply-filter-btn').addEventListener('click', () => {
-                const minCgpa = parseFloat(document.getElementById('score-filter').value);
-                if (isNaN(minCgpa)) {
-                    renderTable(allApplicants); // Reset filter if input is invalid
+            applyFilterBtn.addEventListener('click', () => {
+                const minCgpa = parseFloat(scoreFilterInput.value);
+                if (isNaN(minCgpa) || minCgpa <= 0) {
+                    currentFilteredApplicants = allApplicants;
+                    renderTable(allApplicants);
                     return;
                 }
                 const filtered = allApplicants.filter(app => {
-                    const cgpa = app.education && app.education.length > 0 ? parseFloat(app.education[0].score) : 0;
+                    const edu = getPrimaryEducation(app.education);
+                    const cgpa = edu ? (parseFloat(edu.score) || 0) : 0;
                     return !isNaN(cgpa) && cgpa >= minCgpa;
                 });
+                currentFilteredApplicants = filtered; // Update the currently filtered list
                 renderTable(filtered);
             });
             
-            selectAllCheckbox.addEventListener('change', (e) => {
-                document.querySelectorAll('.applicant-checkbox').forEach(cb => {
-                    cb.checked = e.target.checked;
-                });
-                updateStatusBtn.disabled = !e.target.checked;
-            });
-            
-            applicantsTbody.addEventListener('change', () => {
-                 const selected = document.querySelectorAll('.applicant-checkbox:checked').length;
-                 updateStatusBtn.disabled = selected === 0;
-            });
+            // Note: selectAllCheckbox listener is now inside renderTable
             
             updateStatusBtn.addEventListener('click', async () => {
-                const newStatus = prompt("Enter the new status for the selected applicants (e.g., Round 2, Shortlisted):");
-                if (!newStatus || newStatus.trim() === '') return;
-
                 const selectedIds = Array.from(document.querySelectorAll('.applicant-checkbox:checked')).map(cb => cb.value);
+                if (selectedIds.length === 0) return;
                 
-                const sendEmail = confirm("Do you want to send an email notification to these applicants?");
-                let emailDetails = null;
-                if (sendEmail) {
-                    const subject = prompt("Enter email subject:");
-                    const body = prompt("Enter email body (HTML is supported):");
-                    if (subject && body) {
-                        emailDetails = { send: true, subject, body };
+                selectedCountSpan.textContent = selectedIds.length;
+                updateStatusForm.reset(); // Reset form
+                customStatusContainer.classList.add('hidden'); // Hide custom input
+                customStatusInput.required = false;
+                updateStatusModal.classList.add('visible');
+            });
+
+            // --- Status Modal Listeners ---
+            
+            newStatusSelect.addEventListener('change', (e) => {
+                if (e.target.value === 'custom') {
+                    customStatusContainer.classList.remove('hidden');
+                    customStatusInput.required = true;
+                } else {
+                    customStatusContainer.classList.add('hidden');
+                    customStatusInput.required = false;
+                }
+            });
+            
+            updateModalCloseBtn.addEventListener('click', () => updateStatusModal.classList.remove('visible'));
+            updateModalCancelBtn.addEventListener('click', () => updateStatusModal.classList.remove('visible'));
+
+            updateStatusForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                let newStatus = newStatusSelect.value;
+                
+                if (newStatus === 'custom') {
+                    newStatus = customStatusInput.value.trim();
+                    if (!newStatus) {
+                        alert('Please enter a custom status.');
+                        return;
                     }
                 }
+
+                if (!newStatus) {
+                    alert('Please select a status.');
+                    return;
+                }
+
+                const selectedIds = Array.from(document.querySelectorAll('.applicant-checkbox:checked')).map(cb => cb.value);
+                const sendEmail = sendEmailCheckbox.checked;
+                let emailDetails = null;
+
+                if (sendEmail) {
+                    emailDetails = { send: true, status: newStatus };
+                }
+
+                const submitBtn = updateModalSubmitBtn;
+                const btnSpinner = submitBtn.querySelector('i');
+                const btnSpan = submitBtn.querySelector('span');
+
+                submitBtn.disabled = true;
+                btnSpinner.classList.remove('hidden');
+                btnSpan.textContent = 'Updating...';
 
                 try {
                     const response = await fetch('/api/hiring/update-applicants-status', {
@@ -335,15 +804,321 @@
                     if (!response.ok) throw new Error(result.message);
 
                     alert(result.message);
-                    fetchApplicants();
+                    updateStatusModal.classList.remove('visible');
+                    fetchApplicants(); // Refresh all data
+                    updateStatusBtn.disabled = true;
+                    // Uncheck the 'select all' box after update
+                    const selectAll = document.querySelector('#select-all-checkbox');
+                    if(selectAll) selectAll.checked = false;
                 } catch(error) {
                     alert(`Error: ${error.message}`);
+                } finally {
+                    submitBtn.disabled = false;
+                    btnSpinner.classList.add('hidden');
+                    btnSpan.textContent = 'Update Status';
                 }
             });
 
+
+            const deleteApplicant = async (applicantId) => {
+                try {
+                    const response = await fetch(`/api/hiring/applications/${applicantId}`, {
+                        method: 'DELETE',
+                        headers: { 'x-auth-token': token }
+                    });
+                    
+                    if (!response.ok) {
+                        const result = await response.json();
+                        throw new Error(result.message || 'Failed to delete applicant.');
+                    }
+                    
+                    alert('Applicant deleted successfully.');
+                    fetchApplicants(); // Refresh the list
+                } catch (error) {
+                    console.error('Delete Error:', error);
+                    alert(`Error: ${error.message}.`);
+                }
+            };
+            
+
+            // --- Download/Export Listeners ---
+            exportExcelBtn.addEventListener('click', () => {
+                // NEW: Dynamically build headers
+                const staticHeaders = ["Name", "Email", "Phone", "College", "Department", "RollNumber", "CGPA"];
+                const dynamicHeaders = currentTestHeaders; // The test titles
+                const staticHeadersEnd = ["Status", "AppliedOn", "Address_Street", "Address_City", "Address_State", "Address_ZIP", "Address_Country", "Resume", "LinkedIn"];
+                
+                const allHeaders = [...staticHeaders, ...dynamicHeaders, ...staticHeadersEnd];
+
+                const dataToExport = currentFilteredApplicants.map(app => {
+                    const edu = getPrimaryEducation(app.education);
+                    let row = {
+                        Name: `${app.firstName} ${app.lastName}`,
+                        Email: app.email,
+                        Phone: app.phone,
+                        College: app.college,
+                        Department: app.department,
+                        RollNumber: app.rollNumber,
+                        CGPA: edu ? (parseFloat(edu.score) || 'N/A') : 'N/A',
+                    };
+                    
+                    // Add dynamic scores
+                    currentTestHeaders.forEach(testTitle => {
+                        row[testTitle] = app.scores[testTitle] || 'N/A';
+                    });
+
+                    // Add remaining static fields
+                    row = {
+                        ...row,
+                        Status: app.status || 'Applied',
+                        AppliedOn: new Date(app.appliedAt).toLocaleDateString(),
+                        Address_Street: app.address?.street || 'N/A',
+                        Address_City: app.address?.city || 'N/A',
+                        Address_State: app.address?.state || 'N/A',
+                        Address_ZIP: app.address?.zip || 'N/A',
+                        Address_Country: app.address?.country || 'N/A',
+                        Resume: app.resumeUrl,
+                        LinkedIn: app.links?.linkedin
+                    };
+                    return row;
+                });
+                
+                // Use the new allHeaders array to ensure correct column order
+                const ws = XLSX.utils.json_to_sheet(dataToExport, { header: allHeaders });
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Applicants");
+                XLSX.writeFile(wb, `Applicants_${jobId}.xlsx`);
+            });
+
+            exportPdfBtn.addEventListener('click', () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('landscape'); // Use landscape for more columns
+                
+                // NEW: Dynamic headers for PDF
+                const staticHead = ['Name', 'Email', 'College', 'CGPA', 'Status'];
+                const dynamicHead = currentTestHeaders;
+                const allHead = [...staticHead, ...dynamicHead];
+                
+                const body = currentFilteredApplicants.map(app => {
+                    const edu = getPrimaryEducation(app.education);
+                    const name = `${app.firstName} ${app.lastName}`;
+                    const baseData = [
+                        name,
+                        app.email,
+                        app.college,
+                        edu ? (parseFloat(edu.score) || 'N/A') : 'N/A',
+                        app.status || 'Applied'
+                    ];
+                    
+                    // Add dynamic scores
+                    const scores = currentTestHeaders.map(title => app.scores[title] || 'N/A');
+                    return [...baseData, ...scores];
+                });
+
+                doc.autoTable({
+                    head: [allHead], // Use the combined headers
+                    body: body,
+                    startY: 20,
+                    headStyles: { fillColor: [79, 70, 229] }, // Indigo color
+                    styles: { fontSize: 8, cellPadding: 1.5 },
+                    columnStyles: { 0: { cellWidth: 30 }, 1: { cellWidth: 40 }, 2: { cellWidth: 30 } }
+                });
+                doc.text(`Applicant Summary for Job ID: ${jobId}`, 14, 15);
+                doc.save(`Applicant_Summary_${jobId}.pdf`);
+            });
+
+            downloadReportBtn.addEventListener('click', async () => {
+                if (!currentApplicant) return;
+                
+                downloadReportBtn.disabled = true;
+                const btnSpan = downloadReportBtn.querySelector('span');
+                const btnIcon = downloadReportBtn.querySelector('i');
+                btnSpan.textContent = 'Generating...';
+                btnIcon.classList.remove('fa-download');
+                btnIcon.classList.add('fa-spinner', 'fa-spin');
+
+                try {
+                    await generateIndividualReport(currentApplicant);
+                } catch (error) {
+                    console.error("Failed to generate PDF report:", error);
+                    alert("Failed to generate PDF. See console for details. This may be due to image CORS policy issues.");
+                }
+
+                downloadReportBtn.disabled = false;
+                btnSpan.textContent = 'Download Full Report (PDF)';
+                btnIcon.classList.add('fa-download');
+                btnIcon.classList.remove('fa-spinner', 'fa-spin');
+            });
+
+            const generateIndividualReport = async (app) => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const margin = 15;
+                let y = 20;
+
+                // --- Add Logo ---
+                const logoUrl = 'https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png';
+                const logoData = await imageToDataUrl(logoUrl);
+                if (logoData) {
+                    doc.addImage(logoData, 'PNG', margin, y - 8, 12, 12);
+                }
+                
+                doc.setFontSize(10);
+                doc.setTextColor(100, 116, 139); // gray-500
+                doc.text("HireWithUs / Applicant Report", margin + 14, y);
+                
+                y += 15;
+
+                // --- Add Title ---
+                doc.setFontSize(18);
+                doc.setTextColor(67, 56, 202); // indigo-700
+                doc.text(`${app.firstName} ${app.lastName}`, 105, y, { align: 'center' });
+                y += 8;
+                doc.setFontSize(12);
+                doc.setTextColor(100, 116, 139); // gray-500
+                doc.text(`Application for ${pageTitle.textContent.replace('Applicants for ', '')}`, 105, y, { align: 'center' });
+                
+                // --- Add Passport Photo ---
+                const photoData = await imageToDataUrl(app.passportPhotoUrl);
+                if (photoData) {
+                    // Attempt to add image, handle potential errors
+                    try {
+                        doc.addImage(photoData, 'JPEG', 160, y - 10, 35, 35);
+                    } catch (e) {
+                        console.error("jsPDF addImage Error:", e);
+                        doc.text("[Image Error]", 160, y - 10);
+                    }
+                }
+                
+                y += 15;
+
+                const addSection = (title) => {
+                    if (y > 260) { doc.addPage(); y = 20; }
+                    doc.setFontSize(14);
+                    doc.setTextColor(79, 70, 229); // indigo-600
+                    doc.text(title, margin, y);
+                    doc.setDrawColor(226, 232, 240); // gray-200
+                    doc.line(margin, y + 2, 210 - margin, y + 2);
+                    y += 10;
+                };
+            
+                const addKVPair = (key, value) => {
+                    if (y > 270) { doc.addPage(); y = 20; }
+                    value = value || 'N/A';
+                    doc.setFontSize(9);
+                    doc.setTextColor(100, 116, 139); // gray-500
+                    doc.text(key, margin + 2, y);
+                    doc.setFontSize(10);
+                    doc.setTextColor(31, 41, 55); // gray-800
+                    
+                    const splitValue = doc.splitTextToSize(value, 120);
+                    doc.text(splitValue, margin + 50, y);
+                    y += (splitValue.length * 5) + 3; // Adjust y based on lines
+                };
+                
+                const addBlockItem = (lines) => {
+                     if (y > 270) { doc.addPage(); y = 20; }
+                     doc.setFontSize(10);
+                     doc.setTextColor(31, 41, 55);
+                     doc.text(lines, margin + 2, y);
+                     y += (lines.length * 5) + 3;
+                };
+
+                const addFileLink = (key, url) => {
+                    if (y > 270) { doc.addPage(); y = 20; }
+                    if (!url || url === 'N/A') {
+                        addKVPair(key, 'N/A');
+                        return;
+                    }
+                    doc.setFontSize(9);
+                    doc.setTextColor(100, 116, 139); // gray-500
+                    doc.text(key, margin + 2, y);
+                    doc.setFontSize(10);
+                    doc.setTextColor(49, 46, 129); // indigo-900
+                    doc.textWithLink("Open Link", margin + 50, y, { url: url });
+                    y += 8;
+                };
+
+                addSection("Personal Details");
+                addKVPair("Email", app.email);
+                addKVPair("Phone", app.phone);
+                addKVPair("College", app.college);
+                addKVPair("Department", app.department);
+                addKVPair("Roll Number", app.rollNumber);
+                
+                // NEW: Add Scores Section
+                addSection("Test Scores");
+                if (currentTestHeaders.length > 0) {
+                    currentTestHeaders.forEach(testTitle => {
+                        addKVPair(testTitle, app.scores[testTitle] || 'N/A');
+                    });
+                } else {
+                    addKVPair("N/A", "No tests were assigned for this job.");
+                }
+
+                addSection("Address");
+                addKVPair("Street", app.address?.street);
+                addKVPair("City", app.address?.city);
+                addKVPair("State", app.address?.state);
+                addKVPair("ZIP Code", app.address?.zip);
+                addKVPair("Country", app.address?.country);
+                
+                addSection("Education");
+                (app.education || []).forEach((edu, i) => {
+                    addBlockItem([
+                        `[${i+1}] ${edu.type} in ${edu.stream}`,
+                        `   Institute: ${edu.institute}`,
+                        `   Score/GPA: ${edu.score}`
+                    ]);
+                    if(edu.certificateUrl) addFileLink(`   Edu. Cert #${i+1}`, edu.certificateUrl);
+                });
+
+                addSection("Work Experience");
+                const exp = app.experiences || [];
+                if(exp.length === 0) addKVPair("N/A", "");
+                exp.forEach((e, i) => {
+                    addBlockItem([
+                        `[${i+1}] ${e.title} at ${e.company}`,
+                        `   Description: ${doc.splitTextToSize(e.description || 'N/A', 140).join('\n   ')}`
+                    ]);
+                    if(e.certificateUrl) addFileLink(`   Exp. Letter #${i+1}`, e.certificateUrl);
+                });
+
+                addSection("Certifications");
+                const certs = app.certifications || [];
+                if(certs.length === 0) addKVPair("N/A", "");
+                certs.forEach((c, i) => {
+                    addBlockItem([
+                        `[${i+1}] ${c.name} from ${c.provider}`,
+                        `   Date: ${c.dateIssued || 'N/A'} | ID: ${c.credentialId || 'N/A'}`
+                    ]);
+                    if(c.certificateUrl) addFileLink(`   Cert. File #${i+1}`, c.certificateUrl);
+                });
+                
+                addSection("Links & Uploaded Documents");
+                addKVPair("LinkedIn", app.links?.linkedin);
+                addKVPair("GitHub", app.links?.github);
+                addKVPair("Portfolio", app.links?.portfolio);
+                addFileLink("Resume/CV", app.resumeUrl);
+                addFileLink(`Govt. ID (${app.govtId?.type || 'N/A'})`, app.govtId?.url);
+
+                addSection("Extracurriculars");
+                doc.setFontSize(10);
+                doc.setTextColor(31, 41, 55);
+                doc.text(doc.splitTextToSize(app.extracurricular || 'N/A', 170), margin + 2, y);
+                y += (doc.splitTextToSize(app.extracurricular || 'N/A', 170).length * 5) + 3;
+
+                addSection("Cover Letter");
+                doc.setFontSize(10);
+                doc.setTextColor(31, 41, 55);
+                doc.text(doc.splitTextToSize(app.coverLetter || 'N/A', 170), margin + 2, y);
+                
+                doc.save(`Report_${app.firstName}_${app.lastName}.pdf`);
+            };
+
+            // --- Initial Fetch ---
             fetchApplicants();
         });
     </script>
 </body>
 </html>
-
