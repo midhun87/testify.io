@@ -150,6 +150,8 @@
                 <div class="flex items-center space-x-2 sm:space-x-4">
                     <a href="student-job-board.html" class="px-3 py-2 rounded-md text-sm font-medium text-white bg-indigo-600 transition-all duration-200 shadow-sm hover:bg-indigo-700">Job Board</a>
                     <a href="student-my-applications.html" class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-200">My Applications</a>
+                    <a href="student-my-tests.html" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-100">My Tests</a>
+
                     <!-- User Menu Dropdown -->
                     <div class="relative">
                         <button id="user-menu-button" class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 p-1 hover:bg-gray-100 transition-colors duration-150">
@@ -181,7 +183,7 @@
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                        <i class="fas fa-search text-gray-400 h-5 w-5"></i>
                     </div>
-                    <input type="text" id="search-input" class="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out" placeholder="Search by title, keyword, or location...">
+                    <input type="text" id="search-input" class="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out" placeholder="Search by title, company, or keyword...">
                 </div>
             </div>
 
@@ -332,16 +334,15 @@
                         }
 
                         // Use job.postedBy (moderator name) or fallback
-                        const postedByName = job.postedBy && job.postedBy.trim() !== '' ? job.postedBy : 'Company'; // More robust fallback
-                        // console.log(`Job ${jobId} - postedBy value: '${job.postedBy}', using: '${postedByName}'`); // UNCOMMENT FOR DEBUGGING
+                        // This is where the fix from the backend matters
+                        const postedByName = job.postedBy && job.postedBy.trim() !== '' ? job.postedBy : 'Company'; 
 
                         listItem.innerHTML = `
                             <h3 class="font-semibold text-lg text-indigo-800 group-hover:text-indigo-900 truncate">${job.title || 'Job Title'}</h3>
                             <p class="text-sm text-gray-700 mt-1">${postedByName}</p> <!-- Display fetched name -->
                             <div class="mt-2 flex items-center gap-2 flex-wrap"> <!-- Added flex-wrap -->
                                 <span class="inline-flex items-center text-xs font-medium text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full">
-                                    <i class="fas fa-map-marker-alt text-gray-500 h-3 w-3 mr-1"></i>
-                                    ${job.location || 'Remote'}
+                                    
                                 </span>
                                 <!-- Add Department Tag if available -->
                                 ${job.department ? `<span class="inline-flex items-center text-xs font-medium text-blue-700 bg-blue-100 px-2.5 py-0.5 rounded-full">
@@ -368,8 +369,8 @@
                 const safeDescription = job.description ? job.description.replace(/<script.*?>.*?<\/script>/gi, '') : 'No description provided.';
 
                 // Use job.postedBy or fallback
-                const postedByName = job.postedBy && job.postedBy.trim() !== '' ? job.postedBy : 'Company'; // More robust fallback
-                // console.log(`Details for Job ${jobId} - postedBy value: '${job.postedBy}', using: '${postedByName}'`); // UNCOMMENT FOR DEBUGGING
+                // This is also where the fix from the backend matters
+                const postedByName = job.postedBy && job.postedBy.trim() !== '' ? job.postedBy : 'Company';
 
                 detailsWrapper.innerHTML = `
                     <div class="pb-6 border-b border-gray-200 mb-6">
@@ -508,4 +509,3 @@
     </script>
 </body>
 </html>
-

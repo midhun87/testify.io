@@ -3,430 +3,678 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apply for Job - Student Job Portal</title>
+    <title>Apply for Senior Product Manager - HireWithUs</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Font: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@0.395.0/dist/umd/lucide.min.js"></script>
+    
+    <!-- jsPDF Libraries for Download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf-autotable.umd.min.js"></script>
+    
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
-    <!-- Include Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
+        /* Base styles */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f4f8; /* Lighter blue-gray background */
+            background-color: #f8f9fa; /* Lighter neutral background */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-        .form-input, .form-textarea, .form-select {
-            width: 100%;
-            border-radius: 0.5rem; /* rounded-lg */
-            border: 1px solid #cbd5e1; /* cool-gray-300 */
-            padding: 0.75rem 1rem; /* Consistent padding */
-            transition: border-color 0.2s, box-shadow 0.2s;
-            background-color: white;
-            color: #1f2937; /* gray-800 */
-            font-size: 0.875rem; /* text-sm */
-            line-height: 1.25rem;
-        }
-         /* Smaller inputs for dynamic blocks */
-        .dynamic-block .form-input, .dynamic-block .form-select, .dynamic-block .form-textarea {
-             font-size: 0.8rem; /* Slightly smaller text */
-             padding: 0.6rem 0.8rem; /* Reduced padding */
-        }
-        .dynamic-block .form-label {
-             font-size: 0.75rem; /* text-xs */
-        }
+        /* --- Custom Form Element Styling --- */
 
-        .form-input::placeholder, .form-textarea::placeholder {
-            color: #9ca3af; /* gray-400 */
-        }
-
+        /* Modern Label */
         .form-label {
-            display: block;
-            font-size: 0.875rem; /* text-sm */
-            font-weight: 500; /* font-medium */
-            color: #374151; /* gray-700 */
-            margin-bottom: 0.25rem; /* mb-1 */
+            @apply block text-sm font-semibold text-gray-800 mb-1.5;
         }
-        .form-label span.required { color: #dc2626; margin-left: 2px; } /* red-600 */
-
-        .form-input:focus, .form-textarea:focus, .form-select:focus {
-            outline: none;
-            border-color: #4f46e5; /* indigo-600 */
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); /* ring-indigo-300 ring-opacity-20 */
+        
+        /* Modern Input */
+        .form-input,
+        .form-select,
+        .form-textarea {
+            @apply block w-full rounded-xl border-gray-300 bg-white shadow-sm transition-all duration-200 ease-in-out;
+            @apply placeholder:text-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20;
+            @apply text-base; /* Better mobile readability */
         }
-        .form-input[readonly], .form-select[readonly] {
-            background-color: #f3f4f6; /* gray-100 */
-            cursor: not-allowed;
-            border-color: #e5e7eb; /* gray-200 */
+        
+        .form-textarea {
+            @apply min-h-[120px];
         }
 
-        .form-textarea { min-height: 120px; }
-        .dynamic-block .form-textarea { min-height: 80px; } /* Smaller textarea in blocks */
-
-
-        .file-input-wrapper { display: flex; align-items: center; gap: 0.75rem; }
-        .file-input-label {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.6rem 1rem;
-            background-color: #eef2ff; /* indigo-100 */
-            color: #4338ca; /* indigo-700 */
-            border-radius: 0.5rem; /* rounded-lg */
-            cursor: pointer;
-            transition: background-color 0.2s, color 0.2s;
-            border: 1px solid #c7d2fe; /* indigo-200 */
-            font-size: 0.875rem; /* text-sm */
-            font-weight: 500;
-            white-space: nowrap;
+        /* Validation states */
+        .form-input.invalid, .form-select.invalid, .form-textarea.invalid {
+            @apply border-red-500 ring-1 ring-red-500 focus:border-red-500 focus:ring-red-500/30;
         }
-        .dynamic-block .file-input-label {
-             padding: 0.5rem 0.8rem; /* Smaller padding */
-             font-size: 0.8rem;
+        .form-input.valid, .form-select.valid, .form-textarea.valid {
+            @apply border-green-500 ring-1 ring-green-500 focus:border-green-500 focus:ring-green-500/30;
         }
-        .file-input-label:hover { background-color: #c7d2fe; color: #3730a3; } /* indigo-200, indigo-800 */
-        .file-input-label i { font-size: 0.875rem; } /* Consistent icon size */
-         .dynamic-block .file-input-label i { font-size: 0.75rem; }
-
-
+        
+        /* --- Modern File Uploader --- */
+        .file-dropzone {
+            @apply relative flex flex-col items-center justify-center w-full p-6 border-2 border-dashed border-gray-300 rounded-2xl cursor-pointer;
+            @apply bg-white hover:bg-gray-50 transition-colors duration-200;
+        }
+        .file-dropzone.drag-over {
+            @apply border-blue-500 bg-blue-50;
+        }
+        
         .file-name-display {
-            font-size: 0.875rem; /* text-sm */
-            color: #4b5563; /* gray-600 */
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            max-width: 200px; /* Adjust as needed */
-            display: inline-block;
-            vertical-align: middle;
+            @apply inline-flex items-center gap-2.5 bg-blue-50 text-blue-800 rounded-lg px-4 py-2.5 text-sm font-medium mt-3;
+            @apply border border-blue-100;
         }
-         .dynamic-block .file-name-display {
-             font-size: 0.8rem;
-             max-width: 150px; /* Shorter display in blocks */
-         }
-        .file-name-display:empty::before {
-             content: "No file chosen";
-             color: #9ca3af; /* gray-400 */
-             font-style: italic;
-         }
+        .file-name-remove {
+            @apply w-5 h-5 rounded-full bg-blue-200 text-blue-800 flex items-center justify-center cursor-pointer;
+            @apply hover:bg-blue-300 transition-all;
+        }
+        
+        /* Modern Dynamic Block */
+        .dynamic-block {
+            @apply p-6 bg-white rounded-xl shadow-sm border border-gray-200 relative transition-all duration-300 ease-in-out;
+            animation: slide-in 0.3s ease-out;
+        }
+        @keyframes slide-in {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-        #message, #loading-message, #submit-message { transition: opacity 0.3s ease-in-out; }
+        /* --- Sidebar Navigation --- */
+        .sidebar-step {
+            @apply flex items-center gap-4 p-3 rounded-lg transition-colors duration-200;
+        }
+        .sidebar-step .step-icon {
+            @apply w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center;
+            @apply bg-gray-100 text-gray-500 border border-gray-200;
+            @apply transition-all duration-300 ease-in-out;
+        }
+        .sidebar-step .step-text .title {
+            @apply text-sm font-medium text-gray-700;
+        }
+        .sidebar-step .step-text .status {
+            @apply text-xs text-gray-500;
+        }
 
+        /* Active Step */
+        .sidebar-step.active {
+            @apply bg-blue-50;
+        }
+        .sidebar-step.active .step-icon {
+            @apply bg-blue-600 text-white border-blue-600;
+            transform: scale(1.05);
+        }
+        .sidebar-step.active .step-text .title {
+            @apply text-blue-700 font-semibold;
+        }
+        .sidebar-step.active .step-text .status {
+            @apply text-blue-600;
+        }
+        
+        /* Completed Step */
+        .sidebar-step.completed {
+            @apply bg-green-50/50;
+        }
+        .sidebar-step.completed .step-icon {
+            @apply bg-green-600 text-white border-green-600;
+        }
+        .sidebar-step.completed .step-text .title {
+            @apply text-green-800 font-medium;
+        }
+        .sidebar-step.completed .step-text .status {
+            @apply text-green-700;
+        }
+        
+        /* Custom spinner */
         .button-spinner {
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-top-color: #fff;
-            border-radius: 50%;
-            width: 1rem;
-            height: 1rem;
-            animation: spin 0.6s linear infinite;
+            @apply w-5 h-5 rounded-full animate-spin;
         }
-
-        section {
-            margin-bottom: 2.5rem; /* Increased spacing */
-            padding-bottom: 2rem;
-            border-bottom: 1px solid #e5e7eb; /* gray-200 */
-        }
-        section:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .section-header {
-            font-size: 1.125rem; /* text-lg */
-            font-weight: 600; /* font-semibold */
-            color: #111827; /* gray-900 */
-            margin-bottom: 1.5rem;
-             display: flex;
-             align-items: center;
-             gap: 0.7rem; /* Increased gap */
-        }
-        .section-header i {
-             color: #4f46e5; /* Icon color */
-             font-size: 1.1rem; /* Slightly larger icon */
-        }
-
-        .dynamic-block {
-            padding: 1rem 1.25rem;
-            border: 1px solid #e5e7eb; /* gray-200 */
-            border-radius: 0.75rem; /* More rounded */
-            background-color: #ffffff; /* White background */
-            position: relative;
-            margin-bottom: 1rem;
-             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.07), 0 1px 2px -1px rgba(0, 0, 0, 0.04); /* Adjusted shadow */
-        }
-        .remove-btn {
-            position: absolute; top: 0.6rem; right: 0.6rem;
-            background: #fee2e2; /* red-100 */
-            border: none;
-            color: #dc2626; /* red-600 */
-            cursor: pointer;
-            width: 1.5rem; height: 1.5rem;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.8rem; line-height: 1;
-            transition: background-color 0.2s, color 0.2s;
-        }
-        .remove-btn:hover { background-color: #fecaca; color: #b91c1c; } /* red-200, red-700 */
-
-        .add-button {
-             display: inline-flex;
-             align-items: center;
-             gap: 0.3rem;
-             padding: 0.5rem 1rem;
-             font-size: 0.875rem;
-             font-weight: 500;
-             color: #4338ca; /* indigo-700 */
-             background-color: #eef2ff; /* indigo-100 */
-             border: 1px solid #c7d2fe; /* indigo-200 */
-             border-radius: 0.5rem;
-             cursor: pointer;
-             transition: all 0.2s;
-        }
-        .add-button:hover { background-color: #c7d2fe; color: #3730a3; } /* indigo-200, indigo-800 */
-        .add-button i { font-size: 0.8rem; }
-
-
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        #application-form { display: none; }
-        #loading-state { text-align: center; padding: 4rem 0; }
-        .loading-spinner svg { margin: 0 auto 1rem; }
-         /* Message Box Styles */
-         .message-box {
-             padding: 1rem;
-             margin-bottom: 1.5rem;
-             border-radius: 0.5rem;
-             font-size: 0.875rem;
-             font-weight: 500;
-             display: flex;
-             align-items: center;
-             gap: 0.75rem;
-             opacity: 0; /* Hidden by default */
-             max-height: 0;
-             overflow: hidden;
-             transition: opacity 0.3s ease-in-out, max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+        
+        /* Modal animation */
+         #confirmation-modal .modal-content {
+             @apply relative z-10 w-full max-w-md p-8 bg-white rounded-2xl shadow-xl;
+             @apply transform transition-all duration-300 ease-in-out;
+             transform: scale(0.95);
+             opacity: 0;
          }
-         .message-box.show {
+         #confirmation-modal.show .modal-content {
+             transform: scale(1);
              opacity: 1;
-             max-height: 100px; /* Adjust as needed */
-             margin-top: 1rem; /* Add margin when visible */
-             margin-bottom: 1.5rem;
          }
-         .message-box.error { background-color: #fee2e2; border: 1px solid #fecaca; color: #b91c1c; } /* red */
-         .message-box.success { background-color: #dcfce7; border: 1px solid #bbf7d0; color: #15803d; } /* green */
-         .message-box.info { background-color: #e0f2fe; border: 1px solid #bae6fd; color: #0369a1; } /* blue */
-         .message-box i { font-size: 1.1rem; }
-
-         .hint-text {
-            font-size: 0.75rem; /* text-xs */
-            color: #6b7280; /* gray-500 */
-            margin-top: 0.25rem; /* mt-1 */
-         }
-
+ 
+        /* Remove marker from details/summary */
+        details summary::-webkit-details-marker { display: none; }
+        details summary { list-style: none; }
+        
+        /* Custom shadow for sticky mobile nav */
+        .shadow-top-lg {
+            box-shadow: 0 -10px 15px -3px rgb(0 0 0 / 0.1), 0 -4px 6px -4px rgb(0 0 0 / 0.1);
+        }
     </style>
 </head>
-<body class="p-4 md:p-8">
-    <div class="max-w-5xl mx-auto bg-white shadow-xl rounded-2xl p-6 md:p-10"> <!-- Wider container -->
-        <!-- Header -->
-        <div class="text-center mb-10 border-b pb-8 border-gray-200"> <!-- Increased spacing -->
-            <img class="h-14 w-auto mx-auto mb-4" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="Portal Logo">
-            <h1 id="job-title-header" class="text-3xl md:text-4xl font-bold text-gray-800">Apply for Job</h1>
-            <p id="job-details-header" class="text-base text-gray-500 mt-3">Loading job details...</p> <!-- Larger text -->
-            <!-- Message Area for Loading Errors -->
-            <div id="loading-message" class="message-box error mt-4">
-                 <i class="fas fa-exclamation-triangle"></i>
-                 <span class="message-text"></span>
-            </div>
+<body class="bg-gray-50 font-sans antialiased">
+
+    <!-- 1. Global Header -->
+    <header class="fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-200 shadow-sm h-16 flex items-center justify-between px-4 md:px-8">
+        <div class="flex items-center gap-3">
+            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="HireWithUs Logo" class="h-8 w-8">
+            <span class="text-lg font-bold text-gray-900 hidden sm:block">HireWithUs</span>
         </div>
-
-        <!-- Loading State Indicator -->
-        <div id="loading-state" class="loading-spinner">
-            <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-            <p class="mt-3 text-gray-600 font-medium">Loading Application Form...</p>
+        <div class="flex items-center gap-2 text-sm text-gray-600">
+            <i data-lucide="building" class="w-4 h-4"></i>
+            <span class="font-medium" id="job-title-header-main">Loading Job...</span>
         </div>
+        <div class="flex items-center gap-3">
+            <button type="button" class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-blue-500">
+                <i data-lucide="save" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Save Progress</span>
+            </button>
+            <button type="button" class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500">
+                <i data-lucide="help-circle" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Help</span>
+            </button>
+        </div>
+    </header>
 
-        <!-- Application Form (Initially Hidden) -->
-        <form id="application-form" class="space-y-10" enctype="multipart/form-data"> <!-- Increased space-y -->
+    <!-- 2. Main Container -->
+    <div class="flex pt-16">
 
-             <!-- Message Area for Submission Feedback -->
-             <div id="submit-message" class="message-box">
-                 <i class="message-icon fas"></i>
-                 <span class="message-text"></span>
-             </div>
-
-            <!-- Personal Information Section -->
-            <section>
-                <h2 class="section-header"><i class="fas fa-user-circle"></i>Personal Information</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6"> <!-- Increased gap-y -->
-                    <div>
-                        <label for="firstName" class="form-label">First Name <span class="required">*</span></label>
-                        <input id="firstName" name="firstName" type="text" required class="form-input" placeholder="e.g., Jane">
+        <!-- 3. Left Sidebar (Progress) -->
+        <aside class="fixed top-16 left-0 z-20 w-80 h-[calc(100vh-64px)] bg-white border-r border-gray-200 hidden lg:flex flex-col justify-between p-6">
+            <div class="space-y-4">
+                <div class="mb-6">
+                    <h2 id="job-title-header-sidebar" class="text-xl font-bold text-gray-900">Apply for Job</h2>
+                    <div id="job-details-header" class="flex items-center gap-2 text-sm text-yellow-800 font-medium mt-2">
+                        <i data-lucide="clock" class="w-4 h-4"></i>
+                        <span>Loading deadline...</span>
                     </div>
-                    <div>
-                        <label for="lastName" class="form-label">Last Name <span class="required">*</span></label>
-                        <input id="lastName" name="lastName" type="text" required class="form-input" placeholder="e.g., Doe">
-                    </div>
-                    <div>
-                        <label for="email" class="form-label">Email Address <span class="required">*</span></label>
-                        <input id="email" name="email" type="email" required class="form-input" placeholder="Your Email" readonly>
-                    </div>
-                    <div>
-                        <label for="phone" class="form-label">Phone Number <span class="required">*</span></label>
-                        <input id="phone" name="phone" type="tel" required class="form-input" placeholder="e.g., +91 9876543210">
-                    </div>
-                    <div>
-                        <label for="college" class="form-label">College <span class="required">*</span></label>
-                        <input id="college" name="college" type="text" required class="form-input" placeholder="Your College" readonly>
-                    </div>
-                    <div>
-                        <label for="department" class="form-label">Department <span class="required">*</span></label>
-                        <input id="department" name="department" type="text" required class="form-input" placeholder="e.g., Computer Science Engineering">
-                    </div>
-                    <div>
-                        <label for="rollNumber" class="form-label">Roll Number / ID <span class="required">*</span></label>
-                        <input id="rollNumber" name="rollNumber" type="text" required class="form-input" placeholder="Your University ID Number">
-                    </div>
-                    <!-- Passport Photo -->
-                     <div class="md:col-span-2 flex flex-col sm:flex-row items-start sm:items-center gap-6 pt-2">
-                         <div class="flex-shrink-0">
-                            <label class="form-label block mb-2">Passport Photo <span class="required">*</span></label>
-                            <img id="passportPhotoPreview" src="https://placehold.co/96x96/E0E7FF/4338CA?text=Photo" alt="Photo Preview" class="h-24 w-24 rounded-lg object-cover bg-indigo-100 border border-indigo-200 shadow-sm">
-                         </div>
-                         <div class="flex-grow w-full">
-                             <div class="file-input-wrapper mt-1">
-                                <input type="file" id="passportPhoto" name="passportPhoto" accept="image/jpeg, image/png, image/gif" required class="hidden">
-                                <label for="passportPhoto" class="file-input-label"><i class="fas fa-camera"></i>Choose Photo</label>
-                                <span id="passportPhotoName" class="file-name-display" title=""></span>
-                            </div>
-                            <p class="hint-text">Accepts JPG, PNG, GIF. Max 5MB.</p>
-                         </div>
-                     </div>
                 </div>
-            </section>
 
-            <!-- Education -->
-            <section>
-                <h2 class="section-header"><i class="fas fa-graduation-cap"></i>Education</h2>
-                 <p class="text-sm text-gray-500 -mt-4 mb-5">Please add at least one educational qualification.<span class="required">*</span></p>
-                <div id="education-container" class="space-y-4">
-                    <!-- Dynamic education blocks will be added here -->
-                </div>
-                <button type="button" id="add-education-btn" class="add-button mt-4">
-                    <i class="fas fa-plus"></i> Add Education
-                </button>
-            </section>
-
-            <!-- Experience -->
-            <section>
-                 <h2 class="section-header"><i class="fas fa-briefcase"></i>Work Experience (Optional)</h2>
-                 <p class="text-sm text-gray-500 -mt-4 mb-5">Include internships or relevant work experience.</p>
-                <div id="experience-container" class="space-y-4">
-                    <!-- Dynamic experience blocks will be added here -->
-                </div>
-                <button type="button" id="add-experience-btn" class="add-button mt-4">
-                    <i class="fas fa-plus"></i> Add Experience
-                </button>
-            </section>
-
-             <!-- Certifications -->
-            <section>
-                 <h2 class="section-header"><i class="fas fa-certificate"></i>Global Certifications (Optional)</h2>
-                 <p class="text-sm text-gray-500 -mt-4 mb-5">List any relevant professional certifications.</p>
-                <div id="certification-container" class="space-y-4">
-                    <!-- Dynamic certification blocks will be added here -->
-                </div>
-                <button type="button" id="add-certification-btn" class="add-button mt-4">
-                    <i class="fas fa-plus"></i> Add Certification
-                </button>
-            </section>
-
-             <!-- Extracurricular Activities -->
-            <section>
-                 <h2 class="section-header"><i class="fas fa-users-rays"></i>Extracurricular Activities (Optional)</h2>
-                 <p class="text-sm text-gray-500 -mt-4 mb-5">Briefly mention significant activities, roles, or achievements.</p>
-                 <div>
-                    <label for="extracurricular" class="form-label sr-only">Extracurricular Activities</label>
-                    <textarea id="extracurricular" name="extracurricular" rows="4" class="form-textarea" placeholder="e.g., President of Coding Club (2023-24), Winner of Hackathon XYZ, Volunteer at ABC Org..."></textarea>
-                </div>
-            </section>
-
-
-            <!-- Documents & Links -->
-            <section>
-                 <h2 class="section-header"><i class="fas fa-paperclip"></i>Documents & Links</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6"> <!-- Increased gap-y -->
-                    <!-- Resume -->
-                    <div>
-                        <label class="form-label">Resume/CV (PDF) <span class="required">*</span></label>
-                        <div class="file-input-wrapper mt-1">
-                            <input type="file" id="resume" name="resume" accept=".pdf" required class="hidden">
-                            <label for="resume" class="file-input-label"><i class="fas fa-file-pdf"></i>Choose Resume</label>
-                            <span id="resumeName" class="file-name-display" title=""></span>
-                        </div>
-                         <p class="hint-text">PDF format only. Max 5MB.</p>
-                    </div>
-                    <!-- Govt ID -->
-                    <div>
-                        <label class="form-label">Government ID (Optional)</label>
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-1">
-                            <select id="govtIdType" name="govtIdType" class="form-select flex-shrink-0 w-full sm:w-auto">
-                                <option value="">Select ID Type</option>
-                                <option value="Aadhar">Aadhar Card</option>
-                                <option value="PAN">PAN Card</option>
-                                <option value="Passport">Passport</option>
-                                <option value="DrivingLicense">Driving License</option>
-                                <option value="Other">Other</option>
-                            </select>
-                            <div class="file-input-wrapper flex-grow">
-                                <input type="file" id="govtId" name="govtId" accept="image/*,.pdf" class="hidden">
-                                <label for="govtId" class="file-input-label"><i class="fas fa-id-card"></i>Upload ID</label>
-                                <span id="govtIdName" class="file-name-display" title=""></span>
-                            </div>
-                        </div>
-                        <p class="hint-text">PDF or Image. Max 5MB.</p>
-                    </div>
-                    <!-- Links -->
-                    <div class="md:col-span-2 space-y-5 pt-4"> <!-- Increased space-y -->
-                        <div>
-                            <label for="linkedinUrl" class="form-label">LinkedIn Profile URL (Optional)</label>
-                            <input type="url" id="linkedinUrl" name="linkedinUrl" class="form-input" placeholder="https://linkedin.com/in/yourprofile">
-                        </div>
-                        <div>
-                            <label for="githubUrl" class="form-label">GitHub Profile URL (Optional)</label>
-                            <input type="url" id="githubUrl" name="githubUrl" class="form-input" placeholder="https://github.com/yourusername">
-                        </div>
-                        <div>
-                            <label for="portfolioUrl" class="form-label">Portfolio URL (Optional)</label>
-                            <input type="url" id="portfolioUrl" name="portfolioUrl" class="form-input" placeholder="https://yourportfolio.com">
+                <!-- Vertical Step Navigation -->
+                <nav id="sidebar-steps" class="space-y-2">
+                    <div id="sidebar-step-1" class="sidebar-step">
+                        <span class="step-icon"><i data-lucide="user" class="w-5 h-5"></i></span>
+                        <div class="step-text">
+                            <span class="title">Personal Info</span>
+                            <span class="status">Pending</span>
                         </div>
                     </div>
-                </div>
-            </section>
-
-            <!-- Submit Button -->
-            <div class="pt-8 mt-10 border-t border-gray-300"> <!-- Increased spacing -->
-                <button type="submit" id="submit-btn" class="w-full md:w-auto inline-flex justify-center items-center py-3 px-10 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out disabled:opacity-60 disabled:cursor-not-allowed">
-                    <span class="button-text">Submit Application</span>
-                    <span class="button-spinner hidden ml-2"></span>
-                </button>
+                    <div id="sidebar-step-2" class="sidebar-step">
+                        <span class="step-icon"><i data-lucide="briefcase" class="w-5 h-5"></i></span>
+                        <div class="step-text">
+                            <span class="title">Experience</span>
+                            <span class="status">Pending</span>
+                        </div>
+                    </div>
+                    <div id="sidebar-step-3" class="sidebar-step">
+                        <span class="step-icon"><i data-lucide="paperclip" class="w-5 h-5"></i></span>
+                        <div class="step-text">
+                            <span class="title">Documents</span>
+                            <span class="status">Pending</span>
+                        </div>
+                    </div>
+                    <div id="sidebar-step-4" class="sidebar-step">
+                        <span class="step-icon"><i data-lucide="check-circle" class="w-5 h-5"></i></span>
+                        <div class="step-text">
+                            <span class="title">Review & Submit</span>
+                            <span class="status">Pending</span>
+                        </div>
+                    </div>
+                </nav>
             </div>
 
-        </form>
+            <!-- Auto-save indicator -->
+            <div id="autosave-indicator" class="flex items-center gap-2 text-sm text-gray-500">
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i>
+                <span>All changes saved.</span>
+            </div>
+        </aside>
+
+        <!-- 4. Right Workspace (Form) -->
+        <main class="w-full lg:pl-80 min-h-[calc(100vh-64px)] bg-gray-50/50 p-4 md:p-10 lg:p-12">
+            
+            <!-- 4a. Mobile-only Header (Job title, progress) -->
+            <div class="lg:hidden mb-6">
+                <h1 id="job-title-header-mobile" class="text-2xl font-bold text-gray-900">Apply for Job</h1>
+                <div id="job-details-header-mobile" class="flex items-center gap-2 text-sm text-yellow-800 font-medium mt-2">
+                    <i data-lucide="clock" class="w-4 h-4"></i>
+                    <span>Loading deadline...</span>
+                </div>
+            </div>
+
+            <!-- 4b. Mobile-only Step Nav (The original one) -->
+            <div id="mobile-step-nav-container" class="lg:hidden mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div id="step-nav-1" class="progress-step active flex items-center gap-2 text-sm font-medium text-blue-600">
+                        <span class="step-circle w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all bg-blue-600 text-white">1</span>
+                        <span class="hidden sm:inline">Personal Info</span>
+                    </div>
+                    <div class="progress-divider flex-grow h-0.5 bg-gray-200 mx-2"></div>
+                    <div id="step-nav-2" class="progress-step flex items-center gap-2 text-sm font-medium text-gray-500">
+                        <span class="step-circle w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all bg-gray-200 text-gray-600">2</span>
+                        <span class="hidden sm:inline">Experience</span>
+                    </div>
+                    <div class="progress-divider flex-grow h-0.5 bg-gray-200 mx-2"></div>
+                    <div id="step-nav-3" class="progress-step flex items-center gap-2 text-sm font-medium text-gray-500">
+                        <span class="step-circle w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all bg-gray-200 text-gray-600">3</span>
+                        <span class="hidden sm:inline">Documents</span>
+                    </div>
+                    <div class="progress-divider flex-grow h-0.5 bg-gray-200 mx-2"></div>
+                    <div id="step-nav-4" class="progress-step flex items-center gap-2 text-sm font-medium text-gray-500">
+                        <span class="step-circle w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all bg-gray-200 text-gray-600">4</span>
+                        <span class="hidden sm:inline">Review</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 4c. Main Progress Bar (Desktop) -->
+            <div class="hidden lg:block mb-8">
+                <div class="flex justify-between items-center mb-2">
+                    <span id="progress-text" class="text-sm font-semibold text-blue-700">Step 1 of 4: Personal Info</span>
+                    <span id="progress-percent" class="text-sm font-semibold text-blue-700">25%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div id="main-progress-bar" class="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-500 ease-out" style="width: 25%"></div>
+                </div>
+            </div>
+
+            <!-- Loading State Indicator -->
+            <div id="loading-state" class="flex flex-col items-center justify-center p-16 bg-white rounded-2xl shadow-lg">
+                <svg class="animate-spin h-12 w-12 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <p class="mt-4 text-gray-600 font-medium text-lg">Loading Application Form...</p>
+                <!-- Message Area for Loading Errors -->
+                <div id="loading-message" class="message-box error mt-4 p-4 rounded-lg font-medium text-sm items-center gap-3 hidden bg-red-100 border border-red-200 text-red-800 w-full max-w-lg">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 flex-shrink-0"></i>
+                    <span class="message-text"></span>
+                </div>
+            </div>
+
+            <!-- 4d. Application Form (Initially Hidden) -->
+            <!-- The unified navigation footer is *inside* the form tag -->
+            <form id="application-form" class="hidden pb-24 lg:pb-0" enctype="multipart/form-data">
+            
+                <!-- Message Area for Submission Feedback -->
+                <div id="submit-message" class="message-box mb-6 p-4 rounded-xl font-medium text-sm items-center gap-3 hidden">
+                    <i class="message-icon w-5 h-5"></i>
+                    <span class="message-text"></span>
+                </div>
+            
+                <!-- Step 1: Personal Information -->
+                <div id="step-panel-1" class="step-panel bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
+                    <h2 class="flex items-center gap-3 text-2xl font-bold text-gray-900 mb-8">
+                        <i data-lucide="user" class="w-7 h-7 text-blue-600"></i>
+                        Personal Information
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                        <div>
+                            <label for="firstName" class="form-label">First Name <span class="text-red-600 ml-0.5">*</span></label>
+                            <input id="firstName" name="firstName" type="text" required class="form-input" placeholder="e.g., Jane">
+                        </div>
+                        <div>
+                            <label for="lastName" class="form-label">Last Name <span class="text-red-600 ml-0.5">*</span></label>
+                            <input id="lastName" name="lastName" type="text" required class="form-input" placeholder="e.g., Doe">
+                        </div>
+                        <div>
+                            <label for="email" class="form-label">Email Address <span class="text-red-600 ml-0.5">*</span></label>
+                            <input id="email" name="email" type="email" required class="form-input bg-gray-100 cursor-not-allowed" placeholder="Your Email" readonly>
+                        </div>
+                        <div>
+                            <label for="phone" class="form-label">Phone Number <span class="text-red-600 ml-0.5">*</span></label>
+                            <input id="phone" name="phone" type="tel" required class="form-input" placeholder="e.g., +91 9876543210">
+                        </div>
+                        <div>
+                            <label for="college" class="form-label">College <span class="text-red-600 ml-0.5">*</span></label>
+                            <input id="college" name="college" type="text" required class="form-input bg-gray-100 cursor-not-allowed" placeholder="Your College" readonly>
+                        </div>
+                        <div>
+                            <label for="department" class="form-label">Department <span class="text-red-600 ml-0.5">*</span></label>
+                            <input id="department" name="department" type="text" required class="form-input" placeholder="e.g., Computer Science">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="rollNumber" class="form-label">Roll Number / ID <span class="text-red-600 ml-0.5">*</span></label>
+                            <input id="rollNumber" name="rollNumber" type="text" required class="form-input" placeholder="Your University ID Number">
+                        </div>
+                        
+                        <!-- Address Section -->
+                        <div class="md:col-span-2 pt-6 mt-4 border-t border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-5">Permanent Address</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                                <div class="md:col-span-2">
+                                    <label for="street" class="form-label">Street Address <span class="text-red-600 ml-0.5">*</span></label>
+                                    <input id="street" name="street" type="text" required class="form-input" placeholder="1234 Main St">
+                                </div>
+                                <div>
+                                    <label for="city" class="form-label">City <span class="text-red-600 ml-0.5">*</span></label>
+                                    <input id="city" name="city" type="text" required class="form-input" placeholder="e.g., Mumbai">
+                                </div>
+                                <div>
+                                    <label for="state" class="form-label">State / Province <span class="text-red-600 ml-0.5">*</span></label>
+                                    <input id="state" name="state" type="text" required class="form-input" placeholder="e.g., Maharashtra">
+                                </div>
+                                <div>
+                                    <label for="zip" class="form-label">ZIP / Postal Code <span class="text-red-600 ml-0.5">*</span></label>
+                                    <input id="zip" name="zip" type="text" required class="form-input" placeholder="e.g., 400001">
+                                </div>
+                                <div>
+                                    <label for="country" class="form-label">Country <span class="text-red-600 ml-0.5">*</span></label>
+                                    <input id="country" name="country" type="text" required class="form-input" placeholder="e.g., India">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Passport Photo -->
+                        <div class="md:col-span-2 pt-6 mt-4 border-t border-gray-200">
+                            <label class="form-label">Passport Photo <span class="text-red-600 ml-0.5">*</span></label>
+                            <div class="flex flex-col sm:flex-row items-start sm:items-start gap-5 mt-2">
+                                <img id="passportPhotoPreview" src="https://placehold.co/128x128/e0f2fe/0ea5e9?text=Photo" alt="Photo Preview" class="h-32 w-32 rounded-xl object-cover bg-gray-100 border border-gray-200 shadow-sm flex-shrink-0">
+                                <div class="flex-grow w-full">
+                                    <label for="passportPhoto" id="passportPhotoDropZone" class="file-dropzone">
+                                        <i data-lucide="image-up" class="file-dropzone-icon w-10 h-10 text-gray-400 mb-3"></i>
+                                        <p class="file-dropzone-text text-sm text-gray-600"><strong class="text-blue-600 font-semibold">Click to upload</strong> or drag and drop</p>
+                                        <p class="hint-text text-xs text-gray-500 mt-1.5">JPG, PNG, or GIF (Max 5MB)</p>
+                                        <input type="file" id="passportPhoto" name="passportPhoto" accept="image/jpeg, image/png, image/gif" required class="hidden">
+                                    </label>
+                                    <div id="passportPhotoName" class="file-name-display hidden" title="">
+                                        <i data-lucide="image" class="w-5 h-5 text-blue-600"></i>
+                                        <span class="file-name-text"></span>
+                                        <span class="file-name-remove" data-input="passportPhoto" data-preview="passportPhotoPreview" data-placeholder="https://placehold.co/128x128/e0f2fe/0ea5e9?text=Photo"><i data-lucide="x" class="w-3 h-3"></i></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Step 2: Education & Experience -->
+                <div id="step-panel-2" class="step-panel hidden space-y-8">
+                    <!-- Education Card -->
+                    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
+                        <h2 class="flex items-center gap-3 text-2xl font-bold text-gray-900 mb-2">
+                            <i data-lucide="graduation-cap" class="w-7 h-7 text-blue-600"></i>
+                            Education
+                        </h2>
+                        <p class="text-sm text-gray-500 mb-6">Please add at least one educational qualification.<span class="text-red-600 ml-0.5">*</span></p>
+                        <div id="education-container" class="space-y-5">
+                            <!-- Dynamic education blocks will be added here -->
+                        </div>
+                        <button type="button" id="add-education-btn" class="add-button mt-6 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Add Education
+                        </button>
+                    </div>
+                    
+                    <!-- Work Experience Card -->
+                    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
+                        <details class="group" open>
+                            <summary class="flex items-center justify-between gap-3 text-2xl font-bold text-gray-900 cursor-pointer list-none">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="briefcase" class="w-7 h-7 text-blue-600"></i>
+                                    Work Experience
+                                </div>
+                                <i data-lucide="chevron-down" class="w-6 h-6 text-gray-500 transition-transform duration-200 group-open:rotate-180"></i>
+                            </summary>
+                            <p class="text-sm text-gray-500 mb-6 mt-2">Include internships or relevant work (Optional).</p>
+                            
+                            <div class="mt-6 space-y-5" id="experience-container">
+                                <!-- Dynamic experience blocks will be added here -->
+                            </div>
+                            <button type="button" id="add-experience-btn" class="add-button inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-6">
+                                <i data-lucide="plus" class="w-4 h-4"></i> Add Experience
+                            </button>
+                        </details>
+                    </div>
+                    
+                    <!-- Certifications Card -->
+                    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
+                        <details class="group">
+                            <summary class="flex items-center justify-between gap-3 text-2xl font-bold text-gray-900 cursor-pointer list-none">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="award" class="w-7 h-7 text-blue-600"></i>
+                                    Global Certifications
+                                </div>
+                                <i data-lucide="chevron-down" class="w-6 h-6 text-gray-500 transition-transform duration-200 group-open:rotate-180"></i>
+                            </summary>
+                            <p class="text-sm text-gray-500 mb-6 mt-2">List any relevant professional certifications (Optional).</p>
+                            
+                            <div class="mt-6 space-y-5" id="certification-container">
+                                <!-- Dynamic certification blocks will be added here -->
+                            </div>
+                            <button type="button" id="add-certification-btn" class="add-button inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-6">
+                                <i data-lucide="plus" class="w-4 h-4"></i> Add Certification
+                            </button>
+                        </details>
+                    </div>
+                </div>
+
+                <!-- Step 3: Documents & Links -->
+                <div id="step-panel-3" class="step-panel hidden space-y-8">
+                    <!-- Extracurricular Card -->
+                    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
+                        <details class="group">
+                            <summary class="flex items-center justify-between gap-3 text-2xl font-bold text-gray-900 cursor-pointer list-none">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="users" class="w-7 h-7 text-blue-600"></i>
+                                    Extracurricular Activities
+                                </div>
+                                <i data-lucide="chevron-down" class="w-6 h-6 text-gray-500 transition-transform duration-200 group-open:rotate-180"></i>
+                            </summary>
+                            <p class="text-sm text-gray-500 mb-6 mt-2">Briefly mention significant activities (Optional).</p>
+                            
+                            <div class="mt-6">
+                                <label for="extracurricular" class="form-label sr-only">Extracurricular Activities</label>
+                                <textarea id="extracurricular" name="extracurricular" rows="5" class="form-textarea" placeholder="e.g., President of Coding Club (2023-24)..."></textarea>
+                            </div>
+                        </details>
+                    </div>
+                
+                    <!-- Documents & Links Card -->
+                    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
+                        <h2 class="flex items-center gap-3 text-2xl font-bold text-gray-900 mb-8">
+                            <i data-lucide="paperclip" class="w-7 h-7 text-blue-600"></i>
+                            Documents & Links
+                        </h2>
+                        <div class="space-y-8">
+                            <!-- Resume -->
+                            <div>
+                                <label class="form-label">Resume/CV (PDF) <span class="text-red-600 ml-0.5">*</span></label>
+                                <label for="resume" id="resumeDropZone" class="file-dropzone mt-2">
+                                    <i data-lucide="upload-cloud" class="file-dropzone-icon w-10 h-10 text-gray-400 mb-3"></i>
+                                    <p class="file-dropzone-text text-sm text-gray-600"><strong class="text-blue-600 font-semibold">Click to upload</strong> or drag and drop</p>
+                                    <p class="hint-text text-xs text-gray-500 mt-1.5">PDF format only (Max 5MB)</p>
+                                    <input type="file" id="resume" name="resume" accept=".pdf" required class="hidden">
+                                </label>
+                                <div id="resumeName" class="file-name-display hidden" title="">
+                                    <i data-lucide="file-text" class="w-5 h-5 text-blue-600"></i>
+                                    <span class="file-name-text"></span>
+                                    <span class="file-name-remove" data-input="resume"><i data-lucide="x" class="w-3 h-3"></i></span>
+                                </div>
+                            </div>
+                            
+                            <!-- Govt ID -->
+                            <div>
+                                <label class="form-label">Government ID (Optional)</label>
+                                <select id="govtIdType" name="govtIdType" class="form-select mb-3 max-w-sm">
+                                    <option value="">Select ID Type</option>
+                                    <option value="Aadhar">Aadhar Card</option>
+                                    <option value="PAN">PAN Card</option>
+                                    <option value="Passport">Passport</option>
+                                    <option value="DrivingLicense">Driving License</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                                <label for="govtId" id="govtIdDropZone" class="file-dropzone">
+                                    <i data-lucide="upload-cloud" class="file-dropzone-icon w-10 h-10 text-gray-400 mb-3"></i>
+                                    <p class="file-dropzone-text text-sm text-gray-600"><strong class="text-blue-600 font-semibold">Click to upload</strong> or drag and drop</p>
+                                    <p class="hint-text text-xs text-gray-500 mt-1.5">PDF or Image (Max 5MB)</p>
+                                    <input type="file" id="govtId" name="govtId" accept="image/*,.pdf" class="hidden">
+                                </label>
+                                <div id="govtIdName" class="file-name-display hidden" title="">
+                                    <i data-lucide="file-check" class="w-5 h-5 text-blue-600"></i>
+                                    <span class="file-name-text"></span>
+                                    <span class="file-name-remove" data-input="govtId"><i data-lucide="x" class="w-3 h-3"></i></span>
+                                </div>
+                            </div>
+                            
+                            <!-- Links -->
+                            <div class="space-y-6 pt-6 border-t border-gray-200">
+                                <div>
+                                    <label for="linkedinUrl" class="form-label">LinkedIn Profile URL (Optional)</label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <i data-lucide="linkedin" class="w-5 h-5 text-gray-400"></i>
+                                        </div>
+                                        <input type="url" id="linkedinUrl" name="linkedinUrl" class="form-input pl-12" placeholder="httpss://linkedin.com/in/yourprofile">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="githubUrl" class="form-label">GitHub Profile URL (Optional)</label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <i data-lucide="github" class="w-5 h-5 text-gray-400"></i>
+                                        </div>
+                                        <input type="url" id="githubUrl" name="githubUrl" class="form-input pl-12" placeholder="httpss://github.com/yourusername">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="portfolioUrl" class="form-label">Portfolio URL (Optional)</label>
+                                    <div class="relative">
+                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <i data-lucide="link" class="w-5 h-5 text-gray-400"></i>
+                                        </div>
+                                        <input type="url" id="portfolioUrl" name="portfolioUrl" class="form-input pl-12" placeholder="httpss://yourportfolio.com">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Review & Submit -->
+                <div id="step-panel-4" class="step-panel hidden bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
+                    <h2 class="flex items-center gap-3 text-2xl font-bold text-gray-900 mb-8">
+                        <i data-lucide="check-circle" class="w-7 h-7 text-blue-600"></i>
+                        Review Your Application
+                    </h2>
+                    
+                    <div id="preview-content" class="space-y-8">
+                        <!-- Preview content will be injected here by JavaScript -->
+                        <p class="text-center text-gray-500">Generating preview...</p>
+                    </div>
+                </div>
+                
+                <!-- 
+                ============================================================
+                NEW: Unified Sticky Navigation
+                This single navigation block replaces all the old .step-navigation divs
+                The 'showStep' function now controls which buttons are visible.
+                ============================================================
+                -->
+                <div class="fixed bottom-0 left-0 lg:left-80 right-0 z-10 bg-white/90 backdrop-blur-sm p-4 border-t border-gray-200 shadow-top-lg">
+                   <div class="max-w-3xl mx-auto flex justify-between items-center">
+                        <!-- Previous / Edit Button -->
+                        <button type="button" id="global-prev-btn" class="btn btn-secondary hidden inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-blue-500">
+                            <i data-lucide="arrow-left" class="w-4 h-4"></i> Previous
+                        </button>
+                        <button type="button" id="global-edit-btn" class="btn btn-secondary hidden inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-blue-500">
+                            <i data-lucide="edit-2" class="w-4 h-4"></i> Back to Edit
+                        </button>
+                        
+                        <!-- Spacer for "Previous" only state -->
+                        <div id="global-nav-spacer" class="hidden"></div>
+                        
+                        <!-- Next / Review / Submit Buttons -->
+                        <div class="flex gap-3">
+                            <button type="button" id="global-download-btn" class="btn btn-secondary hidden inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-blue-500">
+                                <i data-lucide="download" class="w-4 h-4"></i> <span class="hidden sm:inline">Download</span>
+                            </button>
+                        
+                            <button type="button" id="global-next-btn" class="btn btn-primary hidden inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500">
+                                Next Step <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </button>
+                            <button type="button" id="global-review-btn" class="btn btn-primary hidden inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500">
+                                Review Application <i data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                            
+                            <button type="submit" id="submit-btn" 
+                                    class="btn btn-success hidden w-full sm:w-auto 
+                                    disabled:opacity-60 disabled:cursor-not-allowed
+                                    inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 text-white bg-green-600 hover:bg-green-700 focus:ring-green-500">
+                                <span class="button-text">Submit Application</span>
+                                <span class="button-spinner hidden"></span>
+                            </button>
+                        </div>
+                   </div>
+                </div>
+                
+            </form>
+        </main>
+
+    </div> <!-- End Main Container -->
+    
+    <!-- Confirmation Modal (Hidden by default) -->
+    <div id="confirmation-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ease-in-out">
+        <div class="modal-overlay absolute inset-0 bg-black bg-opacity-60"></div>
+        <div class="modal-content text-center">
+            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="check" class="w-10 h-10"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Application Submitted!</h3>
+            <p class="text-gray-600 mb-6">Your application has been sent successfully. We will get back to you soon.</p>
+            <button id="modal-close-btn" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                Track My Applications
+            </button>
+        </div>
     </div>
 
+
     <script>
+        // --- Globals for jsPDF ---
+        window.jsPDF = window.jspdf.jsPDF;
+        window.autoTable = window.jspdf.autoTable;
+
         // --- Utility Functions for Dynamic Sections ---
         let educationCounter = 0;
         let experienceCounter = 0;
-        let certificationCounter = 0; // New counter
+        let certificationCounter = 0;
+        
+        // --- REDESIGNED Base classes for dynamic form elements ---
+        const formInputClasses = "form-input block w-full rounded-xl border-gray-300 bg-white shadow-sm transition-all duration-200 ease-in-out placeholder:text-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20";
+        const formSelectClasses = "form-select block w-full rounded-xl border-gray-300 bg-white shadow-sm transition-all duration-200 ease-in-out placeholder:text-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20";
+        const formTextareaClasses = "form-textarea block w-full rounded-xl border-gray-300 bg-white shadow-sm transition-all duration-200 ease-in-out placeholder:text-gray-400 min-h-[100px]";
+        const formLabelClasses = "form-label block text-sm font-semibold text-gray-800 mb-1.5";
+        const requiredSpan = `<span class="text-red-600 ml-0.5">*</span>`;
+        
+        // --- REDESIGNED File uploader classes ---
+        const fileDropZoneClasses = "file-dropzone mt-1 !p-4 flex flex-col items-center justify-center w-full p-6 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-gray-50 transition-colors duration-200";
+        const fileDropZoneIconClasses = "file-dropzone-icon !w-8 !h-8 !mb-2 w-10 h-10 text-gray-400 mb-3";
+        const fileDropZoneTextClasses = "file-dropzone-text !text-xs text-sm text-gray-600";
+        const fileNameDisplayClasses = "file-name-display hidden items-center gap-2.5 bg-blue-50 text-blue-800 rounded-lg px-4 py-2.5 text-sm font-medium mt-3 border border-blue-100";
+        const fileNameRemoveClasses = "file-name-remove w-5 h-5 rounded-full bg-blue-200 text-blue-800 flex items-center justify-center cursor-pointer hover:bg-blue-300 transition-all";
+        const hintTextClasses = "hint-text text-xs text-gray-500 mt-1.5";
+
 
         // Function to create and add an education block
         function addEducationBlock(data = {}) {
             educationCounter++;
             const container = document.getElementById('education-container');
             const div = document.createElement('div');
-            div.className = 'dynamic-block education-block';
+            div.className = 'dynamic-block p-5'; // Use new .dynamic-block style
             div.dataset.index = educationCounter;
             div.innerHTML = `
-                <button type="button" class="remove-btn" onclick="removeBlock(this)" aria-label="Remove education entry"><i class="fas fa-times"></i></button>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                <button type="button" class="remove-btn absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 text-gray-600 hover:bg-red-100 hover:text-red-600 transition-all" onclick="removeBlock(this)" aria-label="Remove education entry">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-5">
                     <div>
-                        <label class="form-label">Type <span class="required">*</span></label>
-                        <select name="education_${educationCounter}_type" required class="form-select">
+                        <label class="${formLabelClasses}">Type ${requiredSpan}</label>
+                        <select name="education_${educationCounter}_type" required class="${formSelectClasses}">
                             <option value="">Select Type</option>
                             <option value="High School">High School</option>
                             <option value="Diploma">Diploma</option>
@@ -437,30 +685,37 @@
                         </select>
                     </div>
                     <div>
-                        <label class="form-label">Institute Name <span class="required">*</span></label>
-                        <input type="text" name="education_${educationCounter}_institute" required class="form-input" placeholder="e.g., University Name">
+                        <label class="${formLabelClasses}">Institute Name ${requiredSpan}</label>
+                        <input type="text" name="education_${educationCounter}_institute" required class="${formInputClasses}" placeholder="e.g., University Name">
                     </div>
                     <div>
-                        <label class="form-label">Stream/Major <span class="required">*</span></label>
-                        <input type="text" name="education_${educationCounter}_stream" required class="form-input" placeholder="e.g., B.Tech CSE">
+                        <label class="${formLabelClasses}">Stream/Major ${requiredSpan}</label>
+                        <input type="text" name="education_${educationCounter}_stream" required class="${formInputClasses}" placeholder="e.g., B.Tech CSE">
                     </div>
                     <div>
-                        <label class="form-label">Score/GPA <span class="required">*</span></label>
-                        <input type="text" name="education_${educationCounter}_score" required class="form-input" placeholder="e.g., 8.5 CGPA or 85%">
+                        <label class="${formLabelClasses}">Score/GPA ${requiredSpan}</label>
+                        <input type="text" name="education_${educationCounter}_score" required class="${formInputClasses}" placeholder="e.g., 8.5 CGPA or 85%">
                     </div>
                     <div class="md:col-span-2">
-                        <label class="form-label">Certificate/Marksheet (Optional)</label>
-                        <div class="file-input-wrapper mt-1">
+                        <label class="${formLabelClasses}">Certificate/Marksheet (Optional)</label>
+                        <label for="education_certificate_${educationCounter}" class="${fileDropZoneClasses}">
+                            <i data-lucide="upload-cloud" class="${fileDropZoneIconClasses}"></i>
+                            <p class="${fileDropZoneTextClasses}"><strong class="text-blue-600 font-semibold">Click to upload</strong> or drag and drop</p>
                             <input type="file" id="education_certificate_${educationCounter}" name="education_certificate_${educationCounter}" accept="image/*,.pdf" class="hidden">
-                            <label for="education_certificate_${educationCounter}" class="file-input-label"><i class="fas fa-upload"></i> Upload File</label>
-                            <span id="education_certificate_name_${educationCounter}" class="file-name-display" title=""></span>
+                        </label>
+                        <div id="education_certificate_name_${educationCounter}" class="${fileNameDisplayClasses}" title="">
+                            <i data-lucide="file-text" class="w-5 h-5 text-blue-600"></i>
+                            <span class="file-name-text"></span>
+                            <span class="${fileNameRemoveClasses}" data-input="education_certificate_${educationCounter}"><i data-lucide="x" class="w-3 h-3"></i></span>
                         </div>
-                        <p class="hint-text">PDF or Image. Max 5MB.</p>
+                        <p class="${hintTextClasses}">PDF or Image. Max 5MB.</p>
                     </div>
                 </div>
             `;
             container.appendChild(div);
+            lucide.createIcons();
             addFileDisplayListener(`education_certificate_${educationCounter}`);
+            setupFormValidation(div);
         }
 
         // Function to create and add an experience block
@@ -468,129 +723,642 @@
             experienceCounter++;
             const container = document.getElementById('experience-container');
             const div = document.createElement('div');
-            div.className = 'dynamic-block experience-block';
+            div.className = 'dynamic-block p-5';
             div.dataset.index = experienceCounter;
             div.innerHTML = `
-                <button type="button" class="remove-btn" onclick="removeBlock(this)" aria-label="Remove experience entry"><i class="fas fa-times"></i></button>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                <button type="button" class="remove-btn absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 text-gray-600 hover:bg-red-100 hover:text-red-600 transition-all" onclick="removeBlock(this)" aria-label="Remove experience entry">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-5">
                     <div>
-                        <label class="form-label">Job Title <span class="required">*</span></label>
-                        <input type="text" name="experience_${experienceCounter}_title" required class="form-input" placeholder="e.g., Software Engineer Intern">
+                        <label class="${formLabelClasses}">Job Title ${requiredSpan}</label>
+                        <input type="text" name="experience_${experienceCounter}_title" required class="${formInputClasses}" placeholder="e.g., Software Engineer Intern">
                     </div>
                     <div>
-                        <label class="form-label">Company Name <span class="required">*</span></label>
-                        <input type="text" name="experience_${experienceCounter}_company" required class="form-input" placeholder="e.g., Tech Corp">
+                        <label class="${formLabelClasses}">Company Name ${requiredSpan}</label>
+                        <input type="text" name="experience_${experienceCounter}_company" required class="${formInputClasses}" placeholder="e.g., Tech Corp">
                     </div>
                     <div class="md:col-span-2">
-                        <label class="form-label">Description (Optional)</label>
-                        <textarea name="experience_${experienceCounter}_description" rows="2" class="form-textarea" placeholder="Describe your responsibilities..."></textarea>
+                        <label class="${formLabelClasses}">Description (Optional)</label>
+                        <textarea name="experience_${experienceCounter}_description" rows="3" class="${formTextareaClasses}" placeholder="Describe your responsibilities..."></textarea>
                     </div>
                     <div class="md:col-span-2">
-                        <label class="form-label">Experience/Relieving Letter (Optional)</label>
-                        <div class="file-input-wrapper mt-1">
+                        <label class="${formLabelClasses}">Experience/Relieving Letter (Optional)</label>
+                        <label for="experience_certificate_${experienceCounter}" class="${fileDropZoneClasses}">
+                            <i data-lucide="upload-cloud" class="${fileDropZoneIconClasses}"></i>
+                            <p class="${fileDropZoneTextClasses}"><strong class="text-blue-600 font-semibold">Click to upload</strong> or drag and drop</p>
                             <input type="file" id="experience_certificate_${experienceCounter}" name="experience_certificate_${experienceCounter}" accept="image/*,.pdf" class="hidden">
-                            <label for="experience_certificate_${experienceCounter}" class="file-input-label"><i class="fas fa-upload"></i> Upload File</label>
-                            <span id="experience_certificate_name_${experienceCounter}" class="file-name-display" title=""></span>
+                        </label>
+                        <div id="experience_certificate_name_${experienceCounter}" class="${fileNameDisplayClasses}" title="">
+                            <i data-lucide="file-text" class="w-5 h-5 text-blue-600"></i>
+                            <span class="file-name-text"></span>
+                            <span class="${fileNameRemoveClasses}" data-input="experience_certificate_${experienceCounter}"><i data-lucide="x" class="w-3 h-3"></i></span>
                         </div>
-                         <p class="hint-text">PDF or Image. Max 5MB.</p>
+                         <p class="${hintTextClasses}">PDF or Image. Max 5MB.</p>
                     </div>
                 </div>
             `;
             container.appendChild(div);
+            lucide.createIcons();
             addFileDisplayListener(`experience_certificate_${experienceCounter}`);
+            setupFormValidation(div);
         }
 
-        // *** NEW *** Function to create and add a certification block
+        // Function to create and add a certification block
         function addCertificationBlock(data = {}) {
             certificationCounter++;
             const container = document.getElementById('certification-container');
             const div = document.createElement('div');
-            div.className = 'dynamic-block certification-block'; // New class
+            div.className = 'dynamic-block p-5';
             div.dataset.index = certificationCounter;
             div.innerHTML = `
-                <button type="button" class="remove-btn" onclick="removeBlock(this)" aria-label="Remove certification entry"><i class="fas fa-times"></i></button>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-3">
+                <button type="button" class="remove-btn absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 text-gray-600 hover:bg-red-100 hover:text-red-600 transition-all" onclick="removeBlock(this)" aria-label="Remove certification entry">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-5">
                     <div>
-                        <label class="form-label">Certification Name <span class="required">*</span></label>
-                        <input type="text" name="certification_${certificationCounter}_name" required class="form-input" placeholder="e.g., AWS Certified Cloud Practitioner">
+                        <label class="${formLabelClasses}">Certification Name ${requiredSpan}</label>
+                        <input type="text" name="certification_${certificationCounter}_name" required class="${formInputClasses}" placeholder="e.g., AWS Certified Cloud Practitioner">
                     </div>
                     <div>
-                        <label class="form-label">Issuing Provider <span class="required">*</span></label>
-                        <input type="text" name="certification_${certificationCounter}_provider" required class="form-input" placeholder="e.g., Amazon Web Services">
+                        <label class="${formLabelClasses}">Issuing Provider ${requiredSpan}</label>
+                        <input type="text" name="certification_${certificationCounter}_provider" required class="${formInputClasses}" placeholder="e.g., Amazon Web Services">
                     </div>
                     <div>
-                        <label class="form-label">Credential ID (Optional)</label>
-                        <input type="text" name="certification_${certificationCounter}_id" class="form-input" placeholder="e.g., ABC-123-XYZ">
+                        <label class="${formLabelClasses}">Credential ID (Optional)</label>
+                        <input type="text" name="certification_${certificationCounter}_id" class="${formInputClasses}" placeholder="e.g., ABC-123-XYZ">
                     </div>
                     <div>
-                        <label class="form-label">Date Issued (Optional)</label>
-                        <input type="date" name="certification_${certificationCounter}_date" class="form-input">
+                        <label class="${formLabelClasses}">Date Issued (Optional)</label>
+                        <input type="date" name="certification_${certificationCounter}_date" class="${formInputClasses}">
                     </div>
                     <div class="md:col-span-2">
-                        <label class="form-label">Certificate File (Optional)</label>
-                        <div class="file-input-wrapper mt-1">
+                        <label class="${formLabelClasses}">Certificate File (Optional)</label>
+                        <label for="certification_file_${certificationCounter}" class="${fileDropZoneClasses}">
+                            <i data-lucide="upload-cloud" class="${fileDropZoneIconClasses}"></i>
+                            <p class="${fileDropZoneTextClasses}"><strong class="text-blue-600 font-semibold">Click to upload</strong> or drag and drop</p>
                             <input type="file" id="certification_file_${certificationCounter}" name="certification_file_${certificationCounter}" accept="image/*,.pdf" class="hidden">
-                            <label for="certification_file_${certificationCounter}" class="file-input-label"><i class="fas fa-upload"></i> Upload Certificate</label>
-                            <span id="certification_file_name_${certificationCounter}" class="file-name-display" title=""></span>
+                        </label>
+                        <div id="certification_file_name_${certificationCounter}" class="${fileNameDisplayClasses}" title="">
+                            <i data-lucide="file-text" class="w-5 h-5 text-blue-600"></i>
+                            <span class="file-name-text"></span>
+                            <span class="${fileNameRemoveClasses}" data-input="certification_file_${certificationCounter}"><i data-lucide="x" class="w-3 h-3"></i></span>
                         </div>
-                         <p class="hint-text">PDF or Image. Max 5MB.</p>
+                         <p class="${hintTextClasses}">PDF or Image. Max 5MB.</p>
                     </div>
                 </div>
             `;
             container.appendChild(div);
+            lucide.createIcons();
             addFileDisplayListener(`certification_file_${certificationCounter}`);
+            setupFormValidation(div);
         }
 
         // Generic function to remove any dynamic block
         function removeBlock(button) {
-            button.closest(`.dynamic-block`).remove();
+            const block = button.closest('.dynamic-block');
+            block.style.opacity = 0;
+            block.style.transform = 'translateY(-10px)';
+            setTimeout(() => {
+                block.remove();
+            }, 300);
         }
 
         // Function to update the file name display when a file is selected
         function addFileDisplayListener(inputId) {
             const input = document.getElementById(inputId);
-            // Derive the span ID dynamically
-            const nameSpanId = inputId.replace(/certificate_|file_/, '') + '_name_' + inputId.match(/\d+$/)[0];
-            const nameSpan = document.getElementById(nameSpanId);
-
-            if (input && nameSpan) {
-                input.addEventListener('change', (e) => {
-                    if (e.target.files.length > 0) {
-                        const fileName = e.target.files[0].name;
-                        nameSpan.textContent = fileName;
-                        nameSpan.title = fileName; // Tooltip for long names
-                    } else {
-                        nameSpan.textContent = '';
-                        nameSpan.title = '';
-                    }
-                });
+            if (!input) return;
+            
+            let nameSpanId;
+            if (inputId.includes('education_certificate_')) {
+                nameSpanId = `education_certificate_name_${inputId.match(/\d+$/)[0]}`;
+            } else if (inputId.includes('experience_certificate_')) {
+                nameSpanId = `experience_certificate_name_${inputId.match(/\d+$/)[0]}`;
+            } else if (inputId.includes('certification_file_')) {
+                nameSpanId = `certification_file_name_${inputId.match(/\d+$/)[0]}`;
             } else {
-                 // console.warn(`Could not find input or span for ID: ${inputId} (Span ID tried: ${nameSpanId})`);
+                nameSpanId = inputId + 'Name'; // For passportPhoto, resume, govtId
+            }
+            
+            const nameSpan = document.getElementById(nameSpanId);
+            if (!nameSpan) return;
+
+            const textSpan = nameSpan.querySelector('.file-name-text');
+            
+            input.addEventListener('change', (e) => {
+                handleFileChange(input, nameSpan, textSpan, e.target.files);
+            });
+        }
+        
+        // Handle file change (from input or drop)
+        function handleFileChange(input, nameSpan, textSpan, files) {
+            if (files.length > 0) {
+                const fileName = files[0].name;
+                textSpan.textContent = fileName.length > 30 ? `${fileName.substring(0, 27)}...` : fileName;
+                nameSpan.title = fileName;
+                nameSpan.classList.remove('hidden');
+                nameSpan.classList.add('inline-flex');
+                
+                // Handle image preview for passport photo
+                if (input.id === 'passportPhoto' && files[0].type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    const preview = document.getElementById('passportPhotoPreview');
+                    reader.onload = (event) => { preview.src = event.target.result; }
+                    reader.readAsDataURL(files[0]);
+                }
+            } else {
+                nameSpan.classList.add('hidden');
+                nameSpan.classList.remove('inline-flex');
+                textSpan.textContent = '';
+                nameSpan.title = '';
             }
         }
-
-
-        // Function to display messages (loading, success, error)
-         function showMessage(divElement, msg, type = 'info') {
-             const textSpan = divElement.querySelector('.message-text') || divElement; // Handle divs with/without inner span
-             const iconElement = divElement.querySelector('.message-icon');
+        
+        // Function to display messages
+        function showMessage(divElement, msg, type = 'info') {
+             const textSpan = divElement.querySelector('.message-text') || divElement;
+             const iconElement = divElement.querySelector('i'); // Lucide icon
 
              textSpan.textContent = msg;
-             divElement.classList.remove('error', 'success', 'info', 'show'); // Reset classes
-             if (iconElement) iconElement.className = 'message-icon fas'; // Reset icon
+             divElement.classList.remove('error', 'success', 'info', 'show', 'flex', 'hidden', 'bg-red-100', 'border', 'border-red-200', 'text-red-800', 'bg-green-100', 'border-green-200', 'text-green-800', 'bg-blue-100', 'border-blue-200', 'text-blue-800');
+             if (iconElement) iconElement.removeAttribute('data-lucide');
 
              if (!msg) {
-                 // Keep it hidden
+                 divElement.classList.add('hidden');
              } else {
-                 divElement.classList.add('show', type); // Add type and show classes
+                 divElement.classList.add('show', 'flex', type);
                   if (iconElement) {
-                      if (type === 'error') iconElement.classList.add('fa-exclamation-triangle');
-                      else if (type === 'success') iconElement.classList.add('fa-check-circle');
-                      else iconElement.classList.add('fa-info-circle');
+                      let iconName = 'info';
+                      if (type === 'error') {
+                        iconName = 'alert-triangle';
+                        divElement.classList.add('bg-red-100', 'border', 'border-red-200', 'text-red-800');
+                      } else if (type === 'success') {
+                        iconName = 'check-circle';
+                        divElement.classList.add('bg-green-100', 'border', 'border-green-200', 'text-green-800');
+                      } else {
+                        iconName = 'info';
+                        divElement.classList.add('bg-blue-100', 'border', 'border-blue-200', 'text-blue-800');
+                      }
+                      iconElement.setAttribute('data-lucide', iconName);
+                      lucide.createIcons({
+                        nodes: [iconElement]
+                      });
                   }
              }
-         }
+        }
+        
+        // --- Drag and Drop File Upload ---
+        function setupDragAndDrop(dropZoneId, inputId) {
+            const dropZone = document.getElementById(dropZoneId);
+            const fileInput = document.getElementById(inputId);
+            const nameSpan = document.getElementById(inputId + 'Name');
+            const textSpan = nameSpan ? nameSpan.querySelector('.file-name-text') : null;
 
+            if (!dropZone || !fileInput) return;
+
+            ['dragover', 'dragenter'].forEach(eventName => {
+                dropZone.addEventListener(eventName, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.add('drag-over');
+                });
+            });
+
+            ['dragleave', 'dragend'].forEach(eventName => {
+                dropZone.addEventListener(eventName, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.remove('drag-over');
+                });
+            });
+
+            dropZone.addEventListener('drop', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('drag-over');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    if(nameSpan && textSpan) {
+                         handleFileChange(fileInput, nameSpan, textSpan, files);
+                    }
+                    validateInput(fileInput);
+                }
+            });
+        }
+        
+        // --- Inline Form Validation ---
+        function validateInput(el) {
+            if (el.checkValidity()) {
+                el.classList.remove('invalid');
+                el.classList.add('valid');
+                return true;
+            } else {
+                el.classList.remove('valid');
+                el.classList.add('invalid');
+                return false;
+            }
+        }
+        
+        function validateStep(stepNumber, submitMessageDiv) {
+            const panel = document.getElementById(`step-panel-${stepNumber}`);
+            if (!panel) return false;
+            
+            // Find all required inputs *only* within the current step panel
+            const inputs = panel.querySelectorAll('input[required], select[required], textarea[required]');
+            let isStepValid = true;
+            
+            inputs.forEach(input => {
+                const isValid = validateInput(input);
+                if (!isValid) {
+                    isStepValid = false;
+                }
+            });
+
+            // Special check for Step 2: Ensure at least one education block exists
+            if (stepNumber === 2) {
+                if (panel.querySelectorAll('#education-container .dynamic-block').length === 0) {
+                    showMessage(submitMessageDiv, 'Please add at least one education entry.', 'error');
+                    submitMessageDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    isStepValid = false;
+                }
+            }
+            
+            if (!isStepValid) {
+                // Only show this message if the specific education error wasn't already shown
+                if (submitMessageDiv.textContent.trim() === '') {
+                    showMessage(submitMessageDiv, 'Please fill out all required fields marked with *', 'error');
+                }
+                 const firstInvalid = panel.querySelector('.invalid');
+                 if (firstInvalid) {
+                    firstInvalid.focus();
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                 }
+            } else {
+                 showMessage(submitMessageDiv, '', 'info'); // Clear error
+            }
+
+            return isStepValid;
+        }
+
+        function setupFormValidation(container) {
+            const inputs = container.querySelectorAll('input[required], select[required], textarea[required]');
+            inputs.forEach(input => {
+                input.addEventListener('blur', () => { validateInput(input); });
+                input.addEventListener('input', () => {
+                    // Clear validation state on input
+                    input.classList.remove('invalid', 'valid');
+                });
+            });
+        }
+        
+        // --- Stepper Logic ---
+        let currentStep = 1;
+        const totalSteps = 4;
+        const stepIcons = {
+            1: 'user',
+            2: 'briefcase',
+            3: 'paperclip',
+            4: 'check-circle'
+        };
+        const stepNames = {
+            1: 'Personal Info',
+            2: 'Experience',
+            3: 'Documents',
+            4: 'Review & Submit'
+        };
+
+        function showStep(stepNumber) {
+            if (stepNumber < 1 || stepNumber > totalSteps) return;
+
+            // 1. Hide all panels, show the current one
+            document.querySelectorAll('.step-panel').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+            document.getElementById(`step-panel-${stepNumber}`).classList.remove('hidden');
+
+            // 2. Update Mobile Stepper (Original logic)
+            for (let i = 1; i <= totalSteps; i++) {
+                const stepNav = document.getElementById(`step-nav-${i}`);
+                const circle = stepNav.querySelector('.step-circle');
+                stepNav.classList.remove('active', 'completed', 'text-blue-600', 'text-gray-500');
+                circle.classList.remove('bg-blue-600', 'text-white', 'bg-green-500', 'bg-gray-200', 'text-gray-600');
+
+                if (i < stepNumber) {
+                    stepNav.classList.add('completed', 'text-gray-500');
+                    circle.classList.add('bg-green-500', 'text-white');
+                    circle.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i>`;
+                } else if (i === stepNumber) {
+                    stepNav.classList.add('active', 'text-blue-600');
+                    circle.classList.add('bg-blue-600', 'text-white');
+                    circle.textContent = i;
+                } else {
+                    stepNav.classList.add('text-gray-500');
+                    circle.classList.add('bg-gray-200', 'text-gray-600');
+                    circle.textContent = i;
+                }
+            }
+            
+            // 3. Update Desktop Sidebar Stepper (New Logic)
+            for (let i = 1; i <= totalSteps; i++) {
+                const step = document.getElementById(`sidebar-step-${i}`);
+                const icon = step.querySelector('.step-icon');
+                const status = step.querySelector('.step-text .status');
+                step.classList.remove('active', 'completed');
+                
+                if (i < stepNumber) {
+                    step.classList.add('completed');
+                    icon.innerHTML = `<i data-lucide="check" class="w-5 h-5"></i>`;
+                    status.textContent = 'Completed';
+                } else if (i === stepNumber) {
+                    step.classList.add('active');
+                    icon.innerHTML = `<i data-lucide="${stepIcons[i]}" class="w-5 h-5"></i>`;
+                    status.textContent = 'In Progress...';
+                } else {
+                    icon.innerHTML = `<i data-lucide="${stepIcons[i]}" class="w-5 h-5"></i>`;
+                    status.textContent = 'Pending';
+                }
+            }
+            
+            // 4. Update Main Progress Bar (New Logic)
+            const progressPercent = (stepNumber / totalSteps) * 100;
+            const bar = document.getElementById('main-progress-bar');
+            const progressText = document.getElementById('progress-text');
+            const progressPercentText = document.getElementById('progress-percent');
+            
+            if (bar) bar.style.width = `${progressPercent}%`;
+            if (progressText) progressText.textContent = `Step ${stepNumber} of ${totalSteps}: ${stepNames[stepNumber]}`;
+            if (progressPercentText) progressPercentText.textContent = `${progressPercent}%`;
+
+            // 5. Update Unified Navigation Buttons (New Logic)
+            const prevBtn = document.getElementById('global-prev-btn');
+            const editBtn = document.getElementById('global-edit-btn');
+            const nextBtn = document.getElementById('global-next-btn');
+            const reviewBtn = document.getElementById('global-review-btn');
+            const downloadBtn = document.getElementById('global-download-btn');
+            const submitBtn = document.getElementById('submit-btn');
+            const spacer = document.getElementById('global-nav-spacer');
+            
+            // Hide all
+            [prevBtn, editBtn, nextBtn, reviewBtn, downloadBtn, submitBtn, spacer].forEach(b => b.classList.add('hidden'));
+
+            if (stepNumber === 1) {
+                spacer.classList.remove('hidden'); // Show spacer to push next button to the right
+                nextBtn.classList.remove('hidden');
+            } else if (stepNumber === 2) {
+                prevBtn.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+            } else if (stepNumber === 3) {
+                prevBtn.classList.remove('hidden');
+                reviewBtn.classList.remove('hidden');
+            } else if (stepNumber === 4) {
+                editBtn.classList.remove('hidden');
+                downloadBtn.classList.remove('hidden');
+                submitBtn.classList.remove('hidden');
+            }
+
+            lucide.createIcons(); // Re-render all icons
+            
+            currentStep = stepNumber;
+            window.scrollTo(0, 0); // Scroll to top on step change
+        }
+        
+        // --- Preview Logic ---
+        function populatePreview() {
+            const previewContainer = document.getElementById('preview-content');
+            const formData = new FormData(document.getElementById('application-form'));
+            
+            const val = (id) => formData.get(id) || '<span class="text-gray-400">N/A</span>';
+            const fileVal = (id) => {
+                const fileInput = document.getElementById(id);
+                return (fileInput.files.length > 0) ? fileInput.files[0].name : '<span class="text-gray-400">N/A</span>';
+            }
+            
+            const renderKV = (label, value) => `
+                <div class="preview-item text-sm">
+                    <dt class="font-semibold text-gray-500 uppercase tracking-wide text-xs">${label}</dt>
+                    <dd class="text-gray-900 text-base mt-0.5">${value}</dd>
+                </div>`;
+            
+            // New: Card-based preview sections
+            const renderSection = (title, icon, content) => `
+                <div class="preview-section border border-gray-200 rounded-xl overflow-hidden">
+                    <h3 class="flex items-center gap-3 text-lg font-semibold text-gray-800 bg-gray-50 p-4 border-b border-gray-200">
+                        <i data-lucide="${icon}" class="w-5 h-5 text-blue-600"></i>
+                        ${title}
+                    </h3>
+                    <div class="preview-content p-5">
+                        ${content}
+                    </div>
+                </div>`;
+
+            let personalInfo = `
+                <dl class="preview-grid grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                    ${renderKV('Full Name', `${val('firstName')} ${val('lastName')}`)}
+                    ${renderKV('Email', val('email'))}
+                    ${renderKV('Phone', val('phone'))}
+                    ${renderKV('College', val('college'))}
+                    ${renderKV('Department', val(new FormData(document.getElementById('application-form')).get('department')))}
+                    ${renderKV('Roll Number', val('rollNumber'))}
+                    ${renderKV('Passport Photo', fileVal('passportPhoto'))}
+                </dl>`;
+            
+            let addressInfo = `
+                <dl class="preview-grid grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                    ${renderKV('Street', val('street'))}
+                    ${renderKV('City', val('city'))}
+                    ${renderKV('State', val('state'))}
+                    ${renderKV('ZIP Code', val('zip'))}
+                    ${renderKV('Country', val('country'))}
+                </dl>`;
+
+            let eduContent = '';
+            const eduBlocks = document.querySelectorAll('#education-container .dynamic-block');
+            if (eduBlocks.length > 0) {
+                eduContent = `<table class="preview-table w-full text-left text-sm">
+                    <thead class="bg-gray-50"><tr>
+                        <th class="p-2 font-medium text-gray-600">Type</th>
+                        <th class="p-2 font-medium text-gray-600">Institute</th>
+                        <th class="p-2 font-medium text-gray-600">Stream</th>
+                        <th class="p-2 font-medium text-gray-600">Score</th>
+                    </tr></thead><tbody>`;
+                eduBlocks.forEach(block => {
+                    const i = block.dataset.index;
+                    eduContent += `<tr class="border-b border-gray-100">
+                        <td class="p-2">${val(`education_${i}_type`)}</td>
+                        <td class="p-2">${val(`education_${i}_institute`)}</td>
+                        <td class="p-2">${val(`education_${i}_stream`)}</td>
+                        <td class="p-2">${val(`education_${i}_score`)}</td>
+                    </tr>`;
+                });
+                eduContent += `</tbody></table>`;
+            } else {
+                eduContent = `<p class="text-gray-500 text-sm">No education provided.</p>`;
+            }
+            
+            let expContent = '';
+            const expBlocks = document.querySelectorAll('#experience-container .dynamic-block');
+            if (expBlocks.length > 0) {
+                expContent = `<table class="preview-table w-full text-left text-sm">
+                    <thead class="bg-gray-50"><tr>
+                        <th class="p-2 font-medium text-gray-600">Title</th>
+                        <th class="p-2 font-medium text-gray-600">Company</th>
+                        <th class="p-2 font-medium text-gray-600">Description</th>
+                    </tr></thead><tbody>`;
+                expBlocks.forEach(block => {
+                    const i = block.dataset.index;
+                    expContent += `<tr class="border-b border-gray-100">
+                        <td class="p-2">${val(`experience_${i}_title`)}</td>
+                        <td class="p-2">${val(`experience_${i}_company`)}</td>
+                        <td class="p-2">${val(`experience_${i}_description`)}</td>
+                    </tr>`;
+                });
+                expContent += `</tbody></table>`;
+            } else {
+                expContent = `<p class="text-gray-500 text-sm">No experience provided.</p>`;
+            }
+
+            let certContent = '';
+            const certBlocks = document.querySelectorAll('#certification-container .dynamic-block');
+            if (certBlocks.length > 0) {
+                certContent = `<table class="preview-table w-full text-left text-sm">
+                    <thead class="bg-gray-50"><tr>
+                        <th class="p-2 font-medium text-gray-600">Name</th>
+                        <th class="p-2 font-medium text-gray-600">Provider</th>
+                        <th class="p-2 font-medium text-gray-600">ID</th>
+                        <th class="p-2 font-medium text-gray-600">Date</th>
+                    </tr></thead><tbody>`;
+                certBlocks.forEach(block => {
+                    const i = block.dataset.index;
+                    certContent += `<tr class="border-b border-gray-100">
+                        <td class="p-2">${val(`certification_${i}_name`)}</td>
+                        <td class="p-2">${val(`certification_${i}_provider`)}</td>
+                        <td class="p-2">${val(`certification_${i}_id`)}</td>
+                        <td class="p-2">${val(`certification_${i}_date`)}</td>
+                    </tr>`;
+                });
+                certContent += `</tbody></table>`;
+            } else {
+                certContent = `<p class="text-gray-500 text-sm">No certifications provided.</p>`;
+            }
+            
+            let docsContent = `
+                <dl class="preview-grid grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                    ${renderKV('Resume/CV', fileVal('resume'))}
+                    ${renderKV('Government ID', `${val('govtIdType') ? val('govtIdType') + ' - ' : ''} ${fileVal('govtId')}`)}
+                    ${renderKV('LinkedIn', val('linkedinUrl'))}
+                    ${renderKV('GitHub', val('githubUrl'))}
+                    ${renderKV('Portfolio', val('portfolioUrl'))}
+                    ${renderKV('Extracurricular', val('extracurricular'))}
+                </dl>`;
+
+            previewContainer.innerHTML = `
+                ${renderSection('Personal Information', 'user', personalInfo)}
+                ${renderSection('Address', 'map-pin', addressInfo)}
+                ${renderSection('Education', 'graduation-cap', eduContent)}
+                ${renderSection('Work Experience', 'briefcase', expContent)}
+                ${renderSection('Certifications', 'award', certContent)}
+                ${renderSection('Documents & Links', 'paperclip', docsContent)}
+            `;
+            
+            lucide.createIcons();
+        }
+
+        // --- Download PDF Logic ---
+        async function downloadPDF() {
+            const { jsPDF } = window.jsPDF;
+            const doc = new jsPDF();
+            const formData = new FormData(document.getElementById('application-form'));
+            const val = (id) => formData.get(id) || 'N/A';
+            const jobTitle = document.getElementById('job-title-header-main').textContent.trim();
+
+            doc.setFontSize(18);
+            doc.text(`Application for: ${jobTitle}`, 14, 22);
+            
+            doc.setFontSize(14);
+            doc.text('Personal Information', 14, 32);
+            doc.autoTable({
+                startY: 36,
+                theme: 'grid',
+                body: [
+                    ['Full Name', `${val('firstName')} ${val('lastName')}`],
+                    ['Email', val('email')],
+                    ['Phone', val('phone')],
+                    ['College', val('college')],
+                    ['Department', val('department')],
+                    ['Roll Number', val('rollNumber')],
+                ],
+                styles: { fontSize: 10 },
+            });
+
+            let lastY = doc.lastAutoTable.finalY + 10;
+            
+            doc.setFontSize(14);
+            doc.text('Address', 14, lastY);
+            doc.autoTable({
+                startY: lastY + 4,
+                theme: 'grid',
+                body: [
+                    ['Street', val('street')],
+                    ['City', val('city')],
+                    ['State', val('state')],
+                    ['ZIP Code', val('zip')],
+                    ['Country', val('country')],
+                ],
+                styles: { fontSize: 10 },
+            });
+            lastY = doc.lastAutoTable.finalY + 10;
+            
+            doc.setFontSize(14);
+            doc.text('Education', 14, lastY);
+            const eduData = Array.from(document.querySelectorAll('#education-container .dynamic-block')).map(block => {
+                const i = block.dataset.index;
+                return [val(`education_${i}_type`), val(`education_${i}_institute`), val(`education_${i}_stream`), val(`education_${i}_score`)]
+            });
+            doc.autoTable({
+                startY: lastY + 4,
+                theme: 'grid',
+                head: [['Type', 'Institute', 'Stream/Major', 'Score/GPA']],
+                body: eduData,
+                styles: { fontSize: 10 },
+            });
+            lastY = doc.lastAutoTable.finalY + 10;
+
+            const expBlocks = document.querySelectorAll('#experience-container .dynamic-block');
+            if (expBlocks.length > 0) {
+                doc.setFontSize(14);
+                doc.text('Work Experience', 14, lastY);
+                const expData = Array.from(expBlocks).map(block => {
+                    const i = block.dataset.index;
+                    return [val(`experience_${i}_title`), val(`experience_${i}_company`), val(`experience_${i}_description`)]
+                });
+                doc.autoTable({
+                    startY: lastY + 4,
+                    theme: 'grid',
+                    head: [['Title', 'Company', 'Description']],
+                    body: expData,
+                    styles: { fontSize: 10 },
+                });
+                lastY = doc.lastAutoTable.finalY + 10;
+            }
+
+            doc.setFontSize(14);
+            doc.text('Links & Other', 14, lastY);
+             doc.autoTable({
+                startY: lastY + 4,
+                theme: 'grid',
+                body: [
+                    ['LinkedIn', val('linkedinUrl')],
+                    ['GitHub', val('githubUrl')],
+                    ['Portfolio', val('portfolioUrl')],
+                    ['Extracurricular', val('extracurricular')],
+                ],
+                styles: { fontSize: 10 },
+            });
+            
+            doc.save(`Application - ${val('firstName')} ${val('lastName')} - ${jobTitle}.pdf`);
+        }
 
         // --- Main Page Logic ---
         document.addEventListener('DOMContentLoaded', async () => {
@@ -601,32 +1369,39 @@
             const submitBtn = document.getElementById('submit-btn');
             const btnText = submitBtn.querySelector('.button-text');
             const btnSpinner = submitBtn.querySelector('.button-spinner');
-            const jobTitleHeader = document.getElementById('job-title-header');
+            
+            // All header elements
+            const jobTitleHeaderMain = document.getElementById('job-title-header-main');
+            const jobTitleHeaderSidebar = document.getElementById('job-title-header-sidebar');
+            const jobTitleHeaderMobile = document.getElementById('job-title-header-mobile');
             const jobDetailsHeader = document.getElementById('job-details-header');
+            const jobDetailsHeaderMobile = document.getElementById('job-details-header-mobile');
+
             const emailInput = document.getElementById('email');
             const collegeInput = document.getElementById('college');
+            const confirmationModal = document.getElementById('confirmation-modal');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+
+            lucide.createIcons(); // Initial icon render
 
             let jobId = null;
 
-            // --- 1. Get Job ID from URL ---
             const urlParams = new URLSearchParams(window.location.search);
             jobId = urlParams.get('jobId');
 
             if (!jobId) {
                 showMessage(loadingMessageDiv, 'Error: Job ID not found in URL.', 'error');
                 loadingStateDiv.style.display = 'none';
-                jobDetailsHeader.textContent = 'Invalid Job ID.';
                 return;
             }
 
-            // --- 2. Fetch User Data and Job Details ---
             const token = localStorage.getItem('studentToken');
             const userString = localStorage.getItem('studentUser');
 
             if (!token || !userString) {
                 showMessage(loadingMessageDiv, 'You must be logged in to apply. Redirecting...', 'error');
                 loadingStateDiv.style.display = 'none';
-                jobDetailsHeader.textContent = 'Please log in.';
+                // Optionally redirect: window.location.href = 'student-login.html';
                 return;
             }
 
@@ -640,105 +1415,185 @@
                     document.getElementById('firstName').value = nameParts[0] || '';
                     document.getElementById('lastName').value = nameParts.slice(1).join(' ') || '';
                 }
+                // Pre-fill new fields
                 document.getElementById('department').value = user.department || '';
                 document.getElementById('rollNumber').value = user.rollNumber || '';
                 document.getElementById('phone').value = user.mobile || user.phone || '';
+                // Pre-fill address
+                if (user.address) {
+                    document.getElementById('street').value = user.address.street || '';
+                    document.getElementById('city').value = user.address.city || '';
+                    document.getElementById('state').value = user.address.state || '';
+                    document.getElementById('zip').value = user.address.zip || '';
+                    document.getElementById('country').value = user.address.country || '';
+                }
 
             } catch (e) {
                 showMessage(loadingMessageDiv, 'Could not load your profile data. Please log in again.', 'error');
                 loadingStateDiv.style.display = 'none';
-                jobDetailsHeader.textContent = 'User data error.';
                 return;
             }
 
-            // --- Fetch Job Details ---
+            // Fetch Job details and check eligibility
             try {
-                jobDetailsHeader.textContent = 'Checking job details...';
                 const jobRes = await fetch(`/api/public/jobs/${jobId}`);
                 const jobResult = await jobRes.json();
 
                 if (!jobRes.ok) {
-                    if (jobRes.status === 404) {
-                         throw new Error(jobResult.message || 'Job not found or the application deadline has passed.');
-                    } else {
-                         throw new Error(jobResult.message || `Failed to load job (Status: ${jobRes.status})`);
-                    }
+                    throw new Error(jobResult.message || `Failed to load job (Status: ${jobRes.status})`);
                 }
 
                 const job = jobResult;
-                jobTitleHeader.textContent = `Apply for ${job.title || 'Job'}`;
-                jobDetailsHeader.textContent = `Deadline: ${new Date(job.applicationDeadline).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+                const jobTitle = job.title || 'Job';
+                const applyTitle = `Apply for ${jobTitle}`;
+                
+                // Update all title elements
+                document.title = `${applyTitle} - HireWithUs`;
+                jobTitleHeaderMain.textContent = jobTitle;
+                jobTitleHeaderSidebar.textContent = applyTitle;
+                jobTitleHeaderMobile.textContent = applyTitle;
+                
+                const deadlineText = `Deadline: ${new Date(job.applicationDeadline).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+                jobDetailsHeader.querySelector('span').textContent = deadlineText;
+                jobDetailsHeaderMobile.querySelector('span').textContent = deadlineText;
+                jobDetailsHeader.classList.remove('hidden');
+                jobDetailsHeaderMobile.classList.remove('hidden');
 
+                 // Check College Eligibility
                  if (!user.college || !job.eligibleColleges || !Array.isArray(job.eligibleColleges) || !job.eligibleColleges.includes(user.college)) {
                     throw new Error(`Your college ('${user.college || 'N/A'}') is not listed as eligible for this job opening.`);
                  }
 
-                addEducationBlock(); // Add default education block
+                addEducationBlock(); // Add one education block by default
 
                 showMessage(loadingMessageDiv, '', 'info');
                 loadingStateDiv.style.display = 'none';
-                applicationForm.style.display = 'block';
+                applicationForm.classList.remove('hidden');
+                showStep(1); 
 
-            } catch (error) {
+            } catch (error)
+            {
                 console.error("Error fetching job details or checking eligibility:", error);
                 showMessage(loadingMessageDiv, `Error: ${error.message}`, 'error');
                 loadingStateDiv.style.display = 'none';
-                jobDetailsHeader.textContent = 'Could not load job details or you are not eligible.';
                  submitBtn.disabled = true;
-                 submitBtn.textContent = 'Application Unavailable';
-                 submitBtn.classList.add('bg-gray-400', 'hover:bg-gray-400'); // Style disabled button
-                 submitBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                 btnText.textContent = 'Application Unavailable';
+                 submitBtn.classList.add('!bg-gray-400', 'cursor-not-allowed');
+                 // Also hide all nav buttons
+                 document.getElementById('global-prev-btn').classList.add('hidden');
+                 document.getElementById('global-next-btn').classList.add('hidden');
             }
 
-            // --- Add Dynamic Section Listeners ---
+            // --- Setup Event Listeners ---
             document.getElementById('add-education-btn').addEventListener('click', () => addEducationBlock());
             document.getElementById('add-experience-btn').addEventListener('click', () => addExperienceBlock());
-            document.getElementById('add-certification-btn').addEventListener('click', () => addCertificationBlock()); // New listener
+            document.getElementById('add-certification-btn').addEventListener('click', () => addCertificationBlock()); 
 
-
-            // --- Add Listeners for Individual File Inputs ---
+            // Listeners for static file inputs
             addFileDisplayListener('passportPhoto');
             addFileDisplayListener('resume');
             addFileDisplayListener('govtId');
-
-            // --- Passport Photo Preview ---
-            const passportPhotoInput = document.getElementById('passportPhoto');
-            const passportPhotoPreview = document.getElementById('passportPhotoPreview');
-            if(passportPhotoInput && passportPhotoPreview) {
-                passportPhotoInput.addEventListener('change', (e) => {
-                    if (e.target.files.length > 0) {
-                        const file = e.target.files[0];
-                        if (file.type.startsWith('image/')) {
-                            const reader = new FileReader();
-                            reader.onload = (event) => { passportPhotoPreview.src = event.target.result; }
-                            reader.readAsDataURL(file);
-                        } else {
-                            passportPhotoPreview.src = 'https://placehold.co/96x96/E0E7FF/4338CA?text=Photo';
-                        }
-                    } else {
-                         passportPhotoPreview.src = 'https://placehold.co/96x96/E0E7FF/4338CA?text=Photo';
+            
+            // Setup drag & drop for static inputs
+            setupDragAndDrop('passportPhotoDropZone', 'passportPhoto');
+            setupDragAndDrop('resumeDropZone', 'resume');
+            setupDragAndDrop('govtIdDropZone', 'govtId');
+            
+            // Global listener for file remove buttons
+            document.body.addEventListener('click', function(e) {
+                const button = e.target.closest('.file-name-remove');
+                if (button) {
+                    const inputId = button.dataset.input;
+                    const input = document.getElementById(inputId);
+                    if (!input) return;
+                    
+                    const nameSpan = input.closest('div, label').querySelector(`[id$="${inputId}Name"]`); // More robust selector
+                    const textSpan = nameSpan.querySelector('.file-name-text');
+                    
+                    input.value = ''; // Clear the file input
+                    nameSpan.classList.add('hidden');
+                    nameSpan.classList.remove('inline-flex');
+                    textSpan.textContent = '';
+                    nameSpan.title = '';
+                    
+                    // Reset passport photo preview
+                    if (button.dataset.preview) {
+                        document.getElementById(button.dataset.preview).src = button.dataset.placeholder;
                     }
-                });
-            }
+                    validateInput(input); // Re-validate (it will fail if required)
+                }
+            });
+            
+            // Setup validation for all inputs present on load
+            setupFormValidation(applicationForm);
+            
+            // --- NEW Unified Stepper Navigation ---
+            document.getElementById('global-next-btn').addEventListener('click', () => {
+                if (currentStep === 1 && validateStep(1, submitMessageDiv)) {
+                    showStep(2);
+                } else if (currentStep === 2 && validateStep(2, submitMessageDiv)) {
+                    showStep(3);
+                }
+            });
+            
+            document.getElementById('global-prev-btn').addEventListener('click', () => {
+                if (currentStep === 2) showStep(1);
+                else if (currentStep === 3) showStep(2);
+            });
+            
+            document.getElementById('global-review-btn').addEventListener('click', () => {
+                 if (validateStep(3, submitMessageDiv)) {
+                    populatePreview();
+                    showStep(4);
+                 }
+            });
+            
+            document.getElementById('global-edit-btn').addEventListener('click', () => showStep(3));
+            document.getElementById('global-download-btn').addEventListener('click', downloadPDF);
 
-            // --- 3. Handle Form Submission ---
+            // Form Submission
             applicationForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                if (document.querySelectorAll('.education-block').length === 0) {
-                    showMessage(submitMessageDiv, 'Please add at least one education entry.', 'error');
-                     document.getElementById('education-container').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Final validation check
+                if (!validateStep(1, submitMessageDiv) || !validateStep(2, submitMessageDiv) || !validateStep(3, submitMessageDiv)) {
+                    showMessage(submitMessageDiv, 'Some required fields are missing. Please go back and check.', 'error');
+                    // Find the first invalid step and go to it
+                    for (let i = 1; i <= 3; i++) {
+                        if (!validateStep(i, submitMessageDiv)) {
+                            showStep(i);
+                            break;
+                        }
+                    }
                     return;
                 }
 
-                showMessage(submitMessageDiv, '', 'info');
+                showMessage(submitMessageDiv, '', 'info'); // Clear any old errors
                 submitBtn.disabled = true;
                 btnText.textContent = 'Submitting...';
                 btnSpinner.classList.remove('hidden');
 
                 const formData = new FormData(applicationForm);
 
-                // --- Consolidate Dynamic Sections into JSON ---
-                const educationData = Array.from(document.querySelectorAll('.education-block')).map(block => {
+                // --- Add address object ---
+                const address = {
+                    street: formData.get('street'),
+                    city: formData.get('city'),
+                    state: formData.get('state'),
+                    zip: formData.get('zip'),
+                    country: formData.get('country')
+                };
+                formData.set('address', JSON.stringify(address));
+                // Remove individual address fields
+                formData.delete('street');
+                formData.delete('city');
+                formData.delete('state');
+                formData.delete('zip');
+                formData.delete('country');
+
+
+                // Process dynamic education blocks
+                const educationData = Array.from(document.querySelectorAll('#education-container .dynamic-block')).map(block => {
                     const i = block.dataset.index;
                     const data = {
                         type: formData.get(`education_${i}_type`),
@@ -746,6 +1601,7 @@
                         stream: formData.get(`education_${i}_stream`),
                         score: formData.get(`education_${i}_score`),
                     };
+                    // Clean up form data
                     formData.delete(`education_${i}_type`);
                     formData.delete(`education_${i}_institute`);
                     formData.delete(`education_${i}_stream`);
@@ -754,7 +1610,8 @@
                 });
                 formData.set('education', JSON.stringify(educationData));
 
-                const experienceData = Array.from(document.querySelectorAll('.experience-block')).map(block => {
+                // Process dynamic experience blocks
+                const experienceData = Array.from(document.querySelectorAll('#experience-container .dynamic-block')).map(block => {
                     const i = block.dataset.index;
                     const data = {
                         title: formData.get(`experience_${i}_title`),
@@ -768,8 +1625,8 @@
                 });
                 formData.set('experiences', JSON.stringify(experienceData));
 
-                 // *** NEW *** Consolidate Certification Data
-                 const certificationData = Array.from(document.querySelectorAll('.certification-block')).map(block => {
+                // Process dynamic certification blocks
+                 const certificationData = Array.from(document.querySelectorAll('#certification-container .dynamic-block')).map(block => {
                      const i = block.dataset.index;
                      const data = {
                          name: formData.get(`certification_${i}_name`),
@@ -783,20 +1640,11 @@
                      formData.delete(`certification_${i}_date`);
                      return data;
                  });
-                 formData.set('certifications', JSON.stringify(certificationData)); // Add certifications JSON
+                 formData.set('certifications', JSON.stringify(certificationData));
 
-
-                // Ensure read-only fields are explicitly set
+                // Set user details from read-only fields
                 formData.set('email', emailInput.value);
                 formData.set('college', collegeInput.value);
-
-                // Log FormData for debugging (optional)
-                // console.log("--- Sending FormData ---");
-                // for (let [key, value] of formData.entries()) {
-                //      console.log(`${key}: ${value instanceof File ? `File: ${value.name}` : value}`);
-                // }
-                // console.log("-----------------------");
-
 
                 try {
                     const response = await fetch(`/api/student/apply/${jobId}`, {
@@ -817,24 +1665,28 @@
                          }
                     }
 
-                    showMessage(submitMessageDiv, 'Application submitted successfully! Redirecting...', 'success');
-                    applicationForm.querySelectorAll('input, select, textarea, button').forEach(el => el.disabled = true);
-                    setTimeout(() => {
-                        window.location.href = 'student-my-applications.html';
-                    }, 2500);
+                    // Show success modal
+                    confirmationModal.classList.remove('hidden');
+                    confirmationModal.classList.add('show', 'flex'); // Make sure it's flex for centering
+                    lucide.createIcons({
+                        nodes: confirmationModal.querySelectorAll('[data-lucide]')
+                    });
 
                 } catch (error) {
                     console.error("Submission Error:", error);
                     showMessage(submitMessageDiv, `Error: ${error.message}`, 'error');
                      submitMessageDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Re-enable button on failure
                     submitBtn.disabled = false;
                     btnText.textContent = 'Submit Application';
                     btnSpinner.classList.add('hidden');
                 }
             });
+            
+            modalCloseBtn.addEventListener('click', () => {
+                window.location.href = 'student-my-applications.html';
+            });
         });
     </script>
-
 </body>
 </html>
-
