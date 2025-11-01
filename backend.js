@@ -13111,6 +13111,40 @@ app.delete('/api/hiring/coding-tests/:codingTestId', hiringModeratorAuth, async 
     }
 });
 
+app.post('/api/hiring/upload-media', hiringModeratorAuth, upload.single('mediaFile'), async (req, res) => {
+    if (!req.file) {
+        console.log("[UPLOAD MEDIA] No file received.");
+        return res.status(400).json({ message: 'No media file was uploaded.' });
+    }
+
+    console.log(`[UPLOAD MEDIA] Received file: ${req.file.originalname}, Size: ${req.file.size}, Type: ${req.file.mimetype}`);
+
+    // Create a unique file key for S3
+    const fileExtension = req.file.originalname.split('.').pop();
+    const fileKey = `test-media/${uuidv4()}.${fileExtension}`;
+
+    const s3Params = {
+        Bucket: S3_BUCKET_NAME,
+        Key: fileKey,
+        Body: req.file.buffer,
+        ContentType: req.file.mimetype
+    };
+
+    try {
+        console.log(`[UPLOAD MEDIA] Uploading '${fileKey}' to S3 bucket '${S3_BUCKET_NAME}'...`);
+        await s3Client.send(new PutObjectCommand(s3Params));
+
+        // Construct the public URL
+        const s3Url = `https://${S3_BUCKET_NAME}.s3.${AWS_S3_REGION}.amazonaws.com/${fileKey}`;
+        
+        console.log(`[UPLOAD MEDIA] Upload successful. URL: ${s3Url}`);
+        res.json({ url: s3Url });
+
+    } catch (error) {
+        console.error("[UPLOAD MEDIA] Error uploading to S3:", error);
+        res.status(500).json({ message: 'Server error during file upload.' });
+    }
+});
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
