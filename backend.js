@@ -20,6 +20,10 @@ const { Server } = require("socket.io");
 const http = require('http');
 const router = express.Router();
 const Razorpay = require('razorpay')
+const stream = require('stream')
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const S3_BUCKET_NAME = "hirewithusjobapplications"; 
+const AWS_S3_REGION = "ap-south-1"; 
 
 const HIRING_USERS_TABLE = "HiringUsers";
 const HIRING_COLLEGES_TABLE = "HiringColleges";
@@ -86,6 +90,13 @@ async function sendEmailWithSES(mailOptions) {
     }
 }
 
+const s3Client = new S3Client({
+    region: process.env.AWS_REGION || 'ap-south-1',
+    credentials: {
+        accessKeyId: 'AKIAT4YSUMZD755UHGW7', // Using same keys as DynamoDB/SES
+        secretAccessKey: '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'
+    }
+});
 
 
 const hiringModeratorAuth = async (req, res, next) => {
@@ -105,77 +116,77 @@ const io = new Server(server, { cors: { origin: "*" } }); // FIX: Attach socket.
 const PORT = 3000;
 const JWT_SECRET = 'your-super-secret-key-for-jwt-in-production';
 
-// async function compileWithCustomCompiler(language, code, input) {
-//     // --- IMPORTANT: This is your custom compiler URL ---
-//     const compilerUrl = 'https://compiler-api-6k95.onrender.com';
+async function compileWithCustomCompiler(language, code, input) {
+    // --- IMPORTANT: This is your custom compiler URL ---
+    const compilerUrl = 'https://compiler-api-6k95.onrender.com';
 
-//     const languageMap = {
-//         'c': 'c',
-//         'cpp': 'cpp',
-//         'python': 'python',
-//         'javascript': 'javascript',
-//         'java': 'java' // Assuming your compiler supports java
-//     };
+    const languageMap = {
+        'c': 'c',
+        'cpp': 'cpp',
+        'python': 'python',
+        'javascript': 'javascript',
+        'java': 'java' // Assuming your compiler supports java
+    };
 
-//     const compilerLanguage = languageMap[language];
+    const compilerLanguage = languageMap[language];
 
-//     if (!compilerLanguage) {
-//         throw new Error(`Language '${language}' is not supported by the custom compiler.`);
-//     }
+    if (!compilerLanguage) {
+        throw new Error(`Language '${language}' is not supported by the custom compiler.`);
+    }
 
-//     try {
-//         console.log(`[Custom Compiler] Sending request for ${language}. URL: ${compilerUrl}/api/compile`);
-//         // --- This fetch now uses the correct URL and body structure for your service ---
-//         const compileResponse = await fetch(`${compilerUrl}/api/compile`, {
-//             method: 'POST',
-//             headers: {
-//                 'Content-Type': 'application/json',
-//             },
-//             body: JSON.stringify({
-//                 language: compilerLanguage,
-//                 code: code,
-//                 stdin: input || "" // Send input if provided
-//             })
-//         });
+    try {
+        console.log(`[Custom Compiler] Sending request for ${language}. URL: ${compilerUrl}/api/compile`);
+        // --- This fetch now uses the correct URL and body structure for your service ---
+        const compileResponse = await fetch(`${compilerUrl}/api/compile`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                language: compilerLanguage,
+                code: code,
+                stdin: input || "" // Send input if provided
+            })
+        });
 
-//         const result = await compileResponse.json(); // Always try to parse JSON
+        const result = await compileResponse.json(); // Always try to parse JSON
 
-//         if (!compileResponse.ok) {
-//             console.error("[Custom Compiler] API Error:", compileResponse.status, result);
-//             // Try to extract a meaningful error message from your service's response
-//             const errorMessage = result?.message || result?.error || result?.stderr || `Execution failed (Status: ${compileResponse.status})`;
-//             throw new Error(`Compiler Service Error: ${errorMessage}`);
-//         }
+        if (!compileResponse.ok) {
+            console.error("[Custom Compiler] API Error:", compileResponse.status, result);
+            // Try to extract a meaningful error message from your service's response
+            const errorMessage = result?.message || result?.error || result?.stderr || `Execution failed (Status: ${compileResponse.status})`;
+            throw new Error(`Compiler Service Error: ${errorMessage}`);
+        }
 
-//         console.log(`[Custom Compiler] Success for ${language}. Status: ${result.status}`);
+        console.log(`[Custom Compiler] Success for ${language}. Status: ${result.status}`);
 
-//         // Combine stdout and stderr for the simple output field
-//         let output = result.stdout || '';
-//         if (result.stderr && result.stderr.trim()) {
-//             output += (output ? '\nError:\n' : '') + result.stderr;
-//         }
+        // Combine stdout and stderr for the simple output field
+        let output = result.stdout || '';
+        if (result.stderr && result.stderr.trim()) {
+            output += (output ? '\nError:\n' : '') + result.stderr;
+        }
 
-//         // Note: Your original compiler did not return 'executionTime'.
-//         // If it does, you can parse it from the 'result' object here.
-//         // const executionTime = result.executionTime || 0;
+        // Note: Your original compiler did not return 'executionTime'.
+        // If it does, you can parse it from the 'result' object here.
+        // const executionTime = result.executionTime || 0;
 
-//         return {
-//             output: output.trim() || 'Execution finished with no output.',
-//             stdout: result.stdout || '',
-//             stderr: result.stderr || '',
-//             status: result.status || 'unknown'
-//             // executionTime: executionTime // Add this back if your service provides it
-//         };
+        return {
+            output: output.trim() || 'Execution finished with no output.',
+            stdout: result.stdout || '',
+            stderr: result.stderr || '',
+            status: result.status || 'unknown'
+            // executionTime: executionTime // Add this back if your service provides it
+        };
 
-//     } catch (error) {
-//         console.error("[Custom Compiler] Fetch or JSON Parsing Error:", error);
-//         // Don't expose internal URLs or stack traces directly to the client
-//         if (error.message.startsWith('Compiler Service Error:')) {
-//             throw error; // Re-throw compiler errors
-//         }
-//         throw new Error(`Server error communicating with the compilation service.`);
-//     }
-// }
+    } catch (error) {
+        console.error("[Custom Compiler] Fetch or JSON Parsing Error:", error);
+        // Don't expose internal URLs or stack traces directly to the client
+        if (error.message.startsWith('Compiler Service Error:')) {
+            throw error; // Re-throw compiler errors
+        }
+        throw new Error(`Server error communicating with the compilation service.`);
+    }
+}
 
 module.exports = router;
 
@@ -3389,63 +3400,33 @@ app.post('/api/admin/impact-stats', authMiddleware, upload.single('flyerImage'),
 // --- COMPILER ENDPOINT (REVISED WITH JUDGE0) ---
 // =================================================================
 app.post('/api/compile', authMiddleware, async (req, res) => {
-    // Middleware ensures req.user exists if token is valid
     const { language, code, input } = req.body;
-    const ONECOMPILER_API_KEY = process.env.ONECOMPILER_API_KEY || '09ccf0b69bmsh066f3a3bc867b99p178664jsna5e9720da3f6'; // Use ENV Var
 
+    // Basic validation
     if (!language || code === undefined || code === null) { // Allow empty code, but not missing
-        return res.status(400).json({ message: 'Language and code are required.' });
-    }
-    if (!ONECOMPILER_API_KEY || ONECOMPILER_API_KEY === 'YOUR_ONECOMPILER_RAPIDAPI_KEY') {
-        console.error("[COMPILE API] OneCompiler API Key not configured!");
-        return res.status(500).json({ message: 'Compilation service key is not configured on the server.' });
-    }
-
-    const languageMap = { 'c': 'c', 'cpp': 'cpp', 'java': 'java', 'python': 'python', 'javascript': 'javascript' };
-    const fileNames = { 'c': 'main.c', 'cpp': 'main.cpp', 'java': 'Main.java', 'python': 'main.py', 'javascript': 'index.js' };
-    const langIdentifier = languageMap[language];
-    const fileName = fileNames[language];
-
-    if (!langIdentifier) {
-        return res.status(400).json({ message: `Language '${language}' is not supported.` });
+        return res.status(400).json({
+            message: 'Language and code are required.'
+        });
     }
 
     try {
-        const submissionPayload = {
-            language: langIdentifier,
-            stdin: input || "",
-            files: [{ name: fileName, content: code }]
-        };
-
-        const submissionResponse = await fetch('https://onecompiler-apis.p.rapidapi.com/api/v1/run', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-RapidAPI-Key': ONECOMPILER_API_KEY,
-                'X-RapidAPI-Host': 'onecompiler-apis.p.rapidapi.com'
-            },
-            body: JSON.stringify(submissionPayload)
+        // Use the new helper function
+        const result = await compileWithCustomCompiler(language, code, input);
+        // Send back the structured result
+        res.json({
+            output: result.output, // Combined stdout/stderr for basic display
+            stdout: result.stdout,
+            stderr: result.stderr,
+            status: result.status // Include the status from the compiler API
         });
-
-        const result = await submissionResponse.json(); // Always try to parse JSON
-
-        if (!submissionResponse.ok) {
-            console.error("OneCompiler API Error:", submissionResponse.status, result);
-            // Try to extract a meaningful error message
-            const errorMessage = result?.message || result?.stderr || `Execution failed (Status: ${submissionResponse.status})`;
-            return res.status(500).json({ message: `Compilation Service Error: ${errorMessage}` });
-        }
-
-        // Combine stdout, stderr, and exception for output
-        let output = result.stdout || '';
-        if (result.stderr) output += `\nError:\n${result.stderr}`;
-        if (result.exception) output += `\nException:\n${result.exception}`;
-
-        res.json({ output: output || 'Execution finished with no output.' }); // Provide default message
-
     } catch (error) {
-        console.error("[COMPILE API] Fetch or JSON Parsing Error:", error);
-        res.status(500).json({ message: 'Server error communicating with the compilation service.' });
+        console.error("[/api/compile] Error:", error);
+        // Send a generic server error and the error message from the helper
+        res.status(500).json({
+            message: 'Server error during compilation.',
+            // Send the specific error message from the helper for debugging on client-side if needed
+            output: error.message
+        });
     }
 });
 
@@ -8157,58 +8138,59 @@ app.get('/api/hiring/tests', hiringModeratorAuth, async (req, res) => {
 // Assuming authMiddleware is correctly populating req.user
 
 app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
-    // ... (Keep existing authentication, input validation, assignment check, previous submission check) ...
-    if (!req.user || !req.user.isExternal) { /* ... */ return res.status(403).json({ message: 'Access denied.' }); }
+    if (!req.user || !req.user.isExternal) {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
     const { testId: testPkFromToken, email: candidateEmail, assignmentId } = req.user;
     const { submissions, violationReason, candidateDetails } = req.body;
-    if (!candidateDetails || !candidateDetails.fullName /*... other details ...*/) { /* ... */ return res.status(400).json({ message: 'Missing required candidate details.' }); }
-    if (!Array.isArray(submissions)) { /* ... */ return res.status(400).json({ message: "Invalid submission data format." }); }
+
+    if (!candidateDetails || !candidateDetails.fullName /*... other details ...*/) {
+        return res.status(400).json({ message: 'Missing required candidate details.' });
+    }
+    if (!Array.isArray(submissions)) {
+        return res.status(400).json({ message: "Invalid submission data format." });
+    }
 
     const resultId = `hcs_${uuidv4()}`;
 
     try {
-        // --- Verify Assignment Record ---
-        const { Item: assignment } = await docClient.send(new GetCommand({ /* ... fetch assignment ... */ TableName: HIRING_ASSIGNMENTS_TABLE, Key: { assignmentId } }));
+        // --- 1. Verify Assignment Record ---
+        const { Item: assignment } = await docClient.send(new GetCommand({
+            TableName: HIRING_ASSIGNMENTS_TABLE, Key: { assignmentId }
+        }));
         if (!assignment || assignment.studentEmail !== candidateEmail || assignment.testId !== testPkFromToken || assignment.testType !== 'coding') {
-            console.warn(`[SUBMIT CODING TEST] Assignment ${assignmentId} validation failed.`);
             return res.status(403).json({ message: 'Assignment validation failed.' });
         }
-        console.log(`[SUBMIT CODING TEST] Assignment ${assignmentId} verified.`);
+        
+        // *** NEW: Get the jobId from the assignment ***
+        const jobId = assignment.jobId || null;
 
-        // --- Check for Previous *SUBMITTED* Submission ---
-        const GSI_NAME = 'AssignmentIdIndex';
-        const { Items: existingSubmittedResults } = await docClient.send(new QueryCommand({ /* ... query as before ... */
-            TableName: HIRING_TEST_RESULTS_TABLE, IndexName: GSI_NAME,
-            KeyConditionExpression: 'assignmentId = :aid',
-            FilterExpression: 'attribute_not_exists(resultId) OR not begins_with(resultId, :initPrefix)',
-            ExpressionAttributeValues: { ':aid': assignmentId, ':initPrefix': 'init_' }, Limit: 1
+        // --- 2. Check for Previous *SUBMITTED* Submission ---
+        const { Items: existingSubmittedResults } = await docClient.send(new QueryCommand({
+           TableName: HIRING_TEST_RESULTS_TABLE, IndexName: 'AssignmentIdIndex',
+           KeyConditionExpression: 'assignmentId = :aid',
+           FilterExpression: 'attribute_not_exists(resultId) OR not begins_with(resultId, :initPrefix)',
+           ExpressionAttributeValues: { ':aid': assignmentId, ':initPrefix': 'init_' }, Limit: 1
        }));
        if (existingSubmittedResults && existingSubmittedResults.length > 0) {
-            console.warn(`[SUBMIT CODING TEST] Test already SUBMITTED for assignment ${assignmentId}.`);
             return res.status(409).json({ message: 'This test has already been submitted.' });
        }
-       console.log(`[SUBMIT CODING TEST] No previous SUBMITTED result found.`);
 
-        // --- Fetch Coding Test Definition (with sections) ---
-        console.log(`[SUBMIT CODING TEST] Fetching test definition for ${assignment.testId} from ${HIRING_CODING_TESTS_TABLE}`);
+        // --- 3. Fetch Coding Test Definition ---
         const { Item: test } = await docClient.send(new GetCommand({
             TableName: HIRING_CODING_TESTS_TABLE,
-            Key: { codingTestId: assignment.testId } // Ensure 'codingTestId' is the correct primary key
+            Key: { codingTestId: assignment.testId } 
         }));
 
-        // ** VALIDATION: Ensure test definition is valid and has sections or problems **
         if (!test || (!Array.isArray(test.sections) && !Array.isArray(test.problems))) {
-            console.error(`[SUBMIT CODING TEST] Test definition ${assignment.testId} not found or invalid (missing sections/problems) in ${HIRING_CODING_TESTS_TABLE}.`);
             return res.status(404).json({ message: "Coding test definition not found or invalid." });
         }
-        console.log(`[SUBMIT CODING TEST] Test definition found: ${test.title}`);
 
-        // --- Create Problem Map for Scoring (Handles both sections and old problems structure) ---
+        // --- 4. Create Problem Map for Scoring ---
         const problemMapForScores = new Map();
         let totalPossibleMarks = 0;
 
         if (test.sections && Array.isArray(test.sections)) {
-            // New structure with sections
             test.sections.forEach(section => {
                 section.problems.forEach(p => {
                     const score = parseInt(p.score, 10) || 0;
@@ -8216,30 +8198,26 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
                     totalPossibleMarks += score;
                 });
             });
-            console.log(`[SUBMIT CODING TEST] Built problem map from SECTIONS structure. Total Marks: ${totalPossibleMarks}`);
         } else if (test.problems && Array.isArray(test.problems)) {
-            // Backwards compatibility for old structure
+            // Backwards compatibility
             test.problems.forEach(p => {
                  const score = parseInt(p.score, 10) || 0;
-                 problemMapForScores.set(p.problemId, { score: score, title: p.title, sectionTitle: "Coding Problems" }); // Default section
+                 problemMapForScores.set(p.problemId, { score: score, title: p.title, sectionTitle: "Coding Problems" });
                  totalPossibleMarks += score;
             });
-            console.log(`[SUBMIT CODING TEST] Built problem map from old PROBLEMS structure. Total Marks: ${totalPossibleMarks}`);
         }
-        // If test.totalMarks exists and seems valid, prefer it (optional, could override calculation)
         if (test.totalMarks && parseInt(test.totalMarks, 10) > 0) {
              totalPossibleMarks = parseInt(test.totalMarks, 10);
-             console.log(`[SUBMIT CODING TEST] Using totalMarks from test definition: ${totalPossibleMarks}`);
         }
 
-        // --- Process Submissions & Calculate Score ---
+        // --- 5. Process Submissions & Calculate Score ---
         let totalScore = 0;
         const detailedSubmissions = submissions.map(sub => {
             const problemId = sub.problemId;
             const problemInfo = problemMapForScores.get(problemId);
             const maxProblemScore = problemInfo ? problemInfo.score : 0;
             const problemTitle = problemInfo ? problemInfo.title : 'Title Not Found';
-            const sectionTitle = problemInfo ? problemInfo.sectionTitle : 'Unknown Section'; // Get section title
+            const sectionTitle = problemInfo ? problemInfo.sectionTitle : 'Unknown Section';
 
             const evaluationResults = sub.evaluationResults || [];
             const passedCases = evaluationResults.filter(r => r?.status === 'Accepted').length;
@@ -8250,12 +8228,10 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
                                       : 0;
             totalScore += calculatedScore;
 
-            console.log(`[SUBMIT CODING TEST] Problem ${problemId} (Section: ${sectionTitle}): Passed ${passedCases}/${totalCases}, Score: ${calculatedScore}/${maxProblemScore}`);
-
             return {
                  problemId: problemId,
-                 problemTitle: problemTitle, // Title from map
-                 sectionTitle: sectionTitle, // ** NEW: Add section title **
+                 problemTitle: problemTitle,
+                 sectionTitle: sectionTitle,
                  language: sub.language || 'N/A',
                  code: sub.code || '',
                  score: maxProblemScore, // Max possible score
@@ -8265,13 +8241,14 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
                  evaluationResults: evaluationResults
              };
         });
-        console.log(`[SUBMIT CODING TEST] Final Calculated Score for assignment ${assignmentId}: ${totalScore}/${totalPossibleMarks}`);
 
-        // --- Construct Final Result Object ---
+        // --- 6. Construct Final Result Object ---
         const newSubmissionResult = {
             resultId,
             testId: assignment.testId,
             assignmentId,
+            // *** NEW: Save the jobId with the result ***
+            jobId: jobId,
             testType: 'coding',
             candidateEmail,
             fullName: candidateDetails.fullName,
@@ -8280,39 +8257,33 @@ app.post('/api/public/submit-coding-test', authMiddleware, async (req, res) => {
             department: candidateDetails.department,
             profileImageUrl: candidateDetails.profileImageUrl || null,
             testTitle: test.title || 'N/A',
-            submissions: detailedSubmissions, // Includes sectionTitle now
+            submissions: detailedSubmissions,
             score: totalScore,
             totalMarks: totalPossibleMarks,
+            // *** NEW: Calculate and save Pass/Fail status for coding tests ***
+            // Assuming 50% is passing for coding tests if not specified
+            result: (totalPossibleMarks > 0 && (totalScore / totalPossibleMarks) * 100 >= 50) ? "Pass" : "Fail", 
             submittedAt: new Date().toISOString(),
             violationReason: violationReason || null,
-            // ** NEW: Add section breakdown to the main result object **
             sectionScores: test.sections ? test.sections.map(section => {
                 let sectionTotalScore = 0;
                 let sectionMaxScore = 0;
                 detailedSubmissions.forEach(sub => {
                     if (sub.sectionTitle === section.title) {
                         sectionTotalScore += sub.calculatedScore;
-                        sectionMaxScore += sub.score; // Add max score for problems in this section
+                        sectionMaxScore += sub.score;
                     }
                 });
-                return {
-                    title: section.title,
-                    score: sectionTotalScore,
-                    maxScore: sectionMaxScore
-                };
-            }) : null // Only add if sections exist in the original test
+                return { title: section.title, score: sectionTotalScore, maxScore: sectionMaxScore };
+            }) : null
         };
-        console.log(`[SUBMIT CODING TEST] Constructed final result object for ${resultId}.`);
 
-        // --- Save Result ---
-        console.log(`[SUBMIT CODING TEST] Saving result ${resultId} to ${HIRING_TEST_RESULTS_TABLE}...`);
+        // --- 7. Save Result ---
         await docClient.send(new PutCommand({
             TableName: HIRING_TEST_RESULTS_TABLE,
             Item: newSubmissionResult
         }));
-        console.log(`[SUBMIT CODING TEST] Successfully saved result ${resultId}.`);
-
-        // --- Send Success Response ---
+        
         res.status(201).json({ message: 'Test submitted successfully! Redirecting...' });
 
     } catch (error) {
@@ -8424,22 +8395,30 @@ app.post('/api/hiring/coding-tests', hiringModeratorAuth, async (req, res) => {
 
 // HIRING: Assign a test to external candidates
 app.post('/api/hiring/assign-test', hiringModeratorAuth, async (req, res) => {
-    const { testId, candidateEmails, startTime, endTime } = req.body; // testId could be aptitudeTestId or codingTestId
+    // *** NEW: Read jobId from the request body ***
+    const { testId, candidateEmails, startTime, endTime, jobId } = req.body; 
+    
+    // --- Validation ---
     if (!testId || !candidateEmails || candidateEmails.length === 0 || !startTime || !endTime) {
-         return res.status(400).json({ message: 'Missing required fields.' });
+         return res.status(400).json({ message: 'Missing required fields (testId, emails, startTime, endTime).' });
+    }
+    // *** NEW: JobID is optional for old tests, but required for new job-based flow ***
+    if (!jobId) {
+         console.warn("[ASSIGN TEST] Warning: Assigning test without a JobID. This may be legacy behavior.");
+         // You could choose to make this an error:
+         // return res.status(400).json({ message: 'A JobID is required to assign this test.' });
     }
     if (new Date(startTime) >= new Date(endTime)) {
          return res.status(400).json({ message: 'Start time must be before end time.' });
     }
+
     try {
-        // Fetch the test to determine its type and check existence
+        // --- Determine Test Type (Aptitude or Coding) ---
         let test;
-        let testType = ''; // Will be 'aptitude' or 'coding'
+        let testType = '';
         let testPk;
         let testTitle;
 
-        // Check Aptitude table first
-        console.log(`[ASSIGN TEST] Checking Aptitude table for testId: ${testId}`);
         const { Item: aptitudeTest } = await docClient.send(new GetCommand({
             TableName: HIRING_APTITUDE_TESTS_TABLE, Key: { aptitudeTestId: testId }
         }));
@@ -8449,10 +8428,7 @@ app.post('/api/hiring/assign-test', hiringModeratorAuth, async (req, res) => {
             testType = 'aptitude';
             testPk = aptitudeTest.aptitudeTestId;
             testTitle = aptitudeTest.title;
-            console.log(`[ASSIGN TEST] Found Aptitude test: ${testTitle}`);
         } else {
-            // Check Coding table if not found in Aptitude
-            console.log(`[ASSIGN TEST] Aptitude test not found. Checking Coding table for testId: ${testId}`);
             const { Item: codingTest } = await docClient.send(new GetCommand({
                 TableName: HIRING_CODING_TESTS_TABLE, Key: { codingTestId: testId }
             }));
@@ -8461,98 +8437,111 @@ app.post('/api/hiring/assign-test', hiringModeratorAuth, async (req, res) => {
                 testType = 'coding';
                 testPk = codingTest.codingTestId;
                 testTitle = codingTest.title;
-                console.log(`[ASSIGN TEST] Found Coding test: ${testTitle}`);
             }
         }
 
-        // If test not found in either table
         if (!test) {
-            console.warn(`[ASSIGN TEST] Test not found for testId: ${testId}`);
             return res.status(404).json({ message: "Test not found." });
         }
 
-        // Always point to the download page
+        const baseUrl = req.protocol + '://' + req.get('host');
         const pageName = 'download-test-app.html';
-        const baseUrl = req.protocol + '://' + req.get('host'); // Or use environment variable
 
         let assignmentsCreated = 0;
         for (const email of candidateEmails) {
             const assignmentId = uuidv4();
-            // Payload includes the correct primary key (testPk)
             const payload = { user: { email, testId: testPk, assignmentId, isExternal: true } };
-            const testToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' }); // Consider shorter expiry?
-
-            // Link points to download page with token
+            const testToken = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
             const testLink = `${baseUrl}/${pageName}?token=${testToken}`;
 
-            // Save assignment with correct testPk and testType
+            // --- SAVE ASSIGNMENT with jobId ---
             await docClient.send(new PutCommand({
                 TableName: HIRING_ASSIGNMENTS_TABLE,
                 Item: {
                     assignmentId,
-                    testId: testPk, // Store the actual primary key of the test
-                    testType: testType, // Store the type ('aptitude' or 'coding')
+                    testId: testPk,
+                    testType: testType,
+                    // *** NEW: Save the JobID with the assignment ***
+                    jobId: jobId || null, // Save jobId if provided
                     studentEmail: email,
                     assignedBy: req.user.email,
-                    startTime, endTime, testToken, // Store the token if needed
+                    startTime, 
+                    endTime, 
+                    testToken,
                     assignedAt: new Date().toISOString()
                 }
             }));
-            console.log(`[ASSIGN TEST] Created assignment ${assignmentId} for ${email}, test ${testPk} (${testType})`);
 
-            // Send Email with the UPDATED HTML template
+            // --- Send Email (copy-pasted from your original endpoint) ---
             const mailOptions = {
                  from: '"HIRE WITH US" <support@testify-lac.com>',
                  to: email,
-                 subject: `Invitation to take ${testType === 'coding' ? 'Coding' : 'Aptitude'} Test: ${testTitle}`,
+                 subject: `Invitation to take ${testType} Test: ${testTitle}`,
                  html: `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test Invitation</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
+    <title>HireWithUs Test Invitation</title>
+    <!--[if mso]>
+    <style>
+        table, td, th, h1, h2, h3, p, a {font-family: 'Inter', Arial, sans-serif !important;}
+        table {border-collapse: collapse !important;}
+        .external-class * {line-height: 100%;}
+    </style>
+    <![endif]-->
+    
     <!-- 
       This <style> block is ONLY for progressive enhancement.
       It will be ignored by Gmail/Outlook but read by Apple Mail, iOS, etc.
       It contains responsive styles and hover effects.
     -->
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+
         @media screen and (max-width: 600px) {
             .container {
-                /* tw: w-full */
                 width: 100% !important;
-                /* tw: rounded-none */
                 border-radius: 0 !important;
+                border-left: 0 !important;
+                border-right: 0 !important;
             }
             .content-cell {
-                /* tw: p-6 */
                 padding: 25px !important;
             }
             .header-cell {
-                /* tw: p-8 */
                 padding: 30px 25px !important;
+            }
+            .step-icon {
+                width: 40px !important;
+                height: 40px !important;
+            }
+            .social-icon {
+                padding: 0 8px !important;
             }
         }
         
-        /* tw: hover:bg-blue-800 */
+        /* Button hover effect for compatible clients */
         .btn:hover {
-            background: linear-gradient(135deg, #1e40af, #1d4ed8) !important;
+            background: linear-gradient(135deg, #6d28d9, #3b82f6) !important;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+            transform: translateY(-2px) !important;
         }
 
-        /* tw: hover:underline */
         .footer-link:hover {
             text-decoration: underline !important;
         }
     </style>
 </head>
-<!-- 
-  tw: bg-gray-100
-  Using a system font stack to look "native" on all devices.
--->
-<body style="margin: 0; padding: 0; background-color: #f3f4f6; width: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#f3f4f6" style="/* tw: bg-gray-100 */ background-color: #f3f4f6; margin: 0; padding: 0; width: 100%;">
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; width: 100%; font-family: 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#f3f4f6" style="background-color: #f3f4f6; margin: 0; padding: 0; width: 100%;">
         <tr>
-            <!-- tw: p-4 md:p-10 -->
             <td align="center" style="padding: 40px 10px;">
                 
                 <!--[if mso | IE]>
@@ -8561,139 +8550,232 @@ app.post('/api/hiring/assign-test', hiringModeratorAuth, async (req, res) => {
                 <td style="width: 600px;">
                 <![endif]-->
 
-                <!-- 
-                  tw: bg-white max-w-2xl rounded-xl border border-gray-200
-                  NOTE: box-shadow (tw: shadow-lg) is NOT supported in email.
-                -->
-                <table class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; width: 100%; max-width: 600px; margin: 0 auto; border-radius: 12px; border-collapse: collapse; overflow: hidden; border: 1px solid #e5e7eb;">
-                    <!-- Header -->
+                <table class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; width: 100%; max-width: 600px; margin: 0 auto; border-radius: 12px; border-collapse: separate; overflow: hidden; border: 1px solid #e5e7eb;">
+                    
+                    <!-- 🧠 Header Section -->
                     <tr>
-                        <!-- 
-                          tw: bg-blue-600 (via gradient) text-center
-                          --- EDITED: Padding decreased from 35px top to 30px top ---
-                        -->
-                        <td class="header-cell" align="center" bgcolor="#2563eb" style="background: linear-gradient(135deg, #2563eb, #3b82f6); color: #ffffff; padding: 10px 10px 5px; text-align: center;">
-                            <!-- Logo size decreased from 90 to 80 -->
-                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="HireWithUs Logo" width="50" style="width: 60px; height: auto; margin-bottom: 15px; border: 0;">
-                            <!-- tw: text-2xl font-semibold text-white -->
-                            <h2 style="margin: 0; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 600;">
-                              Invitation to Test - HireWithUs
-                            </h2>
+                        <td class="header-cell" align="center" bgcolor="#2563eb" style="background: linear-gradient(135deg, #2563eb, #3b82f6); color: #ffffff; padding: 40px 30px; text-align: center;">
+                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="HireWithUs Logo" width="60" style="width: 60px; height: auto; margin-bottom: 16px; border: 0;">
+                            <h1 style="margin: 0 0 8px; color: #ffffff; font-family: 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 24px; font-weight: 700;">
+                                Invitation to Test - HireWithUs
+                            </h1>
+                            <p style="margin: 0; color: #dbeafe; font-family: 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; font-weight: 400;">
+                                Your Secure & Fair Assessment Awaits!
+                            </p>
                         </td>
                     </tr>
+                    
                     <!-- Content -->
                     <tr>
-                        <!-- 
-                          tw: p-8 md:p-10 text-gray-700 text-base leading-7
-                        -->
-                        <td class="content-cell" style="padding: 35px 40px; color: #374151; line-height: 1.7; font-size: 15px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-                            <!-- tw: text-lg font-semibold text-gray-900 -->
-                            <p style="margin: 0 0 16px; font-size: 16px;"><b style="/* tw: text-gray-900 */ color: #111827;">Hello,</b></p>
-                            <!-- tw: mb-4 -->
-                            <p style="margin: 0 0 16px;">You have been invited to take the <strong style="/* tw: text-gray-900 */ color: #111827;">${testType === 'coding' ? 'Coding' : 'Aptitude'}</strong> test titled "<strong style="/* tw: text-gray-900 */ color: #111827;">${testTitle}</strong>".</p>
+                        <td class="content-cell" style="padding: 35px 40px; color: #374151; line-height: 1.7; font-size: 16px; font-family: 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+                            <p style="margin: 0 0 20px; font-size: 18px; line-height: 1.6;"><b style="color: #111827;">Hello,</b></p>
+                            <p style="margin: 0 0 20px; font-size: 16px; line-height: 1.6;">
+                                You have been invited to take the <strong style="color: #111827;">${testType === 'coding' ? 'Coding' : 'Aptitude'}</strong> test for the role of "<strong style="color: #111827;">${testTitle}</strong>".
+                            </p>
                             
-                            <!-- 
-                              tw: bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg my-6
-                            -->
-                            <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="/* tw: bg-blue-50 */ background-color: #eff6ff; /* tw: border-l-4 border-blue-500 */ border-left: 4px solid #3b82f6; /* tw: rounded-lg */ border-radius: 8px; /* tw: my-6 */ margin: 24px 0;">
+                            <!-- Test Window -->
+                            <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 8px; margin: 24px 0;">
                                 <tr>
-                                    <!-- tw: p-5 -->
-                                    <td style="padding: 20px;">
-                                        <strong style="/* tw: text-blue-800 */ color: #1e40af; display: block; margin-bottom: 4px;">Test Window:</strong>
-                                        <span style="/* tw: text-blue-700 */ color: #1d4ed8;">
-                                          ${new Date(startTime).toLocaleString()} — ${new Date(endTime).toLocaleString()}
-                                        </span>
+                                    <td style="padding: 20px 24px;">
+                                        <strong style="color: #1e40af; display: block; margin-bottom: 8px; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Your Test Window:</strong>
+                                        <p style="margin: 0 0 4px; color: #1d4ed8; font-size: 15px; line-height: 1.5; font-weight: 600;">
+                                            <strong>Starts:</strong> ${new Date(startTime).toLocaleString()}
+                                        </p>
+                                        <p style="margin: 0; color: #1d4ed8; font-size: 15px; line-height: 1.5; font-weight: 600;">
+                                            <strong>Ends:</strong> ${new Date(endTime).toLocaleString()}
+                                        </p>
+                                        <p style="margin: 12px 0 0; color: #1e40af; font-size: 14px; line-height: 1.5;">You can take the test at any time within this window.</p>
                                     </td>
                                 </tr>
                             </table>
 
-                            <!-- 
-                              tw: bg-red-50 border-l-4 border-red-500 p-4 rounded-lg my-6
-                              --- EDITED SECTION ---
-                            -->
-                            <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="/* tw: bg-red-50 */ background-color: #fef2f2; /* tw: border-l-4 border-red-500 */ border-left: 4px solid #ef4444; /* tw: rounded-lg */ border-radius: 8px; /* tw: my-6 */ margin: 24px 0;">
+                            <!-- Section Divider -->
+                            <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin: 30px 0;">
                                 <tr>
-                                    <!-- tw: p-5 -->
-                                    <td style="padding: 20px; /* tw: text-red-700 */ color: #b91c1c;">
-                                        <strong style="/* tw: text-red-800 */ color: #991b1b; display: block; margin-bottom: 8px;">Important Notes:</strong>
-                                        <span style="display: block; margin-bottom: 8px;">
-                                          This test requires a secure desktop application. Please ensure you are on a compatible computer before proceeding.
-                                        </span>
-                                        <span style="display: block;">
-                                          Please download the application and run a system test at least **one hour before** your test commencement time.
-                                        </span>
+                                    <td style="border-bottom: 1px solid #e5e7eb;"></td>
+                                </tr>
+                            </table>
+
+                            <!-- 🧩 Step 1: Before the Test (Setup) -->
+                            <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom: 24px;">
+                                <tr>
+                                    <td style="padding: 24px; background-color: #f9fafb; border-radius: 8px; border: 1px solid #f3f4f6;">
+                                        <h3 style="margin: 0 0 20px; color: #1f2937; font-family: 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 20px; font-weight: 600;">
+                                            Step 1: Before the Test (Setup)
+                                        </h3>
+                                        
+                                        <!-- Item 1 -->
+                                        <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom: 16px;">
+                                            <tr>
+                                                <td style="font-size: 15px; color: #4b5563; line-height: 1.6;">
+                                                    <strong>Download the App:</strong> This test requires our secure desktop application. Please click the button below to download it.
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <!-- Item 2 -->
+                                        <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom: 16px;">
+                                            <tr>
+                                                <td style="font-size: 15px; color: #4b5563; line-height: 1.6;">
+                                                    <strong>Run System Check:</strong> Install and run the app *at least one hour* before you plan to take the test. Use the "System Check" feature. This is mandatory.
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <!-- Item 3 -->
+                                        <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom: 16px;">
+                                            <tr>
+                                                <td style="font-size: 15px; color: #4b5563; line-height: 1.6;">
+                                                    <strong>Find Your Token:</strong> The download page will display a unique <strong>Access Token</strong>. Copy and save it securely. You will need it to log in.
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <!-- Item 4 -->
+                                        <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation">
+                                            <tr>
+                                                <td style="font-size: 15px; color: #4b5563; line-height: 1.6;">
+                                                    <strong>Prepare Your Environment:</strong> Use a Windows or macOS computer with a stable internet connection, a functional webcam, and a microphone.
+                                                </td>
+                                            </tr>
+                                        </table>
                                     </td>
                                 </tr>
                             </table>
 
-                            <!-- Button -->
-                            <!-- tw: text-center my-8 -->
-                            <table class="button-container" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 30px 0; text-align: center;">
+                            <!-- Download Button -->
+                            <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin: 10px 0 30px; text-align: center;">
                                 <tr>
                                     <td align="center">
-                                        <!-- 
-                                          tw: bg-blue-600 text-white font-bold py-3 px-6 rounded-lg text-decoration-none
-                                        -->
-                                        <a href="${testLink}" target="_blank" class="btn" bgcolor="#2563eb" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-                                          Download App & Get Token
+                                        <!--[if mso]>
+                                        <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${testLink}" style="height:52px;v-text-anchor:middle;width:300px;" arcsize="16%" strokecolor="#3b82f6" fill="t">
+                                            <v:fill type="gradient" color="#3b82f6" color2="#6d28d9" angle="135" />
+                                            <w:anchorlock/>
+                                            <center style="color:#ffffff;font-family: 'Inter', Arial, sans-serif;font-size:16px;font-weight:bold;">
+                                                Download App & Get Token
+                                            </center>
+                                        </v:roundrect>
+                                        <![endif]-->
+                                        <!--[if !mso]><!-->
+                                        <a href="${testLink}" target="_blank" class="btn" style="background: linear-gradient(135deg, #3b82f6, #6d28d9); color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 700; display: inline-block; font-family: 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 16px; min-width: 250px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: all 0.2s ease;">
+                                            Download App & Get Token
                                         </a>
+                                        <!--<![endif]-->
                                     </td>
                                 </tr>
                             </table>
 
-                            <!-- 
-                              tw: bg-gray-50 border border-gray-200 p-5 rounded-lg
-                            -->
-                            <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="/* tw: bg-gray-50 */ background-color: #f9fafb; /* tw: border border-gray-200 */ border: 1px solid #e5e7eb; /* tw: rounded-lg */ border-radius: 8px;">
+                            <!-- 🛡️ Step 2: Zero-Tolerance Malpractice Policy -->
+                            <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #fef2f2; border-left: 4px solid #ef4444; border-radius: 8px; margin: 24px 0; box-shadow: 0 4px 12px rgba(239,68,68,0.05);">
                                 <tr>
-                                    <!-- tw: p-5 text-sm -->
-                                    <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 20px; font-size: 14px; /* tw: text-gray-600 */ color: #4b5563;">
-                                        <strong style="/* tw: text-gray-800 */ color: #1f2937; display: block; margin-bottom: 12px;">Instructions:</strong>
-                                        <!-- tw: list-decimal list-inside space-y-2 -->
-                                        <ol style="margin: 0; padding-left: 20px;">
-                                            <li style="margin-bottom: 8px;">Click the button above to visit the download page.</li>
-                                            <li style="margin-bottom: 8px;">Download and install the secure test application.</li>
-                                            <li style="margin-bottom: 8px;">Copy the unique access token displayed on the page.</li>
-                                            <li style="margin-bottom: 0;">Launch the application and paste the token to begin.</li>
-                                        </ol>
+                                    <td style="padding: 24px;">
+                                        <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation">
+                                            <tr>
+                                                <td valign="top">
+                                                    <h3 style="margin: 0 0 4px; color: #991b1b; font-family: 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 20px; font-weight: 600;">
+                                                        Step 2: Zero-Tolerance Malpractice Policy
+                                                    </h3>
+                                                    <p style="margin: 0 0 16px; font-size: 15px; color: #b91c1c; font-weight: 600;">
+                                                        Integrity is our priority — one attempt, one opportunity.
+                                                    </p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        
+                                        <p style="margin: 0 0 16px; font-size: 15px; color: #b91c1c; line-height: 1.6;">
+                                            This is a proctored assessment. Your webcam, microphone, and screen will be monitored.
+                                            Any violation of these rules will result in <strong style="color: #991b1b;">immediate disqualification</strong>.
+                                        </p>
+                                        <ul style="margin: 0; padding-left: 20px; font-size: 15px; line-height: 1.6; color: #b91c1c;">
+                                            <li style="margin-bottom: 8px;"><strong>NO</strong> other people allowed in the room.</li>
+                                            <li style="margin-bottom: 8px;"><strong>NO</strong> mobile phones, smart watches, or other devices.</li>
+                                            <li style="margin-bottom: 8px;"><strong>DO NOT</strong> open new browser tabs, applications, or developer tools.</li>
+                                            <li style="margin-bottom: 8px;"><strong>DO NOT</strong> copy/paste problem statements or code from external sources.</li>
+                                            <li style="margin-bottom: 0;"><strong>DO NOT</strong> leave your seat or look away from the screen for extended periods.</li>
+                                        </ul>
+                                        <p style="margin: 16px 0 0; padding-top: 16px; border-top: 1px solid #fee2e2; font-size: 14px; color: #b91c1c; line-height: 1.6;">
+                                            Our AI-powered system ensures 100% fair and malpractice-free assessments through secure browsers, facial recognition, and live monitoring.
+                                        </p>
                                     </td>
                                 </tr>
                             </table>
 
-                            <!-- tw: mt-8 -->
-                            <p style="margin: 16px 0; margin-top: 30px;">Good luck!</p>
-                            <p style="margin: 16px 0 0;">Sincerely,<br><strong style="/* tw: text-gray-900 */ color: #111827;">The HireWithUs Team</strong></p>
+                            <!-- Section Divider -->
+                            <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin: 30px 0;">
+                                <tr>
+                                    <td style="border-bottom: 1px solid #e5e7eb;"></td>
+                                </tr>
+                            </table>
+
+                            <!-- 🚀 Step 3: Taking the Test -->
+                            <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom: 24px;">
+                                <tr>
+                                    <td style="padding: 24px 0 0;">
+                                        <h3 style="margin: 0 0 20px; color: #1f2937; font-family: 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 20px; font-weight: 600;">
+                                            Step 3: Taking the Test
+                                        </h3>
+                                        
+                                        <!-- Item 1 -->
+                                        <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom: 16px;">
+                                            <tr>
+                                                <td style="font-size: 15px; color: #4b5563; line-height: 1.6;">
+                                                    <strong>Be on Time:</strong> Launch the application *before* your test window ends. The test will automatically submit when the window closes or the timer expires.
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <!-- Item 2 -->
+                                        <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom: 16px;">
+                                            <tr>
+                                                <td style="font-size: 15px; color: #4b5563; line-height: 1.6;">
+                                                    <strong>Use Your Token:</strong> Launch the secure application and paste your unique Access Token to log in.
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <!-- Item 3 -->
+                                        <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom: 16px;">
+                                            <tr>
+                                                <td style="font-size: 15px; color: #4b5563; line-height: 1.6;">
+                                                    <strong>One-Time Submission:</strong> You only have one attempt. Once you click "Submit", your test is final. Ensure you have answered all questions.
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <p style="margin: 20px 0 0; padding-top: 20px; border-top: 1px solid #f3f4f6; font-size: 16px; color: #111827; line-height: 1.6; font-weight: 600; text-align: center;">
+                                            Show your best. Every click counts toward your success!
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- Closing -->
+                            <p style="margin: 30px 0 16px; font-size: 16px; line-height: 1.6;">Good luck,</p>
+                            <p style="margin: 0 0 0; font-size: 16px; line-height: 1.6;"><strong style="color: #111827;">The HireWithUs Assessment Team</strong></p>
                         </td>
                     </tr>
-                    <!-- 
-                      Footer 
-                      --- EDITED SECTION ---
-                    -->
+                    
+                    <!-- ✅ Footer -->
                     <tr>
-                        <!-- 
-                          tw: bg-gray-50 border-t border-gray-200
-                        -->
-                        <td class="footer" align="center" bgcolor="#f9fafb" style="background-color: #f9fafb; padding: 24px 20px; text-align: center; /* tw: text-xs text-gray-500 */ font-size: 12px; color: #6b7280; border-top: 1px solid #e5e7eb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                        <td class="footer" align="center" bgcolor="#f9fafb" style="background-color: #f9fafb; padding: 30px 20px; text-align: center; font-size: 13px; color: #6b7280; border-top: 1px solid #e5e7eb; font-family: 'Inter', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6;">
                             
-                            <p style="margin: 0 0 12px;">
+                            <!-- Social Icons Removed -->
+                            <p style="margin: 0 0 12px; font-size: 13px; color: #6b7280;">
+                                Test sessions are encrypted and GDPR-compliant for complete privacy.
+                            </p>
+                            
+                            <p style="margin: 0 0 8px;">
                                 Testing Partner: 
-                                <a href="https://testify-lac.com" target="_blank" class="footer-link" style="color: #2563eb; text-decoration: none; font-weight: bold; vertical-align: middle;">
+                                <a href="https://testify-lac.com" target="_blank" class="footer-link" style="color: #2563eb; text-decoration: none; font-weight: 600; vertical-align: middle;">
                                     Testify
-                                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo" width="18" style="width: 18px; height: auto; border: 0; vertical-align: middle; margin-left: 4px;">
+                                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo" width="18" style="width: 18px; height: auto; border: 0; vertical-align: middle; margin-left: 4px; margin-top: -2px;">
                                 </a>
                             </p>
                             
-                            <!-- tw: mb-2 -->
                             <p style="margin: 0 0 8px;">
-                              Need help? 
-                              <!-- tw: text-blue-600 hover:underline -->
-                              <a href="mailto:support@testify-lac.com" class="footer-link" style="color: #2563eb; text-decoration: none;">support@testify-lac.com</a>
-                              <span style="color: #cbd5e1; margin: 0 4px;">|</span>
-                              <a href="https://testify-lac.com" target="_blank" class="footer-link" style="color: #2563eb; text-decoration: none;">testify-lac.com</a>
+                                Need help? 
+                                <a href="mailto:support@testify-lac.com" class="footer-link" style="color: #2563eb; text-decoration: none;">support@testify-lac.com</a>
+                                <span style="color: #cbd5e1; margin: 0 4px;">|</span>
+                                <a href="https://testify-lac.com" target="_blank" class="footer-link" style="color: #2563eb; text-decoration: none;">testify-lac.com</a>
                             </p>
                             
-                          <p style="margin: 12px 0 0;">&copy; ${new Date().getFullYear()} | Testify-HireWithUS. All rights reserved.</p>
-                          
+                            <p style="margin: 12px 0 0;">&copy; ${new Date().getFullYear()} | Testify-HireWithUS. All rights reserved.</p>
+                        
                         </td>
                     </tr>
                 </table>
@@ -8711,12 +8793,13 @@ app.post('/api/hiring/assign-test', hiringModeratorAuth, async (req, res) => {
 </html>
 
 
-                 `
+` // (Your email HTML is very long, reusing it here)
              };
             await sendEmailWithSES(mailOptions);
             assignmentsCreated++;
         }
-        console.log(`[ASSIGN TEST] Successfully assigned test ${testPk} (${testType}) to ${assignmentsCreated} candidates.`);
+        
+        console.log(`[ASSIGN TEST] Successfully assigned test ${testPk} (${testType}) for job ${jobId} to ${assignmentsCreated} candidates.`);
         res.status(200).json({ message: `Test assigned successfully to ${assignmentsCreated} candidates!` });
     } catch (error) {
         console.error("[ASSIGN TEST] Error:", error);
@@ -8725,30 +8808,110 @@ app.post('/api/hiring/assign-test', hiringModeratorAuth, async (req, res) => {
 });
 
 app.get('/api/hiring/coding-test-results', hiringModeratorAuth, async (req, res) => {
+    console.log(`[GET /api/hiring/coding-test-results] Request received from moderator: ${req.user.email}`);
     try {
+        // 1. Fetch all Coding Tests created by the moderator
         const { Items: codingTests } = await docClient.send(new QueryCommand({
-            TableName: HIRING_CODING_TESTS_TABLE, IndexName: "createdBy-index",
-            KeyConditionExpression: "createdBy = :creator", ExpressionAttributeValues: { ":creator": req.user.email }
+            TableName: HIRING_CODING_TESTS_TABLE,
+            IndexName: "createdBy-index",
+            KeyConditionExpression: "createdBy = :creator",
+            ExpressionAttributeValues: { ":creator": req.user.email }
         }));
-        const testIds = codingTests.map(t => t.codingTestId);
-        if (testIds.length === 0) return res.json([]);
 
-        const filterExpression = testIds.map((_, i) => `:tid${i}`).join(', ');
+        if (!codingTests || codingTests.length === 0) {
+            console.log(`[GET /api/hiring/coding-test-results] No coding tests found.`);
+            return res.json([]);
+        }
+
+        const testIds = codingTests.map(t => t.codingTestId);
+        const testMap = new Map(codingTests.map(t => [t.codingTestId, t]));
+        console.log(`[GET /api/hiring/coding-test-results] Found ${testIds.length} coding tests.`);
+
+        // 2. Build dynamic filter expressions
+        const testIdFilter = testIds.map((_, i) => `:tid${i}`).join(', ');
         const expressionAttributeValues = { ":type": "coding" };
         testIds.forEach((id, i) => expressionAttributeValues[`:tid${i}`] = id);
 
-        const { Items: results } = await docClient.send(new ScanCommand({
-            TableName: HIRING_TEST_RESULTS_TABLE,
-            FilterExpression: `testId IN (${filterExpression}) AND testType = :type`,
+        // 3. Fetch all assignments for these tests
+        const { Items: allAssignments } = await docClient.send(new ScanCommand({
+            TableName: HIRING_ASSIGNMENTS_TABLE,
+            FilterExpression: `testId IN (${testIdFilter}) AND testType = :type`,
             ExpressionAttributeValues: expressionAttributeValues
         }));
+        console.log(`[GET /api/hiring/coding-test-results] Found ${allAssignments.length} total assignments.`);
 
-        const testTitleMap = new Map(codingTests.map(t => [t.codingTestId, t.title]));
-        const enrichedResults = results.map(r => ({ ...r, testTitle: testTitleMap.get(r.testId) || 'Unknown Test' }));
-        enrichedResults.sort((a,b)=> new Date(b.submittedAt) - new Date(a.submittedAt));
-        res.json(enrichedResults);
+        // 4. Fetch all results for these tests
+        const { Items: allResults } = await docClient.send(new ScanCommand({
+            TableName: HIRING_TEST_RESULTS_TABLE,
+            FilterExpression: `testId IN (${testIdFilter}) AND testType = :type`,
+            ExpressionAttributeValues: expressionAttributeValues
+        }));
+        console.log(`[GET /api/hiring/coding-test-results] Found ${allResults.length} total results.`);
+
+        // 5. Create a map of results by assignmentId
+        const resultMap = new Map(allResults.map(r => [r.assignmentId, r]));
+        
+        // 6. Process data
+        const reports = codingTests.map(test => {
+            const testId = test.codingTestId;
+            const assignmentsForThisTest = allAssignments.filter(a => a.testId === testId);
+
+            const reportEntries = assignmentsForThisTest.map(assignment => {
+                const result = resultMap.get(assignment.assignmentId);
+                
+                if (result) {
+                    // Candidate Attempted
+                    return {
+                        ...result, // Full result data
+                        status: "Attempted",
+                        assignmentTime: assignment.assignedAt,
+                        windowStart: assignment.startTime,
+                        windowEnd: assignment.endTime
+                    };
+                } else {
+                    // Candidate Not Attempted
+                    return {
+                        resultId: null,
+                        assignmentId: assignment.assignmentId,
+                        candidateEmail: assignment.studentEmail,
+                        status: "Not Attempted",
+                        score: null,
+                        result: "N/A",
+                        submittedAt: null,
+                        assignmentTime: assignment.assignedAt,
+                        windowStart: assignment.startTime,
+                        windowEnd: assignment.endTime,
+                        fullName: "N/A (Not Attempted)",
+                        collegeName: "N/A",
+                        department: "N/A",
+                        sectionScores: [] // Provide empty array for consistency
+                    };
+                }
+            });
+
+            // Sort entries
+            reportEntries.sort((a, b) => {
+                if (a.status < b.status) return 1;
+                if (a.status > b.status) return -1;
+                return (a.candidateEmail || '').localeCompare(b.candidateEmail || '');
+            });
+
+            return {
+                testId: testId,
+                title: test.title,
+                createdAt: test.createdAt,
+                report: reportEntries
+            };
+        });
+        
+        // Sort tests by creation date
+        reports.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        console.log(`[GET /api/hiring/coding-test-results] Sending ${reports.length} processed test reports.`);
+        res.json(reports);
+        
     } catch (error) {
-        console.error("Get Coding Results Error:", error);
+        console.error("[GET /api/hiring/coding-test-results] Error:", error);
         res.status(500).json({ message: 'Server error fetching results.' });
     }
 });
@@ -8933,94 +9096,108 @@ app.get('/api/hiring/test-results/:resultId', hiringModeratorAuth, async (req, r
 app.get('/api/hiring/test-history', hiringModeratorAuth, async (req, res) => {
     console.log(`[GET /api/hiring/test-history] Request received from moderator: ${req.user.email}`);
     try {
-        // --- 1. Fetch Aptitude Tests created by the moderator ---
-        console.log(`[GET /api/hiring/test-history] Fetching aptitude tests from ${HIRING_APTITUDE_TESTS_TABLE}`);
+        // 1. Fetch all Aptitude Tests created by the moderator
         const { Items: aptitudeTests } = await docClient.send(new QueryCommand({
             TableName: HIRING_APTITUDE_TESTS_TABLE,
-            IndexName: "createdBy-index", // Assumes GSI exists
+            IndexName: "createdBy-index",
             KeyConditionExpression: "createdBy = :creator",
             ExpressionAttributeValues: { ":creator": req.user.email }
         }));
 
-        // Handle case where moderator has created no aptitude tests
         if (!aptitudeTests || aptitudeTests.length === 0) {
-            console.log(`[GET /api/hiring/test-history] No aptitude tests found for moderator ${req.user.email}.`);
-            return res.json([]); // Return empty array
+            console.log(`[GET /api/hiring/test-history] No aptitude tests found.`);
+            return res.json([]);
         }
-        console.log(`[GET /api/hiring/test-history] Found ${aptitudeTests.length} aptitude tests.`);
+        
+        const testIds = aptitudeTests.map(t => t.aptitudeTestId);
+        const testMap = new Map(aptitudeTests.map(t => [t.aptitudeTestId, t]));
+        console.log(`[GET /api/hiring/test-history] Found ${testIds.length} aptitude tests.`);
 
-        // --- 2. Extract Test IDs ---
-        const testIds = aptitudeTests.map(t => t.aptitudeTestId); // Use the correct ID field
-        console.log(`[GET /api/hiring/test-history] Aptitude Test IDs: ${testIds.join(', ')}`);
-
-
-        // --- 3. Fetch ALL relevant results in one scan ---
-        // Build filter expression dynamically for IN clause
-        const filterExpression = testIds.map((_, i) => `:tid${i}`).join(', ');
-        const expressionAttributeValues = { ":type": "aptitude" }; // Filter by testType
+        // 2. Build dynamic filter expressions for assignments and results
+        const testIdFilter = testIds.map((_, i) => `:tid${i}`).join(', ');
+        const expressionAttributeValues = { ":type": "aptitude" };
         testIds.forEach((id, i) => expressionAttributeValues[`:tid${i}`] = id);
 
-        console.log(`[GET /api/hiring/test-history] Fetching results from ${HIRING_TEST_RESULTS_TABLE} for ${testIds.length} tests.`);
-        const { Items: results } = await docClient.send(new ScanCommand({
-            TableName: HIRING_TEST_RESULTS_TABLE,
-            FilterExpression: `testId IN (${filterExpression}) AND testType = :type`,
+        // 3. Fetch all assignments for these tests
+        const { Items: allAssignments } = await docClient.send(new ScanCommand({
+            TableName: HIRING_ASSIGNMENTS_TABLE,
+            FilterExpression: `testId IN (${testIdFilter}) AND testType = :type`,
             ExpressionAttributeValues: expressionAttributeValues
-            // ProjectionExpression can be added here if needed to fetch only specific fields
         }));
-        console.log(`[GET /api/hiring/test-history] Found ${results ? results.length : 0} results.`);
+        console.log(`[GET /api/hiring/test-history] Found ${allAssignments.length} total assignments for these tests.`);
 
+        // 4. Fetch all results for these tests
+        const { Items: allResults } = await docClient.send(new ScanCommand({
+            TableName: HIRING_TEST_RESULTS_TABLE,
+            FilterExpression: `testId IN (${testIdFilter}) AND testType = :type`,
+            ExpressionAttributeValues: expressionAttributeValues
+        }));
+        console.log(`[GET /api/hiring/test-history] Found ${allResults.length} total results for these tests.`);
 
-        // --- 4. Group results by testId for efficient processing ---
-        const resultsByTestId = (results || []).reduce((acc, result) => {
-            if (!acc[result.testId]) {
-                acc[result.testId] = [];
-            }
-            acc[result.testId].push(result);
-            return acc;
-        }, {});
-        console.log(`[GET /api/hiring/test-history] Grouped results by Test ID.`);
+        // 5. Create a map of results by assignmentId for easy lookup
+        const resultMap = new Map(allResults.map(r => [r.assignmentId, r]));
 
-
-        // --- 5. Combine Test Info with Aggregated Results ---
+        // 6. Process data
         const history = aptitudeTests.map(test => {
-            const relevantResults = resultsByTestId[test.aptitudeTestId] || []; // Get results for this test
-            const passedCount = relevantResults.filter(r => r.result === 'Pass').length;
-            const failedCount = relevantResults.length - passedCount;
+            const testId = test.aptitudeTestId;
+            const assignmentsForThisTest = allAssignments.filter(a => a.testId === testId);
+            
+            const reportEntries = assignmentsForThisTest.map(assignment => {
+                const result = resultMap.get(assignment.assignmentId);
+                
+                if (result) {
+                    // Candidate Attempted
+                    return {
+                        ...result, // Includes all result data (score, submittedAt, etc.)
+                        status: "Attempted",
+                        assignmentTime: assignment.assignedAt,
+                        windowStart: assignment.startTime,
+                        windowEnd: assignment.endTime
+                    };
+                } else {
+                    // Candidate Not Attempted
+                    return {
+                        resultId: null, // No result
+                        assignmentId: assignment.assignmentId,
+                        candidateEmail: assignment.studentEmail,
+                        status: "Not Attempted",
+                        score: null,
+                        result: "N/A",
+                        submittedAt: null,
+                        assignmentTime: assignment.assignedAt,
+                        windowStart: assignment.startTime,
+                        windowEnd: assignment.endTime,
+                        // Add basic fields so the table doesn't break
+                        fullName: "N/A (Not Attempted)",
+                        collegeName: "N/A",
+                        department: "N/A"
+                    };
+                }
+            });
 
-            console.log(`[GET /api/hiring/test-history] Processing test: ${test.title} (${test.aptitudeTestId}). Attempts: ${relevantResults.length}, Passed: ${passedCount}, Failed: ${failedCount}`);
+            // Sort entries by status (Not Attempted first) then by email
+            reportEntries.sort((a, b) => {
+                if (a.status < b.status) return 1; // "Not Attempted" comes after "Attempted"
+                if (a.status > b.status) return -1;
+                return (a.candidateEmail || '').localeCompare(b.candidateEmail || '');
+            });
 
-            // Include the detailed results needed for the modal directly
             return {
-                testId: test.aptitudeTestId, // Use correct ID
+                testId: testId,
                 title: test.title,
-                attempted: relevantResults.length,
-                passed: passedCount,
-                failed: failedCount,
-                results: relevantResults // Attach the full results array
+                createdAt: test.createdAt,
+                report: reportEntries // This is the full report for all assigned candidates
             };
         });
+        
+        // Sort tests by creation date
+        history.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        // Sort history by creation date (newest first)
-        history.sort((a,b) => {
-            const testA = aptitudeTests.find(t => t.aptitudeTestId === a.testId);
-            const testB = aptitudeTests.find(t => t.aptitudeTestId === b.testId);
-            return new Date(testB?.createdAt || 0) - new Date(testA?.createdAt || 0);
-        });
-
-        console.log(`[GET /api/hiring/test-history] Sending ${history.length} history items.`);
+        console.log(`[GET /api/hiring/test-history] Sending ${history.length} processed test reports.`);
         res.json(history);
 
     } catch (error) {
         console.error(`[GET /api/hiring/test-history] Error for moderator ${req.user.email}:`, error);
-        // Handle specific errors like missing index
-        if (error.name === 'ValidationException' && error.message.includes('index')) {
-             console.error(`[GET /api/hiring/test-history] Critical Error: The 'createdBy-index' GSI might be missing on ${HIRING_APTITUDE_TESTS_TABLE}.`);
-             return res.status(500).json({ message: 'Server configuration error: Required index missing on tests table.' });
-         }
-        if (error.name === 'ResourceNotFoundException') {
-            console.error(`[GET /api/hiring/test-history] Critical Error: A required table might be missing.`);
-            return res.status(500).json({ message: 'Server configuration error: Required table not found.' });
-        }
         res.status(500).json({ message: 'Server error fetching test history.' });
     }
 });
@@ -9173,178 +9350,116 @@ app.get('/api/public/test-details', authMiddleware, async (req, res) => {
 
 // EXTERNAL CANDIDATE: Submit Test
 app.post('/api/public/submit-test', authMiddleware, async (req, res) => {
-    // 1. Verify Authentication & Extract Token Data
-    // Ensure the request comes from a valid external candidate token.
     if (!req.user || !req.user.isExternal) {
-        console.warn('[SUBMIT APTITUDE] Denied: User not external or not authenticated.');
         return res.status(403).json({ message: 'Access denied. Valid candidate token required.' });
     }
-    // Extract assignmentId, candidateEmail, and the test's Primary Key from the token.
+    
     const { testId: testPkFromToken, email: candidateEmail, assignmentId } = req.user;
-    console.log(`[SUBMIT APTITUDE] Received submission for assignment: ${assignmentId}, Candidate: ${candidateEmail}, Test PK in token: ${testPkFromToken}`);
+    const { answers, timeTaken, violationReason, fullName, rollNumber, collegeName, department, profileImageUrl } = req.body;
 
-    // 2. Extract Submission Data from Request Body
-    // Get answers, time taken, any violation reason, and candidate details submitted from the frontend.
-    const { answers, timeTaken, violationReason, fullName, rollNumber, collegeName, department, profileImageUrl } = req.body; // Added profileImageUrl
-
-    // 3. Validate Input Data
-    // Check if essential candidate details provided in the body are present.
     if (!fullName || !rollNumber || !collegeName || !department) {
-         console.warn(`[SUBMIT APTITUDE] Incomplete candidate details received in body for assignment ${assignmentId}.`);
-         return res.status(400).json({ message: 'Missing required candidate details in submission: Full Name, Roll Number, College, Department.' });
+         return res.status(400).json({ message: 'Missing required candidate details.' });
     }
-    // Check if answers array exists.
     if (!Array.isArray(answers)) {
-         console.warn(`[SUBMIT APTITUDE] Invalid 'answers' format received for assignment ${assignmentId}.`);
         return res.status(400).json({ message: "Invalid answers format." });
     }
-    console.log(`[SUBMIT APTITUDE] Input data validated for assignment ${assignmentId}.`);
 
-    // Define a unique ID for this test result record.
-    const resultId = `har_${uuidv4()}`; // Prefix 'har_' for Hiring Aptitude Result
+    const resultId = `har_${uuidv4()}`;
 
     try {
-        // --- Verify Assignment Record ---
-        console.log(`[SUBMIT APTITUDE] Verifying assignment ${assignmentId} in ${HIRING_ASSIGNMENTS_TABLE}`);
+        // --- 1. Verify Assignment Record ---
         const { Item: assignment } = await docClient.send(new GetCommand({
             TableName: HIRING_ASSIGNMENTS_TABLE,
             Key: { assignmentId }
         }));
 
-        // Validate if assignment exists, belongs to the candidate, matches the test in the token, and is for an aptitude test.
-        if (!assignment) {
-            console.warn(`[SUBMIT APTITUDE] Assignment ${assignmentId} not found.`);
-            return res.status(403).json({ message: 'Assignment record not found. Link may be invalid.' });
-        }
-        if (assignment.studentEmail !== candidateEmail || assignment.testId !== testPkFromToken) {
-             console.warn(`[SUBMIT APTITUDE] Assignment ${assignmentId} data mismatch. Token vs DB: Email (${candidateEmail} vs ${assignment.studentEmail}), Test PK (${testPkFromToken} vs ${assignment.testId})`);
-             return res.status(403).json({ message: 'Link invalid or assignment details mismatch.' });
+        if (!assignment || assignment.studentEmail !== candidateEmail || assignment.testId !== testPkFromToken) {
+             return res.status(403).json({ message: 'Assignment validation failed.' });
         }
         if (assignment.testType !== 'aptitude') {
-            console.warn(`[SUBMIT APTITUDE] Incorrect test type in assignment ${assignmentId}. Expected 'aptitude', got '${assignment.testType}'.`);
             return res.status(403).json({ message: 'Assignment is not for an aptitude test.' });
         }
-        console.log(`[SUBMIT APTITUDE] Assignment ${assignmentId} verified.`);
+        
+        // *** NEW: Get the jobId from the assignment ***
+        const jobId = assignment.jobId || null;
 
-
-        // --- Check for *PREVIOUS SUBMITTED* Result (Ignore Initialization Record) ---
-        const GSI_NAME = 'AssignmentIdIndex'; // GSI on HIRING_TEST_RESULTS_TABLE with assignmentId as key
-        console.log(`[SUBMIT APTITUDE] Checking for existing SUBMITTED results using GSI '${GSI_NAME}' on ${HIRING_TEST_RESULTS_TABLE} for assignment ${assignmentId}`);
-        const queryParams = {
+        // --- 2. Check for Previous *SUBMITTED* Result ---
+        const { Items: existingSubmittedResults } = await docClient.send(new QueryCommand({
              TableName: HIRING_TEST_RESULTS_TABLE,
-             IndexName: GSI_NAME,
+             IndexName: 'AssignmentIdIndex',
              KeyConditionExpression: 'assignmentId = :aid',
-             // ** CORRECTED FILTER EXPRESSION **
-             // This filter ensures we ONLY find results that are NOT the 'init_' placeholder.
              FilterExpression: 'attribute_not_exists(resultId) OR not begins_with(resultId, :initPrefix)',
-             ExpressionAttributeValues: {
-                 ':aid': assignmentId,
-                 ':initPrefix': 'init_' // Prefix used for the initial verification record
-             },
-             Limit: 1 // We only need to know if one *submitted* result exists
-        };
-        const { Items: existingSubmittedResults } = await docClient.send(new QueryCommand(queryParams));
-
-        // If a *submitted* result (not 'init_') is found, reject the new submission.
+             ExpressionAttributeValues: { ':aid': assignmentId, ':initPrefix': 'init_' },
+             Limit: 1
+        }));
         if (existingSubmittedResults && existingSubmittedResults.length > 0) {
-            console.warn(`[SUBMIT APTITUDE] Test already SUBMITTED (found non-init result) for assignment ${assignmentId}.`);
-            return res.status(409).json({ message: 'This test has already been submitted.' }); // 409 Conflict
+            return res.status(409).json({ message: 'This test has already been submitted.' });
         }
-        console.log(`[SUBMIT APTITUDE] No previous SUBMITTED result found for assignment ${assignmentId}. Proceeding with submission.`);
 
-
-        // --- Fetch Aptitude Test Definition ---
-        console.log(`[SUBMIT APTITUDE] Fetching test definition for ${assignment.testId} from ${HIRING_APTITUDE_TESTS_TABLE}`);
+        // --- 3. Fetch Aptitude Test Definition ---
         const { Item: test } = await docClient.send(new GetCommand({
-            TableName: HIRING_APTITUDE_TESTS_TABLE, // Ensure this table name is correct
-            Key: { aptitudeTestId: assignment.testId } // Ensure 'aptitudeTestId' is the correct primary key
+            TableName: HIRING_APTITUDE_TESTS_TABLE,
+            Key: { aptitudeTestId: assignment.testId } 
         }));
 
         if (!test) {
-            console.error(`[SUBMIT APTITUDE] Test definition ${assignment.testId} not found in ${HIRING_APTITUDE_TESTS_TABLE}.`);
             return res.status(404).json({ message: "Test definition not found." });
         }
-        console.log(`[SUBMIT APTITUDE] Test definition found: ${test.title}`);
 
-
-        // --- Score Calculation ---
+        // --- 4. Score Calculation ---
         let marksScored = 0;
-        // Flatten questions from all sections for easier iteration.
         const allQuestions = test.sections?.flatMap(s => s.questions || []) || [];
-        console.log(`[SUBMIT APTITUDE] Calculating score based on ${allQuestions.length} questions and ${answers.length} answers.`);
-
+        
         allQuestions.forEach((question, index) => {
-            const studentAnswer = answers?.[index]; // Get the student's answer for this question index.
-            // Check if an answer was provided and not null/undefined.
+            const studentAnswer = answers?.[index];
             const answerProvided = studentAnswer !== null && studentAnswer !== undefined;
-            // Trim both student's answer and correct answer for comparison, handle case-insensitivity.
             const isCorrect = answerProvided &&
                               String(studentAnswer).trim().toLowerCase() === String(question.correctAnswer).trim().toLowerCase();
-
-            // Log comparison for debugging (optional)
-            // console.log(`[SUBMIT APTITUDE] Q${index + 1}: Student Answer='${studentAnswer}', Correct='${question.correctAnswer}', Provided=${answerProvided}, Correct=${isCorrect}`);
-
             if (isCorrect) {
-                // Add marks if correct. Use question's marks value or default to 0 if missing/invalid.
                 marksScored += (parseInt(question.marks, 10) || 0);
             }
         });
 
-        // Parse total marks and passing percentage from the test definition, defaulting to 0.
         const totalMarks = parseInt(test.totalMarks, 10) || 0;
         const passingPercentage = parseInt(test.passingPercentage, 10) || 0;
-        // Calculate percentage score, handling division by zero if totalMarks is 0.
         const percentageScore = totalMarks > 0 ? Math.round((marksScored / totalMarks) * 100) : 0;
-        // Determine Pass/Fail status based on calculated percentage and test's passing percentage.
         const resultStatus = percentageScore >= passingPercentage ? "Pass" : "Fail";
 
-        console.log(`[SUBMIT APTITUDE] Score Calculation Complete for assignment ${assignmentId}: Marks Scored=${marksScored}, Total Marks=${totalMarks}, Percentage=${percentageScore}%, Result=${resultStatus}`);
-
-
-        // --- Construct Result Object ---
-        // Combine all gathered information into the final result record.
+        // --- 5. Construct Result Object ---
         const newResult = {
-            resultId,                               // Unique ID for this submission result
-            testId: assignment.testId,             // The actual primary key of the test (aptitudeTestId)
-            assignmentId,                           // Link back to the specific assignment
-            testType: 'aptitude',                   // Clearly mark the test type
-            candidateEmail,                         // Candidate's email from the token
-            // Candidate details submitted from the frontend body
+            resultId,
+            testId: assignment.testId,
+            assignmentId,
+            // *** NEW: Save the jobId with the result ***
+            jobId: jobId, 
+            testType: 'aptitude',
+            candidateEmail,
             fullName,
             rollNumber,
             collegeName,
             department,
-            profileImageUrl: profileImageUrl || null, // Include profile image URL if provided
-            // Test information and results
-            testTitle: test.title || 'N/A',         // Title from the test definition
-            answers,                                // The raw array of student answers
-            timeTaken: timeTaken || 0,              // Time spent on the test
-            score: percentageScore,                 // Calculated percentage score
-            marksScored,                            // Total marks obtained
-            totalMarks,                             // Maximum possible marks for the test
-            result: resultStatus,                   // 'Pass' or 'Fail'
-            // Metadata
-            submittedAt: new Date().toISOString(),  // Timestamp of submission
-            violationReason: violationReason || null, // Record any proctoring violations
+            profileImageUrl: profileImageUrl || null,
+            testTitle: test.title || 'N/A',
+            answers,
+            timeTaken: timeTaken || 0,
+            score: percentageScore,
+            marksScored,
+            totalMarks,
+            result: resultStatus,
+            submittedAt: new Date().toISOString(),
+            violationReason: violationReason || null,
         };
-        console.log(`[SUBMIT APTITUDE] Constructed final result object for ${resultId}:`, JSON.stringify(newResult));
 
-
-        // --- Save Result ---
-        console.log(`[SUBMIT APTITUDE] Saving result ${resultId} to ${HIRING_TEST_RESULTS_TABLE}...`);
+        // --- 6. Save Result ---
         await docClient.send(new PutCommand({
             TableName: HIRING_TEST_RESULTS_TABLE,
             Item: newResult
         }));
-        console.log(`[SUBMIT APTITUDE] Successfully saved result ${resultId}.`);
-
-        // --- Send Success Response ---
-        res.status(201).json({ message: 'Test submitted successfully!' }); // 201 Created is appropriate here
+        
+        res.status(201).json({ message: 'Test submitted successfully!' });
 
     } catch (error) {
-        // Log detailed error information for debugging.
         console.error(`[SUBMIT APTITUDE] FATAL ERROR processing assignment ${assignmentId}:`, error);
-        // Provide a generic error message to the client.
         res.status(500).json({ message: 'Server error submitting test. Please contact support.' });
     }
 });
@@ -9899,21 +10014,133 @@ app.post('/api/public/apply/:jobId', upload.any(), async (req, res) => {
 // HIRING MODERATOR: Get applications for a specific job
 app.get('/api/hiring/jobs/:jobId/applications', hiringModeratorAuth, async (req, res) => {
     const { jobId } = req.params;
+    console.log(`[GET /api/hiring/jobs/${jobId}/applications] Request received from moderator: ${req.user.email}`);
+    
     try {
-        const { Item: job } = await docClient.send(new GetCommand({ TableName: HIRING_JOBS_TABLE, Key: { jobId } }));
-        if (!job || job.createdBy !== req.user.email) return res.status(403).json({ message: "Permission denied." });
-        const { Items } = await docClient.send(new QueryCommand({
-            TableName: HIRING_APPLICATIONS_TABLE, IndexName: "jobId-index",
-            KeyConditionExpression: "jobId = :jid", ExpressionAttributeValues: { ":jid": jobId }
+        // --- 1. Verify Job Ownership ---
+        console.log(`[GET /api/hiring/jobs/${jobId}/applications] Fetching job details from ${HIRING_JOBS_TABLE}`);
+        const { Item: job } = await docClient.send(new GetCommand({
+            TableName: HIRING_JOBS_TABLE,
+            Key: { jobId }
         }));
-        (Items || []).sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt));
-        res.json({ jobTitle: job.title, applications: Items || [] });
+        if (!job || job.createdBy !== req.user.email) {
+             console.warn(`[GET /api/hiring/jobs/${jobId}/applications] Permission denied or job not found.`);
+            return res.status(403).json({ message: "Permission denied or job not found." });
+        }
+        console.log(`[GET /api/hiring/jobs/${jobId}/applications] Job found: ${job.title}`);
+
+        // --- 2. Fetch All Applications for this Job ---
+        console.log(`[GET /api/hiring/jobs/${jobId}/applications] Fetching applications from ${HIRING_APPLICATIONS_TABLE}`);
+        const { Items: applications } = await docClient.send(new QueryCommand({
+            TableName: HIRING_APPLICATIONS_TABLE,
+            IndexName: "jobId-index", // Assumes GSI with HASH = jobId
+            KeyConditionExpression: "jobId = :jid",
+            ExpressionAttributeValues: { ":jid": jobId }
+        }));
+        if (!applications || applications.length === 0) {
+            console.log(`[GET /api/hiring/jobs/${jobId}/applications] No applications found for this job.`);
+            return res.json({ jobTitle: job.title, applications: [], testHeaders: [] });
+        }
+        console.log(`[GET /api/hiring/jobs/${jobId}/applications] Found ${applications.length} applications.`);
+        const applicantEmailMap = new Map(applications.map(app => [app.email, app]));
+
+        // --- 3. Fetch All Assignments for this Job ---
+        console.log(`[GET /api/hiring/jobs/${jobId}/applications] Fetching assignments from ${HIRING_ASSIGNMENTS_TABLE}`);
+        const { Items: assignments } = await docClient.send(new ScanCommand({
+            TableName: HIRING_ASSIGNMENTS_TABLE,
+            FilterExpression: "jobId = :jid",
+            ExpressionAttributeValues: { ":jid": jobId }
+        }));
+        console.log(`[GET /api/hiring/jobs/${jobId}/applications] Found ${assignments.length} assignments.`);
+
+        // --- 4. Fetch All Test Results for this Job ---
+        console.log(`[GET /api/hiring/jobs/${jobId}/applications] Fetching results from ${HIRING_TEST_RESULTS_TABLE}`);
+        const { Items: results } = await docClient.send(new ScanCommand({
+            TableName: HIRING_TEST_RESULTS_TABLE,
+            FilterExpression: "jobId = :jid",
+            ExpressionAttributeValues: { ":jid": jobId }
+        }));
+        console.log(`[GET /api/hiring/jobs/${jobId}/applications] Found ${results.length} results.`);
+        const resultMap = new Map(results.map(res => [res.assignmentId, res]));
+
+        // --- 5. Get Test Definitions (Names/Titles) ---
+        const testIds = [...new Set(assignments.map(a => a.testId))];
+        const aptitudeTestKeys = testIds.map(id => ({ aptitudeTestId: id }));
+        const codingTestKeys = testIds.map(id => ({ codingTestId: id }));
+        let testMap = new Map();
+
+        if (aptitudeTestKeys.length > 0) {
+            const { Responses } = await docClient.send(new BatchGetCommand({
+                RequestItems: { [HIRING_APTITUDE_TESTS_TABLE]: { Keys: aptitudeTestKeys, ProjectionExpression: "aptitudeTestId, title" } }
+            }));
+            (Responses[HIRING_APTITUDE_TESTS_TABLE] || []).forEach(t => testMap.set(t.aptitudeTestId, t.title));
+        }
+        if (codingTestKeys.length > 0) {
+            const { Responses } = await docClient.send(new BatchGetCommand({
+                RequestItems: { [HIRING_CODING_TESTS_TABLE]: { Keys: codingTestKeys, ProjectionExpression: "codingTestId, title" } }
+            }));
+            (Responses[HIRING_CODING_TESTS_TABLE] || []).forEach(t => testMap.set(t.codingTestId, t.title));
+        }
+        console.log(`[GET /api/hiring/jobs/${jobId}/applications] Fetched ${testMap.size} unique test definitions.`);
+        const testHeaders = Array.from(testMap.values()); // These are the names for the table columns
+
+        // --- 6. Correlate Data ---
+        // Group assignments by student email
+        const assignmentsByEmail = assignments.reduce((acc, assign) => {
+            if (!acc[assign.studentEmail]) acc[assign.studentEmail] = [];
+            acc[assign.studentEmail].push(assign);
+            return acc;
+        }, {});
+
+        // Build the final, enriched applicant list
+        const enrichedApplicants = applications.map(app => {
+            const applicantAssignments = assignmentsByEmail[app.email] || [];
+            const scores = {};
+
+            // For every test that was assigned for this job...
+            testMap.forEach((testTitle, testId) => {
+                // Find if this applicant was assigned this specific test
+                const assignment = applicantAssignments.find(a => a.testId === testId);
+                
+                if (assignment) {
+                    // They were assigned. Did they complete it?
+                    const result = resultMap.get(assignment.assignmentId);
+                    if (result) {
+                        // Yes, they completed it.
+                        // Format score: Aptitude is %, Coding is score/total
+                        const score = (result.testType === 'aptitude') ? `${result.score}%` : `${result.score}/${result.totalMarks}`;
+                        scores[testTitle] = score;
+                    } else {
+                        // No, they were assigned but did not attempt.
+                        scores[testTitle] = "Not Attempted";
+                    }
+                } else {
+                    // They were not assigned this test.
+                    scores[testTitle] = "N/A";
+                }
+            });
+            
+            return {
+                ...app,
+                scores: scores // Attach the new scores object
+            };
+        });
+
+        // Sort by applied date
+        enrichedApplicants.sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt));
+
+        console.log(`[GET /api/hiring/jobs/${jobId}/applications] Sending ${enrichedApplicants.length} enriched applicants and ${testHeaders.length} test headers.`);
+        res.json({
+            jobTitle: job.title,
+            applications: enrichedApplicants,
+            testHeaders: testHeaders // Send the test names for the frontend to build the table
+        });
+
     } catch (error) {
-        console.error("Get Applications Error:", error);
+        console.error(`[GET /api/hiring/jobs/${jobId}/applications] Error:`, error);
         res.status(500).json({ message: 'Server error fetching applications.' });
     }
 });
-
 
 
 // HIRING MODERATOR: Bulk update application status and send email
@@ -10233,49 +10460,192 @@ app.get('/api/hiring/applicants/:jobId', authMiddleware, async (req, res) => {
 // ** NEW ENDPOINT **
 // HIRING MODERATOR: Update status for multiple applicants and optionally send email
 app.post('/api/hiring/update-applicants-status', hiringModeratorAuth, async (req, res) => {
-    const { applicationIds, newStatus, emailDetails } = req.body; // applicationIds are likely the primary keys from HIRING_APPLICATIONS_TABLE
+    // emailDetails will just be { send: true, status: "Shortlisted" } or null
+    const { applicationIds, newStatus, emailDetails } = req.body; 
+    
     if (!applicationIds || applicationIds.length === 0 || !newStatus) {
         return res.status(400).json({ message: 'Application IDs and new status are required.' });
     }
 
     try {
-        let emailsToSend = [];
-        const applicationUpdatePromises = applicationIds.map(async (appId) => {
-            // Fetch the application to get the email if needed for notifications
-             const { Item: application } = await docClient.send(new GetCommand({
-                 TableName: HIRING_APPLICATIONS_TABLE, // Ensure this table name is correct
-                 Key: { applicationId: appId } // Ensure 'applicationId' is the primary key
-             }));
-
-            if (application && application.email) { // Check if email exists
-                 emailsToSend.push(application.email);
-             }
-
-            // Update the status
+        // Step 1: Update all applicant statuses in the database
+        const updatePromises = applicationIds.map(appId => {
             return docClient.send(new UpdateCommand({
-                TableName: HIRING_APPLICATIONS_TABLE,
-                Key: { applicationId: appId },
+                TableName: HIRING_APPLICATIONS_TABLE, // Your applications table
+                Key: { applicationId: appId }, // The PK of that table
                 UpdateExpression: "set #st = :s",
                 ExpressionAttributeNames: { "#st": "status" },
                 ExpressionAttributeValues: { ":s": newStatus }
             }));
         });
+        
+        await Promise.all(updatePromises);
+        console.log(`[Status Update] Updated ${applicationIds.length} applicants to ${newStatus}.`);
 
-        await Promise.all(applicationUpdatePromises);
+        // Step 2: If emailDetails.send is true, fetch data and send emails
+        if (emailDetails && emailDetails.send) {
+            console.log("[Status Update] Sending email notifications...");
+            
+            // Fetch all the applications we just updated to get their details
+            const keys = applicationIds.map(id => ({ applicationId: id }));
+            const { Responses } = await docClient.send(new BatchGetCommand({
+                RequestItems: { [HIRING_APPLICATIONS_TABLE]: { Keys: keys } }
+            }));
+            
+            const applications = Responses[HIRING_APPLICATIONS_TABLE] || [];
+            
+            // Get unique Job IDs from these applications
+            const jobIds = [...new Set(applications.map(app => app.jobId))];
+            
+            // Fetch all the corresponding jobs to get their titles
+            const jobKeys = jobIds.map(id => ({ jobId: id })); // Assumes PK of jobs table is 'jobId'
+            const { Responses: JobResponses } = await docClient.send(new BatchGetCommand({
+                RequestItems: { [HIRING_JOBS_TABLE]: { Keys: jobKeys } } // Your jobs table
+            }));
 
-        // Send email if requested
-        if (emailDetails && emailDetails.send && emailsToSend.length > 0) {
-            // Remove duplicates just in case
-            const uniqueEmails = [...new Set(emailsToSend)];
-            const mailOptions = {
-                to: uniqueEmails.join(','), // Send as comma-separated string or array based on your SES function
-                subject: emailDetails.subject,
-                html: emailDetails.body
-            };
-            await sendEmailWithSES(mailOptions); // Make sure sendEmailWithSES handles multiple recipients correctly
-            console.log(`Status update email sent to ${uniqueEmails.length} recipients.`);
+            const jobMap = new Map((JobResponses[HIRING_JOBS_TABLE] || []).map(job => [job.jobId, job.title]));
+
+            // Loop through each application and send the dynamic, single-template email
+            let emailsSent = 0;
+            for (const app of applications) {
+                const applicantName = app.firstName || 'Applicant';
+                const jobTitle = jobMap.get(app.jobId) || 'the position you applied for';
+                const status = newStatus; // The status you selected
+
+                // The single, dynamic template
+                const subject = `Your Application Status Update for: ${jobTitle}`;
+                const body = `
+                    <!doctype html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Application Status Update</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f5f7fa;font-family:Arial, Helvetica, sans-serif;color:#333;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f7fa;padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:10px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.06);">
+          
+          <!-- Header / Logo -->
+          <tr>
+            <td style="padding:20px 24px;border-bottom:1px solid #eef0f2;">
+              <table role="presentation" width="100%">
+                <tr>
+                  <td style="vertical-align:middle;">
+                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" 
+                         alt="HireWithUs" width="70" 
+                         style="display:block;border:0;outline:none;text-decoration:none;">
+                  </td>
+                  <td style="text-align:right;vertical-align:middle;font-size:15px;color:#8b94a0;">
+                    <span>Application Update</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:28px 32px 20px 32px;">
+              <h2 style="margin:0 0 8px 0;font-size:20px;color:#222;">Dear ${applicantName},</h2>
+              <p style="margin:0 0 16px 0;line-height:1.6;color:#555;font-size:15px;">
+                We’re writing to update you regarding your application for the 
+                <strong>${jobTitle}</strong> position.
+              </p>
+
+              <!-- Status Card -->
+              <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:16px 0 22px 0;">
+                <tr>
+                  <td style="padding:14px;border-radius:8px;background:#f7fbff;border:1px solid #e6f0ff;">
+                    <strong style="display:block;font-size:15px;color:#0f1724;margin-bottom:6px;">Current Status</strong>
+                    <span style="display:inline-block;padding:8px 12px;border-radius:999px;font-weight:600;font-size:13px;
+                                 background:#fff3cd;color:#8a6d00;border:1px solid #ffe8a1;">
+                      ${status}
+                    </span>
+
+                    <p style="margin:12px 0 0 0;color:#555;font-size:14px;line-height:1.55;">
+                      We’ll reach out to you with further updates or next steps if necessary. 
+                      Thank you for your interest and patience.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:12px 0 24px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="https://www.testify-lac.com/jobportal/student-login.html" 
+                       target="_blank" 
+                       style="background-color:#0069ff;color:#ffffff;text-decoration:none;padding:12px 24px;
+                              border-radius:6px;display:inline-block;font-size:15px;font-weight:bold;">
+                      View Application Status
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0;color:#666;font-size:14px;line-height:1.6;">
+                Best regards,<br>
+                <strong>The HireWithUs Team</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:18px 32px 24px 32px;border-top:1px solid #eef0f2;background:#fbfdff;">
+              <table role="presentation" width="100%">
+                <tr>
+                  <td style="font-size:13px;color:#7a8190;">
+                    <strong style="color:#222;font-size:13px;">HireWithUs</strong><br>
+                    <a href="mailto:support@testify-lac.com" style="color:#7a8190;text-decoration:none;">support@testify-lac.com</a>
+                  </td>
+                  <td style="text-align:right;vertical-align:middle;font-size:12px;color:#9aa0a6;">
+                    <div>© 2025 HireWithUs</div>
+                    <div style="margin-top:6px;">
+                      <a href="#" style="color:#9aa0a6;text-decoration:underline;">Unsubscribe</a>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+
+        <!-- Mobile-friendly small footer note -->
+        <div style="max-width:600px;margin-top:12px;font-size:12px;color:#939aa4;text-align:center;">
+          This email was sent to you because you applied on our Job portal. 
+          If you did not apply, please ignore this message.
+        </div>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+
+                `;
+
+                try {
+                    await sendEmailWithSES({
+                        to: app.email,
+                        subject: subject,
+                        html: body
+                    });
+                    emailsSent++;
+                } catch (emailError) {
+                    console.error(`[Status Update] Failed to send email to ${app.email}:`, emailError);
+                }
+            }
+            console.log(`[Status Update] Sent ${emailsSent} emails.`);
+            return res.status(200).json({ message: `Successfully updated ${applicationIds.length} applicants to "${newStatus}" and sent ${emailsSent} emails.` });
         }
 
+        // If not sending email
         res.status(200).json({ message: `Successfully updated ${applicationIds.length} applicants to "${newStatus}".` });
 
     } catch (error) {
@@ -11141,54 +11511,55 @@ app.get('/api/student/jobs', studentAuthMiddleware, async (req, res) => {
             return res.json([]); // Return early if no jobs are eligible
         }
 
-        // --- MODIFICATION START: Fetch Moderator Names ---
+        // --- *** FIX IS HERE *** ---
         // 3. Get unique moderator emails from the eligible jobs
-        const moderatorEmails = [...new Set(eligibleJobs.map(job => job.createdBy).filter(Boolean))]; // Filter out any undefined/null emails
+        const moderatorEmails = [...new Set(eligibleJobs.map(job => job.createdBy).filter(Boolean))]; 
         console.log(`[STUDENT_JOBS_MODERATORS] Found ${moderatorEmails.length} unique moderator emails: ${moderatorEmails.join(', ')}`);
 
         let moderatorMap = new Map();
         if (moderatorEmails.length > 0) {
-            // 4. Fetch moderator details using BatchGetCommand for efficiency
-            const keys = moderatorEmails.map(email => ({ email: email })); // Assuming 'email' is the PK for HIRING_USERS_TABLE
-            console.log(`[STUDENT_JOBS_BATCH_GET] Fetching details for ${keys.length} moderators from ${HIRING_USERS_TABLE}`);
+            // 4. Fetch moderator details from the correct table: "TestifyUsers"
+            const keys = moderatorEmails.map(email => ({ email: email })); 
+            console.log(`[STUDENT_JOBS_BATCH_GET] Fetching details for ${keys.length} moderators from TestifyUsers`); // <<< CORRECTED TABLE NAME IN LOG
 
             const batchGetParams = {
                 RequestItems: {
-                    [HIRING_USERS_TABLE]: { // Use the correct table name constant
+                    // *** THIS IS THE FIX ***
+                    // Was: [HIRING_USERS_TABLE] (student table)
+                    // Now: "TestifyUsers" (admin/moderator table)
+                    "TestifyUsers": { 
                         Keys: keys,
-                        // Specify only the attributes needed (email and fullName)
                         ProjectionExpression: "email, fullName"
                     }
                 }
             };
-            console.log("[STUDENT_JOBS_BATCH_GET] BatchGet Params:", JSON.stringify(batchGetParams, null, 2));
 
             const { Responses } = await docClient.send(new BatchGetCommand(batchGetParams));
 
-            // Check if the response structure is as expected
-            const moderators = Responses && Responses[HIRING_USERS_TABLE] ? Responses[HIRING_USERS_TABLE] : [];
+            // *** THIS IS THE FIX ***
+            // Read from the correct response object
+            const moderators = Responses && Responses["TestifyUsers"] ? Responses["TestifyUsers"] : [];
 
             if (moderators.length > 0) {
                  moderators.forEach(mod => {
                      if (mod && mod.email) {
-                         // Store the fullName in the map, keyed by email
                          moderatorMap.set(mod.email, mod.fullName);
                      }
                  });
-                 console.log(`[STUDENT_JOBS_BATCH_GET_SUCCESS] Successfully fetched details for ${moderators.length} moderators. Map size: ${moderatorMap.size}`);
+                 console.log(`[STUDENT_JOBS_BATCH_GET_SUCCESS] Successfully fetched details for ${moderators.length} moderators.`);
              } else {
-                console.warn(`[STUDENT_JOBS_BATCH_GET_WARN] BatchGet returned no moderator details, or response structure was unexpected.`);
+                console.warn(`[STUDENT_JOBS_BATCH_GET_WARN] BatchGet returned no moderator details from TestifyUsers.`);
              }
         } else {
             console.log(`[STUDENT_JOBS_INFO] No moderator emails found in eligible jobs, skipping BatchGet.`);
         }
-        // --- MODIFICATION END ---
+        // --- *** END OF FIX *** ---
 
         // 5. Format the jobs for the frontend, adding the moderator's name as 'postedBy'
         const formattedJobs = eligibleJobs.map(job => ({
             ...job,
-            // Use the fetched name from the map, or fallback to 'Unknown' if not found
-            postedBy: moderatorMap.get(job.createdBy) || 'Unknown' // More specific fallback
+            // This will now correctly find the fullName from the moderatorMap
+            postedBy: moderatorMap.get(job.createdBy) || 'Company' // Fallback to 'Company'
         }));
 
         // 6. Sort jobs by creation date (newest first)
@@ -11199,7 +11570,6 @@ app.get('/api/student/jobs', studentAuthMiddleware, async (req, res) => {
 
     } catch (error) {
         console.error(`[STUDENT_JOBS_FATAL_ERROR] Failed fetching jobs for student ${req.user.email} (College: ${studentCollege}):`, error);
-        // Ensure headers aren't already sent before sending response
         if (!res.headersSent) {
             res.status(500).json({ message: 'Server error fetching jobs. Please try again later or contact support.' });
         } else {
@@ -11207,6 +11577,7 @@ app.get('/api/student/jobs', studentAuthMiddleware, async (req, res) => {
         }
     }
 });
+
 app.get('/api/student/applications', studentAuthMiddleware, async (req, res) => {
     const studentEmail = req.user.email;
     try {
@@ -11281,9 +11652,13 @@ app.put('/api/student/applications/:applicationId', studentAuthMiddleware, uploa
     // Extract text fields from the request body
     const {
         firstName, lastName, phone, department, rollNumber, // Added department, rollNumber
-        linkedinUrl, githubUrl, portfolioUrl,
+        coverLetter, linkedinUrl, githubUrl, portfolioUrl,
         education, // JSON string for education array
         experiences, // JSON string for experience array
+        // *** NEW: Add certifications, address, extracurricular ***
+        certifications,
+        address,
+        extracurricular,
         govtIdType,
         // *** NEW *** Add fields to track existing file URLs if frontend sends them
         existingPassportPhotoUrl,
@@ -11296,9 +11671,9 @@ app.put('/api/student/applications/:applicationId', studentAuthMiddleware, uploa
 
     try {
         // --- 1. Fetch the existing application ---
-        console.log(`[APP_UPDATE_FETCH_APP] Fetching application ${applicationId} from ${APPLICATIONS_TABLE}`);
+        console.log(`[APP_UPDATE_FETCH_APP] Fetching application ${applicationId} from ${HIRING_APPLICATIONS_TABLE}`);
         const { Item: application } = await docClient.send(new GetCommand({
-            TableName: APPLICATIONS_TABLE, // FIX: Use correct constant
+            TableName: HIRING_APPLICATIONS_TABLE, // FIX: Use correct constant
             Key: { applicationId }
         }));
 
@@ -11314,16 +11689,14 @@ app.put('/api/student/applications/:applicationId', studentAuthMiddleware, uploa
         console.log(`[APP_UPDATE_AUTH_PASS] Ownership verified for ${applicationId}.`);
 
         // --- 3. Fetch the associated job and verify the deadline ---
-        console.log(`[APP_UPDATE_FETCH_JOB] Fetching job ${application.jobId} from ${JOBS_TABLE}`);
+        console.log(`[APP_UPDATE_FETCH_JOB] Fetching job ${application.jobId} from ${HIRING_JOBS_TABLE}`);
         const { Item: job } = await docClient.send(new GetCommand({
-            TableName: JOBS_TABLE,       // FIX: Use correct constant
+            TableName: HIRING_JOBS_TABLE,       // FIX: Use correct constant
             Key: { jobId: application.jobId } // FIX: Use correct primary key 'jobId'
         }));
 
         if (!job) {
              console.error(`[APP_UPDATE_ERROR] Associated job ${application.jobId} not found for application ${applicationId}. Cannot verify deadline.`);
-             // Decide if you allow updates if the job is gone but deadline *might* be stored on app
-             // For safety, let's reject if the job isn't found to check deadline.
              return res.status(404).json({ message: "Associated job opening not found. Cannot verify deadline." });
         }
          console.log(`[APP_UPDATE_FETCH_JOB_SUCCESS] Job ${application.jobId} found. Deadline: ${job.applicationDeadline}`);
@@ -11340,37 +11713,54 @@ app.put('/api/student/applications/:applicationId', studentAuthMiddleware, uploa
         const uploadedFileUrls = new Map(); // Use a Map to store { fieldname: url }
         console.log(`[APP_UPDATE_UPLOAD] Processing ${files.length} potential file uploads.`);
 
+        // --- FIX: Initialize dynamic file maps ---
+        const educationCertificates = {};
+        const experienceCertificates = {};
+        const certificationFiles = {};
+
         await Promise.all(files.map(async (file) => {
             try {
                 const result = await uploadToCloudinary(file); // Ensure this helper exists and works
-                uploadedFileUrls.set(file.fieldname, result.secure_url);
+                
+                // --- FIX: Handle ALL file types ---
+                if (file.fieldname === 'passportPhoto' || file.fieldname === 'resume' || file.fieldname === 'govtId') {
+                    uploadedFileUrls.set(file.fieldname, result.secure_url);
+                } else if (file.fieldname.startsWith('education_certificate_')) {
+                    const index = file.fieldname.split('_')[2];
+                    educationCertificates[index] = result.secure_url;
+                } else if (file.fieldname.startsWith('experience_certificate_')) {
+                    const index = file.fieldname.split('_')[2];
+                    experienceCertificates[index] = result.secure_url;
+                } else if (file.fieldname.startsWith('certification_file_')) {
+                    const index = file.fieldname.split('_')[2];
+                    certificationFiles[index] = result.secure_url;
+                }
+                // --- End Fix ---
+
                 console.log(`[APP_UPDATE_UPLOAD_SUCCESS] Field '${file.fieldname}' uploaded. URL: ${result.secure_url}`);
             } catch (uploadError) {
                 console.error(`[APP_UPDATE_UPLOAD_FAIL] Cloudinary upload failed for field '${file.fieldname}':`, uploadError.message);
-                // Decide on error strategy: fail fast or continue? For now, continue but log.
             }
         }));
-        console.log(`[APP_UPDATE_UPLOAD_DONE] Processed file uploads. ${uploadedFileUrls.size} successful.`);
+        console.log(`[APP_UPDATE_UPLOAD_DONE] Processed file uploads. ${uploadedFileUrls.size + Object.keys(educationCertificates).length + Object.keys(experienceCertificates).length + Object.keys(certificationFiles).length} successful.`);
 
 
         // --- 5. Prepare the update payload (start with existing application data) ---
-        // We will build the UpdateExpression and AttributeValues dynamically
         let updateExpressionParts = [];
         const expressionAttributeValues = {};
         const expressionAttributeNames = {}; // Needed if attribute names conflict with DynamoDB keywords
-
 
         // Update basic text fields if they are provided in the request
         if (firstName !== undefined) { updateExpressionParts.push("firstName = :fn"); expressionAttributeValues[":fn"] = firstName; }
         if (lastName !== undefined) { updateExpressionParts.push("lastName = :ln"); expressionAttributeValues[":ln"] = lastName; }
         if (phone !== undefined) { updateExpressionParts.push("phone = :ph"); expressionAttributeValues[":ph"] = phone; }
-        // Add department and rollNumber if provided
         if (department !== undefined) { updateExpressionParts.push("department = :dept"); expressionAttributeValues[":dept"] = department; }
         if (rollNumber !== undefined) { updateExpressionParts.push("rollNumber = :rn"); expressionAttributeValues[":rn"] = rollNumber; }
+        if (extracurricular !== undefined) { updateExpressionParts.push("extracurricular = :ext"); expressionAttributeValues[":ext"] = extracurricular; }
+        if (coverLetter !== undefined) { updateExpressionParts.push("coverLetter = :cl"); expressionAttributeValues[":cl"] = coverLetter; }
 
 
-        // Update nested link fields - requires careful handling or overwriting the whole map
-        // Simple approach: overwrite the 'links' map if any link is provided
+        // Update nested link fields
          if (linkedinUrl !== undefined || githubUrl !== undefined || portfolioUrl !== undefined) {
              updateExpressionParts.push("#links = :links"); // Use #links because 'links' could be a reserved word
              expressionAttributeNames["#links"] = "links";
@@ -11380,71 +11770,99 @@ app.put('/api/student/applications/:applicationId', studentAuthMiddleware, uploa
                  portfolio: portfolioUrl !== undefined ? portfolioUrl : application.links?.portfolio
              };
          }
+         
+        // Update address object
+        if (address !== undefined) {
+            try {
+                const addressData = JSON.parse(address || '{}');
+                updateExpressionParts.push("address = :addr");
+                expressionAttributeValues[":addr"] = addressData;
+            } catch (parseError) {
+                 console.error(`[APP_UPDATE_PARSE_ERROR] Invalid JSON for address on application ${applicationId}:`, parseError.message);
+                 return res.status(400).json({ message: "Invalid format for address data." });
+            }
+        }
 
 
-        // Update single file URLs if they were uploaded
+        // Update single file URLs
         if (uploadedFileUrls.has('passportPhoto')) {
             updateExpressionParts.push("passportPhotoUrl = :p_photo");
             expressionAttributeValues[":p_photo"] = uploadedFileUrls.get('passportPhoto');
+        } else if (existingPassportPhotoUrl !== undefined) {
+            updateExpressionParts.push("passportPhotoUrl = :p_photo");
+            expressionAttributeValues[":p_photo"] = existingPassportPhotoUrl || null;
         }
+
         if (uploadedFileUrls.has('resume')) {
             updateExpressionParts.push("resumeUrl = :res_url");
             expressionAttributeValues[":res_url"] = uploadedFileUrls.get('resume');
+        } else if (existingResumeUrl !== undefined) {
+            updateExpressionParts.push("resumeUrl = :res_url");
+            expressionAttributeValues[":res_url"] = existingResumeUrl || null;
         }
 
-        // Update Govt ID (Type and URL) - overwrite the 'govtId' map
-         if (govtIdType !== undefined || uploadedFileUrls.has('govtId')) {
+        // Update Govt ID (Type and URL)
+         if (govtIdType !== undefined || uploadedFileUrls.has('govtId') || existingGovtIdUrl !== undefined) {
              updateExpressionParts.push("govtId = :gid");
              expressionAttributeValues[":gid"] = {
                  type: govtIdType !== undefined ? govtIdType : application.govtId?.type,
-                 url: uploadedFileUrls.get('govtId') || application.govtId?.url // Use new URL if uploaded, else keep old
+                 url: uploadedFileUrls.get('govtId') || (existingGovtIdUrl !== undefined ? (existingGovtIdUrl || null) : application.govtId?.url)
              };
          }
 
-        // --- 6. Update Education & Experience Arrays ---
+        // --- 6. Update Education, Experience, & Certification Arrays ---
         try {
             if (education !== undefined) {
                 const submittedEducation = JSON.parse(education || '[]');
                 const updatedEducation = submittedEducation.map((edu, index) => {
-                    const fieldName = `education_certificate_${index}`; // Match the input field name
-                    // Use uploaded URL if available, else use the URL submitted in the JSON (might be old one or null), default null
-                    const certificateUrl = uploadedFileUrls.get(fieldName) || edu.certificateUrl || null;
+                    const fieldName = `education_certificate_${index}`;
+                    const certificateUrl = educationCertificates[index] || edu.certificateUrl || null;
                     return { ...edu, certificateUrl };
                 });
                 updateExpressionParts.push("education = :edu");
                 expressionAttributeValues[":edu"] = updatedEducation;
             }
 
-             if (experiences !== undefined) {
+            if (experiences !== undefined) {
                 const submittedExperiences = JSON.parse(experiences || '[]');
                 const updatedExperiences = submittedExperiences.map((exp, index) => {
-                    const fieldName = `experience_certificate_${index}`; // Match the input field name
-                    const certificateUrl = uploadedFileUrls.get(fieldName) || exp.certificateUrl || null;
+                    const fieldName = `experience_certificate_${index}`;
+                    const certificateUrl = experienceCertificates[index] || exp.certificateUrl || null;
                     return { ...exp, certificateUrl };
                 });
                  updateExpressionParts.push("experiences = :exp");
                  expressionAttributeValues[":exp"] = updatedExperiences;
             }
+
+            if (certifications !== undefined) {
+                const submittedCerts = JSON.parse(certifications || '[]');
+                const updatedCerts = submittedCerts.map((cert, index) => {
+                    const fieldName = `certification_file_${index}`;
+                    const certificateUrl = certificationFiles[index] || cert.certificateUrl || null;
+                    return { ...cert, certificateUrl };
+                });
+                updateExpressionParts.push("certifications = :certs");
+                expressionAttributeValues[":certs"] = updatedCerts;
+            }
         } catch (parseError) {
-            console.error(`[APP_UPDATE_PARSE_ERROR] Invalid JSON for edu/exp on application ${applicationId}:`, parseError.message);
-            return res.status(400).json({ message: "Invalid format for education or experience data." });
+            console.error(`[APP_UPDATE_PARSE_ERROR] Invalid JSON for edu/exp/certs on application ${applicationId}:`, parseError.message);
+            return res.status(400).json({ message: "Invalid format for education, experience, or certification data." });
         }
 
 
         // --- 7. Perform the update in DynamoDB using UpdateCommand ---
         if (updateExpressionParts.length === 0) {
              console.log(`[APP_UPDATE_NO_CHANGES] No fields provided for update for application ${applicationId}.`);
-             return res.status(200).json({ message: 'No changes detected.' }); // Or 400 if you require changes
+             return res.status(200).json({ message: 'No changes detected.' });
         }
 
         const updateParams = {
-            TableName: APPLICATIONS_TABLE, // FIX: Use correct constant
+            TableName: HIRING_APPLICATIONS_TABLE, // FIX: Use correct constant
             Key: { applicationId },
             UpdateExpression: `SET ${updateExpressionParts.join(', ')}`,
             ExpressionAttributeValues: expressionAttributeValues,
-            ReturnValues: "UPDATED_NEW" // Optional: Return the updated item
+            ReturnValues: "UPDATED_NEW"
         };
-        // Add ExpressionAttributeNames only if needed
          if (Object.keys(expressionAttributeNames).length > 0) {
              updateParams.ExpressionAttributeNames = expressionAttributeNames;
          }
@@ -11461,7 +11879,6 @@ app.put('/api/student/applications/:applicationId', studentAuthMiddleware, uploa
         console.error(`[APP_UPDATE_FATAL_ERROR] Failed to update application ${applicationId}:`, error);
         let userMessage = 'Server error updating application. Please try again later.';
         let statusCode = 500;
-        // Add specific error checks if needed (e.g., ValidationException)
         if (error.name === 'ValidationException') {
             userMessage = 'Database error: Invalid data format during update. Please contact support.';
         } else if (error.name === 'ResourceNotFoundException') {
@@ -11473,22 +11890,66 @@ app.put('/api/student/applications/:applicationId', studentAuthMiddleware, uploa
     }
 });
 
-const uploadToCloudinary = async (file) => {
-    console.log(`[uploadToCloudinary] Attempting to upload file for field: ${file.fieldname}, mimetype: ${file.mimetype}`);
-    try {
-        const b64 = Buffer.from(file.buffer).toString("base64");
-        const dataURI = `data:${file.mimetype};base64,${b64}`;
-        const result = await cloudinary.uploader.upload(dataURI, {
-            folder: "job_applications", // Ensure this folder exists or Cloudinary can create it
-            resource_type: "auto" // Detect resource type (image, pdf, docx etc.)
-        });
-        console.log(`[uploadToCloudinary] SUCCESS for field: ${file.fieldname}. URL: ${result.secure_url}`);
-        return result;
-    } catch (error) {
-        console.error(`[uploadToCloudinary] FAILED for field: ${file.fieldname}. Error:`, error);
-        throw error; // Re-throw the error to be caught by the main endpoint handler
-    }
+const uploadToCloudinary = (file) => {
+    console.log(`[uploadToCloudinary] Attempting to upload file via STREAM: ${file.fieldname}, mimetype: ${file.mimetype}`);
+    
+    return new Promise((resolve, reject) => {
+        // Create an upload stream
+        const uploadStream = cloudinary.uploader.upload_stream(
+            {
+                folder: "job_applications",
+                resource_type: 'auto' // This is key: Cloudinary will detect if it's an image, video, or raw file (like PDF)
+            },
+            (error, result) => {
+                if (error) {
+                    console.error(`[uploadToCloudinary] FAILED for field: ${file.fieldname}. Error:`, error);
+                    return reject(new Error(error.message));
+                }
+                if (result) {
+                    console.log(`[uploadToCloudinary] SUCCESS for field: ${file.fieldname}. URL: ${result.secure_url}`);
+                    resolve(result);
+                } else {
+                    // This case should not happen if error is null, but as a safeguard
+                    reject(new Error("Cloudinary upload failed with no result and no error."));
+                }
+            }
+        );
+
+        // Create a readable stream from the file buffer and pipe it to Cloudinary
+        const bufferStream = new stream.PassThrough();
+        bufferStream.end(file.buffer);
+        bufferStream.pipe(uploadStream);
+    });
 };
+
+const uploadToS3 = (file) => {
+    console.log(`[uploadToS3] Attempting to upload: ${file.fieldname}, mimetype: ${file.mimetype}`);
+
+    // Create a unique file key (path in S3)
+    const fileKey = `job_applications/${uuidv4()}-${file.originalname.replace(/\s+/g, '_')}`;
+
+    const params = {
+        Bucket: S3_BUCKET_NAME,
+        Key: fileKey,
+        Body: file.buffer,
+        ContentType: file.mimetype, // This is CRITICAL for PDFs to open correctly
+        // ACL: 'public-read'         // Make the file publicly viewable // --- MODIFICATION: REMOVE THIS LINE ---
+    };
+
+    return new Promise(async (resolve, reject) => {
+        try {
+            await s3Client.send(new PutObjectCommand(params));
+            // Construct the public URL
+            const url = `https://${S3_BUCKET_NAME}.s3.${AWS_S3_REGION}.amazonaws.com/${fileKey}`;
+            console.log(`[uploadToS3] SUCCESS for field: ${file.fieldname}. URL: ${url}`);
+            resolve(url); // Resolve with the URL string
+        } catch (error) {
+            console.error(`[uploadToS3] FAILED for field: ${file.fieldname}. Error:`, error);
+            reject(error);
+        }
+    });
+};
+
 app.post('/api/student/apply/:jobId', studentAuthMiddleware, upload.any(), async (req, res) => {
     const { jobId } = req.params;
     // Ensure req.user is populated by studentAuthMiddleware
@@ -11500,14 +11961,17 @@ app.post('/api/student/apply/:jobId', studentAuthMiddleware, upload.any(), async
     const studentCollege = req.user.college; // Get college from authenticated user
 
     console.log(`[APPLY_START] Received application for job ${jobId} from student ${studentEmail}`);
-    console.log("[APPLY_BODY] Request Body:", req.body); // Log text fields
-    console.log("[APPLY_FILES] Received Files:", req.files ? req.files.map(f => f.fieldname) : 'None'); // Log file field names
-
-
+    
     // Extract text fields from req.body
     const {
         firstName, lastName, phone, department, rollNumber, // Student profile info from form
-        coverLetter, linkedinUrl, githubUrl, portfolioUrl // Optional fields from form
+        coverLetter, linkedinUrl, githubUrl, portfolioUrl, // Optional fields from form
+        education, // JSON string for education array
+        experiences, // JSON string for experience array
+        certifications, // JSON string for certifications array
+        address, // JSON string for address object
+        govtIdType, // Govt ID Type
+        extracurricular // Extracurricular activities
     } = req.body;
 
     // Basic validation for required text fields from the form
@@ -11543,17 +12007,17 @@ app.post('/api/student/apply/:jobId', studentAuthMiddleware, upload.any(), async
 
         // Check if student's college is eligible
         if (!studentCollege) {
-             console.warn(`[APPLY_ERROR] Student ${studentEmail} college information is missing in token/user data.`);
-             return res.status(403).json({ message: 'Your college information is missing. Cannot verify eligibility.' });
+            console.warn(`[APPLY_ERROR] Student ${studentEmail} college information is missing in token/user data.`);
+            return res.status(403).json({ message: 'Your college information is missing. Cannot verify eligibility.' });
         }
         if (!job.eligibleColleges || !Array.isArray(job.eligibleColleges) || !job.eligibleColleges.includes(studentCollege)) {
-             console.warn(`[APPLY_ERROR] Student ${studentEmail} from college '${studentCollege}' is not eligible for job ${jobId}. Eligible: ${job.eligibleColleges?.join(', ')}`);
-             return res.status(403).json({ message: `Your college ('${studentCollege}') is not eligible for this job.` });
+            console.warn(`[APPLY_ERROR] Student ${studentEmail} from college '${studentCollege}' is not eligible for job ${jobId}. Eligible: ${job.eligibleColleges?.join(', ')}`);
+            return res.status(403).json({ message: `Your college ('${studentCollege}') is not eligible for this job.` });
         }
         console.log(`[APPLY_ELIGIBILITY_PASS] Student ${studentEmail} from '${studentCollege}' is eligible.`);
 
         // --- 2. Check if student already applied ---
-       console.log(`[APPLY_CHECK_DUPLICATE] Checking if student ${studentEmail} already applied for job ${jobId}. Using index: email-jobId-index`);
+    console.log(`[APPLY_CHECK_DUPLICATE] Checking if student ${studentEmail} already applied for job ${jobId}. Using index: email-jobId-index`);
         const queryParams = {
             TableName: HIRING_APPLICATIONS_TABLE, // Ensure this is "HiringApplications"
             IndexName: "email-jobId-index",      // Make sure this index exists with HASH(email), RANGE(jobId)
@@ -11570,58 +12034,138 @@ app.post('/api/student/apply/:jobId', studentAuthMiddleware, upload.any(), async
         }
         console.log(`[APPLY_CHECK_DUPLICATE_PASS] No existing application found.`);
 
-        // --- 3. Process File Uploads (Resume is required) ---
+        // --- 3. Process File Uploads (All files at once) ---
         const files = req.files || [];
-        let resumeUrl = null;
         console.log(`[APPLY_UPLOAD] Processing ${files.length} files.`);
 
-        const resumeFile = files.find(f => f.fieldname === 'resume');
+        let passportPhotoUrl = null;
+        let resumeUrl = null;
+        let govtIdUrl = null;
+        const educationCertificates = {}; // To store { index: url }
+        const experienceCertificates = {}; // To store { index: url }
+        const certificationFiles = {}; // To store { index: url }
 
-        if (!resumeFile) {
-            // This case might happen if the frontend allows submission without the file, despite 'required' attribute
-             console.warn(`[APPLY_ERROR] Resume file missing in submission for student ${studentEmail}, job ${jobId}`);
+        const uploadPromises = files.map(async (file) => {
+            try {
+                // --- MODIFICATION: Call uploadToS3 ---
+                const s3Url = await uploadToS3(file); // Use the new S3 uploader
+                
+                // Assign URL to the correct variable based on fieldname
+                if (file.fieldname === 'passportPhoto') {
+                    passportPhotoUrl = s3Url;
+                } else if (file.fieldname === 'resume') {
+                    resumeUrl = s3Url;
+                } else if (file.fieldname === 'govtId') {
+                    govtIdUrl = s3Url;
+                } else if (file.fieldname.startsWith('education_certificate_')) {
+                    const index = file.fieldname.split('_')[2];
+                    educationCertificates[index] = s3Url;
+                } else if (file.fieldname.startsWith('experience_certificate_')) {
+                    const index = file.fieldname.split('_')[2];
+                    experienceCertificates[index] = s3Url;
+                } else if (file.fieldname.startsWith('certification_file_')) {
+                    const index = file.fieldname.split('_')[2];
+                    certificationFiles[index] = s3Url;
+                }
+                // --- END MODIFICATION ---
+            } catch (uploadError) {
+                console.error(`[APPLY_ERROR] S3 upload failed for field '${file.fieldname}':`, uploadError); // Modified log
+                // We'll throw an error to stop the application process
+                throw new Error(`Upload failed for file: ${file.originalname}. ${uploadError.message}`);
+            }
+        });
+
+        await Promise.all(uploadPromises); // Wait for all files to upload
+        console.log(`[APPLY_UPLOAD_DONE] All files processed via S3.`); // Modified log
+
+        // Validate that required files were uploaded
+        if (!resumeUrl) {
+            console.warn(`[APPLY_ERROR] Resume file missing after processing uploads for student ${studentEmail}, job ${jobId}`);
             return res.status(400).json({ message: 'Resume file is required but was not received by the server.' });
         }
-
-        // Upload resume specifically
-        try {
-            console.log(`[APPLY_UPLOAD_RESUME] Uploading resume...`);
-            const result = await uploadToCloudinary(resumeFile); // Ensure uploadToCloudinary is defined and works
-            resumeUrl = result.secure_url;
-            console.log(`[APPLY_UPLOAD_RESUME_SUCCESS] Resume uploaded: ${resumeUrl}`);
-        } catch (uploadError) {
-             console.error(`[APPLY_ERROR] Cloudinary upload failed for resume (student ${studentEmail}, job ${jobId}):`, uploadError);
-             return res.status(500).json({ message: 'Server error during resume file upload. Please ensure the file is valid and try again.' });
+        if (!passportPhotoUrl) {
+            console.warn(`[APPLY_ERROR] Passport photo missing after processing uploads for student ${studentEmail}, job ${jobId}`);
+            return res.status(400).json({ message: 'Passport photo is required but was not received by the server.' });
         }
-        // Handle other optional file uploads if necessary
 
-        // --- 4. Create and Save Application ---
+        // --- 4. Parse and Enrich JSON Data ---
+        console.log("[APPLY_PARSE_JSON] Parsing JSON strings for education, experience, certs, address...");
+        let educationData = [];
+        let experienceData = [];
+        let certificationData = [];
+        let addressData = {};
+
+        try {
+            educationData = JSON.parse(education || '[]').map((edu, index) => ({
+                ...edu,
+                certificateUrl: educationCertificates[index] || null // Add the uploaded URL
+            }));
+            
+            experienceData = JSON.parse(experiences || '[]').map((exp, index) => ({
+                ...exp,
+                certificateUrl: experienceCertificates[index] || null // Add the uploaded URL
+            }));
+
+            certificationData = JSON.parse(certifications || '[]').map((cert, index) => ({
+                ...cert,
+                certificateUrl: certificationFiles[index] || null // Add the uploaded URL
+            }));
+            
+            addressData = JSON.parse(address || '{}');
+
+        } catch (parseError) {
+            console.error(`[APPLY_ERROR] Invalid JSON data submitted by ${studentEmail} for job ${jobId}:`, parseError.message);
+            return res.status(400).json({ message: "Invalid format for education, experience, or address data." });
+        }
+            console.log("[APPLY_PARSE_JSON_SUCCESS] JSON data parsed and enriched.");
+
+
+        // --- 5. Create and Save Application ---
         const applicationId = `sapp_${uuidv4()}`; // Prefix for student apps
         console.log(`[APPLY_CREATE_ITEM] Creating application item with ID ${applicationId}`);
+        
         const newApplication = {
             applicationId, // Primary Key for HIRING_APPLICATIONS_TABLE
             jobId,         // Range Key for email-jobId-index, Sort Key for jobId-index
             jobTitle: job.title,
-            // Use authenticated user's details + form details
+            
+            // --- All data fields ---
             email: studentEmail,       // Partition Key for email-jobId-index
-            college: studentCollege, // From authenticated user
-            // Use form data submitted
+            college: studentCollege,
             firstName: firstName,
             lastName: lastName,
             phone: phone,
             department: department,
             rollNumber: rollNumber,
-            resumeUrl, // The uploaded resume URL
-            coverLetter: coverLetter || null, // Optional cover letter text
-            links: { // Optional links
+            
+            passportPhotoUrl: passportPhotoUrl, // SAVED
+            resumeUrl: resumeUrl,           // SAVED
+            
+            govtId: {                       // SAVED
+                type: govtIdType || null,
+                url: govtIdUrl || null
+            },
+            
+            address: addressData,           // SAVED
+            
+            education: educationData,       // SAVED
+            experiences: experienceData,    // SAVED
+            certifications: certificationData, // SAVED
+            
+            extracurricular: extracurricular || null, // SAVED
+            coverLetter: coverLetter || null,       // SAVED
+            
+            links: {                        // SAVED
                 linkedin: linkedinUrl || null,
                 github: githubUrl || null,
                 portfolio: portfolioUrl || null
             },
+            
             status: 'Applied', // Initial status
             appliedAt: new Date().toISOString() // Sort Key for jobId-index
         };
-        console.log("[APPLY_CREATE_ITEM] Application Data:", JSON.stringify(newApplication, null, 2));
+
+        console.log("[APPLY_CREATE_ITEM] Final Application Data:", JSON.stringify(newApplication, null, 2));
 
 
         console.log(`[APPLY_SAVE_DB] Attempting to save application ${applicationId} to ${HIRING_APPLICATIONS_TABLE}.`);
@@ -11640,26 +12184,26 @@ app.post('/api/student/apply/:jobId', studentAuthMiddleware, upload.any(), async
         console.error("Error Name:", error.name);
         // Log specifics if it's an AWS error
         if (error.$metadata) {
-             console.error("AWS Error Metadata:", error.$metadata);
+            console.error("AWS Error Metadata:", error.$metadata);
         }
-         console.error("Error Stack:", error.stack); // Log the full stack trace
+            console.error("Error Stack:", error.stack); // Log the full stack trace
 
         // Determine user message based on error type
         let userMessage = 'Server error submitting application. Please try again later.';
         let statusCode = 500;
 
         if (error.name === 'ValidationException') { // DynamoDB validation error
-             userMessage = 'Database error: Invalid data format during submission. Please contact support.';
-             statusCode = 500; // Or 400 if it's likely user input related, but often schema issues
+            userMessage = 'Database error: Invalid data format during submission. Please contact support.';
+            statusCode = 500; // Or 400 if it's likely user input related, but often schema issues
         } else if (error.name === 'ResourceNotFoundException') { // DynamoDB table/index not found
-             userMessage = 'Database error: Required table or index not found. Please contact support.';
-             statusCode = 500;
+            userMessage = 'Database error: Required table or index not found. Please contact support.';
+            statusCode = 500;
         } else if (error.message.includes('IndexNotFound')) { // Specific index error check
-             userMessage = 'Database index configuration error. Please contact support.';
-             statusCode = 500;
-        } else if (error.message.includes('upload') || error.message.includes('Cloudinary')) { // Upload errors
-             userMessage = 'Server error during file upload. Please ensure the file is valid and try again.';
-             statusCode = 500;
+            userMessage = 'Database index configuration error. Please contact support.';
+            statusCode = 500;
+        } else if (error.message.includes('upload') || error.message.includes('S3')) { // --- MODIFICATION: Check for S3 ---
+            userMessage = `Server error during file upload: ${error.message}. Please ensure the file is valid and try again.`;
+            statusCode = 500;
         } else if (error.message.includes('Token is not valid') || error.message.includes('authorization denied')) { // Auth errors
             userMessage = 'Authentication error. Please log in again.';
             statusCode = 401;
@@ -11668,7 +12212,7 @@ app.post('/api/student/apply/:jobId', studentAuthMiddleware, upload.any(), async
 
         // Ensure headers aren't already sent before sending response
         if (!res.headersSent) {
-             res.status(statusCode).json({ message: userMessage });
+            res.status(statusCode).json({ message: userMessage });
         } else {
             console.error("[APPLY_ERROR] Headers already sent, could not send error response to client.");
         }
@@ -12079,9 +12623,495 @@ app.post('/api/public/save-code-snippet', authMiddleware, async (req, res) => {
     }
 });
 
-server.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+app.get('/api/hiring/job-applicant-pools/:jobId', hiringModeratorAuth, async (req, res) => {
+    const { jobId } = req.params;
+
+    try {
+        // --- 1. Get Job details to verify ownership and get total applicant count ---
+        const { Item: job } = await docClient.send(new GetCommand({
+            TableName: HIRING_JOBS_TABLE, Key: { jobId }
+        }));
+        if (!job || job.createdBy !== req.user.email) {
+            return res.status(403).json({ message: 'Access denied or job not found.' });
+        }
+
+        // --- 2. Get count of "All Applicants" ---
+        // We scan HIRING_APPLICATIONS_TABLE (where students first apply)
+        const { Items: allApplications } = await docClient.send(new QueryCommand({
+            TableName: HIRING_APPLICATIONS_TABLE,
+            IndexName: "jobId-index", // Assumes GSI with HASH = jobId
+            KeyConditionExpression: "jobId = :jid",
+            ExpressionAttributeValues: { ":jid": jobId }
+        }));
+        const allApplicantCount = allApplications.length;
+
+        // This is the first, default pool
+        let pools = [
+            { 
+                filterKey: "all", 
+                displayText: `All Applicants for "${job.title}" (${allApplicantCount})` 
+            }
+        ];
+
+        // --- 3. Find all test results associated with this job ---
+        const { Items: results } = await docClient.send(new ScanCommand({
+            TableName: HIRING_TEST_RESULTS_TABLE,
+            FilterExpression: "jobId = :jid",
+            ExpressionAttributeValues: { ":jid": jobId }
+        }));
+
+        if (!results || results.length === 0) {
+            // No test results yet, just return the "All Applicants" pool
+            return res.json(pools);
+        }
+
+        // --- 4. Group results by testId to find unique tests taken ---
+        const resultsByTest = results.reduce((acc, res) => {
+            if (!res.testId) return acc;
+            if (!acc[res.testId]) {
+                acc[res.testId] = { passed: 0, failed: 0, testType: res.testType, testTitle: res.testTitle };
+            }
+            if (res.result === "Pass") {
+                acc[res.testId].passed++;
+            } else {
+                acc[res.testId].failed++;
+            }
+            return acc;
+        }, {});
+
+        // --- 5. Create filterable pools from the grouped results ---
+        for (const [testId, data] of Object.entries(resultsByTest)) {
+            const testTitle = data.testTitle || `${data.testType} Test (ID: ...${testId.slice(-4)})`;
+            
+            if(data.passed > 0) {
+                pools.push({
+                    filterKey: `passed:${testId}`,
+                    displayText: `Passed: "${testTitle}" (${data.passed})`
+                });
+            }
+            if(data.failed > 0) {
+                pools.push({
+                    filterKey: `failed:${testId}`,
+                    displayText: `Failed: "${testTitle}" (${data.failed})`
+                });
+            }
+        }
+
+        res.json(pools);
+
+    } catch (error) {
+        console.error(`[JOB APPLICANT POOLS] Error for jobId ${jobId}:`, error);
+        res.status(500).json({ message: 'Server error fetching applicant pools.' });
+    }
 });
 
 
+// ---
+// 5. NEW ENDPOINT: GET /api/hiring/job-applicants
+// ---
+// Add this new endpoint to your backend.js file.
+
+app.get('/api/hiring/job-applicants', hiringModeratorAuth, async (req, res) => {
+    const { jobId, filterKey } = req.query;
+
+    if (!jobId || !filterKey) {
+        return res.status(400).json({ message: 'jobId and filterKey are required.' });
+    }
+
+    try {
+        let emails = [];
+
+        if (filterKey === 'all') {
+            // --- Fetch ALL applicants from the applications table ---
+            const { Items } = await docClient.send(new QueryCommand({
+                TableName: HIRING_APPLICATIONS_TABLE,
+                IndexName: "jobId-index", // Assumes GSI with HASH = jobId
+                KeyConditionExpression: "jobId = :jid",
+                ExpressionAttributeValues: { ":jid": jobId },
+                ProjectionExpression: "email" // Only fetch the email
+            }));
+            emails = Items.map(app => app.email);
+
+        } else {
+            // --- Fetch from results table based on filter ---
+            const [status, testId] = filterKey.split(':');
+            
+            if (!status || !testId || (status !== 'passed' && status !== 'failed')) {
+                return res.status(400).json({ message: 'Invalid filterKey format. Expected "all", "passed:testid", or "failed:testid".' });
+            }
+
+            const resultString = status === 'passed' ? 'Pass' : 'Fail';
+
+            const { Items } = await docClient.send(new ScanCommand({
+                TableName: HIRING_TEST_RESULTS_TABLE,
+                FilterExpression: "jobId = :jid AND testId = :tid AND #res = :result",
+                ExpressionAttributeNames: { "#res": "result" },
+                ExpressionAttributeValues: {
+                    ":jid": jobId,
+                    ":tid": testId,
+                    ":result": resultString
+                },
+                ProjectionExpression: "candidateEmail" // Only fetch the email
+            }));
+            
+            emails = Items.map(res => res.candidateEmail);
+        }
+
+        // Return unique emails
+        res.json([...new Set(emails)]);
+
+    } catch (error) {
+        console.error(`[JOB APPLICANTS] Error for jobId ${jobId}, filter ${filterKey}:`, error);
+        res.status(500).json({ message: 'Server error fetching applicants.' });
+    }
+});
+// Add this to your backend.js file
+app.delete('/api/hiring/applications/:applicationId', hiringModeratorAuth, async (req, res) => {
+    const { applicationId } = req.params;
+    
+    // You should add a check here to ensure the moderator (req.user.email)
+    // is authorized to delete this application, e.g., by checking
+    // who created the job associated with the application.
+
+    try {
+        await docClient.send(new DeleteCommand({
+            TableName: HIRING_APPLICATIONS_TABLE,
+            Key: { applicationId: applicationId }
+        }));
+        res.status(200).json({ message: 'Application deleted successfully.' });
+    } catch (error) {
+        console.error("Delete Application Error:", error);
+        res.status(500).json({ message: 'Server error deleting application.' });
+    }
+});
+
+app.get('/api/student/my-tests', studentAuthMiddleware, async (req, res) => {
+    const studentEmail = req.user.email;
+    if (!studentEmail) {
+        return res.status(401).json({ message: 'Authentication required.' });
+    }
+
+    console.log(`[MY_TESTS_START] Fetching tests for student ${studentEmail}`);
+    let combinedItems = [];
+    const aptitudeTestIdsToFetch = [];
+    const codingTestIdsToFetch = [];
+
+    try {
+        // --- 1. Fetch Test Assignments ---
+        console.log(`[MY_TESTS_FETCH] Fetching from ${HIRING_ASSIGNMENTS_TABLE}`);
+        const { Items: assignments } = await docClient.send(new ScanCommand({
+            TableName: HIRING_ASSIGNMENTS_TABLE, // [cite: backend.js]
+            FilterExpression: "studentEmail = :emailVal",
+            ExpressionAttributeValues: { ":emailVal": studentEmail }
+        }));
+
+        if (!assignments || assignments.length === 0) {
+            console.log(`[MY_TESTS_FETCH] No test assignments found.`);
+            return res.json([]);
+        }
+
+        console.log(`[MY_TESTS_FETCH] Found ${assignments.length} test assignments.`);
+        const baseUrl = req.protocol + '://' + req.get('host');
+        const pageName = 'download-test-app.html'; // [cite: backend.js]
+
+        assignments.forEach(assign => {
+            const testLink = `${baseUrl}/${pageName}?token=${assign.testToken}`;
+            combinedItems.push({
+                type: 'test',
+                id: assign.assignmentId,
+                testId: assign.testId,
+                testType: assign.testType,
+                startTime: assign.startTime,
+                endTime: assign.endTime,
+                testLink: testLink,
+                date: assign.assignedAt
+            });
+            
+            if (assign.testType === 'aptitude') {
+                aptitudeTestIdsToFetch.push(assign.testId);
+            } else if (assign.testType === 'coding') {
+                codingTestIdsToFetch.push(assign.testId);
+            }
+        });
+
+        // --- 2. Batch Fetch All Test Details (with de-duplication) ---
+        let aptitudeTestMap = new Map();
+        let codingTestMap = new Map();
+
+        if (aptitudeTestIdsToFetch.length > 0) {
+            const uniqueAptitudeTestKeys = [...new Set(aptitudeTestIdsToFetch)].map(id => ({ aptitudeTestId: id }));
+            const { Responses } = await docClient.send(new BatchGetCommand({
+                RequestItems: { [HIRING_APTITUDE_TESTS_TABLE]: { Keys: uniqueAptitudeTestKeys } }
+            }));
+            (Responses[HIRING_APTITUDE_TESTS_TABLE] || []).forEach(t => aptitudeTestMap.set(t.aptitudeTestId, t));
+            console.log(`[MY_TESTS_BATCH] Fetched ${aptitudeTestMap.size} aptitude test details.`);
+        }
+        if (codingTestIdsToFetch.length > 0) {
+            const uniqueCodingTestKeys = [...new Set(codingTestIdsToFetch)].map(id => ({ codingTestId: id }));
+            const { Responses } = await docClient.send(new BatchGetCommand({
+                RequestItems: { [HIRING_CODING_TESTS_TABLE]: { Keys: uniqueCodingTestKeys } }
+            }));
+            (Responses[HIRING_CODING_TESTS_TABLE] || []).forEach(t => codingTestMap.set(t.codingTestId, t));
+            console.log(`[MY_TESTS_BATCH] Fetched ${codingTestMap.size} coding test details.`);
+        }
+
+        // --- 3. Enrich Combined List ---
+        const enrichedItems = combinedItems.map(item => {
+            let test;
+            if (item.testType === 'aptitude') {
+                test = aptitudeTestMap.get(item.testId);
+            } else if (item.testType === 'coding') {
+                test = codingTestMap.get(item.testId);
+            }
+            return {
+                ...item,
+                testTitle: test?.title || 'Test Title Unavailable',
+            };
+        });
+
+        // Sort by date, newest first
+        enrichedItems.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        console.log(`[MY_TESTS_SUCCESS] Returning ${enrichedItems.length} combined items for student ${studentEmail}`);
+        res.json(enrichedItems);
+
+    } catch (error) {
+        console.error(`[MY_TESTS_FATAL_ERROR] Failed fetching items for student ${studentEmail}:`, error);
+        res.status(500).json({ message: 'Server error fetching your tests.' });
+    }
+});
+// NEW: Get a single aptitude test's details (for editing)
+app.get('/api/hiring/aptitude-tests/:aptitudeTestId', hiringModeratorAuth, async (req, res) => {
+    const { aptitudeTestId } = req.params;
+    try {
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: HIRING_APTITUDE_TESTS_TABLE,
+            Key: { aptitudeTestId }
+        }));
+
+        if (!Item || Item.createdBy !== req.user.email) {
+            return res.status(404).json({ message: 'Aptitude test not found or access denied.' });
+        }
+        res.json(Item);
+    } catch (error) {
+        console.error("Get Single Aptitude Test Error:", error);
+        res.status(500).json({ message: 'Server error fetching aptitude test.' });
+    }
+});
+
+// NEW: Update an existing aptitude test
+app.put('/api/hiring/aptitude-tests/:aptitudeTestId', hiringModeratorAuth, async (req, res) => {
+    const { aptitudeTestId } = req.params;
+    const { testTitle, duration, totalMarks, passingPercentage, sections } = req.body;
+
+    // Validate input
+    if (!testTitle || !duration || !totalMarks || !passingPercentage || !sections) {
+        return res.status(400).json({ message: 'All fields are required.' });
+    }
+
+    try {
+        // Check ownership
+        const { Item: existingTest } = await docClient.send(new GetCommand({
+            TableName: HIRING_APTITUDE_TESTS_TABLE,
+            Key: { aptitudeTestId }
+        }));
+        if (!existingTest || existingTest.createdBy !== req.user.email) {
+            return res.status(403).json({ message: 'Access denied.' });
+        }
+
+        // Update the item
+        const updatedTest = {
+            ...existingTest,
+            title: testTitle,
+            duration: parseInt(duration, 10),
+            totalMarks: parseInt(totalMarks, 10),
+            passingPercentage: parseInt(passingPercentage, 10),
+            sections,
+            updatedAt: new Date().toISOString() // Add an updated timestamp
+        };
+
+        await docClient.send(new PutCommand({
+            TableName: HIRING_APTITUDE_TESTS_TABLE,
+            Item: updatedTest
+        }));
+        
+        res.status(200).json({ message: 'Aptitude test updated successfully!', test: updatedTest });
+    } catch (error) {
+        console.error("Update Aptitude Test Error:", error);
+        res.status(500).json({ message: 'Server error updating aptitude test.' });
+    }
+});
+
+// NEW: Delete an aptitude test
+app.delete('/api/hiring/aptitude-tests/:aptitudeTestId', hiringModeratorAuth, async (req, res) => {
+    const { aptitudeTestId } = req.params;
+    try {
+        // Check ownership
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: HIRING_APTITUDE_TESTS_TABLE,
+            Key: { aptitudeTestId }
+        }));
+        if (!Item || Item.createdBy !== req.user.email) {
+            return res.status(403).json({ message: 'Access denied.' });
+        }
+
+        await docClient.send(new DeleteCommand({
+            TableName: HIRING_APTITUDE_TESTS_TABLE,
+            Key: { aptitudeTestId }
+        }));
+        
+        // You might also want to delete related assignments from HIRING_ASSIGNMENTS_TABLE
+        
+        res.status(200).json({ message: 'Aptitude test deleted successfully.' });
+    } catch (error) {
+        console.error("Delete Aptitude Test Error:", error);
+        res.status(500).json({ message: 'Server error deleting aptitude test.' });
+    }
+});
+
+
+
+
+// NEW: Delete a coding problem
+app.delete('/api/hiring/coding-problems/:problemId', hiringModeratorAuth, async (req, res) => {
+    const { problemId } = req.params;
+    try {
+        // Check ownership
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: HIRING_CODING_PROBLEMS_TABLE,
+            Key: { problemId }
+        }));
+        if (!Item || Item.createdBy !== req.user.email) {
+            return res.status(403).json({ message: 'Access denied.' });
+        }
+
+        await docClient.send(new DeleteCommand({
+            TableName: HIRING_CODING_PROBLEMS_TABLE,
+            Key: { problemId }
+        }));
+        
+        // Note: You should also check if this problem is used in any HIRING_CODING_TESTS_TABLE
+        // and handle that (e.g., prevent deletion or remove from tests).
+        
+        res.status(200).json({ message: 'Coding problem deleted successfully.' });
+    } catch (error) {
+        console.error("Delete Coding Problem Error:", error);
+        res.status(500).json({ message: 'Server error deleting problem.' });
+    }
+});
+
+
+
+// NEW: Get a single coding test's details (for editing)
+app.get('/api/hiring/coding-tests/:codingTestId', hiringModeratorAuth, async (req, res) => {
+    const { codingTestId } = req.params;
+    try {
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: HIRING_CODING_TESTS_TABLE,
+            Key: { codingTestId }
+        }));
+
+        if (!Item || Item.createdBy !== req.user.email) {
+            return res.status(404).json({ message: 'Coding test not found or access denied.' });
+        }
+        res.json(Item);
+    } catch (error) {
+        console.error("Get Single Coding Test Error:", error);
+        res.status(500).json({ message: 'Server error fetching coding test.' });
+    }
+});
+
+// NEW: Update an existing coding test
+app.put('/api/hiring/coding-tests/:codingTestId', hiringModeratorAuth, async (req, res) => {
+    const { codingTestId } = req.params;
+    const { testTitle, duration, sections } = req.body; // Expecting the same body as create
+
+    // Validate input
+    if (!testTitle || !duration || !sections || !Array.isArray(sections) || sections.length === 0) {
+        return res.status(400).json({ message: 'Missing required fields.' });
+    }
+    
+    let totalMarks = 0;
+    try {
+        const sectionsToStore = sections.map(section => {
+            if (!section.title || !section.problems || !Array.isArray(section.problems)) {
+                throw new Error('Invalid section format.');
+            }
+            const problemsToStore = section.problems.map(p => {
+                const score = parseInt(p.score, 10) || 0;
+                totalMarks += score;
+                return {
+                    problemId: p.id || p.problemId,
+                    title: p.title,
+                    difficulty: p.difficulty,
+                    score: score
+                };
+            });
+            return { title: section.title, problems: problemsToStore };
+        });
+
+        // Check ownership
+        const { Item: existingTest } = await docClient.send(new GetCommand({
+            TableName: HIRING_CODING_TESTS_TABLE,
+            Key: { codingTestId }
+        }));
+        if (!existingTest || existingTest.createdBy !== req.user.email) {
+            return res.status(403).json({ message: 'Access denied.' });
+        }
+
+        // Update the item
+        const updatedTest = {
+            ...existingTest,
+            title: testTitle,
+            duration: parseInt(duration, 10),
+            totalMarks,
+            sections: sectionsToStore,
+            updatedAt: new Date().toISOString()
+        };
+
+        await docClient.send(new PutCommand({
+            TableName: HIRING_CODING_TESTS_TABLE,
+            Item: updatedTest
+        }));
+        
+        res.status(200).json({ message: 'Coding test updated successfully!', test: updatedTest });
+    } catch (error) {
+        console.error("Update Coding Test Error:", error);
+        if (error.message === 'Invalid section format.') {
+            return res.status(400).json({ message: error.message });
+        }
+        res.status(500).json({ message: 'Server error updating coding test.' });
+    }
+});
+
+// NEW: Delete a coding test
+app.delete('/api/hiring/coding-tests/:codingTestId', hiringModeratorAuth, async (req, res) => {
+    const { codingTestId } = req.params;
+    try {
+        // Check ownership
+        const { Item } = await docClient.send(new GetCommand({
+            TableName: HIRING_CODING_TESTS_TABLE,
+            Key: { codingTestId }
+        }));
+        if (!Item || Item.createdBy !== req.user.email) {
+            return res.status(403).json({ message: 'Access denied.' });
+        }
+
+        await docClient.send(new DeleteCommand({
+            TableName: HIRING_CODING_TESTS_TABLE,
+            Key: { codingTestId }
+        }));
+        
+        // You might also want to delete related assignments from HIRING_ASSIGNMENTS_TABLE
+        
+        res.status(200).json({ message: 'Coding test deleted successfully.' });
+    } catch (error) {
+        console.error("Delete Coding Test Error:", error);
+        res.status(500).json({ message: 'Server error deleting coding test.' });
+    }
+});
+
+server.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
 
