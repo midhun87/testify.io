@@ -14,6 +14,19 @@
         .sidebar-link:hover { background-color: #4338CA; }
         .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
         #ai-loader { display: none; }
+        /* Simple spinner for media upload */
+        .loader-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -87,7 +100,7 @@
                     </div>
                     
                     <div class="mt-8 flex justify-end">
-                        <button type="submit" id="submit-btn" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                        <button type="submit" id="submit-btn" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:bg-gray-400">
                             Create Test
                         </button>
                     </div>
@@ -96,6 +109,7 @@
         </div>
     </div>
     
+    <!-- This script is assumed to exist and handle sidebar/user menu -->
     <script src="common.js"></script>
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js`;
@@ -103,6 +117,11 @@
         document.addEventListener('DOMContentLoaded', () => {
             initializePage('Create Test');
             const token = localStorage.getItem('token');
+            if (!token) {
+                // Handle not logged in
+                console.error("No auth token found. Redirecting to login.");
+                window.location.href = 'hiring-login.html'; // Or your login page
+            }
 
             const sectionsContainer = document.getElementById('sections-container');
             const mainTitle = document.getElementById('main-title');
@@ -127,6 +146,7 @@
 
             async function loadTestData(testId) {
                 try {
+                    // --- MODIFICATION: Fetch from the correct "edit" endpoint ---
                     const response = await fetch(`/api/hiring/aptitude-tests/${testId}`, {
                         headers: { 'x-auth-token': token }
                     });
@@ -188,16 +208,124 @@
             });
             
              sectionsContainer.addEventListener('change', (e) => {
+                // Handle Question Type (MCQ, Fill)
                 if (e.target.matches('.question-type-select')) {
                     updateAnswerArea(e.target.dataset.questionId, e.target.value);
                 }
+                
+                // --- NEW: Handle Media Type (None, Image, Audio) ---
+                if (e.target.matches('.question-media-type-select')) {
+                    handleMediaTypeChange(e.target);
+                }
+
+                // --- NEW: Handle File Upload ---
+                if (e.target.matches('.media-file-input')) {
+                    handleMediaFileUpload(e.target);
+                }
             });
+
+            function handleMediaTypeChange(selectElement) {
+                const questionId = selectElement.dataset.questionId;
+                const newType = selectElement.value;
+
+                const uploadArea = document.getElementById(`${questionId}-media-upload-area`);
+                const playLimitArea = document.getElementById(`${questionId}-media-play-limit-area`);
+                const fileInput = document.getElementById(`${questionId}-media-file`);
+                const mediaUrlInput = document.getElementById(`${questionId}-media-url`);
+                const mediaStatus = document.getElementById(`${questionId}-media-status`);
+
+                uploadArea.classList.toggle('hidden', newType === 'none');
+                playLimitArea.classList.toggle('hidden', newType !== 'audio');
+
+                // Set file input accept attribute
+                if (newType === 'image') fileInput.accept = 'image/*';
+                else if (newType === 'audio') fileInput.accept = 'audio/*';
+                else if (newType === 'video') fileInput.accept = 'video/*';
+                else fileInput.accept = '';
+
+                // If type is "None", clear existing media data
+                if (newType === 'none') {
+                    fileInput.value = ''; // Clear file input
+                    mediaUrlInput.value = ''; // Clear stored URL
+                    mediaStatus.innerHTML = ''; // Clear status message
+                }
+            }
+
+            async function handleMediaFileUpload(fileInputElement) {
+                const questionId = fileInputElement.dataset.questionId;
+                const file = fileInputElement.files[0];
+                if (!file) return;
+
+                const mediaUrlInput = document.getElementById(`${questionId}-media-url`);
+                const mediaStatus = document.getElementById(`${questionId}-media-status`);
+                
+                mediaStatus.innerHTML = `<div class="flex items-center space-x-2"><div class="loader-spinner"></div><span>Uploading ${file.name}...</span></div>`;
+                mediaUrlInput.value = ''; // Clear old URL
+                submitBtn.disabled = true; // Disable submit during upload
+
+                const formData = new FormData();
+                formData.append('mediaFile', file);
+
+                try {
+                    const response = await fetch('/api/hiring/upload-media', {
+                        method: 'POST',
+                        headers: { 'x-auth-token': token },
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message || 'Upload failed');
+
+                    // Success
+                    mediaUrlInput.value = result.url;
+                    mediaStatus.innerHTML = `<span class="text-green-600 font-medium">Upload complete: ${file.name}</span>`;
+                
+                } catch (error) {
+                    console.error('Media upload error:', error);
+                    mediaStatus.innerHTML = `<span class="text-red-600 font-medium">Upload failed: ${error.message}</span>`;
+                    fileInputElement.value = ''; // Clear the failed file input
+                } finally {
+                    submitBtn.disabled = false; // Re-enable submit
+                }
+            }
 
             function addQuestion(questionsContainer, data = {}) {
                 const questionCounter = Date.now() + Math.random(); // Unique ID for question
                 const questionId = `${questionsContainer.closest('.section-block').id}-q-${questionCounter}`;
                 const questionBlock = document.createElement('div');
                 questionBlock.className = 'question-block bg-gray-50 p-4 rounded-lg border';
+                
+                // --- NEW: Add media HTML snippet ---
+                const mediaHtml = `
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <h5 class="text-sm font-medium text-gray-700 mb-2">Media Attachment (Optional)</h5>
+                        <input type="hidden" id="${questionId}-media-url" value="${data.media?.url || ''}">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Media Type -->
+                            <div>
+                                <label for="${questionId}-media-type" class="block text-sm font-medium text-gray-700">Media Type</label>
+                                <select id="${questionId}-media-type" class="question-media-type-select mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" data-question-id="${questionId}">
+                                    <option value="none">None</option>
+                                    <option value="image">Image</option>
+                                    <option value="audio">Audio</option>
+                                    <option value="video">Video</option>
+                                </select>
+                            </div>
+                            <!-- Media Upload -->
+                            <div id="${questionId}-media-upload-area" class="hidden">
+                                <label for="${questionId}-media-file" class="block text-sm font-medium text-gray-700">Upload File</label>
+                                <input type="file" id="${questionId}-media-file" class="media-file-input mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" data-question-id="${questionId}">
+                                <div id="${questionId}-media-status" class="text-sm text-gray-600 mt-1"></div>
+                            </div>
+                            <!-- Play Limit (for Audio) -->
+                            <div id="${questionId}-media-play-limit-area" class="hidden">
+                                <label for="${questionId}-media-play-limit" class="block text-sm font-medium text-gray-700">Play Limit</label>
+                                <input type="number" id="${questionId}-media-play-limit" value="${data.media?.playLimit || 1}" min="1" class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
                 questionBlock.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
                         <h4 class="font-semibold text-gray-700">Question</h4>
@@ -221,12 +349,43 @@
                         <label for="${questionId}-text" class="block text-sm font-medium text-gray-700">Question Text</label>
                         <textarea id="${questionId}-text" rows="2" required class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">${data.text || ''}</textarea>
                     </div>
-                    <div id="${questionId}-answer-area" class="mt-2"></div>
+                    
+                    <!-- NEW: Media HTML Injected Here -->
+                    ${mediaHtml}
+
+                    <div id="${questionId}-answer-area" class="mt-4 pt-4 border-t border-gray-200"></div>
                 `;
                 questionsContainer.appendChild(questionBlock);
                 const typeSelect = questionBlock.querySelector('.question-type-select');
                 if(data.type) typeSelect.value = data.type;
                 updateAnswerArea(questionId, typeSelect.value, data);
+
+                // --- NEW: Populate media fields if editing ---
+                if (data.media && data.media.type) {
+                    const mediaTypeSelect = document.getElementById(`${questionId}-media-type`);
+                    mediaTypeSelect.value = data.media.type;
+                    
+                    // Manually trigger the show/hide logic
+                    const uploadArea = document.getElementById(`${questionId}-media-upload-area`);
+                    const playLimitArea = document.getElementById(`${questionId}-media-play-limit-area`);
+                    uploadArea.classList.remove('hidden');
+                    
+                    if (data.media.type === 'audio') {
+                        playLimitArea.classList.remove('hidden');
+                        document.getElementById(`${questionId}-media-play-limit`).value = data.media.playLimit || 1;
+                    }
+                    
+                    // Show file status (since we can't repopulate a file input)
+                    const mediaStatus = document.getElementById(`${questionId}-media-status`);
+                    if (data.media.url) {
+                        // Extract filename from URL
+                        let filename = data.media.url.split('/').pop();
+                        try {
+                            filename = decodeURIComponent(filename.split('?')[0]);
+                        } catch (e) {}
+                        mediaStatus.innerHTML = `<span class="text-green-600 font-medium">File attached: ${filename}</span>`;
+                    }
+                }
             }
             
             function updateAnswerArea(questionId, type, data={}) {
@@ -242,8 +401,6 @@
                     `;
                     
                     let optionsToRender = data.options;
-                    // In edit mode, if data.options is empty, render 0 options.
-                    // Only add default 2 options if it's not edit mode OR data.options is undefined.
                     if (!isEditMode && (!Array.isArray(optionsToRender) || optionsToRender.length === 0)) {
                         optionsToRender = ['', '']; 
                     }
@@ -299,6 +456,7 @@
                             fullText += textContent.items.map(item => item.str).join(' ') + '\n';
                         }
                         
+                        // --- MODIFICATION: Use the correct "hiring" AI endpoint ---
                         const response = await fetch('/api/hiring/generate-test-from-pdf', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
@@ -347,6 +505,21 @@
                         const marks = parseInt(document.getElementById(`${questionId}-marks`).value);
                         let questionData = { type, text, marks };
 
+                        // --- NEW: Gather Media Data ---
+                        const mediaType = document.getElementById(`${questionId}-media-type`).value;
+                        const mediaUrl = document.getElementById(`${questionId}-media-url`).value;
+                        if (mediaType !== 'none' && mediaUrl) {
+                            questionData.media = {
+                                type: mediaType,
+                                url: mediaUrl
+                            };
+                            if (mediaType === 'audio') {
+                                const playLimit = document.getElementById(`${questionId}-media-play-limit`).value;
+                                questionData.media.playLimit = parseInt(playLimit, 10) || 1;
+                            }
+                        }
+                        // --- End New Media Data ---
+
                         if (type.startsWith('mcq')) {
                             questionData.options = Array.from(qBlock.querySelectorAll('input[type="text"]')).map(i => i.value);
                             if (type === 'mcq-single') {
@@ -371,7 +544,7 @@
                     sections
                 };
                 
-                // Determine URL and Method for Create vs Update
+                // --- MODIFICATION: Use the correct "create" or "update" endpoints ---
                 const url = isEditMode ? `/api/hiring/aptitude-tests/${currentEditingTestId}` : '/api/hiring/tests';
                 const method = isEditMode ? 'PUT' : 'POST';
 
