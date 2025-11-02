@@ -1,388 +1,476 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HireWithUS | Skill-Based Hiring Platform by XETA SOLUTIONS</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
-    
-    <!-- Tailwind CSS -->
+    <title>HireWithUs - End-to-End Secure Hiring Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts: Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <!-- Custom Styles -->
+    <!-- Favicon (Using HireWithUs logo) -->
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Google Fonts (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            background-color: #ffffff;
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        .hero-gradient { background: linear-gradient(120deg, #e0e7ff 0%, #ffffff 100%); }
+        .cta-button { transition: all 0.3s ease; }
+        .cta-button:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -10px rgba(79, 70, 229, 0.5); }
+        .feature-icon { background-color: #eef2ff; color: #4f46e5; }
+        .step-circle { background-color: #4f46e5; color: white; }
+         /* Add subtle animation */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        
-        .gradient-text {
-            background: linear-gradient(to right, #4f46e5, #7c3aed, #a855f7);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        .fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+        /* Stagger animations */
+        .delay-100 { animation-delay: 0.1s; opacity: 0; }
+        .delay-200 { animation-delay: 0.2s; opacity: 0; }
+        .delay-300 { animation-delay: 0.3s; opacity: 0; }
+        .delay-400 { animation-delay: 0.4s; opacity: 0; }
 
-        .hero-bg {
-             background-color: #f9fafb;
-             background-image: 
-                radial-gradient(at 20% 20%, hsla(245, 100%, 95%, 1) 0px, transparent 50%),
-                radial-gradient(at 80% 20%, hsla(220, 100%, 95%, 1) 0px, transparent 50%),
-                radial-gradient(at 20% 80%, hsla(260, 100%, 95%, 1) 0px, transparent 50%),
-                radial-gradient(at 80% 80%, hsla(240, 100%, 95%, 1) 0px, transparent 50%);
-        }
-
-        .fade-in-up {
-            opacity: 0;
-            transform: translateY(20px);
-            transition: opacity 0.7s cubic-bezier(0.645, 0.045, 0.355, 1), transform 0.7s cubic-bezier(0.645, 0.045, 0.355, 1);
-        }
-        .fade-in-up.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .card-hover-effect {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .card-hover-effect:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-        }
-        
-        .step-line {
-            content: '';
-            position: absolute;
-            left: 50%;
-            top: 48px; 
-            bottom: -48px;
-            width: 2px;
-            background-color: #e5e7eb;
-            transform: translateX(-50%);
-        }
-        .step-item:last-child .step-line {
-            display: none;
-        }
-
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid #fff;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .form-input-styled {
-            background-color: #f3f4f6;
-            border: 2px solid transparent;
-            transition: border-color 0.3s ease, background-color 0.3s ease;
-        }
-        .form-input-styled:focus {
-            background-color: #ffffff;
-            border-color: #7c3aed;
-            box-shadow: none;
-            outline: none;
-            --tw-ring-color: transparent;
-        }
-
-        .btn-gradient {
-            background-image: linear-gradient(to right, #6d28d9, #7c3aed, #a855f7);
-            background-size: 200% auto;
-            transition: background-position 0.5s;
-        }
-        .btn-gradient:hover {
-            background-position: right center;
-        }
     </style>
+     <script>
+        // Tailwind config
+        tailwind.config = {
+             theme: {
+                 extend: {
+                     fontFamily: {
+                         sans: ['Inter', 'sans-serif'],
+                     },
+                     colors: {
+                         indigo: {
+                             50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca', 800: '#3730a3', 900: '#312e81'
+                         },
+                         slate: {
+                             50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155', 800: '#1e293b', 900: '#0f172a'
+                         }
+                     }
+                 },
+             },
+        }
+    </script>
 </head>
-<body class="text-slate-800">
+<body class="bg-slate-50 text-slate-800">
 
-    <!-- Navigation Bar -->
-    <header id="navbar" class="bg-white/80 backdrop-blur-lg fixed top-0 left-0 right-0 z-50 transition-all duration-300 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-20">
-                <!-- Logo -->
-                <a href="#" class="flex-shrink-0 flex items-center space-x-2">
-                    <img class="h-10 w-auto" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="HireWithUS Logo">
-                    <span class="text-2xl font-bold text-slate-900 tracking-tight">HireWithUS</span>
-                </a>
-                
-                <!-- Desktop Navigation Links -->
-                <nav class="hidden md:flex items-center space-x-8">
-                    <a href="#features" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 font-semibold">Features</a>
-                    <a href="#how-it-works" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 font-semibold">How It Works</a>
-                    <a href="#contact" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 font-semibold">Contact</a>
-                </nav>
-
-                <!-- CTA & Mobile Menu Button -->
-                <div class="flex items-center">
-                    <div class="hidden md:block">
-                        <a href="#contact" class="btn-gradient inline-flex items-center justify-center px-5 py-2.5 border border-transparent rounded-lg text-base font-semibold text-white transition-all">
-                            Request a Demo
-                        </a>
-                    </div>
-                    <div class="md:hidden ml-4">
-                        <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-slate-600 hover:text-violet-700 hover:bg-slate-100 focus:outline-none">
-                            <span class="sr-only">Open main menu</span>
-                            <svg id="menu-open-icon" class="h-6 w-6 block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" /></svg>
-                            <svg id="menu-close-icon" class="h-6 w-6 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
-                    </div>
-                </div>
+    <!-- Header / Navigation -->
+    <!-- Added shadow-md for slightly more definition on the sticky header -->
+    <header class="bg-white sticky top-0 z-50 shadow-md">
+        <nav class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <a href="#" class="flex items-center gap-2">
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="HireWithUs Logo" class="h-10 w-auto object-contain">
+                <span class="text-2xl font-bold text-indigo-700">HireWithUs</span>
+            </a>
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="#features" class="text-slate-600 hover:text-indigo-600 font-medium transition-colors">Features</a>
+                <a href="#how-it-works" class="text-slate-600 hover:text-indigo-600 font-medium transition-colors">How It Works</a>
+                <a href="#benefits" class="text-slate-600 hover:text-indigo-600 font-medium transition-colors">Benefits</a>
+                <!-- New Login Links -->
+                <a href="jobportal\student-login.html" class="text-slate-600 hover:text-indigo-600 font-medium transition-colors">Job Portal</a>
+                <a href="hiring\hiring-moderator-login.html" class="text-indigo-600 hover:text-indigo-800 font-medium transition-colors">Company Login</a>
+                <!-- Updated Request Demo link -->
+                <a href="#" class="open-demo-modal bg-indigo-600 text-white px-5 py-2 rounded-lg font-semibold shadow-md hover:bg-indigo-700 transition-colors">Request Demo</a>
             </div>
-        </div>
-
-        <!-- Mobile Menu -->
-        <div class="md:hidden hidden" id="mobile-menu">
-            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-slate-200">
-                <a href="#features" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Features</a>
-                <a href="#how-it-works" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">How It Works</a>
-                <a href="#contact" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Contact</a>
-                 <a href="#contact" class="mobile-nav-link text-white bg-violet-600 hover:bg-violet-700 block px-3 py-3 mt-2 rounded-md text-base font-medium text-center">Request a Demo</a>
-            </div>
+             <!-- Mobile Menu Button -->
+             <!-- Added aria-label and aria-expanded for accessibility -->
+            <button id="mobile-menu-btn" class="md:hidden text-slate-700 focus:outline-none" aria-label="Toggle navigation menu" aria-expanded="false">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+        </nav>
+         <!-- Mobile Menu (Hidden by default) -->
+        <div id="mobile-menu" class="hidden md:hidden absolute top-full left-0 w-full bg-white shadow-md py-4">
+            <a href="#features" class="block px-6 py-2 text-slate-700 hover:bg-indigo-50 mobile-link">Features</a>
+            <a href="#how-it-works" class="block px-6 py-2 text-slate-700 hover:bg-indigo-50 mobile-link">How It Works</a>
+            <a href="#benefits" class="block px-6 py-2 text-slate-700 hover:bg-indigo-50 mobile-link">Benefits</a>
+            <!-- New Mobile Login Links -->
+            <a href="public\jobportal\student-login.html" class="block px-6 py-2 text-slate-700 hover:bg-indigo-50 mobile-link">Job Portal</a>
+            <a href="public\hiring\hiring-moderator-login.html" class="block px-6 py-2 text-indigo-600 font-semibold hover:bg-indigo-50 mobile-link">Company Login</a>
+            <!-- Updated Request Demo link -->
+            <a href="#" class="open-demo-modal block px-6 py-2 mt-2 mx-4 bg-indigo-600 text-white rounded-lg text-center font-semibold mobile-link">Request Demo</a>
         </div>
     </header>
 
-    <main>
-        <!-- Hero Section -->
-        <section class="relative pt-40 pb-32 hero-bg overflow-hidden">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-                <h1 class="text-4xl font-extrabold tracking-tight sm:text-6xl lg:text-7xl leading-tight fade-in-up">
-                    <span class="block text-slate-900">Hire Smarter,</span>
-                    <span class="block gradient-text mt-2">Not Harder.</span>
-                </h1>
-                <p class="mt-8 max-w-2xl mx-auto text-lg text-slate-600 leading-relaxed fade-in-up" style="transition-delay: 150ms;">
-                    The ultimate platform for skill-based testing, AI evaluation, and automated interviews — designed to help you find the right talent, faster.
-                </p>
-                <div class="mt-12 flex flex-col sm:flex-row justify-center items-center gap-4 fade-in-up" style="transition-delay: 300ms;">
-                    <a href="#contact" class="w-full sm:w-auto btn-gradient inline-flex items-center justify-center px-8 py-4 border border-transparent rounded-lg shadow-lg text-base font-semibold text-white transition-all duration-300 transform hover:scale-105">
-                        Request a Demo
-                    </a>
-                </div>
+    <!-- Hero Section -->
+    <section class="hero-gradient py-20 md:py-32">
+        <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center fade-in-up">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 leading-tight mb-6">
+                Hire Smarter, Faster, and with <span class="text-indigo-600">Absolute Confidence</span>.
+            </h1>
+            <p class="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto mb-10">
+                HireWithUs integrates seamless applicant tracking with the unparalleled security of Testify Secure Test and optional on-site monitoring for truly reliable assessments.
+            </p>
+            <!-- Updated Request Demo link -->
+            <a href="#" class="open-demo-modal cta-button inline-block bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold text-lg shadow-lg hover:bg-indigo-700">
+                Request a Demo
+            </a>
+            <!-- Placeholder for a product image or illustration -->
+            <div class="mt-16 fade-in-up delay-100">
+                 <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1761656750/Screenshot_2025-10-28_183254_fwpqru.png" alt="HireWithUs Platform Screenshot" class="rounded-lg shadow-xl mx-auto border border-indigo-100">
             </div>
-        </section>
-        
-        <!-- Features Section -->
-        <section id="features" class="py-28 sm:py-36 bg-white">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="text-center">
-                    <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl fade-in-up">Everything You Need to Hire Top Talent</h2>
-                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600 fade-in-up" style="transition-delay: 150ms;">
-                        Focus on what truly matters: a candidate's ability to perform.
-                    </p>
-                </div>
-                <div class="mt-20 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-                    <!-- Feature 1 -->
-                    <div class="fade-in-up card-hover-effect p-8 bg-slate-50/50 rounded-2xl border border-slate-200/80">
-                        <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-violet-100 text-violet-600">
-                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.375 3.375 0 0014 18.442V21a1 1 0 11-2 0v-2.558a3.375 3.375 0 00-.435-1.897l-.548-.547z" /></svg>
-                        </div>
-                        <h3 class="mt-5 text-xl font-bold text-gray-900">AI-Powered Assessments</h3>
-                        <p class="mt-2 text-base text-gray-600">Create tailored tests that measure real-world skills, from coding challenges to situational judgment.</p>
-                    </div>
-                    <!-- Feature 2 -->
-                    <div class="fade-in-up card-hover-effect p-8 bg-slate-50/50 rounded-2xl border border-slate-200/80" style="transition-delay: 100ms;">
-                        <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-violet-100 text-violet-600">
-                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                        </div>
-                        <h3 class="mt-5 text-xl font-bold text-gray-900">Automated Interviews</h3>
-                        <p class="mt-2 text-base text-gray-600">Save hundreds of hours with structured, AI-evaluated video interviews that assess communication and problem-solving.</p>
-                    </div>
-                    <!-- Feature 3 -->
-                    <div class="fade-in-up card-hover-effect p-8 bg-slate-50/50 rounded-2xl border border-slate-200/80" style="transition-delay: 200ms;">
-                        <div class="flex items-center justify-center h-12 w-12 rounded-lg bg-violet-100 text-violet-600">
-                             <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                        </div>
-                        <h3 class="mt-5 text-xl font-bold text-gray-900">In-Depth Analytics</h3>
-                        <p class="mt-2 text-base text-gray-600">Get actionable insights into candidate performance, compare applicants objectively, and identify top potential.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- How It Works Section -->
-        <section id="how-it-works" class="py-28 sm:py-36 bg-slate-50">
-            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="text-center">
-                    <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl fade-in-up">Get Started in 3 Simple Steps</h2>
-                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600 fade-in-up" style="transition-delay: 150ms;">
-                        A streamlined process from assessment creation to confident hiring.
-                    </p>
+    <!-- Problem / Solution Section -->
+    <section class="py-16 md:py-24 bg-white">
+        <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-12 items-center">
+            <div class="fade-in-up">
+                <span class="text-indigo-600 font-semibold uppercase tracking-wide">The Challenge</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mt-2 mb-6">Disjointed Hiring & Assessment Risks</h2>
+                <p class="text-slate-600 leading-relaxed mb-4">
+                    Managing candidates across different tools is inefficient. Worse, standard online tests are vulnerable to malpractice, making it hard to trust assessment results and identify top talent fairly.
+                </p>
+                <ul class="space-y-2 text-slate-600">
+                    <li class="flex items-center"><i class="fas fa-times-circle text-red-500 mr-2"></i> Inefficient manual processes</li>
+                    <li class="flex items-center"><i class="fas fa-times-circle text-red-500 mr-2"></i> High risk of cheating in online tests</li>
+                    <li class="flex items-center"><i class="fas fa-times-circle text-red-500 mr-2"></i> Difficulty verifying candidate identity</li>
+                    <li class="flex items-center"><i class="fas fa-times-circle text-red-500 mr-2"></i> Lack of confidence in assessment outcomes</li>
+                </ul>
+            </div>
+            <div class="fade-in-up delay-100">
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1761657176/HIRING_CHALLENGES_xcffjk.png" alt="Illustration showing hiring challenges" class="rounded-lg shadow-md">
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-16 md:py-24 bg-slate-50">
+        <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 md:mb-16 fade-in-up">
+                <span class="text-indigo-600 font-semibold uppercase tracking-wide">Our Solution</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mt-2">One Platform, Unmatched Integrity</h2>
+                <p class="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
+                    HireWithUs combines powerful recruitment tools with the robust security of Testify.
+                </p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Feature 1: HireWithUs Platform -->
+                <!-- Added hover effects for better UX -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-100 fade-in-up delay-100 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div class="feature-icon inline-flex items-center justify-center h-12 w-12 rounded-full mb-4">
+                        <i class="fas fa-tasks text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-900 mb-2">End-to-End Hiring Workflow</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">Manage applications, schedule tests & interviews, track candidate progress, and collaborate with your team – all within HireWithUs.</p>
                 </div>
-                <div class="mt-20 space-y-20">
+                <!-- Feature 2: Testify Integration -->
+                <!-- Added hover effects for better UX -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-100 fade-in-up delay-200 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div class="feature-icon inline-flex items-center justify-center h-12 w-12 rounded-full mb-4">
+                        <i class="fas fa-shield-alt text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-900 mb-2">Testify Secure Test App</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">Assign aptitude or coding tests delivered via our dedicated desktop app. Features lockdown, proctoring, system checks, and identity verification.</p>
+                </div>
+                <!-- Feature 3: Zero Malpractice Monitoring -->
+                <!-- Added hover effects for better UX -->
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-100 fade-in-up delay-300 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                    <div class="feature-icon inline-flex items-center justify-center h-12 w-12 rounded-full mb-4">
+                         <i class="fas fa-user-secret text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-slate-900 mb-2">Zero Malpractice Guarantee</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed">Need absolute certainty? We offer optional **on-site monitoring teams** during Testify assessments to physically proctor candidates and eliminate malpractice.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="py-16 md:py-24 bg-white">
+        <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 md:mb-16 fade-in-up">
+                 <h2 class="text-3xl md:text-4xl font-bold text-slate-900">Simple Steps to Secure Hiring</h2>
+                 <p class="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
+                    Streamline your process from job creation to confident hiring decisions.
+                 </p>
+            </div>
+            <div class="relative">
+                 <!-- Connecting Line (for desktop) -->
+                <div class="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-indigo-200 transform -translate-y-4 -z-10"></div>
+
+                <div class="grid md:grid-cols-4 gap-8 text-center relative z-10">
                     <!-- Step 1 -->
-                    <div class="relative flex flex-col md:flex-row items-center gap-8 md:gap-16 fade-in-up step-item">
-                        <div class="step-line"></div>
-                        <div class="flex-shrink-0 w-24 h-24 rounded-full bg-violet-600 text-white flex items-center justify-center text-3xl font-bold shadow-lg">1</div>
-                        <div>
-                            <h3 class="text-2xl font-bold text-gray-900">Create & Assign</h3>
-                            <p class="mt-2 text-lg text-gray-600">Build custom skill assessments or use our expert-designed templates. Invite candidates to your branded portal with a single click.</p>
-                        </div>
+                    <div class="fade-in-up delay-100">
+                        <div class="step-circle h-16 w-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-lg">1</div>
+                        <h3 class="text-lg font-semibold text-slate-800 mb-2">Post Your Job</h3>
+                        <p class="text-sm text-slate-600">Create job postings and manage applications within HireWithUs.</p>
                     </div>
-                     <!-- Step 2 -->
-                    <div class="relative flex flex-col md:flex-row-reverse items-center gap-8 md:gap-16 fade-in-up step-item" style="transition-delay: 200ms;">
-                        <div class="step-line"></div>
-                        <div class="flex-shrink-0 w-24 h-24 rounded-full bg-violet-600 text-white flex items-center justify-center text-3xl font-bold shadow-lg">2</div>
-                        <div class="md:text-right">
-                            <h3 class="text-2xl font-bold text-gray-900">AI Evaluates</h3>
-                            <p class="mt-2 text-lg text-gray-600">Our platform automatically scores tests, evaluates code, and analyzes video interviews for key metrics like communication and clarity.</p>
-                        </div>
+                    <!-- Step 2 -->
+                    <div class="fade-in-up delay-200">
+                        <div class="step-circle h-16 w-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-lg">2</div>
+                        <h3 class="text-lg font-semibold text-slate-800 mb-2">Assign Secure Tests</h3>
+                        <p class="text-sm text-slate-600">Schedule aptitude or coding tests delivered via the Testify Secure Test app.</p>
                     </div>
-                     <!-- Step 3 -->
-                    <div class="relative flex flex-col md:flex-row items-center gap-8 md:gap-16 fade-in-up step-item" style="transition-delay: 400ms;">
-                        <div class="flex-shrink-0 w-24 h-24 rounded-full bg-violet-600 text-white flex items-center justify-center text-3xl font-bold shadow-lg">3</div>
-                        <div>
-                            <h3 class="text-2xl font-bold text-gray-900">Hire with Confidence</h3>
-                            <p class="mt-2 text-lg text-gray-600">Review a shortlist of top candidates with data-driven reports and make unbiased hiring decisions based on proven skills.</p>
-                        </div>
+                    <!-- Step 3 -->
+                    <div class="fade-in-up delay-300">
+                        <div class="step-circle h-16 w-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-lg">3</div>
+                        <h3 class="text-lg font-semibold text-slate-800 mb-2">Ensure Integrity</h3>
+                        <p class="text-sm text-slate-600">Leverage Testify's lockdown features and optional on-site monitoring for zero malpractice.</p>
+                    </div>
+                    <!-- Step 4 -->
+                    <div class="fade-in-up delay-400">
+                        <div class="step-circle h-16 w-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-lg">4</div>
+                        <h3 class="text-lg font-semibold text-slate-800 mb-2">Review & Hire</h3>
+                        <p class="text-sm text-slate-600">Confidently review reliable results and manage interviews within HireWithUs.</p>
                     </div>
                 </div>
             </div>
-        </section>
-        
-        <!-- Contact Section -->
-        <section id="contact" class="py-28 sm:py-36 bg-white">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="lg:grid lg:grid-cols-2 lg:gap-24 items-center">
-                    <div class="fade-in-up">
-                        <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Ready to Transform Your Hiring?</h2>
-                        <p class="mt-4 text-lg text-gray-600">Fill out the form to schedule a personalized demo and see how HireWithUS can help you find the best talent.</p>
-                        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760706363/TEAM_MEET_cjvlvo.png" alt="Team collaborating on a project" class="mt-8 rounded-2xl shadow-xl">
-                    </div>
-                    <div class="mt-12 lg:mt-0 bg-white p-8 sm:p-10 rounded-2xl shadow-2xl fade-in-up" style="transition-delay: 150ms;">
-                        <form id="contact-form" action="https://formspree.io/f/xdkwwgow" method="POST" class="space-y-6">
-                            <div>
-                                <label for="name" class="block text-sm font-semibold text-gray-700">Full Name</label>
-                                <input type="text" name="name" id="name" required class="form-input-styled mt-1 block w-full rounded-lg shadow-sm sm:text-sm p-3">
-                            </div>
-                            <div>
-                                <label for="company" class="block text-sm font-semibold text-gray-700">Company</label>
-                                <input type="text" name="company" id="company" required class="form-input-styled mt-1 block w-full rounded-lg shadow-sm sm:text-sm p-3">
-                            </div>
-                            <div>
-                                <label for="email" class="block text-sm font-semibold text-gray-700">Email Address</label>
-                                <input type="email" name="email" id="email" required class="form-input-styled mt-1 block w-full rounded-lg shadow-sm sm:text-sm p-3">
-                            </div>
-                            <div>
-                                <label for="message" class="block text-sm font-semibold text-gray-700">Message</label>
-                                <textarea id="message" name="message" rows="4" required class="form-input-styled mt-1 block w-full rounded-lg shadow-sm sm:text-sm p-3"></textarea>
-                            </div>
-                            <div id="form-status" class="text-center text-sm font-medium h-4"></div>
-                            <div>
-                                <button id="form-submit-btn" type="submit" class="w-full btn-gradient inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white transition-all duration-300">
-                                    <span id="button-text">Schedule Demo</span>
-                                    <div id="spinner" class="spinner ml-3 hidden"></div>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+        </div>
+    </section>
+
+     <!-- Benefits Section -->
+    <section id="benefits" class="py-16 md:py-24 bg-indigo-50">
+        <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12 md:mb-16 fade-in-up">
+                 <h2 class="text-3xl md:text-4xl font-bold text-slate-900">Why Choose HireWithUs + Testify?</h2>
             </div>
-        </section>
-    </main>
-    
+            <div class="grid md:grid-cols-2 gap-8 lg:gap-12">
+                <!-- Added padding, rounding, and hover effects to each benefit block -->
+                 <div class="flex items-start space-x-4 fade-in-up delay-100 p-4 rounded-lg transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:bg-white">
+                    <div class="feature-icon flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center mt-1">
+                        <i class="fas fa-bolt text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800">Boost Efficiency</h3>
+                        <p class="text-slate-600 mt-1">Manage your entire hiring pipeline in one place, reducing manual work and context switching.</p>
+                    </div>
+                 </div>
+                 <div class="flex items-start space-x-4 fade-in-up delay-200 p-4 rounded-lg transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:bg-white">
+                    <div class="feature-icon flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center mt-1">
+                         <i class="fas fa-lock text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800">Uncompromised Security</h3>
+                        <p class="text-slate-600 mt-1">Prevent cheating effectively with Testify's secure desktop environment and proctoring features.</p>
+                    </div>
+                 </div>
+                 <div class="flex items-start space-x-4 fade-in-up delay-300 p-4 rounded-lg transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:bg-white">
+                    <div class="feature-icon flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center mt-1">
+                        <i class="fas fa-check-double text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800">Guaranteed Integrity</h3>
+                        <p class="text-slate-600 mt-1">Achieve zero malpractice with our unique optional on-site monitoring service during assessments.</p>
+                    </div>
+                 </div>
+                 <div class="flex items-start space-x-4 fade-in-up delay-400 p-4 rounded-lg transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:bg-white">
+                    <div class="feature-icon flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center mt-1">
+                         <i class="fas fa-thumbs-up text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-slate-800">Hire with Confidence</h3>
+                        <p class="text-slate-600 mt-1">Make better hiring decisions based on reliable, verified assessment results you can trust.</p>
+                    </div>
+                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action Section -->
+    <section id="contact" class="py-16 md:py-24 bg-indigo-700 text-white">
+        <div class="container mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center fade-in-up">
+            <h2 class="text-3xl md:text-4xl font-bold mb-6">Ready to Secure and Streamline Your Hiring?</h2>
+            <p class="text-indigo-200 text-lg mb-10 max-w-2xl mx-auto">
+                See HireWithUs and Testify Secure Test in action. Request a personalized demo today and discover how we ensure assessment integrity.
+            </p>
+             <!-- Updated Request Demo link -->
+             <a href="#" class="open-demo-modal cta-button inline-block bg-white text-indigo-700 px-8 py-3 rounded-lg font-bold text-lg shadow-lg hover:bg-indigo-50">
+                Request a Demo
+             </a>
+            <p class="text-sm text-indigo-300 mt-6">Or contact us at <a href="mailto:support@testify-lac.com" class="font-medium hover:underline">support@testify-lac.com</a></p>
+        </div>
+    </section>
+
     <!-- Footer -->
-    <footer class="bg-slate-900 text-slate-300">
-        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col items-center">
-                 <a href="/XetaSolutions.html" class="inline-flex items-center justify-center space-x-3">
-                     <p class="text-slate-400 text-sm">A Product By</p>
-                     <img class="h-8 w-auto" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg" alt="XETA SOLUTIONS Logo">
-                 </a>
+    <footer class="bg-slate-800 text-slate-400 py-10">
+        <div class="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+            <div class="flex justify-center items-center gap-2 mb-4">
+                 <!-- Removed filter classes to show color logo -->
+                 <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="HireWithUs Logo" class="h-8 w-auto object-contain">
+                 <span class="text-lg font-semibold text-slate-300">HireWithUs</span>
             </div>
-            <div class="mt-8 border-t border-slate-700 pt-8 text-center">
-                <p class="text-base text-slate-400">&copy; 2025 XETA SOLUTIONS. All rights reserved.</p>
-            </div>
+            <p class="text-sm mb-4">A product by Xeta Solutions.</p>
+            <p class="text-xs">&copy; <span id="footer-year"></span> Xeta Solutions. All rights reserved.</p>
+             <!-- Added hover effects to social links -->
+             <div class="mt-4 flex justify-center space-x-4">
+                 <a href="#" aria-label="LinkedIn" class="hover:text-indigo-400 transform hover:-translate-y-1 transition-all"><i class="fab fa-linkedin fa-lg"></i></a>
+                 <a href="#" aria-label="Twitter" class="hover:text-indigo-400 transform hover:-translate-y-1 transition-all"><i class="fab fa-twitter fa-lg"></i></a>
+             </div>
         </div>
     </footer>
 
+    <!-- Demo Request Modal -->
+    <div id="demo-modal" class="fixed inset-0 z-[60] hidden">
+        <!-- Backdrop -->
+        <div id="demo-modal-backdrop" class="fixed inset-0 bg-black/50 opacity-0 transition-opacity duration-300 ease-in-out" aria-hidden="true"></div>
+
+        <!-- Panel -->
+        <div id="demo-modal-panel" class="fixed top-0 right-0 h-full w-full max-w-lg bg-white shadow-xl transform translate-x-full transition-transform duration-300 ease-in-out">
+            <div class="flex justify-between items-center p-6 border-b border-slate-200">
+                <h2 class="text-2xl font-bold text-slate-900">Request a Demo</h2>
+                <button id="close-demo-modal" class="text-slate-500 hover:text-slate-800" aria-label="Close modal">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <!-- Scrollable content area -->
+            <div class="p-6 overflow-y-auto h-[calc(100vh-73px)]">
+                <p class="text-slate-600 mb-6">Fill out the form below and our team will get in touch with you shortly to schedule a personalized demo.</p>
+                
+                <form id="demo-form" action="https://formspree.io/f/xyzbelvz" method="POST">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-slate-700">Full Name</label>
+                            <!-- Added px-3 py-2 for better styling -->
+                            <input type="text" name="name" id="name" required class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-slate-700">Company Email</label>
+                            <!-- Added px-3 py-2 for better styling -->
+                            <input type="email" name="email" id="email" required class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2">
+                        </div>
+                         <!-- Added Mobile Number field -->
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-slate-700">Mobile Number</label>
+                            <input type="tel" name="phone" id="phone" required class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2" placeholder="e.g., +1 555-123-4567">
+                        </div>
+                        <div>
+                            <label for="company" class="block text-sm font-medium text-slate-700">Company Name</label>
+                            <!-- Added px-3 py-2 for better styling -->
+                            <input type="text" name="company" id="company" required class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2">
+                        </div>
+                        <div>
+                            <label for="message" class="block text-sm font-m-medium text-slate-700">Questions or Message (Optional)</label>
+                            <!-- Added px-3 py-2 for better styling -->
+                            <textarea name="message" id="message" rows="4" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 px-3 py-2" placeholder="Let us know if you have specific questions..."></textarea>
+                        </div>
+                        <div>
+                            <button type="submit" id="form-submit-btn" class="w-full cta-button bg-indigo-600 text-white px-6 py-3 rounded-lg font-bold text-lg shadow-lg hover:bg-indigo-7D0 disabled:opacity-75 disabled:cursor-not-allowed">
+                                Submit Request
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <div id="form-status" class="mt-4 text-center"></div>
+            </div>
+        </div>
+    </div>
+
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Mobile Menu
-            const mobileMenuButton = document.getElementById('mobile-menu-button');
-            const mobileMenu = document.getElementById('mobile-menu');
-            const menuOpenIcon = document.getElementById('menu-open-icon');
-            const menuCloseIcon = document.getElementById('menu-close-icon');
-            const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+        // Set current year in footer
+        document.getElementById('footer-year').textContent = new Date().getFullYear();
 
-            const toggleMenu = () => {
-                mobileMenu.classList.toggle('hidden');
-                menuOpenIcon.classList.toggle('hidden');
-                menuCloseIcon.classList.toggle('hidden');
-            };
-
-            mobileMenuButton.addEventListener('click', toggleMenu);
-            mobileNavLinks.forEach(link => link.addEventListener('click', () => {
-                if (!mobileMenu.classList.contains('hidden')) toggleMenu();
-            }));
-
-            // Animate on scroll
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('visible');
-                    }
-                });
-            }, { threshold: 0.1 });
-            document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
-            
-            // Formspree Logic
-            const contactForm = document.getElementById('contact-form');
-            const formStatus = document.getElementById('form-status');
-            const formSubmitBtn = document.getElementById('form-submit-btn');
-            const buttonText = document.getElementById('button-text');
-            const spinner = document.getElementById('spinner');
-
-            contactForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                buttonText.textContent = "Sending...";
-                spinner.classList.remove('hidden');
-                formSubmitBtn.disabled = true;
-                const data = new FormData(e.target);
-                try {
-                    const response = await fetch(e.target.action, {
-                        method: 'POST',
-                        body: data,
-                        headers: {'Accept': 'application/json'}
-                    });
-                    if (response.ok) {
-                        formStatus.textContent = "Thanks for your submission!";
-                        formStatus.className = "text-center text-sm font-medium h-4 text-green-600";
-                        contactForm.reset();
-                    } else {
-                        const data = await response.json();
-                        if (Object.hasOwn(data, 'errors')) {
-                            formStatus.textContent = data["errors"].map(error => error["message"]).join(", ");
-                        } else {
-                            formStatus.textContent = "Oops! There was a problem submitting your form";
-                        }
-                         formStatus.className = "text-center text-sm font-medium h-4 text-red-600";
-                    }
-                } catch (error) {
-                    formStatus.textContent = "Oops! There was a problem submitting your form";
-                    formStatus.className = "text-center text-sm font-medium h-4 text-red-600";
-                } finally {
-                    buttonText.textContent = "Schedule Demo";
-                    spinner.classList.add('hidden');
-                    formSubmitBtn.disabled = false;
-                }
+        // --- Mobile Menu Toggle ---
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        // Added this querySelectorAll to include the new links
+        mobileMenu.querySelectorAll('.mobile-link').forEach(link => {
+            link.addEventListener('click', () => {
+                 mobileMenu.classList.add('hidden');
+                 mobileMenuBtn.setAttribute('aria-expanded', 'false');
             });
         });
-    </script>
+        mobileMenuBtn.addEventListener('click', () => {
+            const isHidden = mobileMenu.classList.toggle('hidden');
+            mobileMenuBtn.setAttribute('aria-expanded', !isHidden);
+        });
 
+
+         // --- Simple Intersection Observer for fade-in animations ---
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = 1; // Make element visible before animation starts
+                    entry.target.classList.add('fade-in-up');
+                    observer.unobserve(entry.target); // Optional: stop observing once animated
+                }
+            });
+        }, { threshold: 0.1 }); // Trigger when 10% of the element is visible
+
+        document.querySelectorAll('.fade-in-up').forEach(el => {
+            el.style.opacity = 0; // Initially hide elements to be animated
+            observer.observe(el);
+        });
+
+        // --- Demo Modal Logic ---
+        const demoModal = document.getElementById('demo-modal');
+        const modalBackdrop = document.getElementById('demo-modal-backdrop');
+        const modalPanel = document.getElementById('demo-modal-panel');
+        const closeBtn = document.getElementById('close-demo-modal');
+        const openTriggers = document.querySelectorAll('.open-demo-modal');
+
+        function openModal() {
+            document.body.classList.add('overflow-hidden'); // Prevent background scroll
+            demoModal.classList.remove('hidden');
+            // Use requestAnimationFrame for smoother transition start
+            requestAnimationFrame(() => {
+                modalBackdrop.classList.remove('opacity-0');
+                modalPanel.classList.remove('translate-x-full');
+            });
+        }
+
+        function closeModal() {
+            modalBackdrop.classList.add('opacity-0');
+            modalPanel.classList.add('translate-x-full');
+            setTimeout(() => {
+                demoModal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden'); // Re-enable scroll
+            }, 300); // Match transition-duration-300
+        }
+
+        openTriggers.forEach(trigger => {
+            trigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                openModal();
+            });
+        });
+
+        closeBtn.addEventListener('click', closeModal);
+        modalBackdrop.addEventListener('click', closeModal);
+        
+        // --- Formspree Submission ---
+        const form = document.getElementById('demo-form');
+        const formStatus = document.getElementById('form-status');
+        const submitBtn = document.getElementById('form-submit-btn');
+
+        async function handleSubmit(event) {
+            event.preventDefault();
+            const data = new FormData(event.target);
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            formStatus.innerHTML = ""; // Clear previous status
+
+            try {
+                const response = await fetch(event.target.action, {
+                    method: form.method,
+                    body: data,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    formStatus.innerHTML = "<p class'='text-green-600'>Thanks! We've received your request and will be in touch soon.</p>";
+                    form.reset();
+                    setTimeout(closeModal, 2500); // Close modal after 2.5s
+                } else {
+                    response.json().then(data => {
+                        if (Object.hasOwn(data, 'errors')) {
+                            formStatus.innerHTML = `<p class='text-red-600'>${data.errors.map(error => error.message).join(", ")}</p>`;
+                        } else {
+                            formStatus.innerHTML = "<p class='text-red-600'>Oops! There was a problem submitting your form.</p>";
+                        }
+                    });
+                }
+            } catch (error) {
+                formStatus.innerHTML = "<p class='text-red-600'>Oops! There was a network error. Please try again.</p>";
+            }
+            
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Request';
+        }
+        form.addEventListener("submit", handleSubmit);
+
+    </script>
 </body>
 </html>
-
