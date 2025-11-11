@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interviewer Login - HIRE WITH US</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-md p-8 space-y-8 bg-white rounded-2xl shadow-xl border border-gray-200">
+        <div>
+            <img class="mx-auto h-16 w-auto" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="HIRE WITH US">
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                Interviewer Portal
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                Sign in to your account
+            </p>
+        </div>
+        
+        <form id="login-form" class="mt-8 space-y-6">
+            <div class="rounded-md shadow-sm -space-y-px">
+                <div>
+                    <label for="email-address" class="sr-only">Email address</label>
+                    <input id="email-address" name="email" type="email" autocomplete="email" required
+                           class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                           placeholder="Email address">
+                </div>
+                <div>
+                    <label for="password" class="sr-only">Password</label>
+                    <input id="password" name="password" type="password" autocomplete="current-password" required
+                           class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                           placeholder="Password">
+                </div>
+            </div>
+
+            <div class="text-sm">
+                <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500">
+                    Forgot your password?
+                </a>
+            </div>
+
+            <div>
+                <button type="submit" id="login-btn"
+                        class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400">
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <i class="fas fa-lock h-5 w-5 text-indigo-500 group-hover:text-indigo-400"></i>
+                    </span>
+                    <span id="login-btn-text">Sign in</span>
+                    <i id="login-spinner" class="fas fa-spinner fa-spin ml-2 hidden"></i>
+                </button>
+            </div>
+            
+            <div id="message" class="text-sm text-center font-medium"></div>
+
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('login-form');
+            const loginBtn = document.getElementById('login-btn');
+            const loginBtnText = document.getElementById('login-btn-text');
+            const loginSpinner = document.getElementById('login-spinner');
+            const messageDiv = document.getElementById('message');
+
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const email = document.getElementById('email-address').value;
+                const password = document.getElementById('password').value;
+
+                // Disable button and show spinner
+                loginBtn.disabled = true;
+                loginBtnText.textContent = 'Signing in...';
+                loginSpinner.classList.remove('hidden');
+                messageDiv.textContent = '';
+                messageDiv.className = 'text-sm text-center font-medium';
+
+                try {
+                    // We use the same general login endpoint
+                    const response = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Login failed.');
+                    }
+
+                    // --- IMPORTANT: Role Check ---
+                    if (data.user && data.user.role === 'Interviewer') {
+                        // Success! Store token and user, then redirect.
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        
+                        messageDiv.textContent = 'Success! Redirecting to your dashboard...';
+                        messageDiv.classList.add('text-green-600');
+
+                        // Redirect to the interviewer's dashboard
+                        window.location.href = 'interviewer-dashboard.html';
+                    
+                    } else if (data.user) {
+                        // Logged in, but NOT an interviewer
+                        throw new Error(`Access Denied: This account is a "${data.user.role}", not an "Interviewer".`);
+                    } else {
+                        throw new Error('Login failed: Invalid user data received.');
+                    }
+
+                } catch (error) {
+                    messageDiv.textContent = error.message;
+                    messageDiv.classList.add('text-red-600');
+                    
+                    // Re-enable button
+                    loginBtn.disabled = false;
+                    loginBtnText.textContent = 'Sign in';
+                    loginSpinner.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

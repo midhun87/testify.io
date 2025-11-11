@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interviewer Portal - HIRE WITH US</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configure Tailwind to use Inter font and primary color -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#2563EB', // Royal Blue
+                        'soft-blue': '#3B82F6',   // Soft Blue for lighter accents
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Poppins', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        'xl': '12px', // Consistent large rounded corners
+                    },
+                    boxShadow: {
+                        'soft': 'rgba(0, 0, 0, 0.1) 0px 1px 3px, rgba(0, 0, 0, 0.06) 0px 1px 2px',
+                        'md': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06)',
+                        'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght+400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/neat.min.css"> 
+
+    <style>
+        
+        /* --- MODIFIED: Lighter body background --- */
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; } 
+        /* --- MODIFIED: Base card style --- */
+        .card { @apply bg-white rounded-xl shadow-lg border border-gray-200 p-6 transition-all duration-200 overflow-hidden; }
+        .form-input, .form-select, .form-textarea {
+            @apply block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-blue focus:ring-primary-blue sm:text-sm;
+        }
+        
+        /* CodeMirror Styling for 'neat' theme */
+        .CodeMirror {
+            border-radius: 0.75rem; 
+            height: 100%; 
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .cm-s-neat.CodeMirror { 
+            background: #ffffff; 
+            color: #1f2937; 
+            border-top: 1px solid #e5e7eb;
+            border-radius: 0 0 0.75rem 0.75rem;
+        }
+        .cm-s-neat .CodeMirror-gutters {
+            background: #f9fafb !important;
+            border-right: 1px solid #e5e7eb;
+        }
+        .cm-s-neat .CodeMirror-linenumbers { color: #6b7280; }
+        .cm-s-neat .CodeMirror-cursor { border-left: 2px solid #2563EB; }
+        .CodeMirror-vscrollbar { display: block !important; }
+
+        /* --- MODIFIED: Tab Styles --- */
+        .tab-btn {
+            @apply px-5 py-3.5 font-medium text-sm rounded-t-lg border-b-2 border-transparent text-gray-500 hover:text-primary-blue hover:border-gray-300 relative transition-colors duration-200;
+        }
+        .tab-btn.active {
+            @apply border-primary-blue text-primary-blue bg-white; /* Active tab has white bg */
+        }
+        
+        
+        /* --- MODIFIED: Added min-height: 0 for flex scroll fix --- */
+        .tab-content { display: none; min-height: 0; }
+        .tab-content.active { display: flex; min-height: 0; }
+        
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+
+        /* --- MODIFIED: Tighter main grid --- */
+        .main-grid {
+             display: grid;
+             grid-template-columns: minmax(320px, 1.3fr) 2fr minmax(320px, 1fr); 
+             grid-template-rows: 1fr;
+             height: calc(100vh - 4rem); /* Full height minus header */
+             gap: 1rem; /* Tighter gap */
+             padding: 1rem; /* Tighter padding */
+             max-width: 100%;
+             margin-left: auto;
+             margin-right: auto;
+        }
+        
+        /* Responsive Overrides */
+        @media (max-width: 1280px) { 
+             .main-grid {
+                grid-template-columns: minmax(320px, 1fr) 1.5fr; /* 2 column layout */
+             }
+             #right-col { display: none; } 
+             #open-resume-modal-btn { display: inline-flex; }
+        }
+
+        @media (max-width: 1024px) { 
+            .main-grid {
+                grid-template-columns: 1fr; /* Single column layout */
+                grid-template-rows: auto auto auto; 
+                height: auto;
+                padding: 1rem;
+            }
+            #left-col { order: 1; }
+            #middle-col { order: 2; min-height: 600px; } 
+            #right-col { order: 3; display: block; min-height: 600px; } 
+            #open-resume-modal-btn { display: none; }
+        }
+        
+        .video-feed {
+            @apply w-full h-full object-cover bg-gray-900 rounded-lg;
+            transform: scaleX(-1); 
+        }
+        .remote-video {
+            /* FIX: Student video should not be mirrored */
+            transform: scaleX(1); 
+        }
+        
+        /* --- POPUP CENTERING FIX --- */
+        .modal-bg {
+            position: fixed !important; 
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            @apply h-screen w-screen bg-gray-900 bg-opacity-75 backdrop-blur-sm flex items-center justify-center z-[999] transition-opacity duration-300;
+        }
+        .modal-center-container {
+            @apply w-full max-w-sm transition-all duration-300; /* Default size for confirm modal */
+        }
+        #resume-modal .modal-center-container {
+            @apply max-w-4xl h-[90vh];
+        }
+        
+        /* --- DRAGGABLE WINDOW STYLES --- */
+        .draggable-window-bg {
+            @apply fixed inset-0 z-40 pointer-events-none;
+        }
+        
+        .draggable-window-handle {
+            @apply cursor-move;
+        }
+        
+        /* CHAT POPUP (Draggable) */
+        #chat-modal {
+            @apply z-50;
+        }
+        #chat-modal-container {
+            position: absolute;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            width: 24rem;
+            max-width: 22.5rem;
+            max-height: 70vh;
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            display: flex;
+            flex-direction: column;
+            pointer-events: auto;
+            transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+            transform-origin: bottom right;
+            transform: scale(0.9) translateY(10px);
+            opacity: 0;
+        }
+        #chat-modal.visible #chat-modal-container {
+             transform: scale(1) translateY(0);
+             opacity: 1;
+        }
+        
+        .submit-btn-green {
+            background-image: linear-gradient(to right, #10B981, #059669); 
+        }
+        .submit-btn-green:hover {
+            background-image: linear-gradient(to left, #10B981, #059669);
+        }
+
+        .chat-bubble { @apply max-w-xs md:max-w-md; }
+        .chat-bubble-self { @apply bg-primary-blue text-white rounded-br-none ml-auto; }
+        .chat-bubble-other { @apply bg-gray-700 text-gray-200 rounded-bl-none mr-auto; }
+        
+        /* --- MODIFIED: Score input smaller --- */
+        .score-input {
+            @apply w-16 p-2 text-center rounded-lg border-gray-300 focus:border-primary-blue focus:ring-primary-blue;
+            @apply font-bold text-lg text-primary-blue border-2;
+        }
+
+        .chat-badge {
+            @apply absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse;
+        }
+        .modal-close-btn {
+            @apply text-white hover:opacity-80 p-2 rounded-full;
+        }
+        .modal-close-btn-dark {
+             @apply text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100;
+        }
+        
+        /* --- MODIFIED: Criteria item styling --- */
+        .criteria-item {
+            @apply flex items-center justify-between py-3 border-b border-gray-200;
+        }
+        .criteria-item:last-child {
+            @apply border-b-0 pb-0;
+        }
+        
+        /* --- MODIFIED: Problem View Prose --- */
+        .problem-view-prose h5 { 
+            @apply text-base font-semibold text-gray-800 mb-2 mt-4; 
+        }
+        .problem-view-prose p { 
+            @apply text-sm text-gray-700 leading-relaxed; 
+        }
+        .problem-view-prose pre { 
+            @apply bg-gray-100 p-3 rounded-lg text-xs font-mono text-gray-900 whitespace-pre-wrap; 
+        }
+        .problem-view-prose strong { 
+            @apply font-medium text-gray-900; 
+        }
+
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between h-16 bg-white border-b border-gray-200 px-6 sticky top-0 z-30 shadow-sm">
+        <div class="flex items-center">
+            <img class="h-8 w-8" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="Logo">
+            <span class="ml-3 text-xl font-semibold text-gray-800">Interviewer Portal</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-sm font-medium text-gray-700 hidden sm:inline">Interviewing: <span id="student-name" class="font-bold text-primary-blue">Loading...</span></span>
+            <span id="student-violation-counter" class="hidden text-sm font-bold text-red-600 bg-red-100 px-3 py-1 rounded-lg">Violations: 0</span>
+            <button id="open-resume-modal-btn" class="hidden px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-lg shadow-md hover:bg-gray-200 text-sm transition-all duration-200">
+                <i class="fas fa-file-alt mr-2"></i>View Resume
+            </button>
+            <button id="start-interview-btn" class="px-4 py-2 bg-primary-blue text-white font-semibold rounded-lg shadow-md hover:bg-soft-blue text-sm disabled:bg-gray-400 transition-all duration-200 hover:shadow-lg" disabled>
+                <i class="fas fa-play mr-2"></i>Start Interview
+            </button>
+            <button id="end-interview-btn" class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 text-sm transition-all duration-200 hover:shadow-lg">
+                <i class="fas fa-phone-slash mr-2"></i>End Interview
+            </button>
+        </div>
+    </div>
+
+    <!-- Main 3-Column Layout -->
+    <div class="main-grid">
+        
+        <!-- === Column 1 (Left) === -->
+        <div id="left-col" class="flex flex-col gap-y-4 h-full overflow-y-auto custom-scrollbar">
+            
+            <!-- --- MODIFIED: Added border-t --- -->
+            <div class="card flex-shrink-0 border-t-4 border-blue-500">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b pb-3">Student Information</h2>
+                
+                <div class="flex items-center space-x-4 mb-4">
+                    <img id="student-avatar" class="w-16 h-16 rounded-full border-2 border-gray-100 shadow-md" 
+                         src="https://placehold.co/100x100/FEE2E2/EF4444?text=?" 
+                         onerror="this.onerror=null; this.src='https://placehold.co/100x100/FEE2E2/EF4444?text=?'" 
+                         alt="Student Avatar">
+                    <div>
+                        <p class="text-xl font-bold text-gray-900" id="info-full-name">Name Unavailable</p>
+                        <p class="text-sm text-gray-500" id="info-roll-number">Roll: N/A</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-2 text-sm mb-4">
+                    <p class="text-gray-700"><strong>CGPA:</strong> <span id="info-cgpa" class="font-medium text-primary-blue">N/A</span></p>
+                    <p class="text-gray-700"><strong>College:</strong> <span id="info-college" class="font-medium">Loading College...</span></p>
+                    <p class="text-gray-700"><strong>Department:</strong> <span id="info-department" class="font-medium">N/A</span></p>
+                </div>
+            </div>
+
+            <!-- --- MODIFIED: Added border-t --- -->
+            <div class="card flex-shrink-0 !p-4 border-t-4 border-green-500">
+                <h2 class="text-lg font-semibold text-gray-900 mb-3 border-b pb-3">Live Video Preview</h2>
+                <div id="student-video-container" class="relative w-full aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-md mb-3">
+                    <video id="student-video" class="video-feed remote-video w-full h-full" autoplay playsinline poster="https://placehold.co/600x400/333/999?text=Waiting for Student"></video>
+                    <span id="student-video-name" class="absolute top-3 left-3 px-2 py-0.5 bg-black bg-opacity-60 text-white text-sm rounded-lg font-medium">Student</span>
+                    
+                    <div class="absolute bottom-3 right-3 w-1/3 aspect-video bg-gray-800 rounded-lg overflow-hidden border-2 border-white shadow-lg">
+                        <video id="interviewer-preview" class="video-feed w-full h-full" autoplay playsinline muted poster="https://placehold.co/200x150/555/CCC?text=Your View"></video>
+                        <span class="absolute top-1 left-1 px-1 py-0.5 bg-black bg-opacity-60 text-white text-[10px] rounded-md">You</span>
+                    </div>
+                </div>
+                
+                <div class="flex justify-around pt-2">
+                    <button id="mute-mic-btn" class="p-3 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-colors" title="Mute Mic">
+                        <i class="fas fa-microphone fa-lg"></i>
+                    </button>
+                    <button id="mute-cam-btn" class="p-3 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-colors" title="Turn Off Camera">
+                         <i class="fas fa-video fa-lg"></i>
+                    </button>
+                    <button id="end-call-icon" class="p-3 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors" title="End Call">
+                        <i class="fas fa-phone-slash fa-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- --- MODIFIED: Added border-t --- -->
+            <div class="card flex-grow flex flex-col overflow-hidden min-h-[300px] border-t-4 border-indigo-500">
+                <h2 class="text-lg font-semibold text-gray-900 mb-3 flex-shrink-0 border-b pb-3">Coding Problems List</h2>
+                <div id="problems-list" class="flex-grow space-y-3 pr-1 overflow-y-auto custom-scrollbar">
+                    <div class="text-center p-4 text-gray-500" id="problems-loading">
+                        <i class="fas fa-spinner fa-spin mr-2 text-primary-blue"></i>
+                        <p class="mt-2 text-sm font-medium">Loading problems...</p>
+                    </div>
+                    <!-- Problems injected here -->
+                </div>
+            </div>
+            
+        </div>
+        
+        <!-- === Column 2 (Middle) === -->
+        <div id="middle-col" class="flex flex-col h-full">
+            
+            <!-- --- MODIFIED: Added border-t --- -->
+            <div class="card flex-grow flex flex-col p-0 overflow-hidden min-h-[50%] border-t-4 border-gray-400">
+                <!-- --- MODIFIED: Tab bar styling --- -->
+                <div class="flex border-b border-gray-200 px-2 pt-2 flex-shrink-0 bg-gray-50 rounded-t-xl">
+  <button
+    class="tab-btn active flex items-center px-5 py-3 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 bg-white rounded-t-lg shadow-sm transition-all duration-300 hover:bg-blue-50 hover:text-blue-700"
+    data-tab-group="main"
+    data-tab-target="code-tab"
+  >
+    <i class="fas fa-code mr-2 text-blue-600"></i>
+    Code Editor Area
+  </button>
+
+  <button
+    class="tab-btn flex items-center px-5 py-3 text-sm font-semibold text-gray-600 border-b-2 border-transparent rounded-t-lg transition-all duration-300 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200"
+    data-tab-group="main"
+    data-tab-target="evaluation-panel"
+  >
+    <i class="fas fa-clipboard-list mr-2 text-gray-500"></i>
+    Evaluation Panel
+  </button>
+</div>
+
+                
+                <div id="code-tab" class="tab-content active flex-col flex-grow bg-white overflow-hidden min-h-0">
+                    <div class="flex justify-between items-center p-3 bg-gray-50 border-b border-gray-200 flex-shrink-0">
+                        <h3 class="text-base font-semibold text-gray-800">Student's Live Code</h3>
+                        <div class="flex items-center space-x-3">
+                            <span id="current-problem-title" class="text-sm font-medium text-primary-blue">No problem assigned</span>
+                        </div>
+                    </div>
+                    <div class="flex-grow min-h-0 relative">
+                         <textarea id="code-viewer" class="w-full h-full border-none p-0"></textarea>
+                    </div>
+                    <div class="flex-shrink-0 h-2/5 flex flex-col border-t border-gray-200 bg-gray-50">
+                        <div class="flex-shrink-0 border-b border-gray-200 bg-white">
+                            <nav class="flex" aria-label="Output Tabs">
+                                <button class="tab-btn active text-xs !py-2.5" data-tab-group="output" data-tab-target="output-console-tab">Console Output</button>
+                                <button class="tab-btn text-xs !py-2.5" data-tab-group="output" data-tab-target="output-results-tab">Test Results</button>
+                            </nav>
+                        </div>
+                        
+                        <div id="output-console-tab" class="tab-content active flex-grow overflow-y-auto custom-scrollbar">
+                            <pre id="output-console" class="p-4 bg-gray-800 text-gray-200 text-xs h-full whitespace-pre-wrap font-mono">Waiting for student to run code...</pre>
+                        </div>
+                        
+                        <div id="output-results-tab" class="tab-content flex-col flex-grow overflow-y-auto custom-scrollbar">
+                            <div id="output-results-container" class="p-4 space-y-3">
+                                <p class="text-gray-500 text-sm">Waiting for student to submit code...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="evaluation-panel" class="tab-content flex-col flex-grow overflow-y-auto custom-scrollbar p-6 min-h-0">
+                    <!-- This content will be replaced by JS when viewing a problem -->
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Evaluation (Out of 50 Marks)</h2>
+                    <form id="evaluation-form" class="space-y-5">
+                        
+                        <!-- --- MODIFIED: Criteria styling --- -->
+                        <div id="criteria-container" class="space-y-0 p-4 border rounded-xl bg-gray-50 shadow-inner">
+                             
+                             <div class="criteria-item">
+                                 <div class="flex flex-col flex-grow mr-4">
+                                     <label for="techKnowledge" class="text-sm font-medium text-gray-800">1. Technical Knowledge (Max: 15)</label>
+                                     <span class="text-xs text-gray-500">Understanding of fundamentals, subject expertise, clarity of concepts.</span>
+                                 </div>
+                                 <input type="number" id="techKnowledge" name="techKnowledge" min="0" max="15" value="0" step="0.5" class="score-input" required>
+                             </div>
+
+                             <div class="criteria-item">
+                                 <div class="flex flex-col flex-grow mr-4">
+                                     <label for="problemSolving" class="text-sm font-medium text-gray-800">2. Problem Solving / Coding Skills (Max: 10)</label>
+                                     <span class="text-xs text-gray-500">Logic building, accuracy, code efficiency, approach, and ability to debug.</span>
+                                 </div>
+                                 <input type="number" id="problemSolving" name="problemSolving" min="0" max="10" value="0" step="0.5" class="score-input" required>
+                             </div>
+
+                             <div class="criteria-item">
+                                 <div class="flex flex-col flex-grow mr-4">
+                                     <label for="projectUnderstanding" class="text-sm font-medium text-gray-800">3. Project & Internship Understanding (Max: 8)</label>
+                                     <span class="text-xs text-gray-500">Depth of understanding of past work, contributions, challenges, and outcomes.</span>
+                                 </div>
+                                 <input type="number" id="projectUnderstanding" name="projectUnderstanding" min="0" max="8" value="0" step="0.5" class="score-input" required>
+                             </div>
+
+                             <div class="criteria-item">
+                                 <div class="flex flex-col flex-grow mr-4">
+                                     <label for="communicationSkills" class="text-sm font-medium text-gray-800">4. Communication & Explanation Skills (Max: 5)</label>
+                                     <span class="text-xs text-gray-500">Clarity, articulation, confidence, ability to explain ideas simply.</span>
+                                 </div>
+                                 <input type="number" id="communicationSkills" name="communicationSkills" min="0" max="5" value="0" step="0.5" class="score-input" required>
+                             </div>
+
+                             <div class="criteria-item">
+                                 <div class="flex flex-col flex-grow mr-4">
+                                     <label for="attitudeBehavior" class="text-sm font-medium text-gray-800">5. Attitude, Behavior & Team Fit (Max: 5)</label>
+                                     <span class="text-xs text-gray-500">Enthusiasm, learning mindset, professionalism, adaptability.</span>
+                                 </div>
+                                 <input type="number" id="attitudeBehavior" name="attitudeBehavior" min="0" max="5" value="0" step="0.5" class="score-input" required>
+                             </div>
+
+                             <div class="criteria-item">
+                                 <div class="flex flex-col flex-grow mr-4">
+                                     <label for="analyticalThinking" class="text-sm font-medium text-gray-800">6. Analytical & Logical Thinking (Max: 4)</label>
+                                     <span class="text-xs text-gray-500">Approach to reasoning questions or scenario-based questions.</span>
+                                 </div>
+                                 <input type="number" id="analyticalThinking" name="analyticalThinking" min="0" max="4" value="0" step="0.5" class="score-input" required>
+                             </div>
+
+                             <div class="criteria-item">
+                                 <div class="flex flex-col flex-grow mr-4">
+                                     <label for="overallImpression" class="text-sm font-medium text-gray-800">7. Overall Impression / Potential (Max: 3)</label>
+                                     <span class="text-xs text-gray-500">Overall performance, potential to grow, interviewer’s final impression.</span>
+                                 </div>
+                                 <input type="number" id="overallImpression" name="overallImpression" min="0" max="3" value="0" step="0.5" class="score-input" required>
+                             </div>
+                        </div>
+                        
+                        <!-- --- MODIFIED: Total Score styling --- -->
+                        <div class="pt-4">
+                            <div class="bg-green-50 p-4 rounded-lg flex justify-between items-center border border-green-200">
+                                 <p class="text-base font-semibold text-green-800">
+                                     Total Score:
+                                 </p>
+                                 <span class="font-extrabold text-2xl text-green-700" id="totalScore-val">0.0 / 50</span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="recommendation" class="block text-sm font-medium text-gray-700 mb-1">Recommendation <span class="text-red-600">*</span></label>
+                            <select id="recommendation" name="recommendation" class="form-select" required>
+                                <option value="" disabled selected>-- Select an option --</option>
+                                <option value="Strong Hire">Strong Hire</option>
+                                <option value="Hire">Hire</option>
+                                <option value="No Hire">No Hire</option>
+                                <option value="On Hold">On Hold</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="feedback" class="block text-sm font-medium text-gray-700 mb-1">Feedback & Recommendation <span class="text-red-600">*</span></label>
+                            <textarea id="feedback" name="feedback" rows="6" class="form-textarea" placeholder="Detailed feedback, strengths, areas for improvement, and hiring recommendation rationale." required></textarea>
+                        </div>
+                        
+                        <div class="pt-2">
+                            <button type="submit" id="submit-evaluation-btn" class="submit-btn-green w-full inline-flex justify-center items-center px-6 py-3 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 disabled:from-gray-400 disabled:to-gray-500 text-base" disabled>
+                                <i class="fas fa-check-circle mr-2"></i>
+                                Submit Final Evaluation
+                            </button>
+                        </div>
+                        <div id="eval-message" class="text-sm text-center pt-2"></div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- === Column 3 (Right) === -->
+        <div id="right-col" class="flex flex-col h-full">
+            <!-- --- MODIFIED: Added border-t --- -->
+            <div class="card flex-grow flex flex-col p-0 border-t-4 border-gray-400">
+                <div class="flex-shrink-0 flex justify-between items-center p-4 border-b">
+                    <h2 class="text-xl font-semibold text-gray-900">Student Resume</h2>
+                    <span id="resume-status-text" class="text-xs text-gray-500">Loading resume...</span>
+                </div>
+                 <div class="flex-grow min-h-0">
+                     <iframe id="resume-iframe" class="w-full h-full border-none"></iframe>
+                     <button id="open-resume-btn-inline" class="hidden" disabled>
+                        <i class="fas fa-file-pdf mr-2"></i>Open Resume PDF
+                    </button>
+                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Floating Chat Modal Trigger -->
+    <div id="floating-chat-trigger" class="fixed bottom-6 right-6 z-40">
+        <button id="open-chat-modal-btn" class="p-4 bg-primary-blue text-white rounded-full shadow-2xl hover:bg-soft-blue transition-all duration-300 hover:scale-105 relative">
+            <i class="fas fa-comments fa-lg"></i>
+            <span id="floating-chat-badge" class="chat-badge hidden"></span>
+        </button>
+    </div>
+
+    <!-- 
+      MODALS: MOVED to be direct children of <body> 
+    -->
+
+    <!-- Chat Modal (Draggable) -->
+    <div id="chat-modal" class="draggable-window-bg hidden">
+        <div id="chat-modal-container" class="">
+             <div id="chat-modal-handle" class="draggable-window-handle flex justify-between items-center p-4 border-b border-gray-200 flex-shrink-0 bg-primary-blue text-white rounded-t-xl">
+                <h3 class="text-xl font-semibold">Live Chat with Candidate</h3>
+                <button id="close-chat-modal-btn" class="modal-close-btn">
+                    <i class="fas fa-xmark fa-lg"></i>
+                </button>
+             </div>
+             <div id="chat-messages-modal" class="flex-grow p-4 space-y-4 overflow-y-auto custom-scrollbar bg-gray-50">
+             </div>
+             <form id="chat-form-modal" class="flex-shrink-0 p-4 border-t border-gray-200 bg-white rounded-b-xl">
+                <div class="flex gap-2">
+                    <input type="text" id="chat-input-modal" class="form-input flex-grow" placeholder="Type a message...">
+                    <button type="submit" class="px-4 py-2 bg-primary-blue text-white font-semibold rounded-lg shadow-md hover:bg-soft-blue">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+             </form>
+        </div>
+    </div>
+    
+    <!-- Resume Modal (Center Popup) - Fallback for small screens -->
+    <div id="resume-modal" class="modal-bg hidden">
+        <div class="modal-container w-full max-w-4xl h-[90vh] modal-center-container">
+            <div class="modal-center-content w-full h-full flex flex-col">
+                 <div class="flex justify-between items-center p-4 border-b border-gray-200 flex-shrink-0">
+                    <h3 class="text-xl font-semibold text-gray-900">Candidate Resume</h3>
+                    <button id="close-resume-modal" class="modal-close-btn-dark">
+                        <i class="fas fa-times fa-lg"></i>
+                    </button>
+                 </div>
+                 <div class="flex-grow min-h-0 p-4">
+                     <iframe id="resume-iframe-modal" class="w-full h-full border rounded-lg"></iframe>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal (for End Interview) (Center Popup) -->
+    <div id="confirm-modal" class="modal-bg hidden">
+        <div class="modal-container w-full max-w-md modal-center-container"> 
+            <div class="modal-center-content w-full p-6 bg-white">
+                <h3 class="text-lg font-bold text-gray-900" id="modal-title">End Interview?</h3>
+                <div class="mt-3">
+                    <p class="text-sm text-gray-500" id="modal-message">Are you sure you want to end this interview? This action cannot be undone. Ensure you have submitted your evaluation!</p>
+                </div>
+                <div class="mt-5 sm:mt-6 flex flex-col sm:flex-row-reverse gap-3">
+                    <button type="button" id="modal-confirm-btn" class="w-full inline-flex justify-center rounded-lg shadow-md px-4 py-2 bg-red-600 text-base font-semibold text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">
+                        End Interview
+                    </button>
+                    <button type="button" id="modal-cancel-btn" class="w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-semibold text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Socket.io Client -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <!-- CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/java/java.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!token || !user || user.role !== 'Interviewer') {
+                window.location.href = 'interviewer-login.html';
+                return;
+            }
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const slotId = urlParams.get('slot');
+            if (!slotId) {
+                console.error('Error: No slot ID provided.');
+                window.location.href = 'interviewer-dashboard.html?message=No slot ID provided';
+                return;
+            }
+            
+            // --- Elements ---
+            const studentNameEl = document.getElementById('student-name');
+            const studentVideoNameEl = document.getElementById('student-video-name');
+            const studentAvatarEl = document.getElementById('student-avatar');
+            const infoFullNameEl = document.getElementById('info-full-name');
+            const infoRollNumberEl = document.getElementById('info-roll-number');
+            const infoCgpaEl = document.getElementById('info-cgpa');
+            const infoCollegeEl = document.getElementById('info-college');
+            const infoDepartmentEl = document.getElementById('info-department');
+            const problemsList = document.getElementById('problems-list');
+            const problemsLoading = document.getElementById('problems-loading');
+            
+            const floatingChatBadge = document.getElementById('floating-chat-badge');
+            const chatModal = document.getElementById('chat-modal');
+            const openChatModalBtn = document.getElementById('open-chat-modal-btn');
+            const closeChatModalBtn = document.getElementById('close-chat-modal-btn');
+
+            const evalPanel = document.getElementById('evaluation-panel');
+            const evalMessage = document.getElementById('eval-message');
+            const currentProblemTitleEl = document.getElementById('current-problem-title');
+            const startInterviewBtn = document.getElementById('start-interview-btn');
+            const endInterviewBtn = document.getElementById('end-interview-btn');
+            const violationCounterEl = document.getElementById('student-violation-counter');
+
+            const confirmModal = document.getElementById('confirm-modal');
+            const resumeModal = document.getElementById('resume-modal'); 
+
+            const openResumeBtnInline = document.getElementById('open-resume-btn-inline');
+            const resumeStatusText = document.getElementById('resume-status-text');
+            const closeResumeModalBtn = document.getElementById('close-resume-modal');
+            const resumeIframe = document.getElementById('resume-iframe'); 
+            const resumeIframeModal = document.getElementById('resume-iframe-modal'); 
+            
+            const localVideo = document.getElementById('interviewer-preview');
+            const remoteVideo = document.getElementById('student-video');
+            
+            const outputConsole = document.getElementById('output-console');
+            const outputResultsContainer = document.getElementById('output-results-container');
+            
+            const codeViewer = CodeMirror.fromTextArea(document.getElementById('code-viewer'), {
+                lineNumbers: true,
+                theme: 'neat',
+                readOnly: 'nocursor',
+                mode: 'javascript'
+            });
+            
+            // --- Global State ---
+            let socket;
+            let peerConnection;
+            let localStream;
+            let allProblems = [];
+            let currentChatHistory = [];
+            let currentProblemId = null;
+            let studentData = {};
+            let remoteDescriptionSet = false;
+            let originalEvalPanelHTML; // To store original form
+
+            if (evalPanel) {
+                originalEvalPanelHTML = evalPanel.innerHTML;
+            }
+
+            const chatMessagesModal = document.getElementById('chat-messages-modal');
+            const chatFormModal = document.getElementById('chat-form-modal');
+            const chatInputModal = document.getElementById('chat-input-modal');
+
+            // --- Evaluation Logic ---
+            const sliders = [
+                { id: 'techKnowledge', max: 15 },
+                { id: 'problemSolving', max: 10 },
+                { id: 'projectUnderstanding', max: 8 },
+                { id: 'communicationSkills', max: 5 },
+                { id: 'attitudeBehavior', max: 5 },
+                { id: 'analyticalThinking', max: 4 },
+                { id: 'overallImpression', max: 3 }
+            ];
+            
+            function getElementValue(id) {
+                 const el = document.getElementById(id);
+                 return el ? parseFloat(el.value) : 0;
+            }
+
+            function updateTotalScore() {
+                const totalScoreEl = document.getElementById('totalScore-val');
+                if (!totalScoreEl) return 0; 
+
+                let total = 0;
+                sliders.forEach(s => { 
+                    const inputEl = document.getElementById(s.id);
+                    const value = inputEl ? parseFloat(inputEl.value) : 0;
+                    const max = s.max;
+                    let safeValue = value;
+                    if (value > max) {
+                        safeValue = max;
+                        if (inputEl) inputEl.value = max;
+                    } else if (value < 0 || isNaN(value)) {
+                        safeValue = 0;
+                        if (inputEl) inputEl.value = 0;
+                    } 
+                    total += safeValue;
+                });
+                totalScoreEl.textContent = `${total.toFixed(1)} / 50`;
+                
+                const recommendationEl = document.getElementById('recommendation');
+                const feedbackEl = document.getElementById('feedback');
+                const submitEvalBtn = document.getElementById('submit-evaluation-btn');
+                
+                const isRecommendationSelected = recommendationEl ? recommendationEl.value !== "" : false;
+                const isFeedbackProvided = feedbackEl ? feedbackEl.value.trim().length > 10 : false;
+                
+                if (submitEvalBtn) {
+                    submitEvalBtn.disabled = !(isRecommendationSelected && isFeedbackProvided);
+                }
+                
+                return total.toFixed(1);
+            }
+            
+            function rebindEvaluationFormListeners() {
+                const evalForm = document.getElementById('evaluation-form');
+                if (!evalForm) return; 
+
+                sliders.forEach(s => {
+                    const inputEl = document.getElementById(s.id);
+                    if(inputEl) {
+                        inputEl.addEventListener('input', updateTotalScore);
+                    }
+                });
+                
+                const recommendationEl = document.getElementById('recommendation');
+                if (recommendationEl) {
+                    recommendationEl.addEventListener('change', updateTotalScore);
+                }
+                
+                const feedbackEl = document.getElementById('feedback');
+                if (feedbackEl) {
+                    feedbackEl.addEventListener('input', updateTotalScore);
+                }
+
+                evalForm.addEventListener('submit', handleEvaluationSubmit);
+                updateTotalScore();
+            }
+            
+            rebindEvaluationFormListeners();
+
+
+            // --- Tab Switching ---
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const tabGroup = btn.dataset.tabGroup;
+                    const tabTargetId = btn.dataset.tabTarget;
+                    
+                    document.querySelectorAll(`.tab-btn[data-tab-group="${tabGroup}"]`).forEach(t => t.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    if (tabGroup === 'main') {
+                        document.querySelectorAll('#middle-col > .card > .tab-content').forEach(c => c.classList.remove('active'));
+                        document.getElementById(tabTargetId).classList.add('active');
+
+                        const isProblemView = evalPanel && !!evalPanel.querySelector('#close-problem-view');
+
+                        if (tabTargetId === 'code-tab' && isProblemView) {
+                            evalPanel.innerHTML = originalEvalPanelHTML;
+                            rebindEvaluationFormListeners();
+                        } else if (tabTargetId === 'evaluation-panel' && !isProblemView) {
+                            if (evalPanel && evalPanel.innerHTML !== originalEvalPanelHTML) {
+                                 evalPanel.innerHTML = originalEvalPanelHTML;
+                                 rebindEvaluationFormListeners();
+                            }
+                        }
+
+                    } else if (tabGroup === 'output') {
+                        document.querySelectorAll('#code-tab .tab-content[id*="output-"]').forEach(c => c.classList.remove('active'));
+                        document.getElementById(tabTargetId).classList.add('active');
+                    }
+                    
+                    if (tabTargetId === 'code-tab') {
+                        codeViewer.refresh();
+                    }
+                });
+            });
+
+            // --- WebRTC & Socket.io ---
+            async function initWebRTC() {
+                try {
+                    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                    localVideo.srcObject = localStream;
+                    localVideo.poster = ""; 
+                    await localVideo.play().catch(e => console.warn("Local video autoplay failed:", e));
+                    startInterviewBtn.disabled = false;
+                } catch (e) {
+                    console.error('Error accessing media devices.', e);
+                    showConfirmModal('Media Error', 'Failed to access your camera and microphone. Please check permissions and refresh.', () => {
+                        window.location.reload();
+                    }, 'Refresh Page');
+                    startInterviewBtn.disabled = true;
+                    startInterviewBtn.textContent = 'Media Error';
+                    return;
+                }
+                
+                socket = io();
+                
+                socket.on('connect', () => {
+                    console.log('Socket connected:', socket.id);
+                    socket.emit('join-interview-room', { slotId: slotId, role: 'interviewer' });
+                });
+                
+                socket.on('interview-state-restore', (state) => {
+                    if (state.latestCode) {
+                        codeViewer.setValue(state.latestCode);
+                    }
+                    if (state.latestLanguage) {
+                         setEditorMode(state.latestLanguage);
+                    }
+                    if (state.chatHistory) {
+                        currentChatHistory = state.chatHistory;
+                        renderChatHistory(currentChatHistory);
+                    }
+                });
+
+                handleSocketEvents();
+            }
+
+            function setEditorMode(language) {
+                let cmMode;
+                if (language === 'python') cmMode = 'python';
+                else if (language === 'java') cmMode = 'text/x-java';
+                else if (language === 'cpp') cmMode = 'text/x-c++src';
+                else cmMode = 'javascript';
+                
+                if (CodeMirror.modes[cmMode] || cmMode === 'javascript') {
+                    codeViewer.setOption('mode', cmMode);
+                } else {
+                    console.warn(`CodeMirror mode not found for language: ${language}. Defaulting to JavaScript.`);
+                    codeViewer.setOption('mode', 'javascript');
+                }
+            }
+
+            function handleSocketEvents() {
+                socket.on('user-joined', (data) => {
+                    if (data.role === 'student') {
+                        console.log('Student is in the room (or just joined).');
+                        startInterviewBtn.textContent = 'Student Connected';
+                        startInterviewBtn.disabled = true;
+                        if (!peerConnection || peerConnection.connectionState === 'new' || peerConnection.connectionState === 'closed') {
+                            console.log('Starting peer connection as offerer (due to user-joined event).');
+                            startPeerConnection(true); // true = isOfferer
+                        } else {
+                            console.log('Peer connection already active, not re-initializing.');
+                        }
+                    }
+                });
+                
+                socket.on('student-ready', () => {
+                    console.log('Student sent "ready" signal.');
+                    startInterviewBtn.textContent = 'Student Connected';
+                    startInterviewBtn.disabled = true;
+                    if (!peerConnection || peerConnection.connectionState === 'new' || peerConnection.connectionState === 'closed') {
+                        console.log('Starting peer connection as offerer (due to student-ready event).');
+                        startPeerConnection(true); // true = isOfferer
+                    }
+                });
+
+                socket.on('webrtc-offer', async (offer) => {
+                    console.error("Interviewer should not receive 'webrtc-offer'. Ignoring.");
+                });
+
+                socket.on('webrtc-answer', (answer) => {
+                    if (peerConnection) {
+                        console.log("Received WebRTC answer from student.");
+                        peerConnection.setRemoteDescription(new RTCSessionDescription(answer))
+                            .then(() => {
+                                remoteDescriptionSet = true;
+                                console.log("Remote description (answer) set successfully.");
+                            })
+                            .catch(e => console.error("Error setting remote description:", e));
+                    }
+                });
+
+                socket.on('webrtc-ice-candidate', (candidate) => {
+                    if (candidate && peerConnection) {
+                        if (remoteDescriptionSet) {
+                            peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
+                                .catch(e => console.warn("Error adding received ICE candidate:", e));
+                        } else {
+                            console.warn("Received ICE candidate before remote description was set. Ignoring.");
+                        }
+                    }
+                });
+                
+                socket.on('interviewer-receive-code', (data) => {
+                    if (codeViewer && data.code !== undefined) {
+                        const scrollInfo = codeViewer.getScrollInfo();
+                        codeViewer.setValue(data.code);
+                        codeViewer.scrollTo(scrollInfo.left, scrollInfo.top);
+                        if(data.language) setEditorMode(data.language);
+                    }
+                });
+                
+                socket.on('receive-chat-message', (message) => {
+                    if (message.sender !== 'interviewer') { 
+                        currentChatHistory.push(message);
+                        renderSingleMessage(message, false);
+                        floatingChatBadge.classList.remove('hidden');
+                    }
+                });
+                
+                socket.on('student-code-output', ({ outputs, isSubmit }) => {
+                     renderStudentOutput(outputs, isSubmit);
+                });
+
+                socket.on('student-violation-count', (data) => {
+                    if(violationCounterEl) {
+                        violationCounterEl.textContent = `Violations: ${data.count}`;
+                        violationCounterEl.classList.remove('hidden');
+                    }
+                });
+                
+                socket.on('interview-end', () => {
+                    showConfirmModal('Interview Ended', 'The student has ended the interview session. Please submit your final evaluation.', null, 'Acknowledge');
+                });
+            }
+
+            async function startPeerConnection(isOfferer) {
+                if (peerConnection) {
+                    peerConnection.close();
+                }
+
+                peerConnection = new RTCPeerConnection({
+                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                });
+
+                remoteDescriptionSet = false;
+
+                peerConnection.onicecandidate = (event) => {
+                    if (event.candidate && socket) {
+                        console.log("Generated local ICE candidate. Sending.");
+                        socket.emit('webrtc-ice-candidate', {
+                            slotId: slotId,
+                            candidate: event.candidate
+                        });
+                    }
+                };
+
+                if(localStream) {
+                    console.log("Adding local stream tracks to peer connection.");
+                    localStream.getTracks().forEach(track => {
+                        peerConnection.addTrack(track, localStream);
+                    });
+                } else {
+                     console.error("CRITICAL: startPeerConnection called but localStream is null!");
+                }
+
+                peerConnection.ontrack = async (event) => {
+                    console.log("Received remote track from student.");
+                    if (event.streams && event.streams[0]) {
+                        remoteVideo.srcObject = event.streams[0];
+                        remoteVideo.poster = studentData.candidatePhotoUrl || "https://placehold.co/600x400/333/999?text=Student Video Feed";
+                        await remoteVideo.play().catch(e => console.warn("Remote video autoplay blocked or failed:", e));
+                    }
+                };
+                
+                peerConnection.onconnectionstatechange = () => {
+                    console.log("Peer Connection State:", peerConnection.connectionState);
+                };
+
+                if (isOfferer) {
+                    console.log("Creating WebRTC offer...");
+                    const offer = await peerConnection.createOffer();
+                    await peerConnection.setLocalDescription(offer);
+                    console.log("Local description (offer) set. Sending to student.");
+                    socket.emit('webrtc-offer', { slotId: slotId, offer: offer });
+                }
+            }
+
+            // --- Load Initial Data ---
+            async function loadInitialData() {
+                try {
+                    const slotResponse = await fetch(`/api/interviewer/slot-details/${slotId}`, {
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!slotResponse.ok) {
+                        const errorData = await slotResponse.json();
+                        throw new Error(errorData.message || 'Failed to load slot details');
+                    }
+                    const { slot, application, interviewerPhotoUrl: iPhoto, chatHistory, assignedProblems, latestCode, latestLanguage, currentProblemId: savedProblemId } = await slotResponse.json();
+                    
+                    studentData = {
+                        candidateName: slot.candidateName || 'N/A',
+                        candidateEmail: slot.candidateEmail || 'N/A',
+                        rollNumber: slot.rollNumber || application.rollNumber || 'N/A',
+                        collegeName: slot.collegeName || application.college || 'N/A',
+                        departmentName: slot.departmentName || application.department || 'N/A',
+                        candidatePhotoUrl: application.passportPhotoUrl || 'https://placehold.co/100x100/FEE2E2/EF4444?text=?'
+                    };
+
+                    studentNameEl.textContent = studentData.candidateName;
+                    studentVideoNameEl.textContent = studentData.candidateName;
+                    studentAvatarEl.src = studentData.candidatePhotoUrl;
+                    
+                    infoFullNameEl.textContent = studentData.candidateName;
+                    infoRollNumberEl.textContent = `Roll: ${studentData.rollNumber}`;
+                    infoCollegeEl.textContent = studentData.collegeName;
+                    infoDepartmentEl.textContent = studentData.departmentName;
+                    infoCgpaEl.textContent = '7.5 / 10.0'; 
+                    
+                    remoteVideo.poster = studentData.candidatePhotoUrl;
+                    if (iPhoto) localVideo.poster = iPhoto;
+
+                    if (application.resumeUrl) {
+                        resumeIframe.src = application.resumeUrl; 
+                        resumeIframeModal.src = application.resumeUrl; 
+                        resumeStatusText.textContent = 'Resume loaded.';
+                        openResumeBtnInline.classList.add('hidden'); 
+                    } else {
+                        resumeStatusText.textContent = 'Resume Not Available';
+                        openResumeBtnInline.classList.add('hidden');
+                        resumeIframe.srcdoc = `<div style='display:flex;align-items:center;justify-content:center;height:100%;font-family:Inter,sans-serif;color:#6b7280;'>No resume was submitted by the candidate.</div>`;
+                    }
+
+                    currentChatHistory = chatHistory || [];
+                    renderChatHistory(currentChatHistory);
+                    
+                    codeViewer.setValue(latestCode || '// Student has not typed any code yet.');
+                    if (latestLanguage) setEditorMode(latestLanguage);
+                    
+                    const problemsResponse = await fetch('/api/interviewer/coding-problems', {
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!problemsResponse.ok) throw new Error('Failed to load coding problems');
+                    allProblems = await problemsResponse.json();
+                    
+                    currentProblemId = savedProblemId; 
+                    renderProblemsList(allProblems, assignedProblems);
+
+                    if (currentProblemId) {
+                         const problem = allProblems.find(p => p.id === currentProblemId);
+                         if(problem) currentProblemTitleEl.textContent = `Assigned: ${problem.title}`;
+                    }
+                    
+                    await initWebRTC(); 
+
+                } catch (error) {
+                    console.error('Error loading initial data:', error);
+                    document.body.innerHTML = `
+                        <div class="fixed inset-0 flex items-center justify-center bg-gray-50 p-8 text-center">
+                            <div>
+                                <h2 class="text-2xl font-bold text-red-600 mb-4">Error Loading Interview Portal</h2>
+                                <p class="text-gray-700 mb-6">${error.message}</p>
+                                <a href="/interviewer-dashboard.html" class="px-6 py-3 bg-primary-blue text-white font-semibold rounded-lg hover:bg-soft-blue">
+                                    <i class="fas fa-arrow-left mr-2"></i>Go to Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            // --- MODIFIED: renderProblemsList ---
+            function renderProblemsList(problems, assignedProblems) {
+                if(problemsLoading) problemsLoading.remove();
+                problemsList.innerHTML = '';
+                const assignedIds = new Set((assignedProblems || []).map(p => p.id || p.problemId));
+
+                if (problems.length === 0) {
+                    problemsList.innerHTML = '<p class="text-sm text-gray-500 p-4">No global coding problems available for assignment.</p>';
+                    return;
+                }
+                
+                problems.forEach(problem => {
+                    const isAssigned = assignedIds.has(problem.id);
+                    const viewBtnClass = 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100';
+                    // --- MODIFIED: Button Classes ---
+                    const assignBtnClass = isAssigned ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700';
+                    const btnText = isAssigned ? 'Assigned' : 'Assign';
+                    
+                    // --- MODIFIED: Problem item card styling ---
+                    const problemEl = document.createElement('div');
+                    problemEl.className = 'p-4 bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-shadow duration-200';
+                    problemEl.innerHTML = `
+                        <h4 class="font-semibold text-gray-800 text-base">${problem.title} (${problem.difficulty})</h4>
+                        <p class="text-sm text-gray-600 line-clamp-2">${problem.description}</p>
+                        <div class="flex gap-2 mt-3">
+                            <button class="view-problem-btn px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${viewBtnClass}" data-problem-id="${problem.id}">
+                                <i class="fas fa-eye mr-1"></i>View
+                            </button>
+                            <button class="assign-btn px-3 py-1.5 text-xs font-bold rounded-md transition-colors ${assignBtnClass}" data-problem-id="${problem.id}" ${isAssigned ? 'disabled' : ''}>
+                                <i class="fas fa-arrow-right mr-1"></i>${btnText}
+                            </button>
+                        </div>
+                    `;
+                    problemsList.appendChild(problemEl);
+                });
+            }
+
+            // --- MODIFIED: Assign Problem Click Handler ---
+            problemsList.addEventListener('click', (e) => {
+                const btn = e.target.closest('button.assign-btn');
+                if (btn && !btn.disabled) {
+                    const problemId = btn.dataset.problemId;
+                    const problem = allProblems.find(p => p.id === problemId);
+                    
+                    if (problem && socket) {
+                        socket.emit('interviewer-assign-problem', { slotId: slotId, problem: {
+                            id: problem.problemId,
+                            problemId: problem.problemId,
+                            title: problem.title,
+                            difficulty: problem.difficulty,
+                            score: problem.score
+                        } });
+                        currentProblemId = problem.id;
+                        
+                        // --- MODIFIED: Update classes for all buttons ---
+                        problemsList.querySelectorAll('.assign-btn').forEach(b => {
+                            if (!b.disabled) {
+                                b.textContent = 'Assign';
+                                b.classList.remove('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
+                                b.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+                                b.disabled = false;
+                            }
+                        });
+                        btn.textContent = 'Assigned';
+                        btn.classList.remove('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+                        btn.classList.add('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
+                        btn.disabled = true;
+                        
+                        currentProblemTitleEl.textContent = `Assigned: ${problem.title}`;
+                        document.querySelector('.tab-btn[data-tab-target="code-tab"]').click();
+                    }
+                }
+            });
+
+            // --- MODIFIED: Problem View Logic ---
+            problemsList.addEventListener('click', async (e) => {
+                const btn = e.target.closest('button.view-problem-btn');
+                if (btn) {
+                    const problemId = btn.dataset.problemId;
+                    
+                    const evalTabButton = document.querySelector('.tab-btn[data-tab-target="evaluation-panel"]');
+
+                    evalPanel.innerHTML = `
+                        <div class="text-center p-8 text-gray-500">
+                            <i class="fas fa-spinner fa-spin fa-2x text-primary-blue"></i>
+                            <p class="mt-3 font-medium">Fetching full details...</p>
+                        </div>
+                    `;
+                    
+                    if (evalTabButton && !evalTabButton.classList.contains('active')) {
+                        evalTabButton.click();
+                    }
+
+                    try {
+                        const fullDetailsResponse = await fetch(`/api/interviewer/coding-problems/${problemId}`, {
+                            headers: { 'x-auth-token': token }
+                        });
+                        
+                        if (!fullDetailsResponse.ok) {
+                            throw new Error(`Failed to fetch full problem details.`);
+                        }
+                        const fullProblem = await fullDetailsResponse.json();
+
+                        // --- MODIFIED: Generate Refined HTML for the panel ---
+                        const problemHTML = `
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-xl font-semibold text-gray-900">${fullProblem.title}</h3>
+                                <button id="close-problem-view" class="modal-close-btn-dark" title="Close problem view">
+                                    <i class="fas fa-xmark fa-lg"></i>
+                                </button>
+                            </div>
+                            <div class="space-y-6 text-gray-700 pb-10 problem-view-prose"> <!-- Added class -->
+                                <div class="flex gap-4">
+                                    <span class="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">Difficulty: ${fullProblem.difficulty}</span>
+                                    <span class="inline-block bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">Score: ${fullProblem.score}</span>
+                                </div>
+                                
+                                <div class="border-t pt-4">
+                                    <h5>Problem Statement</h5>
+                                    <p>${fullProblem.description || 'N/A'}</p>
+                                </div>
+                                
+                                ${fullProblem.inputFormat ? `
+                                <div>
+                                    <h5>Input Format</h5>
+                                    <p>${fullProblem.inputFormat}</p>
+                                </div>` : ''}
+                                
+                                ${fullProblem.outputFormat ? `
+                                <div>
+                                    <h5>Output Format</h5>
+                                    <p>${fullProblem.outputFormat}</p>
+                                </div>` : ''}
+
+                                ${fullProblem.constraints ? `
+                                <div>
+                                    <h5>Constraints</h5>
+                                    <pre>${fullProblem.constraints}</pre>
+                                </div>` : ''}
+                                
+                                ${fullProblem.example ? `
+                                <div>
+                                    <h5>Example</h5>
+                                    <pre>${fullProblem.example}</pre>
+                                </div>` : ''}
+
+                                <div>
+                                    <h5>Test Cases (Sample)</h5>
+                                    ${(fullProblem.testCases || []).slice(0, 1).map((tc, index) => `
+                                        <div class="bg-gray-100 p-3 rounded-md mt-2 text-xs font-mono">
+                                            <strong>Input:</strong>
+                                            <pre class="!p-0 !bg-transparent">${tc.input || 'N/A'}</pre>
+                                            <strong class="mt-2 inline-block">Expected Output:</strong>
+                                            <pre class="!p-0 !bg-transparent">${tc.expected || 'N/A'}</pre>
+                                        </div>
+                                    `).join('') || '<p class="text-sm text-gray-500">No sample test cases provided.</p>'}
+                                </div>
+                            </div>
+                        `;
+
+                        evalPanel.innerHTML = problemHTML;
+
+                        document.getElementById('close-problem-view').addEventListener('click', () => {
+                            evalPanel.innerHTML = originalEvalPanelHTML;
+                            rebindEvaluationFormListeners();
+                        });
+
+                    } catch (error) {
+                        evalPanel.innerHTML = `
+                            <div class="text-center p-8 text-red-600">
+                                <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                                <p class="font-medium">Error loading problem: ${error.message}</p>
+                            </div>
+                        `;
+                    }
+                }
+            });
+
+            // --- Resume Modal ---
+            openResumeBtnInline.addEventListener('click', () => {
+                const resumeUrl = resumeIframe.src; 
+                if (resumeUrl) {
+                    resumeIframeModal.src = resumeUrl;
+                    showAppModal(resumeModal);
+                }
+            });
+            closeResumeModalBtn.addEventListener('click', () => {
+                hideAppModal(resumeModal);
+            });
+            
+            document.getElementById('open-resume-modal-btn').addEventListener('click', () => {
+                const resumeUrl = resumeIframe.src; 
+                if (resumeUrl && resumeUrl !== "about:blank") {
+                    resumeIframeModal.src = resumeUrl;
+                    showAppModal(resumeModal);
+                } else {
+                     showConfirmModal('No Resume', 'A resume has not been provided for this candidate.', null, 'OK');
+                }
+            });
+
+
+            // --- CHAT LOGIC ---
+            const handleChatSubmit = (e, inputEl) => {
+                 e.preventDefault();
+                const text = inputEl.value.trim();
+                if (text === '' || !socket) return;
+                
+                const message = {
+                    sender: 'interviewer',
+                    text: text,
+                    timestamp: new Date().toISOString()
+                };
+                
+                currentChatHistory.push(message);
+                renderSingleMessage(message, true); 
+                socket.emit('send-chat-message', { slotId: slotId, message: message });
+                inputEl.value = '';
+            }
+
+            if (chatFormModal) chatFormModal.addEventListener('submit', (e) => handleChatSubmit(e, chatInputModal));
+
+            function renderChatHistory(history) {
+                chatMessagesModal.innerHTML = '';
+                history.forEach(msg => {
+                    renderSingleMessage(msg, msg.sender === 'interviewer', true);
+                });
+            }
+
+            function renderSingleMessage(message, isSelf, isInitialLoad = false) {
+                const container = chatMessagesModal;
+                if (!container) return; 
+                
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `flex ${isSelf ? 'justify-end' : 'justify-start'}`;
+                const time = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                msgDiv.innerHTML = `
+                    <div class="chat-bubble ${isSelf ? 'chat-bubble-self' : 'chat-bubble-other'} card !shadow-sm !p-3 !max-w-xs">
+                        <p class="text-sm">${message.text}</p>
+                        <p class="text-xs mt-1 opacity-70 ${isSelf ? 'text-right' : 'text-left'}">${time}</p>
+                    </div>
+                `;
+                container.appendChild(msgDiv);
+                     
+                if (!isInitialLoad) {
+                    container.scrollTop = container.scrollHeight; 
+                }
+            }
+            
+            if (openChatModalBtn) {
+                 openChatModalBtn.addEventListener('click', () => {
+                    if (chatModal.classList.contains('visible')) {
+                        hideAppModal(chatModal);
+                    } else {
+                        showAppModal(chatModal);
+                        floatingChatBadge.classList.add('hidden');
+                        
+                        setTimeout(() => {
+                            const messagesContainer = document.getElementById('chat-messages-modal');
+                            if (messagesContainer) {
+                                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                            }
+                            const chatInput = document.getElementById('chat-input-modal');
+                            if (chatInput) {
+                                chatInput.focus();
+                            }
+                        }, 200);
+                    }
+                });
+            }
+            
+            if (closeChatModalBtn) {
+                closeChatModalBtn.addEventListener('click', () => {
+                     hideAppModal(chatModal);
+                });
+            }
+            
+            // --- Output Rendering ---
+            function renderStudentOutput(outputs, isSubmit) {
+                 if (isSubmit) {
+                        let passedCount = 0;
+                        const totalCases = outputs.length;
+                        let resultsHtml = '';
+
+                        outputs.forEach((result, i) => {
+                            const passed = result.passed;
+                            if (passed) passedCount++;
+                            
+                            resultsHtml += `
+                                <div class="p-3 rounded-lg ${passed ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'} border">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-semibold ${passed ? 'text-green-800' : 'text-red-800'}">Test Case ${i + 1}</span>
+                                        <span class="px-3 py-1 text-xs rounded-full ${passed ? 'bg-green-500 text-white' : 'bg-red-500 text-white'} font-bold">${passed ? 'PASSED' : 'FAILED'}</span>
+                                    </div>
+                                    <div class="mt-2 text-xs font-mono text-gray-700 space-y-1">
+                                        <p><strong>Input:</strong> ${result.input || 'N/A'}</p>
+                                        <p><strong>Expected:</strong> ${result.expected || 'N/A'}</p>
+                                        <p class="break-words"><strong>Got:</strong> ${result.output || 'No Output'}</p>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        let summaryClass = passedCount === totalCases ? 'bg-green-100 text-green-800' : (passedCount > 0 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800');
+                        let summaryText = passedCount === totalCases ? 'All Test Cases Passed!' : `${passedCount} / ${totalCases} Test Cases Passed`;
+                        
+                        outputResultsContainer.innerHTML = `
+                            <div class="p-4 rounded-xl ${summaryClass} font-bold text-base text-center mb-2 shadow-sm border">
+                                ${summaryText}
+                            </div>
+                            ${resultsHtml}
+                        `;
+                        document.querySelector('.tab-btn[data-tab-group="output"][data-tab-target="output-results-tab"]').click();
+
+                    } else {
+                        const result = outputs[0] || { output: 'No output' };
+                        const isError = (result.output || '').toLowerCase().includes('error') || (result.output || '').toLowerCase().includes('exception');
+
+                        outputConsole.textContent = result.output || 'Execution finished with no output.';
+                        outputConsole.className = `p-4 bg-gray-800 text-xs h-full whitespace-pre-wrap font-mono ${isError ? 'text-red-300' : 'text-green-300'}`;
+                        document.querySelector('.tab-btn[data-tab-group="output"][data-tab-target="output-console-tab"]').click();
+                    }
+            }
+
+
+            // --- Form Submission ---
+            async function handleEvaluationSubmit(e) {
+                e.preventDefault();
+                
+                const submitEvalBtn = document.getElementById('submit-evaluation-btn');
+                const evalMessage = document.getElementById('eval-message');
+                if (!submitEvalBtn || !evalMessage) return;
+
+                submitEvalBtn.disabled = true;
+                evalMessage.textContent = 'Submitting...';
+                evalMessage.className = 'text-sm text-center text-gray-600';
+                
+                const totalScore = updateTotalScore();
+                
+                const evaluationData = {
+                    technicalKnowledge: getElementValue('techKnowledge'),
+                    problemSolving: getElementValue('problemSolving'),
+                    projectUnderstanding: getElementValue('projectUnderstanding'),
+                    communicationSkills: getElementValue('communicationSkills'),
+                    attitudeBehavior: getElementValue('attitudeBehavior'),
+                    analyticalThinking: getElementValue('analyticalThinking'),
+                    overallImpression: getElementValue('overallImpression'),
+                    totalScore: totalScore,
+                    recommendation: document.getElementById('recommendation').value,
+                    feedback: document.getElementById('feedback').value,
+                };
+                
+                const payload = {
+                    slotId: slotId,
+                    evaluation: evaluationData,
+                    studentDetails: studentData
+                };
+
+                try {
+                    const response = await fetch('/api/interviewer/submit-evaluation', {
+                        method: 'POST',
+                        headers: { 'x-auth-token': token, 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    const result = await response.json();
+                    if (!response.ok) {
+                         throw new Error(result.message || 'Failed to submit evaluation.');
+                    }
+                    
+                    evalMessage.textContent = 'Evaluation Submitted Successfully! Redirecting...';
+                    evalMessage.className = 'text-sm text-center text-green-600';
+                    
+                    showConfirmModal('Evaluation Submitted', 'The evaluation has been successfully recorded. The interview session is now completed.', () => {
+                        if (socket) socket.emit('interviewer-end-interview', { slotId: slotId });
+                        if (localStream) localStream.getTracks().forEach(track => track.stop());
+                        window.location.href = 'interviewer-dashboard.html';
+                    }, 'Go to Dashboard');
+
+                } catch (error) {
+                    console.error('Failed to submit evaluation:', error);
+                    evalMessage.textContent = `Error: ${error.message}`;
+                    evalMessage.className = 'text-sm text-center text-red-600';
+                    submitEvalBtn.disabled = false;
+                }
+            }
+            
+            // --- Draggable Window Logic ---
+            function makeDraggable(container, handle) {
+                let isDragging = false;
+                let offsetX, offsetY;
+
+                const onMouseDown = (e) => {
+                    if (e.button === 0 || (e.touches && e.touches.length === 1)) {
+                        isDragging = true;
+                        handle.style.cursor = 'grabbing';
+                        
+                        const rect = container.getBoundingClientRect();
+                        
+                        if (container.style.position !== 'absolute') {
+                            container.style.position = 'absolute';
+                        }
+                        container.style.top = `${rect.top}px`;
+                        container.style.left = `${rect.left}px`;
+                        container.style.bottom = 'auto';
+                        container.style.right = 'auto';
+                        container.style.transform = 'none';
+                        
+                        const eventPos = e.touches ? e.touches[0] : e;
+                        offsetX = eventPos.clientX - rect.left;
+                        offsetY = eventPos.clientY - rect.top;
+
+                        document.addEventListener('mousemove', onMouseMove);
+                        document.addEventListener('mouseup', onMouseUp);
+                        document.addEventListener('touchmove', onMouseMove, { passive: false });
+                        document.addEventListener('touchend', onMouseUp);
+                        
+                        if (e.preventDefault) e.preventDefault();
+                    }
+                };
+
+                const onMouseMove = (e) => {
+                    if (!isDragging) return;
+                    
+                    if (e.preventDefault) e.preventDefault();
+                    
+                    const eventPos = e.touches ? e.touches[0] : e;
+                    let newTop = eventPos.clientY - offsetY;
+                    let newLeft = eventPos.clientX - offsetX;
+                    
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
+                    const contRect = container.getBoundingClientRect(); 
+                    
+                    if (newLeft < 0) newLeft = 0;
+                    if (newTop < 0) newTop = 0;
+                    if (newLeft + contRect.width > viewportWidth) newLeft = viewportWidth - contRect.width;
+                    if (newTop + contRect.height > viewportHeight) newTop = viewportHeight - contRect.height;
+
+                    container.style.top = `${newTop}px`;
+                    container.style.left = `${newLeft}px`;
+                };
+
+                const onMouseUp = () => {
+                    isDragging = false;
+                    handle.style.cursor = 'move';
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    document.removeEventListener('touchmove', onMouseMove);
+                    document.removeEventListener('touchend', onMouseUp);
+                };
+
+                handle.addEventListener('mousedown', onMouseDown);
+                handle.addEventListener('touchstart', onMouseDown, { passive: false });
+            }
+
+            // --- Modal Functions ---
+            function showConfirmModal(title, message, onConfirm, confirmText = 'OK') {
+                const modal = confirmModal; 
+                const container = modal.querySelector('.modal-center-container');
+                const modalContent = modal.querySelector('.modal-center-content');
+                
+                modal.querySelector('#modal-title').textContent = title;
+                modal.querySelector('#modal-message').textContent = message;
+                
+                let modalConfirmBtn = modal.querySelector('#modal-confirm-btn');
+                const newConfirmBtn = modalConfirmBtn.cloneNode(true); 
+                modalConfirmBtn.parentNode.replaceChild(newConfirmBtn, modalConfirmBtn);
+                modalConfirmBtn = newConfirmBtn;
+                
+                modalConfirmBtn.textContent = confirmText;
+                
+                modalConfirmBtn.onclick = () => {
+                    hideAppModal(modal);
+                    if (onConfirm) onConfirm();
+                };
+                
+                modal.querySelector('#modal-cancel-btn').onclick = () => hideAppModal(modal);
+                
+                if (confirmText === 'End Interview') {
+                    modalConfirmBtn.className = 'w-full inline-flex justify-center rounded-lg shadow-md px-4 py-2 bg-red-600 text-base font-semibold text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm';
+                } else {
+                     modalConfirmBtn.className = 'w-full inline-flex justify-center rounded-lg shadow-md px-4 py-2 bg-primary-blue text-base font-semibold text-white hover:bg-soft-blue sm:ml-3 sm:w-auto sm:text-sm';
+                }
+                
+                modal.classList.remove('hidden');
+                container.classList.add('visible'); 
+                
+                requestAnimationFrame(() => {
+                    modalContent.classList.add('scale-100', 'opacity-100');
+                });
+            }
+
+            function showAppModal(modal) {
+                if (!modal) return;
+                modal.classList.remove('hidden');
+                
+                const modalContent = modal.querySelector('.modal-center-content');
+                if (modal.id === 'resume-modal') {
+                    const container = modal.querySelector('.modal-center-container');
+                    if(container) container.classList.add('visible'); 
+                    requestAnimationFrame(() => {
+                        if(modalContent) modalContent.classList.add('scale-100', 'opacity-100');
+                    });
+                } else {
+                    requestAnimationFrame(() => {
+                        modal.classList.add('visible');
+                    });
+                }
+            }
+
+            function hideAppModal(modal) {
+                 if (!modal) return;
+                 
+                 modal.classList.remove('visible');
+                 
+                 let duration = 300;
+                 if (modal.id === 'chat-modal') duration = 200;
+                 
+                 const modalContent = modal.querySelector('.modal-center-content');
+                 if (modal.id === 'resume-modal' || modal.id === 'confirm-modal') {
+                     if(modalContent) modalContent.classList.remove('scale-100', 'opacity-100');
+                     const container = modal.querySelector('.modal-center-container');
+                     if(container) container.classList.remove('visible');
+                 }
+                 
+                 setTimeout(() => {
+                    modal.classList.add('hidden');
+                 }, duration);
+            }
+
+            // --- Control Buttons ---
+            document.getElementById('end-call-icon').addEventListener('click', () => endInterviewBtn.click());
+            
+            endInterviewBtn.addEventListener('click', () => {
+                showConfirmModal('End Interview?', 'Are you sure you want to end this interview? Make sure you have submitted your evaluation.', () => {
+                    if (socket) socket.emit('interviewer-end-interview', { slotId: slotId });
+                    if (localStream) localStream.getTracks().forEach(track => track.stop());
+                    window.location.href = 'interviewer-dashboard.html';
+                }, 'End Interview');
+            });
+
+            startInterviewBtn.addEventListener('click', async () => {
+                try {
+                    const response = await fetch('/api/interviewer/start-interview', {
+                        method: 'POST',
+                        headers: { 'x-auth-token': token, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ slotId: slotId })
+                    });
+                    
+                    if (!response.ok) {
+                        const err = await response.json();
+                        throw new Error(err.message || 'Failed to send start signal.');
+                    }
+                    
+                    console.log('Interview start signal sent. Waiting for student to be ready.');
+                    startInterviewBtn.disabled = true;
+                    startInterviewBtn.textContent = 'Waiting for student...';
+                } catch (error) {
+                    showConfirmModal('Error', `Error starting interview: ${error.message}`);
+                }
+            });
+
+
+            document.getElementById('mute-mic-btn').addEventListener('click', (e) => {
+                 if (!localStream) return;
+                 const audioTrack = localStream.getAudioTracks()[0];
+                 if (!audioTrack) return;
+                 audioTrack.enabled = !audioTrack.enabled;
+                 e.currentTarget.classList.toggle('bg-red-100', !audioTrack.enabled);
+                 e.currentTarget.classList.toggle('text-red-600', !audioTrack.enabled);
+                 e.currentTarget.classList.toggle('bg-green-100', audioTrack.enabled);
+                 e.currentTarget.classList.toggle('text-green-600', audioTrack.enabled);
+                 e.currentTarget.querySelector('i').className = `fas fa-lg ${audioTrack.enabled ? 'fa-microphone' : 'fa-microphone-slash'}`;
+            });
+            document.getElementById('mute-cam-btn').addEventListener('click', (e) => {
+                 if (!localStream) return;
+                 const videoTrack = localStream.getVideoTracks()[0];
+                 if (!videoTrack) return;
+                 videoTrack.enabled = !videoTrack.enabled;
+                 e.currentTarget.classList.toggle('bg-red-100', !videoTrack.enabled);
+                 e.currentTarget.classList.toggle('text-red-600', !videoTrack.enabled);
+                 e.currentTarget.classList.toggle('bg-green-100', videoTrack.enabled);
+                 e.currentTarget.classList.toggle('text-green-600', videoTrack.enabled);
+                 e.currentTarget.querySelector('i').className = `fas fa-lg ${videoTrack.enabled ? 'fa-video' : 'fa-video-slash'}`;
+            });
+
+            // --- Initial Load ---
+            loadInitialData();
+
+            // --- Initialize Draggables ---
+            const chatModalContainer = document.getElementById('chat-modal-container');
+            const chatModalHandle = document.getElementById('chat-modal-handle');
+            
+            if (chatModalContainer && chatModalHandle) {
+                makeDraggable(chatModalContainer, chatModalHandle);
+            }
+        });
+    </script>
+</body>
+</html>
