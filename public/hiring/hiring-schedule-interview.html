@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Interview Event - HIRE WITH US</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Flatpickr CSS for date/time selection -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+
+        .form-input, .form-select, .form-textarea {
+            @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm;
+        }
+        .form-label {
+            @apply block text-sm font-medium text-gray-700 mb-1;
+        }
+        
+        /* Custom styles for multi-select / tag input */
+        .tag-container {
+            @apply flex flex-wrap gap-2 p-2 border border-gray-300 rounded-md bg-white shadow-sm;
+            min-height: 42px;
+        }
+        .tag {
+            @apply flex items-center bg-indigo-100 text-indigo-700 text-sm font-medium px-2.5 py-1 rounded-full;
+        }
+        .tag-remove {
+            @apply ml-2 text-indigo-400 hover:text-indigo-600 cursor-pointer font-bold;
+        }
+        
+        /* Modal for schedule preview */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: none; justify-content: center; align-items: center;
+            z-index: 1000; opacity: 0; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.visible { opacity: 1; display: flex; }
+        .modal-container {
+            background-color: white; border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+            width: 90%; max-width: 4xl; /* Large modal */
+            max-height: 90vh;
+            transform: scale(0.95); transition: transform 0.3s ease;
+            display: flex; flex-direction: column;
+        }
+        .modal-overlay.visible .modal-container { transform: scale(1); }
+        .modal-header {
+            padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .modal-body { padding: 1.5rem 2rem; overflow-y: auto; background-color: #f9fafb; }
+        .modal-footer {
+            padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb;
+            background-color: #ffffff; display: flex; justify-content: space-between; gap: 0.75rem;
+        }
+
+        /* NEW: Print Styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #schedule-print-area, #schedule-print-area * {
+                visibility: visible;
+            }
+            #schedule-print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 0;
+                margin: 0;
+                border: none;
+            }
+            .modal-overlay {
+                display: none !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            @page {
+                size: auto;
+                margin: 20mm;
+            }
+        }
+        
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="Logo">
+                <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
+            </div>
+            <nav class="flex-grow p-4 overflow-y-auto" id="sidebar-nav"></nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6 sticky top-0 z-10">
+                <h1 id="page-title" class="text-2xl font-bold text-gray-800">Schedule New Interview Event</h1>
+                <div id="user-menu-container"></div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="p-4 md:p-6 lg:p-8">
+                <div class="max-w-5xl mx-auto">
+                    <form id="schedule-form" class="space-y-6">
+
+                        <!-- Step 1: Event Details -->
+                        <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-200">
+                            <div class="flex items-center gap-4 mb-4">
+                                <span class="flex-shrink-0 w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-calendar-alt fa-lg"></i>
+                                </span>
+                                <div>
+                                    <h2 class="text-xl font-bold text-gray-900">Step 1: Event Details</h2>
+                                    <p class="text-sm text-gray-600">Define the event, select the job, and choose the interviewers.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="event-name" class="form-label">Event Name <span class="text-red-600">*</span></label>
+                                        <input type="text" id="event-name" class="form-input" placeholder="e.g., Spring 2025 Campus Drive" required>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="event-start" class="form-label">Event Start Date/Time <span class="text-red-600">*</span></label>
+                                            <input type="text" id="event-start" class="form-input" placeholder="Select start time" required>
+                                        </div>
+                                        <div>
+                                            <label for="event-end" class="form-label">Event End Date/Time <span class="text-red-600">*</span></label>
+                                            <input type="text" id="event-end" class="form-input" placeholder="Select end time" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="job-select" class="form-label">Job Posting <span class="text-red-600">*</span></label>
+                                        <select id="job-select" class="form-select" required>
+                                            <option value="" disabled selected>-- Loading jobs... --</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="pool-select" class="form-label">Applicant Pool <span class="text-red-600">*</span></label>
+                                        <select id="pool-select" class="form-select" disabled>
+                                            <option value="" disabled selected>-- Select a job first --</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Slot & Break Rules -->
+                        <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-200">
+                            <div class="flex items-center gap-4 mb-4">
+                                <span class="flex-shrink-0 w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-clock fa-lg"></i>
+                                </span>
+                                <div>
+                                    <h2 class="text-xl font-bold text-gray-900">Step 2: Slot & Break Rules</h2>
+                                    <p class="text-sm text-gray-600">Define the timing for individual interview slots and breaks.</p>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label for="slot-duration" class="form-label">Interview Duration (mins) <span class="text-red-600">*</span></label>
+                                    <input type="number" id="slot-duration" class="form-input" value="30" min="10" required>
+                                </div>
+                                <div>
+                                    <label for="break-duration" class="form-label">Break Duration (mins)</label>
+                                    <input type="number" id="break-duration" class="form-input" value="15" min="0">
+                                </div>
+                                <div>
+                                    <label for="break-after" class="form-label">Break After (slots)</label>
+                                    <input type="number" id="break-after" class="form-input" value="2" min="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Add Interviewers -->
+                        <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-200">
+                            <div class="flex items-center gap-4 mb-4">
+                                <span class="flex-shrink-0 w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-users fa-lg"></i>
+                                </span>
+                                <div>
+                                    <h2 class="text-xl font-bold text-gray-900">Step 3: Assign Interviewers</h2>
+                                    <p class="text-sm text-gray-600">Select the interviewers who will be available for this event.</p>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="interviewer-select" class="form-label">Add Available Interviewers <span class="text-red-600">*</span></label>
+                                <select id="interviewer-select" class="form-select mb-2">
+                                    <option value="" disabled selected>-- Loading interviewers... --</option>
+                                </select>
+                                <div id="interviewer-tag-container" class="tag-container">
+                                    <!-- Selected interviewers will appear here as tags -->
+                                </div>
+                                <input type="hidden" id="selected-interviewers" name="selected-interviewers" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 4: Add Candidates -->
+                        <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-200">
+                             <div class="flex items-center gap-4 mb-4">
+                                <span class="flex-shrink-0 w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-user-friends fa-lg"></i>
+                                </span>
+                                <div>
+                                    <h2 class="text-xl font-bold text-gray-900">Step 4: Add Candidates</h2>
+                                    <p class="text-sm text-gray-600">Applicant emails from the selected job pool will appear here. You can also add/remove emails manually.</p>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="candidate-emails" class="form-label flex justify-between">
+                                    <span>Candidate Emails <span class="text-red-600">*</span></span>
+                                    <span class="font-medium text-indigo-600">Count: <span id="candidate-count">0</span></span>
+                                </label>
+                                <textarea id="candidate-emails" rows="8" class="form-textarea" placeholder="Select a job pool to auto-fill candidates, or paste emails here (separated by commas or new lines)." required></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <div class="pt-4 flex justify-end">
+                            <button type="submit" id="preview-btn" class="w-full md:w-auto inline-flex justify-center items-center px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-lg hover:bg-indigo-700 disabled:bg-gray-400 text-base transition-all duration-200 hover:shadow-indigo-300">
+                                <i class="fas fa-magic mr-2"></i>
+                                Generate & Preview Schedule
+                            </button>
+                        </div>
+                        <div id="form-message" class="text-sm text-center"></div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Schedule Preview Modal -->
+    <div id="preview-modal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 id="modal-title" class="text-xl font-bold text-gray-800">Confirm Schedule</h2>
+                <button id="modal-close-btn" class="p-2 rounded-full hover:bg-gray-200 text-gray-500 hover:text-gray-800 text-2xl no-print">&times;</button>
+            </div>
+            
+            <div id="modal-content" class="modal-body">
+                <div class="text-center" id="modal-loading">
+                    <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
+                    <p class="mt-4 text-gray-700 font-medium">Generating optimal schedule... This may take a moment.</p>
+                </div>
+                
+                <!-- This is the area that will be printed -->
+                <div id="schedule-print-area">
+                    <div id="modal-results" class="hidden">
+                        <!-- JS will populate this -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <!-- NEW: Print Button -->
+                <button id="modal-print-btn" type="button" class="inline-flex justify-center items-center px-4 py-2 bg-gray-600 text-white font-medium rounded-lg shadow-sm hover:bg-gray-700 text-sm no-print">
+                    <i class="fas fa-print mr-2"></i>
+                    Print Schedule
+                </button>
+                <div class="flex-grow"></div> <!-- Spacer -->
+                <button id="modal-cancel-btn" type="button" class="px-4 py-2 bg-white text-gray-700 font-medium rounded-lg border border-gray-300 hover:bg-gray-50 text-sm no-print">
+                    Cancel
+                </button>
+                <button id="modal-confirm-btn" type="button" class="inline-flex justify-center items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg shadow-sm hover:bg-green-700 text-sm disabled:bg-gray-400 no-print">
+                    <i class="fas fa-check mr-2"></i>
+                    <span>Confirm & Send Invites</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    
+    <script src="common.js"></script>
+    <!-- Flatpickr JS for date/time selection -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user'));
+            
+            // Page guard: Allow both 'Admin' and 'Hiring Moderator'
+            if (!token || !user || (user.role !== 'Admin' && user.role !== 'Hiring Moderator')) {
+                console.warn('Access denied. User role is not Admin or Hiring Moderator.');
+                window.location.href = 'hiring-dashboard.html';
+                return;
+            }
+
+            initializePage('Schedule Interview');
+
+            // --- Form Elements ---
+            const form = document.getElementById('schedule-form');
+            const formMessage = document.getElementById('form-message');
+            const previewBtn = document.getElementById('preview-btn');
+            const candidateEmailsEl = document.getElementById('candidate-emails');
+            const candidateCountEl = document.getElementById('candidate-count');
+            
+            // --- NEW Job/Pool Elements ---
+            const jobSelect = document.getElementById('job-select');
+            const poolSelect = document.getElementById('pool-select');
+            
+            // --- Interviewer Select Elements ---
+            const interviewerSelect = document.getElementById('interviewer-select');
+            const interviewerTagContainer = document.getElementById('interviewer-tag-container');
+            const selectedInterviewersHidden = document.getElementById('selected-interviewers');
+            let availableInterviewers = [];
+            let selectedInterviewers = [];
+            
+            // --- Modal Elements ---
+            const modal = document.getElementById('preview-modal');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+            const modalCancelBtn = document.getElementById('modal-cancel-btn');
+            const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+            const modalPrintBtn = document.getElementById('modal-print-btn'); // NEW
+            const modalLoading = document.getElementById('modal-loading');
+            const modalResults = document.getElementById('modal-results');
+            
+            let generatedSchedule = null; 
+
+            // --- Initialize Date/Time Pickers ---
+            flatpickr("#event-start", { enableTime: true, dateFormat: "Y-m-d H:i", minDate: "today" });
+            flatpickr("#event-end", { enableTime: true, dateFormat: "Y-m-d H:i", minDate: "today" });
+
+            // --- REAL Function to Fetch Interviewers ---
+            async function fetchInterviewers() {
+                try {
+                    const response = await fetch('/api/hiring/interviewers', {
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch interviewers');
+                    return await response.json();
+                } catch (error) {
+                    console.error(error);
+                    return [];
+                }
+            }
+            
+            // --- NEW: Function to Fetch Jobs ---
+            async function fetchJobs() {
+                try {
+                    const response = await fetch('/api/hiring/jobs', {
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch jobs');
+                    const jobs = await response.json();
+                    
+                    if (jobs.length > 0) {
+                        jobSelect.innerHTML = '<option value="" disabled selected>-- Select a job posting --</option>';
+                        jobs.forEach(job => {
+                            jobSelect.innerHTML += `<option value="${job.jobId}">${job.title}</option>`;
+                        });
+                    } else {
+                        jobSelect.innerHTML = '<option value="" disabled selected>-- No jobs found. Create one first. --</option>';
+                    }
+                } catch (error) {
+                    console.error(error);
+                    jobSelect.innerHTML = `<option value="" disabled selected>Error loading jobs</option>`;
+                }
+            }
+
+            // --- NEW: Function to Fetch Job Pools ---
+            async function fetchJobPools(jobId) {
+                poolSelect.disabled = true;
+                poolSelect.innerHTML = '<option value="" disabled selected>-- Loading pools... --</option>';
+                try {
+                    const response = await fetch(`/api/hiring/job-applicant-pools/${jobId}`, {
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch job pools');
+                    const pools = await response.json();
+                    
+                    if (pools.length > 0) {
+                        poolSelect.innerHTML = '<option value="" disabled selected>-- Select a job pool --</option>';
+                        pools.forEach(pool => {
+                            poolSelect.innerHTML += `<option value="${pool.filterKey}">${pool.displayText}</option>`;
+                        });
+                        poolSelect.disabled = false;
+                    } else {
+                        poolSelect.innerHTML = '<option value="" disabled selected>-- No applicant pools found for this job --</option>';
+                    }
+                } catch (error) {
+                    console.error(error);
+                    poolSelect.innerHTML = `<option value="" disabled selected>Error loading pools</option>`;
+                }
+            }
+            
+            // --- NEW: Function to Fetch Applicants from Pool ---
+            async function fetchApplicants(jobId, poolName) {
+                try {
+                    const response = await fetch(`/api/hiring/job-applicants?jobId=${jobId}&filterKey=${poolName}`, {
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!response.ok) throw new Error('Failed to fetch applicants');
+                    const applicants = await response.json(); // Expects an array of emails: [...]
+                    
+                    const emailString = applicants.join('\n');
+                    candidateEmailsEl.value = emailString;
+                    updateCandidateCount(); // Update the count
+                    
+                } catch (error) {
+                    console.error(error);
+                    alert(`Error loading applicants: ${error.message}`);
+                }
+            }
+
+            // --- Load Interviewers ---
+            (async () => {
+                availableInterviewers = await fetchInterviewers();
+                if (availableInterviewers.length > 0) {
+                    interviewerSelect.innerHTML = '<option value="" disabled selected>-- Select an interviewer to add --</option>';
+                    availableInterviewers.forEach(user => {
+                        interviewerSelect.innerHTML += `<option value="${user.email}">${user.fullName} (${user.email})</option>`;
+                    });
+                } else {
+                    interviewerSelect.innerHTML = '<option value="" disabled selected>-- No interviewers found. Create one first. --</option>';
+                }
+            })();
+            
+            // --- Load Jobs ---
+            fetchJobs();
+            
+            // --- NEW: Job/Pool Event Listeners ---
+            jobSelect.addEventListener('change', () => {
+                const jobId = jobSelect.value;
+                if (jobId) {
+                    fetchJobPools(jobId);
+                } else {
+                    poolSelect.disabled = true;
+                    poolSelect.innerHTML = '<option value="" disabled selected>-- Select a job first --</option>';
+                }
+                candidateEmailsEl.value = ''; // Clear emails on job change
+                updateCandidateCount();
+            });
+            
+            poolSelect.addEventListener('change', () => {
+                const jobId = jobSelect.value;
+                const poolName = poolSelect.value; // This will now correctly be the 'filterKey'
+                if (jobId && poolName) {
+                    fetchApplicants(jobId, poolName);
+                }
+            });
+
+
+            // --- Interviewer Tag Logic ---
+            function renderInterviewerTags() {
+                interviewerTagContainer.innerHTML = '';
+                selectedInterviewers.forEach(email => {
+                    const user = availableInterviewers.find(u => u.email === email);
+                    const tagName = user ? user.fullName : email;
+                    const tagEl = document.createElement('div');
+                    tagEl.className = 'tag';
+                    tagEl.innerHTML = `
+                        <span>${tagName}</span>
+                        <span class="tag-remove" data-email="${email}">&times;</span>
+                    `;
+                    interviewerTagContainer.appendChild(tagEl);
+                });
+                // Update hidden input
+                selectedInterviewersHidden.value = JSON.stringify(selectedInterviewers);
+            }
+
+            interviewerSelect.addEventListener('change', () => {
+                const email = interviewerSelect.value;
+                if (email && !selectedInterviewers.includes(email)) {
+                    selectedInterviewers.push(email);
+                    renderInterviewerTags();
+                }
+                interviewerSelect.value = ""; // Reset select
+            });
+
+            interviewerTagContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('tag-remove')) {
+                    const email = e.target.dataset.email;
+                    selectedInterviewers = selectedInterviewers.filter(em => em !== email);
+                    renderInterviewerTags();
+                }
+            });
+
+            // --- Candidate Email Count ---
+            function updateCandidateCount() {
+                const emails = candidateEmailsEl.value.split(/[\n, ]+/)
+                                .map(e => e.trim()).filter(e => e.length > 0);
+                candidateCountEl.textContent = emails.length;
+            }
+            candidateEmailsEl.addEventListener('input', updateCandidateCount);
+
+            // --- Form Submit: Generate & Preview ---
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                previewBtn.disabled = true;
+                previewBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+                formMessage.textContent = '';
+                
+                modalResults.innerHTML = '';
+                modalResults.classList.add('hidden');
+                modalLoading.classList.remove('hidden');
+                modalConfirmBtn.disabled = true;
+                modal.classList.add('visible');
+
+                // --- 1. Get All Form Data ---
+                const scheduleRequest = {
+                    eventName: document.getElementById('event-name').value,
+                    jobId: document.getElementById('job-select').value, // Send jobId
+                    jobTitle: document.getElementById('job-select').options[jobSelect.selectedIndex].text, // Send jobTitle
+                    eventStart: document.getElementById('event-start').value,
+                    eventEnd: document.getElementById('event-end').value,
+                    slotDuration: parseInt(document.getElementById('slot-duration').value),
+                    breakDuration: parseInt(document.getElementById('break-duration').value),
+                    breakAfter: parseInt(document.getElementById('break-after').value),
+                    interviewers: selectedInterviewers.map(email => {
+                        const user = availableInterviewers.find(u => u.email === email);
+                        return { email: user.email, name: user.fullName };
+                    }),
+                    candidates: candidateEmailsEl.value.split(/[\n, ]+/).map(e => e.trim()).filter(e => e.length > 0)
+                };
+                
+                // --- 2. Mock Schedule Generation ---
+                try {
+                    // This mock function simulates your complex auto-scheduling backend logic
+                    generatedSchedule = await mockScheduleGenerator(scheduleRequest);
+                    
+                    renderSchedulePreview(generatedSchedule);
+                    modalLoading.classList.add('hidden');
+                    modalResults.classList.remove('hidden');
+                    modalConfirmBtn.disabled = false;
+
+                } catch (error) {
+                    modalLoading.classList.add('hidden');
+                    modalResults.classList.remove('hidden');
+                    modalResults.innerHTML = `<p class="text-red-600 font-semibold text-center">Error: ${error.message}</p>`;
+                } finally {
+                    previewBtn.disabled = false;
+                    previewBtn.innerHTML = '<i class="fas fa-magic mr-2"></i>Generate & Preview Schedule';
+                }
+            });
+            
+            // --- Modal Close Listeners ---
+            modalCloseBtn.addEventListener('click', () => modal.classList.remove('visible'));
+            modalCancelBtn.addEventListener('click', () => modal.classList.remove('visible'));
+            
+            // --- NEW: Print Button Listener ---
+            modalPrintBtn.addEventListener('click', () => {
+                window.print();
+            });
+
+            // --- Modal Confirm Listener (FIXED) ---
+            modalConfirmBtn.addEventListener('click', async () => {
+                if (!generatedSchedule) return;
+
+                modalConfirmBtn.disabled = true;
+                modalConfirmBtn.querySelector('span').textContent = 'Confirming...';
+                modalConfirmBtn.querySelector('i').classList.add('fa-spin');
+                
+                try {
+                    // --- FIX: Create a payload that matches the backend API ---
+                    // The backend expects an array named 'schedule', but your
+                    // generator creates an array named 'slots'.
+                    const payload = {
+                        eventName: generatedSchedule.eventName,
+                        jobId: generatedSchedule.jobId,
+                        jobTitle: generatedSchedule.jobTitle,
+                        schedule: generatedSchedule.slots // Map frontend 'slots' to backend 'schedule'
+                    };
+                    // --- END FIX ---
+
+                    // Send the new 'payload' object instead of 'generatedSchedule'
+                    const response = await fetch('/api/hiring/schedule-interview', {
+                       method: 'POST',
+                       headers: { 'x-auth-token': token, 'Content-Type': 'application/json' },
+                       body: JSON.stringify(payload) // Send the corrected payload
+                    });
+                    
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message);
+                    
+                    modal.classList.remove('visible');
+                    form.reset();
+                    candidateCountEl.textContent = '0';
+                    selectedInterviewers = [];
+                    renderInterviewerTags();
+                    // Reset job/pool dropdowns
+                    poolSelect.disabled = true;
+                    poolSelect.innerHTML = '<option value="" disabled selected>-- Select a job first --</option>';
+                    jobSelect.selectedIndex = 0;
+                    
+                    alert('Schedule Confirmed! Invitation emails are being sent to all candidates and interviewers.');
+
+                } catch (error) {
+                    alert(`Error confirming schedule: ${error.message}`);
+                } finally {
+                    modalConfirmBtn.disabled = false;
+                    modalConfirmBtn.querySelector('span').textContent = 'Confirm & Send Invites';
+                    modalConfirmBtn.querySelector('i').classList.remove('fa-spin');
+                }
+            });
+            
+            
+            // --- MOCK LOGIC (Updated to use full objects) ---
+            function mockScheduleGenerator(request) {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        const { candidates, interviewers, slotDuration, eventStart, jobId, jobTitle, eventName } = request;
+                        if (candidates.length === 0) return reject(new Error('No candidates to schedule.'));
+                        if (interviewers.length === 0) return reject(new Error('No interviewers selected.'));
+
+                        let schedule = {
+                            // Add event metadata
+                            eventName: eventName,
+                            jobId: jobId,
+                            jobTitle: jobTitle,
+                            // Summary
+                            summary: {
+                                totalCandidates: candidates.length,
+                                totalInterviewers: interviewers.length,
+                                slotsAvailable: interviewers.length * 10, // Mock value
+                                unassignedCandidates: Math.max(0, candidates.length - (interviewers.length * 10))
+                            },
+                            // Slots
+                            slots: []
+                        };
+                        
+                        let slotTime = new Date(eventStart);
+                        let candidateIndex = 0;
+                        
+                        while(candidateIndex < candidates.length) {
+                            for(const interviewer of interviewers) {
+                                if (candidateIndex >= candidates.length) break;
+                                
+                                // NEW: Find candidate name
+                                const candidateEmail = candidates[candidateIndex];
+                                // This is a mock; in a real app, you'd fetch this
+                                const candidateName = candidateEmail.split('@')[0]; 
+                                
+                                schedule.slots.push({
+                                    candidateEmail: candidateEmail,
+                                    candidateName: candidateName, // NEW
+                                    interviewerEmail: interviewer.email,
+                                    interviewerName: interviewer.name,
+                                    startTime: slotTime.toISOString(), // Use ISO string
+                                    endTime: new Date(slotTime.getTime() + slotDuration * 60000).toISOString()
+                                });
+                                candidateIndex++;
+                            }
+                            // This logic is simplified; a real one would alternate interviewers
+                            slotTime.setMinutes(slotTime.getMinutes() + slotDuration);
+                        }
+                        
+                        // Re-calculate summary
+                        schedule.summary.slotsAvailable = schedule.slots.length;
+                        schedule.summary.unassignedCandidates = Math.max(0, candidates.length - schedule.slots.length);
+                        
+                        resolve(schedule);
+                    }, 1000); // Simulate network delay
+                });
+            }
+            
+            // NEW: Upgraded render function
+            function renderSchedulePreview(schedule) {
+                const { summary, slots } = schedule;
+                let html = `
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">${schedule.eventName}</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                            <div class="text-sm font-medium text-gray-500">Total Candidates</div>
+                            <div class="text-3xl font-bold text-indigo-600">${summary.totalCandidates}</div>
+                        </div>
+                        <div class="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                            <div class="text-sm font-medium text-gray-500">Total Interviewers</div>
+                            <div class="text-3xl font-bold text-indigo-600">${summary.totalInterviewers}</div>
+                        </div>
+                        <div class="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                            <div class="text-sm font-medium text-gray-500">Slots Generated</div>
+                            <div class="text-3xl font-bold text-green-600">${summary.slotsAvailable}</div>
+                        </div>
+                        <div class="p-4 bg-white rounded-lg border shadow-sm ${summary.unassignedCandidates > 0 ? 'border-red-300 bg-red-50' : 'border-gray-200'}">
+                            <div class="text-sm font-medium ${summary.unassignedCandidates > 0 ? 'text-red-700' : 'text-gray-500'}">Unassigned</div>
+                            <div class="text-3xl font-bold ${summary.unassignedCandidates > 0 ? 'text-red-600' : 'text-gray-900'}">${summary.unassignedCandidates}</div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Generated Slots (${slots.length})</h3>
+                    <div class="overflow-x-auto max-h-[45vh] border rounded-lg shadow-inner">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-100 sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Candidate</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interviewer</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled Time</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${slots.length > 0 ? slots.map(slot => `
+                                    <tr>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">${slot.candidateEmail}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">${slot.interviewerName}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-600">${new Date(slot.startTime).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}</td>
+                                    </tr>
+                                `).join('') : `
+                                    <tr>
+                                        <td colspan="3" class="px-4 py-10 text-center text-gray-500">No slots could be generated with the current settings.</td>
+                                    </tr>
+                                `}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                if (summary.unassignedCandidates > 0) {
+                    html += `<p class="mt-4 text-sm text-red-600 font-medium">Warning: ${summary.unassignedCandidates} candidates could not be assigned a slot. Please extend the event window or add more interviewers.</p>`;
+                }
+                
+                modalResults.innerHTML = html;
+            }
+
+        });
+    </script>
+</body>
+</html>
+

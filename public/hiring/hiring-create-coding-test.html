@@ -17,6 +17,47 @@
         .section-container { border: 1px solid #e5e7eb; border-radius: 0.5rem; background-color: #f9fafb;}
         .section-header { border-bottom: 1px solid #e5e7eb; }
         .problem-placeholder { border: 2px dashed #d1d5db; min-height: 50px; }
+        
+        /* Professional Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 28px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background-color: #4F46E5;
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -41,22 +82,40 @@
                 <form id="create-coding-test-form" class="space-y-6">
                     <!-- Test Details Section -->
                     <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Test Configuration</h2>
+                        <h2 class="text-xl font-semibold text-gray-800 mb-6 border-b pb-3">Test Configuration</h2>
+                        
+                        <!-- NEW: Section Settings Toggle -->
+                        <div class="flex items-center justify-between p-4 bg-indigo-50 rounded-lg border border-indigo-200 mb-6">
+                            <div>
+                                <label for="useSectionSettings" class="text-base font-semibold text-indigo-900">Enable Section-Specific Settings</label>
+                                <p class="text-sm text-indigo-700">Set timers and qualifying marks for each section individually.</p>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="useSectionSettings">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label for="testTitle" class="block text-sm font-medium text-gray-700">Test Title</label>
                                 <input type="text" id="testTitle" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
-                            <div>
-                                <label for="duration" class="block text-sm font-medium text-gray-700">Duration (Minutes)</label>
+                            <div id="global-duration-wrapper">
+                                <label for="duration" class="block text-sm font-medium text-gray-700">Total Duration (Minutes)</label>
                                 <input type="number" id="duration" required min="1" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            <!-- NEW: Global Passing Marks (optional) -->
+                            <div id="global-passing-wrapper">
+                                <label for="passingPercentage" class="block text-sm font-medium text-gray-700">Overall Passing Marks</label>
+                                <input type="number" id="passingPercentage" min="0" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500" placeholder="Optional">
                             </div>
                         </div>
                     </div>
 
                     <!-- Available Problems Section -->
                     <div class="bg-white p-6 rounded-xl shadow-md">
-                        <h2 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Available Problems</h2>
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">Available Problems (Drag or Click to Add)</h2>
                         <div id="available-problems-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-h-96 overflow-y-auto pr-2">
                             <!-- Available problems will be loaded here -->
                         </div>
@@ -66,14 +125,13 @@
                     <!-- Test Sections Builder -->
                     <div class="bg-white p-6 rounded-xl shadow-md space-y-4">
                          <h2 class="text-xl font-semibold text-gray-800 border-b pb-2">Test Structure (Sections)</h2>
-                         <!-- Section Creation -->
                          <div class="flex items-center gap-3">
                             <input type="text" id="new-section-title" placeholder="Enter new section title" class="flex-grow px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                            <button type="button" id="add-section-btn" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-sm hover:bg-blue-700 transition whitespace-nowrap">
-                                + Add Section
+                            <button type="button" id="add-section-btn" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-sm hover:bg-blue-700 transition whitespace-nowrap">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                Add Section
                             </button>
                         </div>
-                        <!-- Sections Area -->
                         <div id="sections-container" class="space-y-4 mt-4">
                             <!-- Sections will be added here -->
                         </div>
@@ -83,10 +141,11 @@
                     <!-- Submission Footer -->
                     <div class="flex justify-end items-center pt-4">
                         <div class="text-right mr-6">
-                            <p class="text-sm text-gray-500">Total Marks</p>
+                            <p class="text-sm text-gray-500">Total Test Marks</p>
                             <p id="total-marks-display" class="text-2xl font-bold text-indigo-600">0</p>
                         </div>
-                        <button type="submit" id="submit-btn" class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700 transition">
+                        <button type="submit" id="submit-btn" class="flex items-center gap-2 px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-md hover:bg-green-700 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                             Create Coding Test
                         </button>
                     </div>
@@ -112,11 +171,18 @@
             const mainTitle = document.getElementById('main-title');
             const submitBtn = document.getElementById('submit-btn');
             
+            // Form Fields
             const titleInput = document.getElementById('testTitle');
             const durationInput = document.getElementById('duration');
+            const passingPercentageInput = document.getElementById('passingPercentage');
+            
+            // New UI Elements
+            const useSectionSettingsToggle = document.getElementById('useSectionSettings');
+            const globalDurationWrapper = document.getElementById('global-duration-wrapper');
+            const globalPassingWrapper = document.getElementById('global-passing-wrapper');
 
             let allProblems = []; // Store fetched problems
-            let testSections = []; // Array to hold section data [{ title: '...', problems: [...] }]
+            let testSections = []; // Array to hold section data [{ title: '...', problems: [...], sectionTimer: X, sectionQualifyingMarks: Y }]
             
             // --- Edit Mode Logic ---
             const urlParams = new URLSearchParams(window.location.search);
@@ -125,12 +191,30 @@
 
             if (isEditMode && currentEditingTestId) {
                 mainTitle.textContent = 'Edit Coding Test';
-                submitBtn.textContent = 'Update Coding Test';
+                submitBtn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg><span>Update Coding Test</span>`;
                 submitBtn.classList.replace('bg-green-600', 'bg-blue-600');
                 submitBtn.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
             }
+            
+            // --- NEW: Toggle Logic ---
+            useSectionSettingsToggle.addEventListener('change', () => {
+                toggleSectionSettings(useSectionSettingsToggle.checked);
+            });
 
-            // Fetch all available coding problems created by the moderator
+            function toggleSectionSettings(isSectionSpecific) {
+                // Toggle global fields
+                globalDurationWrapper.classList.toggle('hidden', isSectionSpecific);
+                globalPassingWrapper.classList.toggle('hidden', isSectionSpecific);
+                durationInput.required = !isSectionSpecific;
+                // passingPercentageInput is optional, so no required change
+
+                // Toggle visibility of section inputs
+                document.querySelectorAll('.section-settings-wrapper').forEach(wrapper => {
+                    wrapper.classList.toggle('hidden', !isSectionSpecific);
+                });
+            }
+
+            // Fetch all available coding problems
             const fetchProblems = async () => {
                 try {
                     const response = await fetch('/api/hiring/coding-problems', { headers: { 'x-auth-token': token } });
@@ -138,7 +222,6 @@
                     allProblems = await response.json();
                     renderAvailableProblems(allProblems);
                     
-                    // If in edit mode, load test data AFTER problems are available
                     if (isEditMode && currentEditingTestId) {
                         await loadTestData(currentEditingTestId);
                     }
@@ -155,14 +238,21 @@
                         headers: { 'x-auth-token': token }
                     });
                     if (!response.ok) throw new Error('Failed to fetch test data.');
-                    
                     const testData = await response.json();
                     
-                    // Populate basic fields
-                    titleInput.value = testData.title;
-                    durationInput.value = testData.duration;
+                    // Set the toggle FIRST
+                    if (testData.useSectionSettings) {
+                        useSectionSettingsToggle.checked = true;
+                        toggleSectionSettings(true); // Manually trigger UI update
+                    } else {
+                        useSectionSettingsToggle.checked = false;
+                        toggleSectionSettings(false); // Manually trigger UI update
+                        durationInput.value = testData.duration;
+                        passingPercentageInput.value = testData.passingPercentage || '';
+                    }
                     
-                    // Clear existing UI and data
+                    titleInput.value = testData.title;
+                    
                     sectionsContainer.innerHTML = '';
                     testSections = [];
                     
@@ -170,21 +260,24 @@
                         noSectionsPlaceholder.style.display = 'none';
                         
                         testData.sections.forEach((section, index) => {
-                            // Find full problem details from allProblems
                             const fullProblemData = section.problems.map(p => {
                                 return allProblems.find(ap => ap.problemId === p.problemId);
-                            }).filter(Boolean); // Filter out any problems not found
+                            }).filter(Boolean);
                             
-                            // Add to data array
+                            // Add to data array (including new fields)
                             testSections.push({
                                 title: section.title,
-                                problems: fullProblemData
+                                problems: fullProblemData,
+                                sectionTimer: section.sectionTimer,
+                                sectionQualifyingMarks: section.sectionQualifyingMarks
                             });
                             
-                            // Add to UI
-                            addSectionUI(section.title, index, fullProblemData);
+                            // Add to UI (pass new fields)
+                            addSectionUI(section.title, index, fullProblemData, {
+                                timer: section.sectionTimer,
+                                qualifyingMarks: section.sectionQualifyingMarks
+                            });
                             
-                            // Disable added problems in the available list
                             fullProblemData.forEach(p => {
                                 const availableCard = availableProblemsContainer.querySelector(`.problem-card[data-problem-id="${p.problemId}"]`);
                                 if (availableCard) {
@@ -193,17 +286,14 @@
                                 }
                             });
                         });
-                        
                         updateTotalMarks();
                     }
-                    
                 } catch (err) {
                     alert(`Error loading test data: ${err.message}`);
-                    window.location.href = 'hiring-manage-tests.html'; // Go back if load fails
+                    window.location.href = 'hiring-manage-tests.html';
                 }
             };
 
-            // Render the list of available problems (selectable cards)
             const renderAvailableProblems = (problems) => {
                 if (problems.length === 0) {
                     availableProblemsContainer.innerHTML = `<p class="text-gray-500 col-span-full">No coding problems found. Please create some first.</p>`;
@@ -218,13 +308,40 @@
                 addProblemDragListeners();
             };
 
-            // Add a new section UI element
-            const addSectionUI = (title, sectionIndex, problemsInSection = []) => {
-                noSectionsPlaceholder.style.display = 'none'; // Hide placeholder
+            // MODIFIED: addSectionUI now accepts sectionSettings
+            const addSectionUI = (title, sectionIndex, problemsInSection = [], sectionSettings = {}) => {
+                noSectionsPlaceholder.style.display = 'none';
                 const sectionId = `section-${sectionIndex}`;
                 const sectionEl = document.createElement('div');
                 sectionEl.className = 'section-container p-4 space-y-3';
                 sectionEl.dataset.sectionIndex = sectionIndex;
+                
+                // NEW: Section settings inputs
+                const sectionSettingsHtml = `
+                    <div class="section-settings-wrapper mt-4 pt-4 border-t border-gray-200 ${useSectionSettingsToggle.checked ? '' : 'hidden'}">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="relative">
+                                <label for="${sectionId}-timer" class="block text-sm font-medium text-gray-700">Section Timer (min)</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    </div>
+                                    <input type="number" id="${sectionId}-timer" value="${sectionSettings.timer || ''}" min="1" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2">
+                                </div>
+                            </div>
+                            <div class="relative">
+                                <label for="${sectionId}-qualifying" class="block text-sm font-medium text-gray-700">Section Qualifying Marks</label>
+                                 <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    </div>
+                                    <input type="number" id="${sectionId}-qualifying" value="${sectionSettings.qualifyingMarks || ''}" min="0" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-2">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
                 sectionEl.innerHTML = `
                     <div class="section-header flex justify-between items-center pb-2">
                         <h3 class="text-lg font-semibold text-gray-700">${title}</h3>
@@ -233,39 +350,35 @@
                     <div class="section-problems min-h-[60px] space-y-2 problem-placeholder flex flex-col items-center justify-center text-gray-400 text-sm" data-section-id="${sectionId}">
                         Drop problems here or click available problems to add
                     </div>
+                    ${sectionSettingsHtml}
                 `;
                 sectionsContainer.appendChild(sectionEl);
 
-                // Add existing problems if provided (e.g., when loading/editing)
                 const problemsContainer = sectionEl.querySelector('.section-problems');
                 if (problemsInSection.length > 0) {
-                    problemsContainer.innerHTML = ''; // Clear placeholder
-                     problemsContainer.classList.remove('problem-placeholder', 'items-center', 'justify-center', 'text-gray-400', 'text-sm');
+                    problemsContainer.innerHTML = '';
+                    problemsContainer.classList.remove('problem-placeholder', 'items-center', 'justify-center', 'text-gray-400', 'text-sm');
                     problemsInSection.forEach(problem => {
                         renderProblemInSection(problemsContainer, problem);
                     });
                 }
 
-
                 sectionEl.querySelector('.remove-section-btn').addEventListener('click', () => {
                     removeSection(sectionIndex);
                 });
 
-                // Add drop listeners for the problems area
                 addSectionDropListeners(problemsContainer);
             };
 
-            // Render a problem card within a section
+            // (renderProblemInSection is unchanged)
             const renderProblemInSection = (container, problem) => {
-                 // Remove placeholder if it exists
                 if (container.classList.contains('problem-placeholder')) {
                     container.innerHTML = '';
                     container.classList.remove('problem-placeholder', 'items-center', 'justify-center', 'text-gray-400', 'text-sm');
                 }
-
                 const problemEl = document.createElement('div');
                 problemEl.className = 'problem-card border rounded-md p-2 bg-indigo-50 flex justify-between items-center';
-                problemEl.dataset.problemId = problem.problemId; // Use problemId
+                problemEl.dataset.problemId = problem.problemId;
                 problemEl.innerHTML = `
                     <div>
                         <span class="font-medium text-sm text-indigo-800">${problem.title}</span>
@@ -275,76 +388,65 @@
                 `;
                 container.appendChild(problemEl);
                 problemEl.querySelector('.remove-problem-btn').addEventListener('click', () => {
-                     removeProblemFromSection(container.closest('.section-container').dataset.sectionIndex, problem.problemId); // Use problemId
+                     removeProblemFromSection(container.closest('.section-container').dataset.sectionIndex, problem.problemId);
                      problemEl.remove();
-                     // Re-enable the problem in the available list
                     const availableCard = availableProblemsContainer.querySelector(`.problem-card[data-problem-id="${problem.problemId}"]`);
                     if (availableCard) {
                         availableCard.classList.remove('opacity-50', 'cursor-not-allowed');
                         availableCard.draggable = true;
                     }
-                    if (container.children.length === 0) { // Add placeholder back if section becomes empty
+                    if (container.children.length === 0) {
                         container.innerHTML = 'Drop problems here or click available problems to add';
                         container.classList.add('problem-placeholder', 'items-center', 'justify-center', 'text-gray-400', 'text-sm');
                     }
                      updateTotalMarks();
                 });
             };
-
-            // Add a problem to a specific section's data
+            
+            // (addProblemToSection is unchanged)
             const addProblemToSection = (sectionIndex, problemId) => {
                 const problem = allProblems.find(p => p.problemId === problemId);
                 if (!problem || !testSections[sectionIndex]) return;
-
-                // Prevent adding the same problem multiple times to the test (across all sections)
                 const isAlreadyAdded = testSections.some(sec => sec.problems.some(p => p.problemId === problemId));
                 if (isAlreadyAdded) {
                     alert(`${problem.title} is already added to the test.`);
                     return;
                 }
-
-
                 testSections[sectionIndex].problems.push(problem);
-
-                // Visually add to the section UI
                 const sectionContainer = sectionsContainer.querySelector(`.section-container[data-section-index="${sectionIndex}"] .section-problems`);
                 if(sectionContainer) {
                     renderProblemInSection(sectionContainer, problem);
                 }
-
-                // Visually disable in available list
                 const availableCard = availableProblemsContainer.querySelector(`.problem-card[data-problem-id="${problemId}"]`);
                  if (availableCard) {
                     availableCard.classList.add('opacity-50', 'cursor-not-allowed');
                     availableCard.draggable = false;
                 }
-
                 updateTotalMarks();
             };
 
-            // Remove a problem from a specific section's data
+            // (removeProblemFromSection is unchanged)
             const removeProblemFromSection = (sectionIndex, problemId) => {
                 if (!testSections[sectionIndex]) return;
                 testSections[sectionIndex].problems = testSections[sectionIndex].problems.filter(p => p.problemId !== problemId);
                 updateTotalMarks();
             };
 
-            // Add new section to data and UI
+            // (addSectionBtn listener is unchanged)
             addSectionBtn.addEventListener('click', () => {
                 const title = newSectionTitleInput.value.trim();
                 if (title) {
                     const newIndex = testSections.length;
-                    testSections.push({ title: title, problems: [] });
-                    addSectionUI(title, newIndex);
-                    newSectionTitleInput.value = ''; // Clear input
+                    testSections.push({ title: title, problems: [] }); // Data array
+                    addSectionUI(title, newIndex); // UI
+                    newSectionTitleInput.value = '';
                 } else {
                     alert('Please enter a title for the section.');
                 }
             });
 
-            // Remove section from data and UI
+            // (removeSection is unchanged)
             const removeSection = (indexToRemove) => {
-                 // Re-enable any problems that were in this section
                 testSections[indexToRemove].problems.forEach(problem => {
                     const availableCard = availableProblemsContainer.querySelector(`.problem-card[data-problem-id="${problem.problemId}"]`);
                     if (availableCard) {
@@ -352,20 +454,22 @@
                         availableCard.draggable = true;
                     }
                 });
-
-                testSections.splice(indexToRemove, 1); // Remove from data array
-                sectionsContainer.innerHTML = ''; // Clear UI
-                // Re-render sections with updated indices
+                testSections.splice(indexToRemove, 1);
+                sectionsContainer.innerHTML = '';
                 testSections.forEach((section, newIndex) => {
-                    addSectionUI(section.title, newIndex, section.problems);
+                    // Repopulate UI with new data (including new fields)
+                    addSectionUI(section.title, newIndex, section.problems, {
+                        timer: section.sectionTimer,
+                        qualifyingMarks: section.sectionQualifyingMarks
+                    });
                 });
                  if (testSections.length === 0) {
                      noSectionsPlaceholder.style.display = 'block';
                  }
-                updateTotalMarks(); // Recalculate marks
+                updateTotalMarks();
             };
 
-            // Calculate and display total marks
+            // (updateTotalMarks is unchanged)
             const updateTotalMarks = () => {
                 let total = 0;
                 testSections.forEach(section => {
@@ -376,36 +480,28 @@
                 totalMarksDisplay.textContent = total;
             };
 
-            // --- Drag and Drop Logic ---
+            // (Drag and Drop Listeners are unchanged)
             let draggedProblemId = null;
-
             function addProblemDragListeners() {
                 availableProblemsContainer.querySelectorAll('.problem-card').forEach(card => {
                     card.addEventListener('dragstart', (e) => {
-                         // Only allow dragging if not already added
                         if (!card.classList.contains('opacity-50')) {
                              draggedProblemId = card.dataset.problemId;
                              e.dataTransfer.effectAllowed = 'copy';
                              card.classList.add('opacity-75');
-                        } else {
-                            e.preventDefault(); // Prevent dragging if already added
-                        }
-
+                        } else { e.preventDefault(); }
                     });
                     card.addEventListener('dragend', (e) => {
                         draggedProblemId = null;
-                        card.classList.remove('opacity-75'); // Reset opacity
+                        card.classList.remove('opacity-75');
                          sectionsContainer.querySelectorAll('.section-problems').forEach(dropZone => {
                              dropZone.classList.remove('bg-indigo-100', 'border-indigo-400');
                          });
                     });
-
-                    // --- Click to Add Logic ---
-                     card.addEventListener('click', (e) => {
+                    card.addEventListener('click', (e) => {
                         const problemId = card.dataset.problemId;
                         const isAlreadyAdded = testSections.some(sec => sec.problems.some(p => p.problemId === problemId));
-                        if(isAlreadyAdded) return; // Do nothing if already added
-
+                        if(isAlreadyAdded) return;
                         let targetSectionIndex = testSections.length > 0 ? testSections.length - 1 : -1;
                         if (targetSectionIndex === -1) {
                             alert("Please add a section first before adding problems.");
@@ -415,11 +511,9 @@
                     });
                 });
             }
-
             function addSectionDropListeners(dropZone) {
                 dropZone.addEventListener('dragover', (e) => {
-                    e.preventDefault(); 
-                    e.dataTransfer.dropEffect = 'copy';
+                    e.preventDefault(); e.dataTransfer.dropEffect = 'copy';
                     dropZone.classList.add('bg-indigo-100', 'border-indigo-400');
                 });
                 dropZone.addEventListener('dragleave', (e) => {
@@ -431,39 +525,71 @@
                     if (draggedProblemId) {
                         const sectionIndex = dropZone.closest('.section-container').dataset.sectionIndex;
                         addProblemToSection(sectionIndex, draggedProblemId);
-                        draggedProblemId = null; // Clear after drop
+                        draggedProblemId = null;
                     }
                 });
             }
 
-            // --- Form Submission (Handles Create and Update) ---
+            // --- Form Submission (MODIFIED) ---
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                submitBtn.disabled = true;
 
                 if (testSections.length === 0) {
                     alert('Please add at least one section to the test.');
+                    submitBtn.disabled = false;
                     return;
                 }
                 const hasEmptySection = testSections.some(section => section.problems.length === 0);
                 if (hasEmptySection) {
                      alert('Please ensure all sections contain at least one problem.');
+                     submitBtn.disabled = false;
                      return;
                 }
+                
+                const useSectionSettings = useSectionSettingsToggle.checked;
+                let validationError = null;
 
                 // Prepare payload in the new format
                 const payload = {
                     testTitle: titleInput.value,
                     duration: durationInput.value,
-                    sections: testSections.map(section => ({
-                        title: section.title,
-                        problems: section.problems.map(p => ({
-                             problemId: p.problemId, // Use problemId
-                             title: p.title,
-                             difficulty: p.difficulty,
-                             score: p.score
-                         }))
-                    }))
+                    passingPercentage: passingPercentageInput.value || null, // Send global passing %
+                    useSectionSettings: useSectionSettings, // Send the flag
+                    sections: testSections.map((section, index) => {
+                        const sectionEl = sectionsContainer.querySelector(`.section-container[data-section-index="${index}"]`);
+                        const sectionTimer = sectionEl.querySelector('input[id$="-timer"]').value;
+                        const sectionQualifyingMarks = sectionEl.querySelector('input[id$="-qualifying"]').value;
+                        
+                        if (useSectionSettings) {
+                            if (!sectionTimer || parseInt(sectionTimer) <= 0) {
+                                validationError = `Please provide a valid timer for section: "${section.title}"`;
+                            }
+                            if (sectionQualifyingMarks === null || sectionQualifyingMarks === '' || parseInt(sectionQualifyingMarks) < 0) {
+                                validationError = `Please provide valid qualifying marks for section: "${section.title}"`;
+                            }
+                        }
+
+                        return {
+                            title: section.title,
+                            problems: section.problems.map(p => ({
+                                 problemId: p.problemId,
+                                 title: p.title,
+                                 difficulty: p.difficulty,
+                                 score: p.score
+                             })),
+                             // Add new fields
+                             sectionTimer: parseInt(sectionTimer) || null,
+                             sectionQualifyingMarks: parseInt(sectionQualifyingMarks) || null
+                        };
+                    })
                 };
+                
+                if (validationError) {
+                    alert(validationError);
+                    submitBtn.disabled = false;
+                    return;
+                }
 
                  console.log("Submitting Payload:", JSON.stringify(payload, null, 2));
                  
@@ -480,14 +606,16 @@
                      if (!response.ok) throw new Error(result.message || 'Failed to save test');
                     
                     alert(`Coding test ${isEditMode ? 'updated' : 'created'} successfully!`);
-                    window.location.href = 'hiring-manage-tests.html'; // Redirect to manage page
+                    window.location.href = 'hiring-manage-tests.html';
                 } catch (error) {
                     alert(`Error saving test: ${error.message}`);
+                    submitBtn.disabled = false;
                 }
             });
 
             // Initial Fetch
             fetchProblems();
+            toggleSectionSettings(false); // Start with global settings visible
         });
     </script>
 </body>

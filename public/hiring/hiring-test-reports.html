@@ -164,6 +164,7 @@
             let codeViewer = null;
             let allReportData = { aptitude: {}, coding: {} }; // Store all fetched data
             let currentDetailedResult = null; // Store data for the open modal
+            let originalTestsCache = new Map(); // Cache for original test definitions
 
             // --- Tab Switching Logic ---
             tabButtons.forEach(button => {
@@ -195,6 +196,25 @@
                     return null;
                 }
             }
+            
+            // --- Helper to get original test (aptitude/coding) from cache or fetch ---
+            async function getOriginalTest(testId, type) {
+                if (originalTestsCache.has(testId)) {
+                    return originalTestsCache.get(testId);
+                }
+                const endpoint = type === 'coding' ? `/api/hiring/coding-tests/${testId}` : `/api/hiring/aptitude-tests/${testId}`;
+                try {
+                    const response = await fetch(endpoint, { headers: { 'x-auth-token': token } });
+                    if (!response.ok) throw new Error('Failed to fetch original test');
+                    const testData = await response.json();
+                    originalTestsCache.set(testId, testData);
+                    return testData;
+                } catch (error) {
+                    console.error(`Failed to fetch original test ${testId}:`, error);
+                    return null;
+                }
+            }
+
 
             // --- Fetch and Render Reports ---
             async function fetchReports(type) {
@@ -212,9 +232,8 @@
                     const response = await fetch(endpoint, { headers: { 'x-auth-token': token } });
                     if (!response.ok) throw new Error((await response.json()).message || `HTTP error! status: ${response.status}`);
                     
-                    const reports = await response.json(); // This is the new report structure
+                    const reports = await response.json();
                     
-                    // Add a check to ensure 'reports' is an array
                     if (!Array.isArray(reports)) {
                          throw new Error("Invalid data format received from server.");
                     }
@@ -230,11 +249,17 @@
                     
                     // Store data
                     allReportData[type] = reports.reduce((acc, report) => {
-                        if (report && report.testId) { // Add safety check
+                        if (report && report.testId) {
                             acc[report.testId] = report;
+                            // Also cache the original test definition if it's part of the report
+                            // (This is an optimization, but we'll fetch manually for robustness)
                         }
                         return acc;
                     }, {});
+                    
+                    // NEW: Fetch all original tests in parallel for the accordion view
+                    const originalTestPromises = reports.map(report => getOriginalTest(report.testId, type));
+                    await Promise.all(originalTestPromises);
                     
                     renderReportAccordions(reports, container, type);
                     
@@ -248,6 +273,7 @@
 
             function renderReportAccordions(reports, container, type) {
                 container.innerHTML = reports.map(report => {
+                    const originalTest = originalTestsCache.get(report.testId);
                     const reportArray = report?.report || []; 
                     const totalAssigned = reportArray.length;
                     const totalAttempted = reportArray.filter(r => r.status === 'Attempted').length;
@@ -275,13 +301,13 @@
                                             <tr>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Candidate Email</th>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                                                ${type === 'coding' ? '<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section Scores</th>' : ''}
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Overall Result</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section Result</th>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody class="bg-white divide-y divide-gray-200">
-                                            ${reportArray.map(r => renderReportRow(r, type)).join('')}
+                                            ${reportArray.map(r => renderReportRow(r, type, originalTest)).join('')}
                                         </tbody>
                                     </table>
                                 </div>
@@ -291,30 +317,78 @@
                 `}).join('');
             }
             
-            function renderReportRow(reportEntry, type) {
+            function renderReportRow(reportEntry, type, originalTest) {
                 const isAttempted = reportEntry.status === 'Attempted';
-                let scoreText = '';
-                let sectionScoreHtml = '';
+                let overallResultHtml = `<span class="text-gray-500">N/A</span>`;
+                let sectionResultHtml = `<span class="text-gray-500">N/A</span>`;
 
-                if (isAttempted) {
-                    const scoreValue = reportEntry.score ?? 'N/A';
-                    const totalMarksValue = reportEntry.totalMarks || 0;
-                    const scoreSuffix = type === 'aptitude' ? '%' : ` / ${totalMarksValue}`;
+                if (isAttempted && originalTest) {
+                    const useSectionSettings = originalTest.useSectionSettings;
                     
-                    scoreText = `<span class="font-semibold text-indigo-700">${scoreValue}${scoreSuffix}</span>`;
+                    // --- Overall Result ---
+                    const overallScore = reportEntry.score ?? 'N/A';
+                    let overallPassFail = reportEntry.result || 'N/A';
+                    let overallScoreSuffix = type === 'aptitude' ? '%' : ` / ${reportEntry.totalMarks || 0}`;
                     
-                    if (type === 'coding' && reportEntry.sectionScores && reportEntry.sectionScores.length > 0) {
-                        sectionScoreHtml = reportEntry.sectionScores.map(s => 
-                            `<div class="text-xs">
-                                <span class="font-medium text-gray-600">${s.title}:</span>
-                                <span class="font-semibold text-gray-800">${s.score}/${s.maxScore}</span>
-                             </div>`
-                        ).join('');
-                    } else if (type === 'aptitude') {
-                        // Aptitude section scores could be calculated here if needed
+                    // If using section settings, the overall 'result' might be N/A.
+                    // We will just show the score.
+                    if (useSectionSettings) {
+                        overallResultHtml = `<span class="font-semibold text-indigo-700">${overallScore}${overallScoreSuffix}</span>`;
+                    } else {
+                        // If not using section settings, show the Pass/Fail status
+                        const statusColor = overallPassFail === 'Pass' ? 'text-green-700' : 'text-red-700';
+                        overallResultHtml = `
+                            <div><span class="font-semibold text-indigo-700">${overallScore}${overallScoreSuffix}</span></div>
+                            <div><span class="font-semibold ${statusColor}">${overallPassFail}</span></div>`;
                     }
-                } else {
-                    scoreText = `<span class="text-gray-500">N/A</span>`;
+
+                    // --- Section Result ---
+                    if (useSectionSettings && originalTest.sections) {
+                        let sectionsPassed = 0;
+                        const totalSections = originalTest.sections.length;
+
+                        if (type === 'coding' && reportEntry.sectionScores) {
+                            originalTest.sections.forEach(section => {
+                                const resultSection = reportEntry.sectionScores.find(s => s.title === section.title);
+                                if (resultSection && resultSection.score >= (section.sectionQualifyingMarks || 0)) {
+                                    sectionsPassed++;
+                                }
+                            });
+                        } else if (type === 'aptitude') {
+                            // Re-calculate aptitude section scores on the fly (simplified)
+                            let qIndex = 0;
+                            originalTest.sections.forEach(section => {
+                                let sectionScore = 0;
+                                let sectionMaxScore = 0;
+                                (section.questions || []).forEach(q => {
+                                    const studentAnswer = reportEntry.answers[qIndex];
+                                    const isCorrect = (studentAnswer !== null && studentAnswer !== undefined) &&
+                                                      (String(studentAnswer).trim() === String(q.correctAnswer).trim());
+                                    if (isCorrect) {
+                                        sectionScore += (parseInt(q.marks, 10) || 0);
+                                    }
+                                    sectionMaxScore += (parseInt(q.marks, 10) || 0);
+                                    qIndex++;
+                                });
+                                // Check if passed
+                                if (sectionScore >= (section.sectionQualifyingMarks || 0)) {
+                                    sectionsPassed++;
+                                }
+                            });
+                        }
+                        
+                        const sectionColor = sectionsPassed === totalSections ? 'text-green-700' : (sectionsPassed > 0 ? 'text-yellow-700' : 'text-red-700');
+                        sectionResultHtml = `<span class="font-semibold ${sectionColor}">${sectionsPassed} / ${totalSections} Sections Passed</span>`;
+
+                    } else {
+                        // Not using section settings, so this column is N/A
+                        sectionResultHtml = `<span class="text-gray-400 text-xs italic">Not Applicable</span>`;
+                    }
+
+                } else if (isAttempted && !originalTest) {
+                    // Fallback if originalTest failed to load
+                    overallResultHtml = `<span class="text-red-500 text-xs">Error loading test data</span>`;
+                    sectionResultHtml = `<span class="text-red-500 text-xs">Error loading test data</span>`;
                 }
 
                 return `
@@ -325,8 +399,8 @@
                                 ${reportEntry.status}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">${scoreText}</td>
-                        ${type === 'coding' ? `<td class="px-6 py-4 whitespace-nowrap text-sm">${sectionScoreHtml}</td>` : ''}
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">${overallResultHtml}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">${sectionResultHtml}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                             ${isAttempted ? 
                                 `<button class="view-details-btn text-indigo-600 hover:text-indigo-900 font-semibold" 
@@ -360,13 +434,12 @@
                     exportToExcel(button.dataset.testid, button.dataset.type);
                 } else if (button.classList.contains('view-code-btn')) {
                     try {
-                        // *** FIX 1: Manually decode HTML entities before parsing ***
                         const submissionJSON = button.dataset.submission.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&');
                         const submission = JSON.parse(submissionJSON);
                         showCodeModal(submission);
                     } catch (parseError) {
                          console.error("Error parsing submission data for code modal:", parseError);
-                         console.log("Raw data-submission string:", button.dataset.submission); // Add this log for debugging
+                         console.log("Raw data-submission string:", button.dataset.submission);
                          alert("Could not load code: Invalid data format.");
                     }
                 }
@@ -380,55 +453,79 @@
                 currentDetailedResult = null; 
 
                 try {
-                    // This single endpoint now fetches all details
-                    const response = await fetch(`/api/hiring/test-results/${resultId}`, { headers: { 'x-auth-token': token } });
-                    if (!response.ok) throw new Error((await response.json()).message || `HTTP error! status: ${response.status}`);
-
-                    const result = await response.json();
+                    // 1. Fetch the main result data
+                    const resultResponse = await fetch(`/api/hiring/test-results/${resultId}`, { headers: { 'x-auth-token': token } });
+                    if (!resultResponse.ok) throw new Error((await resultResponse.json()).message || `HTTP error! status: ${resultResponse.status}`);
+                    const result = await resultResponse.json();
+                    
+                    // 2. Fetch the original test data (for settings, qualifying marks)
+                    const originalTest = await getOriginalTest(result.testId, type);
+                    if (!originalTest) {
+                        throw new Error('Could not load original test definition.');
+                    }
+                    
+                    // Attach original test sections to the result object for PDF export
+                    result.originalTestSections = originalTest.sections;
+                    result.useSectionSettings = originalTest.useSectionSettings;
+                    result.passingPercentage = originalTest.passingPercentage;
                     currentDetailedResult = result; // Store for PDF export
 
                     modalTitle.textContent = `Details for ${result.fullName || result.candidateEmail}`;
 
                     let sectionsHtml = '';
+                    let overallSummaryHtml = '';
                     
                     if (type === 'coding') {
                         // --- RENDER CODING REPORT ---
+                        sectionsHtml = `<h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">Problem Breakup</h3>`;
                         const submissions = result.submissions || [];
-                        if (result.sectionScores && result.sectionScores.length > 0) {
-                            sectionsHtml += `<h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">Section Scores</h3>`;
-                            sectionsHtml += `<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">`;
-                            result.sectionScores.forEach(sec => {
-                                const percentage = sec.maxScore > 0 ? Math.round((sec.score / sec.maxScore) * 100) : 0;
-                                sectionsHtml += `
-                                    <div class="p-4 border rounded-lg bg-white shadow-sm">
-                                        <div class="flex justify-between items-center mb-1">
-                                             <h4 class="font-semibold text-gray-700">${sec.title}</h4>
-                                             <span class="font-bold text-lg ${percentage >= 50 ? 'text-green-600' : 'text-red-600'}">${sec.score} / ${sec.maxScore}</span>
+                        
+                        if (originalTest.sections && originalTest.sections.length > 0) {
+                             originalTest.sections.forEach(section => {
+                                // Find the matching section score from the result
+                                const resultSection = (result.sectionScores || []).find(s => s.title === section.title);
+                                const sectionScore = resultSection?.score || 0;
+                                const sectionMaxScore = resultSection?.maxScore || 0;
+                                const qualifyingMarks = section.sectionQualifyingMarks || 0;
+                                const isPassed = sectionScore >= qualifyingMarks;
+                                
+                                sectionsHtml += `<div class="mb-5 p-4 bg-white rounded-lg shadow-sm border border-gray-200">`;
+                                
+                                // Section Summary Box
+                                if (originalTest.useSectionSettings) {
+                                    sectionsHtml += `
+                                    <div class="mb-4 p-3 rounded-md ${isPassed ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}">
+                                        <div class="flex justify-between items-center">
+                                            <h4 class="text-lg font-bold ${isPassed ? 'text-green-800' : 'text-red-800'}">${section.title}</h4>
+                                            <span class="text-xl font-bold ${isPassed ? 'text-green-700' : 'text-red-700'}">${isPassed ? 'Pass' : 'Fail'}</span>
                                         </div>
-                                         <div class="w-full progress-bar-bg rounded-full h-2.5">
-                                            <div class="progress-bar-fg h-2.5 rounded-full" style="width: ${percentage}%"></div>
+                                        <div class="mt-2 grid grid-cols-3 gap-2 text-sm">
+                                            <div>
+                                                <span class="block text-xs font-medium text-gray-500">Section Score</span>
+                                                <span class="font-semibold text-gray-800">${sectionScore} / ${sectionMaxScore}</span>
+                                            </div>
+                                            <div>
+                                                <span class="block text-xs font-medium text-gray-500">Qualifying</span>
+                                                <span class="font-semibold text-gray-800">${qualifyingMarks}</span>
+                                            </div>
+                                            <div>
+                                                <span class="block text-xs font-medium text-gray-500">Time Limit</span>
+                                                <span class="font-semibold text-gray-800">${section.sectionTimer || 'N/A'} mins</span>
+                                            </div>
                                         </div>
                                     </div>`;
-                            });
-                            sectionsHtml += `</div><h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">Problem Breakup</h3>`;
+                                } else {
+                                     sectionsHtml += `<h4 class="text-lg font-bold text-gray-800 mb-3">${section.title}</h4>`;
+                                }
 
-                            const submissionsBySection = result.sectionScores.reduce((acc, sec) => {
-                                 acc[sec.title] = submissions.filter(sub => sub.sectionTitle === sec.title);
-                                 return acc;
-                             }, {});
-
-                             result.sectionScores.forEach(sec => {
-                                 sectionsHtml += `<div class="mb-5"><h4 class="text-md font-semibold text-gray-600 mb-3">${sec.title}</h4>`;
-                                 if (submissionsBySection[sec.title] && submissionsBySection[sec.title].length > 0) {
-                                     sectionsHtml += submissionsBySection[sec.title].map(renderProblemSubmissionCard).join('');
+                                 const submissionsInSection = submissions.filter(sub => sub.sectionTitle === section.title);
+                                 if (submissionsInSection.length > 0) {
+                                     sectionsHtml += submissionsInSection.map(renderProblemSubmissionCard).join('');
                                  } else {
                                      sectionsHtml += `<p class="text-sm text-gray-500 italic">No submissions for this section.</p>`;
                                  }
                                  sectionsHtml += `</div>`;
                              });
-                        } else if (submissions.length > 0) {
-                            sectionsHtml += `<h3 class="text-lg font-bold mb-4 text-gray-800 border-b pb-2">Problem Breakup</h3>`;
-                            sectionsHtml += submissions.map(renderProblemSubmissionCard).join('');
                         }
                     
                     } else {
@@ -437,36 +534,113 @@
                         if (result.originalTestSections && result.answers) {
                             let qIndex = 0;
                             result.originalTestSections.forEach(section => {
-                                sectionsHtml += `<div class="mb-5"><h4 class="text-md font-semibold text-gray-600 mb-3">${section.title}</h4>`;
-                                // Add check for section.questions
-                                if (section.questions && Array.isArray(section.questions)) {
-                                    section.questions.forEach(q => {
-                                        const studentAnswerIndex = result.answers[qIndex];
-                                        const studentAnswerText = (studentAnswerIndex !== null && q.options) ? q.options[studentAnswerIndex] : (studentAnswerIndex || "No Answer");
-                                        const correctIndex = q.correctAnswer;
-                                        const correctAnswerText = (q.options) ? q.options[correctIndex] : correctIndex;
-                                        const isCorrect = String(studentAnswerIndex) === String(correctIndex);
-                                        
-                                        sectionsHtml += `
-                                        <div class="mb-3 p-4 border rounded-lg bg-white shadow-sm">
-                                            <p class="font-medium text-gray-800">${qIndex + 1}. ${q.text}</p>
-                                            <p class="text-sm mt-2 ${isCorrect ? 'text-green-700' : 'text-red-700'}">
-                                                <strong>Your Answer:</strong> ${studentAnswerText || '(Skipped)'}
-                                            </p>
-                                            ${!isCorrect ? `
-                                            <p class="text-sm mt-1 text-green-800">
-                                                <strong>Correct Answer:</strong> ${correctAnswerText}
-                                            </p>` : ''}
-                                        </div>`;
-                                        qIndex++;
-                                    });
+                                sectionsHtml += `<div class="mb-5 p-4 bg-white rounded-lg shadow-sm border border-gray-200">`;
+
+                                let sectionScore = 0;
+                                let sectionMaxScore = 0;
+                                const questionHtml = (section.questions || []).map(q => {
+                                    const studentAnswerIndex = result.answers[qIndex];
+                                    const studentAnswerText = (studentAnswerIndex !== null && q.options) ? q.options[studentAnswerIndex] : (studentAnswerIndex || "No Answer");
+                                    const correctIndex = q.correctAnswer;
+                                    const correctAnswerText = (q.options) ? q.options[correctIndex] : correctIndex;
+                                    const isCorrect = String(studentAnswerIndex) === String(correctIndex);
+                                    
+                                    const marks = parseInt(q.marks, 10) || 0;
+                                    sectionMaxScore += marks;
+                                    if (isCorrect) sectionScore += marks;
+
+                                    qIndex++;
+                                    return `
+                                    <div class="mb-3 p-3 border rounded-md bg-gray-50">
+                                        <p class="font-medium text-gray-800">${qIndex}. ${q.text}</p>
+                                        <p class="text-sm mt-2 ${isCorrect ? 'text-green-700' : 'text-red-700'}">
+                                            <strong>Your Answer:</strong> ${studentAnswerText || '(Skipped)'}
+                                        </p>
+                                        ${!isCorrect ? `
+                                        <p class="text-sm mt-1 text-green-800">
+                                            <strong>Correct Answer:</strong> ${correctAnswerText}
+                                        </p>` : ''}
+                                    </div>`;
+                                }).join('');
+
+                                // Section Summary Box
+                                if (originalTest.useSectionSettings) {
+                                    const qualifyingMarks = section.sectionQualifyingMarks || 0;
+                                    const isPassed = sectionScore >= qualifyingMarks;
+                                    sectionsHtml += `
+                                    <div class="mb-4 p-3 rounded-md ${isPassed ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}">
+                                        <div class="flex justify-between items-center">
+                                            <h4 class="text-lg font-bold ${isPassed ? 'text-green-800' : 'text-red-800'}">${section.title}</h4>
+                                            <span class="text-xl font-bold ${isPassed ? 'text-green-700' : 'text-red-700'}">${isPassed ? 'Pass' : 'Fail'}</span>
+                                        </div>
+                                        <div class="mt-2 grid grid-cols-3 gap-2 text-sm">
+                                            <div>
+                                                <span class="block text-xs font-medium text-gray-500">Section Score</span>
+                                                <span class="font-semibold text-gray-800">${sectionScore} / ${sectionMaxScore}</span>
+                                            </div>
+                                            <div>
+                                                <span class="block text-xs font-medium text-gray-500">Qualifying</span>
+                                                <span class="font-semibold text-gray-800">${qualifyingMarks}</span>
+                                            </div>
+                                            <div>
+                                                <span class="block text-xs font-medium text-gray-500">Time Limit</span>
+                                                <span class="font-semibold text-gray-800">${section.sectionTimer || 'N/A'} mins</span>
+                                            </div>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-2 italic">Note: Section time tracking is not available for aptitude tests.</p>
+                                    </div>`;
+                                } else {
+                                     sectionsHtml += `<h4 class="text-lg font-bold text-gray-800 mb-3">${section.title}</h4>`;
                                 }
-                                    sectionsHtml += `</div>`;
-                                });
+                                
+                                sectionsHtml += questionHtml; // Add the questions
+                                sectionsHtml += `</div>`;
+                            });
                         } else {
                             sectionsHtml += `<p class="text-gray-500 italic">Detailed answer review is not available for this test.</p>`;
                         }
                     }
+
+                    // --- Overall Summary (based on section settings) ---
+                    let overallStatusHtml = '';
+                    if (originalTest.useSectionSettings) {
+                        // Overall status is based on passing all sections
+                        let allSectionsPassed = true;
+                        if (type === 'coding') {
+                             if (!result.sectionScores || result.sectionScores.length < originalTest.sections.length) {
+                                allSectionsPassed = false;
+                             } else {
+                                allSectionsPassed = originalTest.sections.every(section => {
+                                    const resultSection = result.sectionScores.find(s => s.title === section.title);
+                                    return resultSection && resultSection.score >= (section.sectionQualifyingMarks || 0);
+                                });
+                             }
+                        } else { // Aptitude
+                            let qIndex = 0;
+                            allSectionsPassed = originalTest.sections.every(section => {
+                                let sectionScore = 0;
+                                (section.questions || []).forEach(q => {
+                                    const isCorrect = String(result.answers[qIndex]) === String(q.correctAnswer);
+                                    if (isCorrect) sectionScore += (parseInt(q.marks, 10) || 0);
+                                    qIndex++;
+                                });
+                                return sectionScore >= (section.sectionQualifyingMarks || 0);
+                            });
+                        }
+                        const overallLabel = allSectionsPassed ? "Pass" : "Fail";
+                        const overallColor = allSectionsPassed ? "text-green-700" : "text-red-700";
+                        overallStatusHtml = `<span class="text-xl font-bold ${overallColor}">${overallLabel}</span> (Based on section pass marks)`;
+
+                    } else {
+                        // Overall status is based on overall test pass mark
+                        const overallLabel = result.result || 'N/A';
+                        const overallColor = overallLabel === 'Pass' ? 'text-green-700' : 'text-red-700';
+                        const scoreSuffix = type === 'aptitude' ? '%' : ` / ${result.totalMarks || 0}`;
+                        overallStatusHtml = `
+                            <span class="text-xl font-bold text-indigo-700">${result.score}${scoreSuffix}</span>
+                            <span class="text-xl font-bold ${overallColor} ml-4">${overallLabel}</span>`;
+                    }
+
 
                     // --- Candidate Info (Same for both) ---
                     const candidateInfoHtml = `
@@ -480,7 +654,7 @@
                                     <div><strong class="block text-gray-500 uppercase text-xs tracking-wider">Department</strong> <span class="text-gray-800 font-medium">${result.department || 'N/A'}</span></div>
                                     <div class="sm:col-span-2"><strong class="block text-gray-500 uppercase text-xs tracking-wider">Email</strong> <span class="text-gray-800 font-medium">${result.candidateEmail}</span></div>
                                     <div class="sm:col-span-2"><strong class="block text-gray-500 uppercase text-xs tracking-wider">Submitted</strong> <span class="text-gray-800 font-medium">${result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A'}</span></div>
-                                     <div class="sm:col-span-2"><strong class="block text-gray-500 uppercase text-xs tracking-wider">Overall Score</strong> <span class="text-xl font-bold text-indigo-700">${result.score} ${type === 'aptitude' ? '%' : `/ ${result.totalMarks || 0}`}</span></div>
+                                     <div class="sm:col-span-2"><strong class="block text-gray-500 uppercase text-xs tracking-wider">Overall Result</strong> ${overallStatusHtml}</div>
                                 </div>
                             </div>
                             ${result.violationReason ? `<div class="mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700 text-sm rounded-r-md"><strong class="font-semibold">Violation Recorded:</strong> ${result.violationReason}</div>` : ''}
@@ -498,12 +672,10 @@
              function renderProblemSubmissionCard(sub) {
                 const isCorrect = sub.passedCases === sub.totalCases && sub.totalCases > 0;
                 const statusColor = isCorrect ? 'green' : (sub.passedCases > 0 ? 'yellow' : 'red');
-                
-                // *** FIX 1: Escape single quotes in the JSON string for the data-submission attribute ***
                 const submissionString = JSON.stringify(sub).replace(/'/g, '&#39;');
 
                 return `
-                    <div class="mb-3 p-4 border border-gray-200 rounded-lg bg-white shadow-sm">
+                    <div class="mb-3 p-3 border border-gray-200 rounded-md bg-gray-50">
                         <div class="flex justify-between items-start mb-2">
                             <div>
                                 <h4 class="font-bold text-gray-800">${sub.problemTitle || 'Unnamed Problem'}</h4>
@@ -525,54 +697,99 @@
                     alert("No results to export.");
                     return;
                 }
-
+                
+                const originalTest = originalTestsCache.get(testId);
                 const isCoding = type === 'coding';
-                const headers = [
+                
+                // Base Headers
+                let headers = [
                     "Candidate Email", "Full Name", "College", "Department", "Roll Number", 
-                    "Status", "Score", "Total Marks", "Submitted At", "Violation Reason"
+                    "Status", "Overall Score", "Total Marks", "Overall Result", "Submitted At", "Violation Reason"
                 ];
                 
-                // Add section headers for coding tests
+                // Section Headers
                 let sectionHeaders = [];
-                let masterSectionTitles = []; // <-- Store master list of titles
-                if (isCoding && testData.report.length > 0) {
-                    const firstAttempted = testData.report.find(r => r.status === 'Attempted' && r.sectionScores && r.sectionScores.length > 0);
-                    if (firstAttempted) {
-                        // *** FIX 2: Store master list of titles for correct mapping ***
-                        masterSectionTitles = firstAttempted.sectionScores.map(s => s.title);
-                        sectionHeaders = masterSectionTitles.map(title => `Section: ${title} (Score)`);
-                        headers.splice(8, 0, ...sectionHeaders); // Insert section scores after Total Marks
-                    }
+                if (originalTest && originalTest.sections) {
+                    originalTest.sections.forEach(sec => {
+                        sectionHeaders.push(`Section: ${sec.title} (Score)`);
+                        sectionHeaders.push(`Section: ${sec.title} (Max)`);
+                        if (originalTest.useSectionSettings) {
+                             sectionHeaders.push(`Section: ${sec.title} (Qualifying)`);
+                             sectionHeaders.push(`Section: ${sec.title} (Result)`);
+                        }
+                    });
                 }
+                // Insert section headers after "Overall Result"
+                headers.splice(9, 0, ...sectionHeaders);
 
                 const worksheetData = [
                     headers,
                     ...testData.report.map(r => {
+                        if (r.status !== 'Attempted') {
+                            return [r.candidateEmail, "N/A", "N/A", "N/A", "N/A", r.status, "N/A", "N/A", "N/A"];
+                        }
+                        
+                        let sectionData = [];
+                        let allSectionsPassed = true;
+                        
+                        if (originalTest && originalTest.sections) {
+                            let qIndex = 0; // For aptitude
+                            originalTest.sections.forEach(sec => {
+                                let secScore = 0;
+                                let secMax = 0;
+                                let secQualifying = originalTest.useSectionSettings ? (sec.sectionQualifyingMarks || 0) : 'N/A';
+                                let secResult = 'N/A';
+                                
+                                if (isCoding) {
+                                    const resSec = (r.sectionScores || []).find(s => s.title === sec.title);
+                                    secScore = resSec?.score || 0;
+                                    secMax = resSec?.maxScore || 0;
+                                } else { // Aptitude
+                                    (sec.questions || []).forEach(q => {
+                                        const qMarks = parseInt(q.marks, 10) || 0;
+                                        secMax += qMarks;
+                                        const isCorrect = String(r.answers[qIndex]) === String(q.correctAnswer);
+                                        if (isCorrect) secScore += qMarks;
+                                        qIndex++;
+                                    });
+                                }
+                                
+                                if (originalTest.useSectionSettings) {
+                                    secResult = secScore >= secQualifying ? 'Pass' : 'Fail';
+                                    if (secResult === 'Fail') allSectionsPassed = false;
+                                }
+                                
+                                sectionData.push(secScore, secMax);
+                                if (originalTest.useSectionSettings) {
+                                    sectionData.push(secQualifying, secResult);
+                                }
+                            });
+                        }
+                        
+                        // Determine Overall Result
+                        let overallResult = 'N/A';
+                        if (originalTest) {
+                            if (originalTest.useSectionSettings) {
+                                overallResult = allSectionsPassed ? 'Pass' : 'Fail';
+                            } else {
+                                overallResult = r.result || 'N/A'; // Use the pre-calculated overall result
+                            }
+                        }
+
                         const row = [
-                            r.candidateEmail,
-                            r.fullName || 'N/A',
-                            r.collegeName || 'N/A',
-                            r.department || 'N/A',
-                            r.rollNumber || 'N/A',
-                            r.status,
-                            r.score,
-                            r.totalMarks || (isCoding ? r.maxScore : (type === 'aptitude' ? 100 : 0)), // Use 100 for aptitude total
+                            r.candidateEmail, r.fullName || 'N/A', r.collegeName || 'N/A', r.department || 'N/A', r.rollNumber || 'N/A',
+                            r.status, r.score, r.totalMarks, overallResult,
+                            ...sectionData, // Add all section columns
                             r.submittedAt ? new Date(r.submittedAt).toLocaleString() : 'N/A',
                             r.violationReason || ''
                         ];
-                        
-                        if (isCoding && sectionHeaders.length > 0) {
-                            // *** FIX 2: Use master list to map scores correctly ***
-                            const studentScoreMap = new Map((r.sectionScores || []).map(s => [s.title, s.score]));
-                            const orderedSectionScores = masterSectionTitles.map(title => studentScoreMap.get(title) ?? 'N/A');
-                            row.splice(8, 0, ...orderedSectionScores);
-                        }
                         return row;
                     })
                 ];
 
                 const ws = XLSX.utils.aoa_to_sheet(worksheetData);
-                ws['!cols'] = [ {wch:25}, {wch:25}, {wch:30}, {wch:20}, {wch:20}, {wch:15}, {wch:10}, {wch:12}, ...sectionHeaders.map(() => ({wch: 20})), {wch:22}, {wch:30} ];
+                // Dynamically set column widths
+                ws['!cols'] = [ {wch:25}, {wch:25}, {wch:30}, {wch:20}, {wch:20}, {wch:15}, {wch:12}, {wch:12}, {wch:12}, ...sectionHeaders.map(() => ({wch: 20})), {wch:22}, {wch:30} ];
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Results Report");
                 XLSX.writeFile(wb, `${testData.title.replace(/\s/g, '_')}_Report.xlsx`);
@@ -585,9 +802,9 @@
                     return;
                 }
                 const result = currentDetailedResult;
-                // Safely access testType, default to 'aptitude' if missing
                 const testType = result.testType || 'aptitude';
-                const testTitle = allReportData[testType]?.[result.testId]?.title || "Test Report";
+                const testTitle = result.testTitle || "Test Report";
+                const originalTest = originalTestsCache.get(result.testId); // Get from cache
                 
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
@@ -612,7 +829,7 @@
                     };
                     addHeader(1);
 
-                    // Candidate Info...
+                    // --- Candidate Info ---
                     const imgSize = 35;
                     if (profileImage) doc.addImage(profileImage, 'PNG', margin, yPosition, imgSize, imgSize);
                     const textStartX = margin + imgSize + 8;
@@ -625,7 +842,7 @@
                     doc.text('Department:', textStartX + fieldWidth, yPosition + 12);
                     doc.text('Email:', textStartX, yPosition + 19);
                     doc.text('Submitted:', textStartX + fieldWidth, yPosition + 19);
-                    doc.text('Overall Score:', textStartX, yPosition + 26);
+                    doc.text('Overall Result:', textStartX, yPosition + 26);
                     
                     doc.setFont('helvetica', 'normal');
                     doc.text(result.fullName || 'N/A', textStartX + 25, yPosition + 5);
@@ -634,10 +851,43 @@
                     doc.text(result.department || 'N/A', textStartX + fieldWidth + 28, yPosition + 12);
                     doc.text(result.candidateEmail || 'N/A', textStartX + 25, yPosition + 19);
                     doc.text(result.submittedAt ? new Date(result.submittedAt).toLocaleString() : 'N/A', textStartX + fieldWidth + 28, yPosition + 19);
-                    doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
-                    doc.text(`${result.score} ${testType === 'aptitude' ? '%' : `/ ${result.totalMarks || 0}`}`, textStartX + 28, yPosition + 26);
+                    
+                    // --- Dynamic Overall Result ---
+                    doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+                    let overallResultText = '';
+                    if (originalTest && originalTest.useSectionSettings) {
+                        // Calculate if all sections passed
+                         let allSectionsPassed = true;
+                        if (testType === 'coding') {
+                             allSectionsPassed = originalTest.sections.every(section => {
+                                const resultSection = (result.sectionScores || []).find(s => s.title === section.title);
+                                return resultSection && resultSection.score >= (section.sectionQualifyingMarks || 0);
+                            });
+                        } else { // Aptitude
+                            let qIndex = 0;
+                            allSectionsPassed = originalTest.sections.every(section => {
+                                let sectionScore = 0;
+                                (section.questions || []).forEach(q => {
+                                    const isCorrect = String(result.answers[qIndex]) === String(q.correctAnswer);
+                                    if (isCorrect) sectionScore += (parseInt(q.marks, 10) || 0);
+                                    qIndex++;
+                                });
+                                return sectionScore >= (section.sectionQualifyingMarks || 0);
+                            });
+                        }
+                        overallResultText = allSectionsPassed ? 'Pass' : 'Fail';
+                        doc.setTextColor(allSectionsPassed ? 21 : 220, allSectionsPassed ? 128 : 38, allSectionsPassed ? 61 : 38); // Green / Red
+                    } else {
+                        overallResultText = result.result || 'N/A';
+                        const scoreSuffix = testType === 'aptitude' ? '%' : ` / ${result.totalMarks || 0}`;
+                        overallResultText = `${result.score}${scoreSuffix} (${overallResultText})`;
+                        doc.setTextColor(result.result === 'Pass' ? 21 : 220, result.result === 'Pass' ? 128 : 38, result.result === 'Pass' ? 61 : 38);
+                    }
+                    doc.text(overallResultText, textStartX + 28, yPosition + 26);
+                    doc.setTextColor(0, 0, 0); // Reset color
                     yPosition += imgSize + 8;
-
+                    
+                    // --- Violation ---
                     if (result.violationReason) {
                          doc.setFontSize(9); doc.setTextColor(185, 28, 28); // Red-700
                          doc.text(`Violation Recorded: ${result.violationReason}`, margin, yPosition, { maxWidth: pageWidth - 2*margin });
@@ -646,19 +896,37 @@
                     }
                     doc.setLineWidth(0.3); doc.line(margin, yPosition, pageWidth - margin, yPosition); yPosition += 8;
 
-                    // Report Content (Aptitude vs Coding)
+                    // --- Report Content (Aptitude vs Coding) ---
                     doc.setFontSize(13); doc.setFont('helvetica', 'bold');
                     doc.text('Submission Breakup', margin, yPosition); yPosition += 8;
 
                     if (testType === 'coding') {
-                        if (result.sectionScores && result.sectionScores.length > 0) {
-                             result.sectionScores.forEach(sec => {
-                                 if (yPosition + 15 > pageHeight - margin) { doc.addPage(); addHeader(doc.internal.getNumberOfPages()); }
+                        if (originalTest.sections && originalTest.sections.length > 0) {
+                             originalTest.sections.forEach(sec => {
+                                 if (yPosition + 25 > pageHeight - margin) { doc.addPage(); addHeader(doc.internal.getNumberOfPages()); }
+                                 
+                                 const resSec = (result.sectionScores || []).find(s => s.title === sec.title);
+                                 const secScore = resSec?.score || 0;
+                                 const secMax = resSec?.maxScore || 0;
+                                 const secQualifying = sec.sectionQualifyingMarks || 0;
+                                 const isPassed = secScore >= secQualifying;
+
                                  doc.setFontSize(12); doc.setFont('helvetica', 'bold');
                                  doc.setFillColor(243, 244, 246); doc.rect(margin, yPosition - 5, pageWidth - 2 * margin, 8, 'F');
                                  doc.text(sec.title, margin + 2, yPosition);
-                                 doc.text(`Section Score: ${sec.score} / ${sec.maxScore}`, pageWidth - margin - 2, yPosition, { align: 'right' });
-                                 yPosition += 10;
+                                 
+                                 if (originalTest.useSectionSettings) {
+                                     doc.setTextColor(isPassed ? 21 : 220, isPassed ? 128 : 38, isPassed ? 61 : 38); // Green / Red
+                                     doc.text(`Status: ${isPassed ? 'Pass' : 'Fail'}`, pageWidth - margin - 2, yPosition, { align: 'right' });
+                                     doc.setTextColor(0,0,0);
+                                     yPosition += 6;
+                                     doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+                                     doc.text(`Score: ${secScore} / ${secMax} (Qualifying: ${secQualifying}) | Time: ${sec.sectionTimer} mins`, margin + 2, yPosition);
+                                 } else {
+                                     doc.text(`Score: ${secScore} / ${secMax}`, pageWidth - margin - 2, yPosition, { align: 'right' });
+                                     yPosition += 6;
+                                 }
+                                 yPosition += 4;
 
                                  const sectionSubmissions = (result.submissions || []).filter(sub => sub.sectionTitle === sec.title);
                                  if (sectionSubmissions.length > 0) {
@@ -679,9 +947,37 @@
                         if (result.originalTestSections && result.answers) {
                             let qIndex = 0;
                             result.originalTestSections.forEach(section => {
-                                if (yPosition + 10 > pageHeight - margin) { doc.addPage(); addHeader(doc.internal.getNumberOfPages()); }
+                                if (yPosition + 25 > pageHeight - margin) { doc.addPage(); addHeader(doc.internal.getNumberOfPages()); }
+                                
+                                let secScore = 0; let secMax = 0;
+                                (section.questions || []).forEach(q => {
+                                    const qMarks = parseInt(q.marks, 10) || 0;
+                                    secMax += qMarks;
+                                    const isCorrect = String(result.answers[qIndex]) === String(q.correctAnswer);
+                                    if (isCorrect) secScore += qMarks;
+                                    qIndex++;
+                                });
+                                qIndex -= (section.questions || []).length; // Reset index for this section
+
+                                const secQualifying = section.sectionQualifyingMarks || 0;
+                                const isPassed = secScore >= secQualifying;
+                                
                                 doc.setFontSize(12); doc.setFont('helvetica', 'bold');
-                                doc.text(section.title, margin, yPosition); yPosition += 8;
+                                doc.setFillColor(243, 244, 246); doc.rect(margin, yPosition - 5, pageWidth - 2 * margin, 8, 'F');
+                                doc.text(section.title, margin + 2, yPosition);
+
+                                if (originalTest.useSectionSettings) {
+                                     doc.setTextColor(isPassed ? 21 : 220, isPassed ? 128 : 38, isPassed ? 61 : 38); // Green / Red
+                                     doc.text(`Status: ${isPassed ? 'Pass' : 'Fail'}`, pageWidth - margin - 2, yPosition, { align: 'right' });
+                                     doc.setTextColor(0,0,0);
+                                     yPosition += 6;
+                                     doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+                                     doc.text(`Score: ${secScore} / ${secMax} (Qualifying: ${secQualifying}) | Time: ${sec.sectionTimer} mins (Not Tracked)`, margin + 2, yPosition);
+                                 } else {
+                                     doc.text(`Score: ${secScore} / ${secMax}`, pageWidth - margin - 2, yPosition, { align: 'right' });
+                                     yPosition += 6;
+                                 }
+                                 yPosition += 4;
 
                                 if (section.questions && Array.isArray(section.questions)) {
                                     section.questions.forEach(q => {
@@ -731,11 +1027,6 @@
             }
 
             // --- Code Viewer Modal Logic ---
-            /* * This entire 'click' listener was a duplicate and caused the error.
-             * The logic is already handled in the main listener above.
-             * I have removed the buggy duplicate block from lines 935-942.
-             */
-
             function showCodeModal(submission) {
                 document.getElementById('code-modal-title').textContent = `Code for: ${submission.problemTitle || 'Unknown Problem'}`;
                 if (!codeViewer) {
@@ -762,6 +1053,3 @@
     </script>
 </body>
 </html>
-
-
-
