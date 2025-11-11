@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Installation Support - Testify</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1761650455/TESTIFY-SECURE_TEST_bpv8vp.png">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Google Fonts (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; /* slate-50 */}
+        /* Basic accordion styling */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+    </style>
+     <script>
+        // Tailwind config
+        tailwind.config = {
+             theme: {
+                 extend: {
+                     fontFamily: {
+                         sans: ['Inter', 'sans-serif'],
+                     },
+                     colors: {
+                         slate: {
+                             50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1', 400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155', 800: '#1e293b', 900: '#0f172a'
+                         }
+                     }
+                 },
+             },
+        }
+    </script>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 shadow-sm">
+        <nav class="container mx-auto max-w-5xl px-4 py-4 flex justify-between items-center">
+            <a href="#" class="flex items-center gap-2">
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1761650455/TESTIFY-SECURE_TEST_bpv8vp.png" alt="Testify Logo" class="h-9 w-9 rounded-md object-contain">
+                <span class="text-xl font-bold text-slate-800">Testify Support</span>
+            </a>
+            <!-- Assuming 'download.html' is the download page -->
+            <a href="download.html" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">
+                <i class="fas fa-arrow-left mr-1.5"></i> Back to Download
+            </a>
+        </nav>
+    </header>
+
+    <!-- 🌟 Main Content -->
+    <main class="flex-grow py-12 md:py-16">
+        <div id="main-content" class="bg-white p-8 md:p-10 rounded-xl shadow-xl max-w-3xl w-full mx-auto">
+            <!-- Page Header -->
+            <header class="text-center mb-8 md:mb-10 border-b border-slate-200 pb-6">
+                <i class="fas fa-tools text-5xl text-indigo-600 mb-4"></i>
+                <h1 class="text-3xl font-bold text-slate-800 mb-2">Installation Help Center</h1>
+                <p class="text-slate-500">
+                    Having trouble? Here are some common questions and solutions.
+                </p>
+            </header>
+
+            <!-- FAQ Container -->
+            <div class="space-y-6">
+
+                <!-- FAQ Item 1 -->
+                <details class="group" open>
+                    <summary class="flex justify-between items-center cursor-pointer list-none">
+                        <span class="text-lg font-semibold text-slate-700 group-hover:text-indigo-600">
+                            My antivirus or browser blocked the download.
+                        </span>
+                        <span class="text-indigo-600 transform transition-transform duration-200 group-open:rotate-180">
+                            <i class="fas fa-chevron-down"></i>
+                        </span>
+                    </summary>
+                    <div class="text-slate-600 mt-3 pl-2 border-l-2 border-indigo-100 leading-relaxed">
+                        <p>This is common for new applications. Our software is safe, but it may not be recognized by all antivirus programs yet.</p>
+                        <ul class="list-disc pl-5 mt-2 space-y-2">
+                            <li><strong>On your browser (Chrome/Edge):</strong> Click the "Show all" or "Downloads" button, find the file, and select "Keep" or "Keep anyway".</li>
+                            <!-- MODIFIED: Updated Windows Defender instructions -->
+                            <li><strong>On Windows Defender:</strong> If a blue "Windows protected your PC" screen appears, don't worry! This is a standard Windows security check. We guarantee our app is safe and does not access any of your personal data.
+                                <ol class="list-decimal pl-5 mt-2 space-y-1">
+                                    <li>Click <strong>"More info"</strong> (it may be a small text link).</li>
+                                    <li>A new button, <strong>"Run anyway"</strong>, will appear. Click it to proceed with the installation.</li>
+                                </ol>
+                            </li>
+                        </ul>
+                    </div>
+                </details>
+
+                <!-- FAQ Item 2 -->
+                <details class="group">
+                    <summary class="flex justify-between items-center cursor-pointer list-none">
+                        <span class="text-lg font-semibold text-slate-700 group-hover:text-indigo-600">
+                            macOS says the app is from an "unidentified developer".
+                        </span>
+                        <span class="text-indigo-600 transform transition-transform duration-200 group-open:rotate-180">
+                            <i class="fas fa-chevron-down"></i>
+                        </span>
+                    </summary>
+                    <div class="text-slate-600 mt-3 pl-2 border-l-2 border-indigo-100 leading-relaxed">
+                        <p>This is a standard macOS security feature. You can easily bypass this for trusted apps:</p>
+                        <ol class="list-decimal pl-5 mt-2 space-y-1">
+                            <li>Open <strong>Finder</strong> and go to your <strong>Downloads</strong> folder.</li>
+                            <li><strong>Right-click (or Control-click)</strong> on the "Testify Secure Test" app.</li>
+                            <li>Select <strong>"Open"</strong> from the menu.</li>
+                            <li>A dialog box will appear. Click <strong>"Open"</strong> again. The app is now saved as an exception and you can launch it normally in the future.</li>
+                        </ol>
+                    </div>
+                </details>
+
+                <!-- FAQ Item 3 -->
+                <details class="group">
+                    <summary class="flex justify-between items-center cursor-pointer list-none">
+                        <span class="text-lg font-semibold text-slate-700 group-hover:text-indigo-600">
+                            My token says it's invalid.
+                        </span>
+                        <span class="text-indigo-600 transform transition-transform duration-200 group-open:rotate-180">
+                            <i class="fas fa-chevron-down"></i>
+                        </span>
+                    </summary>
+                    <div class="text-slate-600 mt-3 pl-2 border-l-2 border-indigo-100 leading-relaxed">
+                        <p>This can happen for a few reasons. Please try the following:</p>
+                        <ul class="list-disc pl-5 mt-2 space-y-1">
+                            <li>Go back to the download page and re-copy the token. Make sure you are copying the entire token and no extra spaces before or after it.</li>
+                            <li>Test tokens usually expire after a certain amount of time. If it has been several hours, your token may have expired.</li>
+                            <li>Try closing and reopening the secure test application, then paste the token again.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <!-- FAQ Item 4 -->
+                <details class="group">
+                    <summary class="flex justify-between items-center cursor-pointer list-none">
+                        <span class="text-lg font-semibold text-slate-700 group-hover:text-indigo-600">
+                            The app won't launch or crashes.
+                        </span>
+                        <span class="text-indigo-600 transform transition-transform duration-200 group-open:rotate-180">
+                            <i class="fas fa-chevron-down"></i>
+                        </span>
+                    </summary>
+                    <div class="text-slate-600 mt-3 pl-2 border-l-2 border-indigo-100 leading-relaxed">
+                        <p>Please try these standard troubleshooting steps:</p>
+                        <ul class="list-disc pl-5 mt-2 space-y-1">
+                            <li><strong>Restart your computer.</strong> This solves many common issues.</li>
+                            <li><strong>Re-install the application.</strong> Delete the application, re-download it from the download page, and run the installer again.</li>
+                            <li>Ensure your operating system is up to date.</li>
+                        </ul>
+                    </div>
+                </details>
+
+                <!-- Contact Section -->
+                <section class="text-center border-t border-slate-200 pt-8 mt-10">
+                    <h2 class="text-xl font-semibold text-slate-700 mb-3">Still Stuck?</h2>
+                    <p class="text-slate-500 leading-relaxed mb-4">
+                        If none of the above solutions work, our support team is here to help.
+                    </sUm>
+                    <a href="mailto:support@testify.com" class="inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 text-white font-medium rounded-lg shadow-md hover:bg-indigo-700 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        <i class="fas fa-envelope mr-2.5"></i> Contact Support
+                    </a>
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full text-center py-5 mt-10 bg-white border-t border-slate-200">
+        <p class="text-xs text-slate-500">
+            &copy; <span id="footer-year"></span> Testify - Secure Test | Xeta Solutions
+        </p>
+    </footer>
+
+    <script>
+        // Set current year in footer
+        document.getElementById('footer-year').textContent = new Date().getFullYear();
+
+        // Simple accordion logic
+        // This is optional - <details> tag works natively.
+        // But if you want to close others when one opens:
+        document.querySelectorAll('details').forEach((el) => {
+            el.addEventListener('toggle', (e) => {
+                if (e.target.open) {
+                    // Close other open <details>
+                    document.querySelectorAll('details[open]').forEach((openEl) => {
+                        if (openEl !== e.target) {
+                            openEl.open = false;
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+

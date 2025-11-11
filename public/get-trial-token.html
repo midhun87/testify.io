@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Your Testify Trial Application</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome (for icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg">
+    
+    <style>
+        /* Base font */
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #334155; /* slate-700 */
+            overflow-x: hidden;
+            background-color: #f8fafc; /* slate-50 */
+            /* More sophisticated, subtle background */
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,96%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,94%,1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,96%,1) 0, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        /* --- Animations --- */
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 3px solid #e2e8f0; /* slate-200 */
+            border-bottom-color: #6366f1; /* indigo-500 */
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(15px);
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* --- Pop-up Notification --- */
+        #notification-popup {
+            position: fixed;
+            top: 1.5rem;
+            left: 50%;
+            transform: translate(-50%, -120%);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 1000;
+        }
+        #notification-popup.show {
+            transform: translate(-50%, 0);
+            opacity: 1;
+        }
+
+        /* --- Component Styles --- */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* Step Number Indicator */
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 9999px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6); /* indigo-500 to violet-500 */
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Token Input Area */
+        .token-container {
+            background: #f1f5f9; /* slate-100 */
+            border: 1px solid #e2e8f0; /* slate-200 */
+            transition: all 0.2s ease;
+        }
+        .token-container:focus-within {
+            border-color: #8b5cf6; /* violet-500 */
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+        .token-input {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            letter-spacing: -0.5px;
+        }
+
+        /* Primary Action Button */
+        .btn-primary {
+            background-image: linear-gradient(to right, #4F46E5, #7C3AED);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.3), 0 4px 6px -2px rgba(124, 58, 237, 0.05);
+            transform: translateY(-1px);
+        }
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        /* Disabled Button */
+        .btn-disabled {
+            background: #f1f5f9;
+            color: #94a3b8;
+            border: 1px solid #e2e8f0;
+            cursor: not-allowed;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            bottom: 115%;
+            left: 50%;
+            transform: translateX(-50%) scale(0.8);
+            background-color: #0f172a; /* slate-900 */
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            white-space: nowrap;
+        }
+        .tooltip.show {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+        }
+        /* Little arrow for tooltip */
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -4px;
+            border-width: 4px;
+            border-style: solid;
+            border-color: #0f172a transparent transparent transparent;
+        }
+
+        /* Privacy Badge */
+        .privacy-badge {
+            background: linear-gradient(to bottom right, #f8fafc, #f1f5f9);
+            border: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body class="antialiased flex items-center justify-center min-h-screen p-4 md:p-6">
+
+    <!-- 1. Loading Screen -->
+    <div id="loading-screen" class="fixed inset-0 bg-slate-50 flex flex-col items-center justify-center space-y-6 z-50">
+        <span class="loader"></span>
+        <p class="text-slate-500 font-medium animate-pulse">Securing your trial environment...</p>
+    </div>
+    
+    <!-- Pop-up Notification Area -->
+    <div id="notification-popup" class="flex items-center p-4 bg-white rounded-2xl shadow-[0_20px_50px_-12px_rgb(0,0,0,0.25)] border border-slate-100 max-w-sm w-full mx-4">
+        <div id="notification-icon" class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center mr-4">
+            <!-- Icon injected by JS -->
+        </div>
+        <div>
+            <h3 id="notification-title" class="font-bold text-slate-800"></h3>
+            <p id="notification-message" class="text-sm text-slate-500 leading-tight mt-1"></p>
+        </div>
+    </div>
+
+    <!-- Main Content Wrapper -->
+    <main id="main-content" class="w-full max-w-[42rem] mx-auto" style="display: none;">
+        
+        <!-- Header -->
+        <header class="text-center mb-8 fade-in-up" style="animation-delay: 0.1s;">
+            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg" alt="Testify Logo" class="h-12 w-auto mx-auto mb-6 drop-shadow-sm">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">
+                Ready for your trial?
+            </h1>
+            <p class="text-lg text-slate-600 max-w-md mx-auto leading-relaxed">
+                Follow these 4 simple steps to set up your secure environment and begin the assessment.
+            </p>
+        </header>
+
+        <!-- Main Steps Card -->
+        <div class="glass-panel rounded-3xl shadow-xl overflow-hidden fade-in-up" style="animation-delay: 0.2s;">
+            <div class="p-6 sm:p-10">
+                
+                <!-- Steps List -->
+                <ol class="relative space-y-10">
+                    <!-- Connecting line (visual only) -->
+                    <div class="absolute left-5 top-5 bottom-5 w-0.5 bg-slate-200 -z-10 hidden sm:block"></div>
+
+                    <!-- STEP 1: Download -->
+                    <li class="flex flex-col sm:flex-row items-start sm:space-x-6 relative">
+                        <div class="flex-shrink-0 mb-4 sm:mb-0 z-10 bg-slate-50 sm:bg-transparent">
+                            <span class="step-indicator">1</span>
+                        </div>
+                        <div class="flex-grow w-full">
+                            <h3 class="text-lg font-bold text-slate-800 flex items-center">
+                                <i class="fa-solid fa-download text-indigo-500 mr-2.5 opacity-75"></i>
+                                Download Secure Browser
+                            </h3>
+                            <p class="text-slate-500 mt-1 mb-4 text-sm">Get the application for your operating system.</p>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <!-- Windows (Active) -->
+                                <a href="https://testifysecuretestbrowser.s3.ap-south-1.amazonaws.com/Testify+Secure+Test+Setup+1.0.0.exe" 
+                                   class="btn-primary text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow-md hover:shadow-lg">
+                                    <i class="fab fa-windows text-lg"></i>
+                                    <span>Windows</span>
+                                </a>
+                                <!-- macOS (Disabled) -->
+                                <button id="mac-download-btn" class="btn-disabled font-medium py-3 px-4 rounded-xl flex items-center justify-center space-x-2">
+                                    <i class="fab fa-apple text-lg opacity-50"></i>
+                                    <span>macOS</span>
+                                </button>
+                                <!-- Linux (Disabled) -->
+                                <button id="linux-download-btn" class="btn-disabled font-medium py-3 px-4 rounded-xl flex items-center justify-center space-x-2">
+                                    <i class="fab fa-linux text-lg opacity-50"></i>
+                                    <span>Linux</span>
+                                </button>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2.5">Supports Windows 10/11. Mac & Linux coming soon.</p>
+                        </div>
+                    </li>
+
+                    <!-- STEP 2: System Check -->
+                    <li class="flex flex-col sm:flex-row items-start sm:space-x-6 relative">
+                        <div class="flex-shrink-0 mb-4 sm:mb-0 z-10 bg-slate-50 sm:bg-transparent">
+                            <span class="step-indicator">2</span>
+                        </div>
+                        <div class="flex-grow">
+                            <h3 class="text-lg font-bold text-slate-800 flex items-center">
+                                <i class="fa-solid fa-stethoscope text-indigo-500 mr-2.5 opacity-75"></i>
+                                Complete System Check
+                            </h3>
+                            <p class="text-slate-600 mt-1 text-sm leading-relaxed">
+                                Run the installer. It will automatically verify your <span class="font-semibold text-slate-700">camera, microphone, and internet connection</span> to ensure a smooth experience.
+                            </p>
+                        </div>
+                    </li>
+
+                    <!-- STEP 3: Paste Token -->
+                    <li class="flex flex-col sm:flex-row items-start sm:space-x-6 relative">
+                        <div class="flex-shrink-0 mb-4 sm:mb-0 z-10 bg-slate-50 sm:bg-transparent">
+                            <span class="step-indicator">3</span>
+                        </div>
+                        <div class="flex-grow w-full">
+                            <h3 class="text-lg font-bold text-slate-800 flex items-center">
+                                <i class="fa-solid fa-key text-indigo-500 mr-2.5 opacity-75"></i>
+                                Paste Your Trial Token
+                            </h3>
+                            <p class="text-slate-500 mt-1 mb-4 text-sm">Copy this unique key and paste it when the app launches.</p>
+
+                            <!-- Token Component -->
+                            <div class="token-container p-1.5 pl-4 rounded-xl flex items-center bg-white shadow-sm">
+                                <input id="test-token" readonly 
+                                       class="token-input bg-transparent flex-grow text-indigo-900 font-medium focus:outline-none text-sm py-2"
+                                       value="Generating token...">
+                                <button id="copy-token-btn" class="btn-primary relative text-white p-3 rounded-lg ml-2 flex-shrink-0 transition-transform active:scale-95">
+                                    <i class="far fa-copy"></i>
+                                    <span class="sr-only">Copy Token</span>
+                                    <div id="copy-tooltip" class="tooltip">Copied!</div>
+                                </button>
+                            </div>
+                        </div>
+                    </li>
+
+                    <!-- STEP 4: Access & Submit -->
+                    <li class="flex flex-col sm:flex-row items-start sm:space-x-6 relative">
+                        <div class="flex-shrink-0 mb-4 sm:mb-0 z-10 bg-slate-50 sm:bg-transparent">
+                            <span class="step-indicator">4</span>
+                        </div>
+                        <div class="flex-grow">
+                            <h3 class="text-lg font-bold text-slate-800 flex items-center">
+                                <i class="fa-solid fa-flag-checkered text-indigo-500 mr-2.5 opacity-75"></i>
+                                Access Trial & Submit
+                            </h3>
+                            <p class="text-slate-600 mt-1 text-sm leading-relaxed">
+                                Enter the test environment, explore the interface, and don't forget to click the <span class="inline-block bg-indigo-100 text-indigo-800 text-xs font-bold px-2 py-0.5 rounded">Submit Test</span> button to complete your trial run.
+                            </p>
+                        </div>
+                    </li>
+                </ol>
+            </div>
+
+            <!-- Enhanced Privacy Badge Footer -->
+            <div class="privacy-badge p-5 sm:px-10 border-t border-slate-100 flex items-start space-x-4">
+                <div class="flex-shrink-0 bg-white p-2 rounded-full shadow-sm border border-slate-100 text-emerald-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-800 mb-1">Your Privacy is Protected</h4>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        The secure browser only monitors the test environment. It <strong>does not</strong> access personal files. Any data entered during this trial is confidential and automatically deleted after the session.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center mt-10 mb-6 fade-in-up" style="animation-delay: 0.3s;">
+             <p class="text-sm font-medium text-slate-400 flex items-center justify-center">
+                <i class="fa-solid fa-shield-halved mr-2 opacity-75"></i>
+                Secure Assessment by Xeta Solutions
+            </p>
+        </footer>
+
+    </main>
+
+    <script>
+        // --- Pop-up Notification Logic ---
+        const notificationPopup = document.getElementById('notification-popup');
+        const notificationIcon = document.getElementById('notification-icon');
+        const notificationTitle = document.getElementById('notification-title');
+        const notificationMessage = document.getElementById('notification-message');
+        let notificationTimeout;
+
+        function showNotification(title, message, iconHtml, bgColorClass, textColorClass = 'text-white') {
+            if (notificationTimeout) clearTimeout(notificationTimeout);
+            
+            notificationTitle.textContent = title;
+            notificationMessage.textContent = message;
+            notificationIcon.innerHTML = iconHtml;
+            notificationIcon.className = `flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center mr-4 shadow-sm ${bgColorClass} ${textColorClass}`;
+            
+            notificationPopup.classList.add('show');
+            notificationTimeout = setTimeout(() => {
+                notificationPopup.classList.remove('show');
+            }, 4000);
+        }
+
+        // --- Initial Load Simulation ---
+        window.addEventListener("load", () => {
+            // Simulate a secure token generation delay (1.2s - 2.2s)
+            const randomDelay = Math.floor(Math.random() * 1000) + 1200; 
+            setTimeout(() => {
+                document.getElementById("loading-screen").style.opacity = '0';
+                document.getElementById("loading-screen").style.transition = 'opacity 0.5s ease';
+                setTimeout(() => {
+                    document.getElementById("loading-screen").style.display = "none";
+                    document.getElementById("main-content").style.display = "block";
+                }, 500);
+            }, randomDelay);
+        });
+
+        // --- Core Functionality ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const tokenInput = document.getElementById('test-token');
+            const copyBtn = document.getElementById('copy-token-btn');
+            const tooltip = document.getElementById('copy-tooltip');
+            
+            // 1. Handle URL Token
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+
+            if (token) {
+                tokenInput.value = token;
+            } else {
+                tokenInput.value = 'Error: Token missing from URL';
+                tokenInput.classList.add('text-red-500');
+                copyBtn.disabled = true;
+                copyBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
+            // 2. Handle "Coming Soon" buttons
+            const comingSoonHandler = (osName) => {
+                showNotification(
+                    `${osName} Coming Soon`,
+                    "We're currently fine-tuning the secure browser for this operating system. Stay tuned!",
+                    '<i class="fa-solid fa-person-digging text-xl"></i>',
+                    'bg-indigo-100',
+                    'text-indigo-600'
+                );
+            };
+            document.getElementById('mac-download-btn').addEventListener('click', () => comingSoonHandler('macOS'));
+            document.getElementById('linux-download-btn').addEventListener('click', () => comingSoonHandler('Linux'));
+
+            // 3. Copy Token Logic
+            copyBtn.addEventListener('click', async () => {
+                if (copyBtn.disabled) return;
+
+                try {
+                    // Try modern API first
+                    await navigator.clipboard.writeText(tokenInput.value);
+                    showCopySuccess();
+                } catch (err) {
+                    // Fallback for older browsers/http
+                    const textArea = document.createElement("textarea");
+                    textArea.value = tokenInput.value;
+                    textArea.style.position = "fixed";
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        showCopySuccess();
+                    } catch (e) {
+                        console.error('Copy failed', e);
+                        showNotification('Copy Failed', 'Please select and copy the token manually.', '<i class="fa-solid fa-triangle-exclamation"></i>', 'bg-red-100', 'text-red-600');
+                    }
+                    document.body.removeChild(textArea);
+                }
+            });
+
+            function showCopySuccess() {
+                // Visual feedback on button
+                const originalIcon = copyBtn.innerHTML;
+                tooltip.classList.add('show');
+                copyBtn.innerHTML = '<i class="fa-solid fa-check"></i><div id="copy-tooltip" class="tooltip show">Copied!</div>';
+                copyBtn.classList.remove('btn-primary');
+                copyBtn.classList.add('bg-emerald-500'); // Green success state
+
+                setTimeout(() => {
+                    tooltip.classList.remove('show');
+                    copyBtn.innerHTML = originalIcon;
+                    copyBtn.classList.add('btn-primary');
+                    copyBtn.classList.remove('bg-emerald-500');
+                }, 2000);
+            }
+        });
+    </script>
+</body>
+</html>

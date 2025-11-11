@@ -1,0 +1,1928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Room - HIRE WITH US</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/neat.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#2563EB', // Royal Blue
+                        'soft-blue': '#3B82F6',   // Soft Blue for lighter accents
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Poppins', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        'xl': '12px',
+                    },
+                    boxShadow: {
+                        'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* --- General Layout & Aesthetics --- */
+        html, body {
+            height: 100vh;
+            overflow: hidden; /* Prevent body scroll */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            display: flex; 
+            flex-direction: column; 
+        }
+        
+        .card {
+            @apply bg-white rounded-xl shadow-lg border border-gray-200 p-5 transition-all duration-200 overflow-hidden;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            @apply block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-blue focus:ring-primary-blue sm:text-sm;
+        }
+
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+
+        /* CodeMirror Light Theme */
+        .CodeMirror {
+            height: 100%;
+            font-size: 14px;
+            line-height: 1.6;
+            background: #ffffff;
+            border-radius: 0;
+            border-top: 1px solid #e5e7eb;
+        }
+        .cm-s-neat.CodeMirror { background: #ffffff; color: #1f2937; }
+        .CodeMirror-gutters { background: #f9fafb !important; border-right: 1px solid #e5e7eb; }
+        .CodeMirror-linenumbers { color: #6b7280; }
+        .cm-s-neat .CodeMirror-cursor { border-left: 2px solid #2563EB; }
+        
+        /* Tab Styles (Light) */
+        .tab-btn {
+            @apply flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-800 hover:bg-gray-100 -mb-px transition-all;
+        }
+        .tab-btn.active {
+            @apply text-primary-blue border-primary-blue bg-white;
+        }
+        .tab-content { @apply hidden; }
+        .tab-content.active { @apply block; } /* Use block for simple tabs */
+
+        /* Video Feed Styles */
+        .video-feed {
+            @apply w-full h-full object-cover;
+            transform: scaleX(-1);
+        }
+        .remote-video {
+            transform: scaleX(1); /* Interviewer video is not mirrored */
+        }
+
+        /* State containers */
+        #page-loading, #student-details-form, #interview-lobby, #interview-completed {
+            display: none;
+            flex-direction: column;
+            flex-grow: 1; /* Make states fill the main area */
+        }
+        #interview-room {
+            display: none; /* This will be set to 'grid' by JS when active */
+            flex-grow: 1; /* Make room fill the main area */
+        }
+        
+        /* Preformatted text styles for problems */
+        .problem-pre {
+            @apply bg-gray-100 p-4 rounded-md text-sm text-gray-700 font-mono whitespace-pre-wrap border border-gray-300;
+        }
+        
+        /* Output Console (Keeping dark for readability) */
+        .output-console {
+            background-color: #111827;
+            color: #e5e7eb;
+            font-family: 'Menlo', 'Consolas', monospace;
+        }
+        .output-console.output-error { color: #f87171; }
+        
+        /* Test Case Results */
+        .test-case { @apply p-3 rounded-lg border; }
+        .test-case-pass {
+            background-color: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+        .test-case-fail {
+            background-color: #fef2f2;
+            border-color: #fecaca;
+        }
+        
+        /* Chat bubble styles */
+        .chat-bubble { @apply p-3 rounded-2xl max-w-[80%]; }
+        .chat-bubble-self { @apply bg-primary-blue text-white rounded-br-lg ml-auto; }
+        .chat-bubble-other { @apply bg-gray-700 text-gray-200 rounded-bl-lg mr-auto; }
+
+        /* * --- MODAL POSITIONING FIX ---
+         * The modal backgrounds MUST be `fixed` to cover the viewport.
+         * They must be direct children of `<body>` to escape the `<main>` flex layout.
+        */
+        .modal-bg {
+            @apply fixed inset-0 h-screen w-screen bg-gray-900 bg-opacity-75 backdrop-blur-sm flex z-50 transition-opacity duration-300;
+        }
+        .modal-center-content {
+            @apply bg-white rounded-xl shadow-2xl transform transition-all duration-300 scale-95 opacity-0;
+        }
+        .modal-bg.visible .modal-center-content {
+            @apply scale-100 opacity-100;
+        }
+        
+        /* * --- 2. DRAGGABLE CHAT MODAL (NEW) ---
+         * Copied from interviewer-portal.html
+        */
+        .draggable-window-bg {
+            @apply fixed inset-0 z-40 pointer-events-none;
+            /* No background, just a container for positioning */
+        }
+        .draggable-window-handle {
+            @apply cursor-move;
+        }
+        
+        #chat-modal {
+            @apply z-50; /* Raised z-index */
+        }
+        #chat-modal-container {
+            /* This is the draggable element */
+            position: absolute;
+            bottom: 1.5rem; /* bottom-6 */
+            right: 1.5rem; /* right-6 */
+            width: 24rem; /* w-96 */
+            max-width: 22.5rem; /* max-w-sm */
+            max-height: 70vh;
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); /* shadow-2xl */
+            display: flex;
+            flex-direction: column;
+            pointer-events: auto;
+            transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+
+            /* Start hidden */
+            transform-origin: bottom right;
+            transform: scale(0.9) translateY(10px);
+            opacity: 0;
+        }
+        #chat-modal.visible #chat-modal-container {
+             /* Show state */
+             transform: scale(1) translateY(0);
+             opacity: 1;
+        }
+        /* --- END DRAGGABLE CHAT --- */
+
+
+        /* 3. SCREEN SHARE MODAL (CENTERED) */
+        #screen-share-modal {
+            @apply items-center justify-center p-4; /* Aligns to center */
+        }
+
+        .chat-badge {
+            @apply absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full animate-pulse border-2 border-white;
+        }
+
+        /* --- LAYOUT FIX: 2-COLUMN LAYOUT (MODIFIED) --- */
+        .main-grid {
+             display: grid;
+             /* MODIFIED: Left col is narrower (1fr), right col takes more space (2.5fr) */
+             grid-template-columns: minmax(300px, 1fr) 2.5fr; 
+             grid-template-rows: 1fr;
+             gap: 1.5rem;
+             padding: 1.5rem;
+             max-width: 100%;
+             margin-left: auto;
+             margin-right: auto;
+             height: 100%; /* Fill the main container */
+        }
+        
+        /* Responsive break */
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr; /* Single column layout */
+                grid-template-rows: auto auto; 
+                height: auto;
+                padding: 1rem;
+                overflow-y: auto;
+            }
+            #left-col, #right-col {
+                min-height: 500px;
+            }
+        }
+
+        /* Problem Card Styling */
+        .problem-card {
+            @apply bg-white border border-gray-200 p-4 rounded-lg shadow-sm transition-all;
+        }
+        .problem-card.active {
+            @apply ring-2 ring-primary-blue border-primary-blue shadow-md;
+        }
+
+        /* --- NEW: Tab Content for Right Column --- */
+        #problem-view-tab {
+            display: block; /* Show by default */
+        }
+        #code-editor-tab {
+            display: none; /* Hide by default */
+        }
+        
+        /* --- NEW: Custom Input Area --- */
+        #custom-input-area {
+             @apply w-full h-full p-4 bg-gray-800 text-gray-200 text-sm font-mono border-none resize-none outline-none;
+        }
+
+    </style>
+</head>
+
+<body class="flex flex-col h-screen antialiased">
+
+    <!-- Header (Light) -->
+    <header class="flex-shrink-0 flex items-center justify-between h-16 bg-white border-b border-gray-200 px-4 md:px-6 z-40 shadow-sm">
+        <div class="flex items-center gap-3">
+            <img class="h-8 w-8" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="HireWithUs Logo">
+            <span class="text-xl font-bold text-gray-800 hidden sm:inline">Interview Room</span>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 text-sm">
+                <span class="text-gray-500">Interviewer:</span>
+                <span id="interviewer-name" class="font-medium text-gray-900">Loading...</span>
+            </div>
+            
+            <div id="connection-status" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 border border-gray-300">
+                <div id="connection-dot" class="w-2.5 h-2.5 bg-yellow-500 rounded-full"></div>
+                <span id="connection-text" class="text-xs font-medium text-gray-600">Connecting...</span>
+            </div>
+
+            <div id="violation-counter" class="hidden items-center gap-2 px-3 py-1.5 rounded-full bg-red-100 border border-red-300">
+                <i class="fas fa-exclamation-triangle text-red-500"></i>
+                <span id="violation-count-text" class="text-xs font-bold text-red-700">Violations: 0</span>
+            </div>
+            
+            <div id="timer" class="hidden items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 border border-gray-300">
+                <i class="far fa-clock text-primary-blue"></i>
+                <span id="timer-text" class="text-sm font-mono font-medium text-gray-900">--:--</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow flex flex-col overflow-hidden relative">
+
+        <!-- State 1: Page Loading -->
+        <div id="page-loading" class="flex-grow flex items-center justify-center p-8 text-center">
+            <i class="fas fa-spinner fa-spin fa-3x text-primary-blue"></i>
+            <h2 class="mt-6 text-2xl font-bold text-gray-900">Connecting to Interview...</h2>
+            <p class="text-gray-500 mt-2">Please wait while we verify your interview link and restore your session.</p>
+        </div>
+
+        <!-- State 2: Student Details Form -->
+        <div id="student-details-form" class="flex-grow flex items-center justify-center p-4 sm:p-8 overflow-y-auto custom-scrollbar">
+            <div class="card w-full max-w-2xl !p-6 sm:!p-8 border-t-4 border-primary-blue">
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Pre-Interview Verification</h2>
+                <p class="text-gray-600 mb-6">Please confirm your details and capture a live photo to proceed.</p>
+                
+                <form id="details-form" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="fullName" class="block text-sm font-medium text-gray-700">Full Name</label>
+                            <input type="text" id="fullName" class="form-input mt-1" required>
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                            <input type="email" id="email" class="form-input mt-1" required>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="rollNumber" class="block text-sm font-medium text-gray-700">Roll Number</label>
+                            <input type="text" id="rollNumber" class="form-input mt-1" required>
+                        </div>
+                        <div>
+                            <label for="collegeName" class="block text-sm font-medium text-gray-700">College Name</label>
+                            <input type="text" id="collegeName" class="form-input mt-1" required>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="departmentName" class="block text-sm font-medium text-gray-700">Department Name</label>
+                        <input type="text" id="departmentName" class="form-input mt-1" required>
+                    </div>
+
+                    <div class="pt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Live Photo Capture</label>
+                        <div class="flex flex-col sm:flex-row items-center gap-4">
+                            <video id="webcam-preview" class="w-full sm:w-1/2 h-auto bg-gray-900 rounded-lg shadow-inner" autoplay playsinline></video>
+                            <canvas id="photo-canvas" class="w-full sm:w-1/2 h-auto bg-gray-200 rounded-lg shadow-inner hidden"></canvas>
+                            <img id="captured-photo" class="w-full sm:w-1/2 h-auto rounded-lg shadow-inner hidden" alt="Captured Photo">
+                        </div>
+                        <button type="button" id="capture-photo-btn" class="mt-3 w-full sm:w-auto px-4 py-2 bg-primary-blue text-white font-semibold rounded-lg shadow-md hover:bg-soft-blue transition-all">
+                            <i class="fas fa-camera mr-2"></i>Capture Photo
+                        </button>
+                        <p id="photo-error" class="text-red-600 text-sm mt-2 hidden"></p>
+                    </div>
+
+                    <div class="pt-6">
+                        <button type="submit" id="submit-details-btn" class="w-full px-6 py-3 bg-green-600 text-white text-lg font-semibold rounded-lg shadow-lg hover:bg-green-700 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed">
+                            Submit Details & Proceed
+                        </button>
+                        <p id="details-submit-message" class="text-center text-sm mt-3"></p>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- State 3: Interview Lobby (NEW) -->
+        <div id="interview-lobby" class="flex-grow flex items-center justify-center p-8 text-center">
+            <div class="card w-full max-w-lg !p-8 border-t-4 border-primary-blue">
+                <i class="fas fa-user-clock fa-3x text-primary-blue mb-5"></i>
+                <h2 class="text-2xl font-bold text-gray-900 mb-3" id="lobby-title">Please Wait</h2>
+                <p class="text-gray-600 text-lg" id="lobby-message">The interview is scheduled to begin soon. Please wait for the interviewer to start the session.</p>
+                
+                <div id="lobby-timer-container" class="mt-6">
+                    <p class="text-sm text-gray-500 uppercase tracking-wider">Interview starts in</p>
+                    <div id="lobby-timer" class="text-4xl font-bold text-gray-900 mt-2">--:--:--</div>
+                </div>
+                
+                <div class="mt-6">
+                    <i class="fas fa-spinner fa-spin fa-lg text-gray-400"></i>
+                    <p class="text-sm text-gray-500 mt-2">Checking status...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- State 4: Interview Room (LAYOUT FIX) -->
+        <div id="interview-room" class="main-grid">
+            
+            <!-- COLUMN 1 (Video/Self-Preview & Problems) -->
+            <div id="left-col" class="flex flex-col gap-y-6 h-full overflow-y-auto custom-scrollbar">
+                
+                <!-- 1. Video Feeds -->
+                <div class="card flex-shrink-0 !p-4 border-t-4 border-primary-blue"> 
+                    <h2 class="text-lg font-semibold text-gray-900 mb-3 border-b pb-3">Live Video</h2>
+                    <div class="relative w-full aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-md">
+                        <video id="interviewer-video" class="video-feed remote-video w-full h-full" autoplay playsinline poster="https://placehold.co/600x400/333/999?text=Interviewer"></video>
+                        <span id="interviewer-video-name" class="absolute top-2 left-2 px-2 py-0.5 bg-black/60 text-white text-xs rounded-md font-medium">Interviewer</span>
+                        
+                        <div class="absolute bottom-2 right-2 w-1/3 aspect-video bg-gray-800 rounded-md overflow-hidden border-2 border-white shadow-lg">
+                            <video id="student-preview" class="video-feed w-full h-full" autoplay playsinline muted poster="https://placehold.co/200x150/555/CCC?text=You"></video>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Assigned Problems Box -->
+                <div class="card flex-grow p-4 space-y-2 overflow-y-auto custom-scrollbar border-t-4 border-indigo-500">
+                    <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2 mb-3 border-b pb-3">
+                        <i class="fas fa-tasks text-indigo-500"></i>Assigned Problems
+                    </h3>
+                    <div id="problems-card-list" class="space-y-3">
+                        <p class="text-gray-500 text-sm p-2">Waiting for interviewer to assign problems...</p>
+                        <!-- Problem cards will be injected here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- COLUMN 2 (Code Editor & Output) -->
+            <div id="right-col" class="flex-grow flex flex-col card p-0 overflow-hidden min-h-0 h-full border-t-4 border-gray-400">
+                
+                <!-- Compiler Header -->
+                <div class="flex-shrink-0 flex items-center justify-between p-3 bg-white border-b border-gray-200">
+                    <div class="flex items-center gap-3">
+                        <span id="active-problem-title" class="text-sm font-semibold text-primary-blue">No problem selected</span>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <select id="language-select" class="form-select bg-gray-50 border-gray-300 text-gray-900 focus:ring-primary-blue focus:border-primary-blue text-sm rounded-lg shadow-sm">
+                            <option value="javascript">JavaScript</option>
+                            <option value="python">Python</option>
+                            <option value="java">Java</option>
+                            <option value="cpp">C++</option>
+                        </select>
+                        <!-- FIX: Run button is no longer disabled by default -->
+                        <button id="run-code-btn" class="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                            <i class="fas fa-play"></i>Run
+                        </button>
+                        <!-- FIX: Submit button IS disabled by default -->
+                        <button id="submit-code-btn" class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-300 disabled:cursor-not-allowed" disabled>
+                            <i class="fas fa-check-double"></i>Submit
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab Headers -->
+                <div class="flex-shrink-0 flex justify-between items-center border-b border-gray-200 bg-gray-50">
+                    <nav class="flex" aria-label="Main Tabs">
+                        <button class="tab-btn active" data-tab-group="main-workspace" data-tab-target="problem-view-tab">
+                            <i class="fas fa-book-open"></i>Problem Details
+                        </button>
+                        <button class="tab-btn" data-tab-group="main-workspace" data-tab-target="code-editor-tab">
+                            <i class="fas fa-code"></i>Code Editor
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Tab Content: Problem View (SCROLL FIX) -->
+                <div id="problem-view-tab" class="tab-content active flex-grow flex flex-col" data-tab-group="main-workspace">
+                    <!-- FIX: Added min-h-0 to allow scrolling -->
+                    <div id="problem-view-content" class="flex-grow p-6 overflow-y-auto custom-scrollbar text-gray-700 space-y-4 min-h-0">
+                        <h3 id="problem-view-title" class="text-2xl font-bold text-gray-900">No Problem Selected</h3>
+                        <p id="problem-view-description" class="text-base">Please select a problem from the "Assigned Problems" list on the left, or use the "Code Editor" tab to write your own code.</p>
+                        <div id="problem-view-details" class="space-y-4">
+                            <!-- Problem details will be injected here by JS -->
+                        </div>
+                    </div>
+                    <div class="flex-shrink-0 p-4 bg-gray-50 border-t border-gray-200 flex justify-end">
+                        <button id="solve-from-view-btn" class="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:bg-gray-400" disabled>
+                            <i class="fas fa-code mr-2"></i>Solve this Problem
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab Content: Code Editor -->
+                <div id="code-editor-tab" class="tab-content flex-grow flex flex-col min-h-0" data-tab-group="main-workspace">
+                    
+                    <!-- Code Editor (Flex Grow) -->
+                    <div class="flex-grow h-[60%] overflow-hidden relative">
+                        <textarea id="code-editor"></textarea>
+                    </div>
+
+                    <!-- Output Panel (Fixed Height) (FREESTYLE COMPILER FIX) -->
+                    <div class="flex-shrink-0 h-[40%] flex flex-col border-t border-gray-200">
+                        <!-- Output Tabs -->
+                        <div class="flex-shrink-0 border-b border-gray-200 bg-gray-50">
+                            <nav class="flex" aria-label="Output Tabs">
+                                <!-- NEW: Custom Input Tab -->
+                                <button class="tab-btn" data-tab-group="output" data-tab-target="output-custom-input-tab">
+                                    <i class="fas fa-keyboard"></i>Custom Input
+                                </button>
+                                <button class="tab-btn active" data-tab-group="output" data-tab-target="output-console-tab">
+                                    <i class="fas fa-terminal"></i>Console
+                                </button>
+                                <button class="tab-btn" data-tab-group="output" data-tab-target="output-results-tab">
+                                    <i class="fas fa-tasks"></i>Test Results
+                                </button>
+                            </nav>
+                        </div>
+
+                        <!-- NEW: Custom Input Tab Pane -->
+                        <div id="output-custom-input-tab" class="tab-content flex-grow" data-tab-group="output">
+                            <textarea id="custom-input-area" class="custom-input-area" placeholder="Enter your custom input here to use with the 'Run' button..."></textarea>
+                        </div>
+                        
+                        <!-- Console Tab -->
+                        <div id="output-console-tab" class="tab-content active flex-grow overflow-y-auto custom-scrollbar" data-tab-group="output">
+                            <pre id="output-console" class="output-console p-4 text-sm h-full w-full !bg-transparent !rounded-none">Click "Run" to execute code with your custom input.</pre>
+                        </div>
+                        
+                        <!-- Results Tab -->
+                        <div id="output-results-tab" class="tab-content flex-grow overflow-y-auto custom-scrollbar" data-tab-group="output">
+                            <div id="output-results-container" class="p-4 space-y-3">
+                                <p class="text-gray-500 italic p-4">Click "Submit" on an assigned problem to see test case results here.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- State 5: Interview Completed (Light) -->
+        <div id="interview-completed" class="flex-grow flex items-center justify-center p-8 text-center">
+            <div class="bg-white p-10 rounded-2xl shadow-2xl max-w-lg w-full border border-gray-200">
+                <i class="fas fa-check-circle fa-4x text-green-500 mb-6"></i>
+                <h2 class="mt-6 text-3xl font-bold text-gray-900">Interview Completed</h2>
+                <p id="completed-message" class="text-gray-600 text-lg mt-2">The interviewer has ended the session. Thank you for your time.</p>
+                <p class="text-gray-500 mt-6">You may now safely close this window.</p>
+            </div>
+        </div>
+        
+    </main>
+
+    <!-- 
+      MODALS: MOVED to be direct children of <body> 
+      This is the CRITICAL FIX for modal positioning.
+    -->
+
+    <!-- Screen Share Permission Modal (Light) -->
+    <div id="screen-share-modal" class="modal-bg hidden p-4">
+        <div class="modal-container w-full max-w-md">
+            <div class="modal-center-content bg-white p-8 rounded-2xl shadow-2xl text-center w-full">
+                <i class="fas fa-desktop fa-3x text-primary-blue mb-5"></i>
+                <h2 class="text-2xl font-bold text-gray-900 mb-3">Screen Sharing Required</h2>
+                <!-- MODIFIED: Text emphasizes Entire Screen -->
+                <p class="text-gray-600 mb-6">This is a proctored interview. You must share your <strong class="text-red-600">Entire Screen</strong> to proceed. Sharing a single window or tab is <strong class="text-red-600">not allowed</strong>.</p>
+                
+                <!-- NEW: Error message area for screen share fail -->
+                <p id="screen-share-error" class="hidden text-red-600 text-sm mb-4 font-medium"></p>
+
+                <button id="share-and-enter-btn" class="w-full px-6 py-3 bg-primary-blue text-white text-lg font-semibold rounded-lg shadow-lg hover:bg-soft-blue transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2">
+                    Share Screen & Enter
+                </button>
+                <p class="text-xs text-gray-400 mt-4">Your screen and camera will be streamed to the interviewer.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Chat Modal Trigger -->
+    <div id="floating-chat-trigger" class="fixed bottom-6 right-6 z-40 hidden"> <!-- Start hidden -->
+        <button id="open-chat-modal-btn" class="p-4 bg-primary-blue text-white rounded-full shadow-2xl hover:bg-soft-blue transition-all duration-300 hover:scale-105 relative">
+            <i class="fas fa-comments fa-lg"></i>
+            <span id="floating-chat-badge" class="chat-badge hidden"></span>
+        </button>
+    </div>
+
+    <!-- 
+      NEW: Draggable Chat Modal 
+      (Copied from interviewer-portal.html) 
+    -->
+    <div id="chat-modal" class="draggable-window-bg hidden"> <!-- Note: This is the background, not the modal itself -->
+        <!-- Container is now the draggable element -->
+        <div id="chat-modal-container" class="">
+             <!-- Handle is the header -->
+             <div id="chat-modal-handle" class="draggable-window-handle flex justify-between items-center p-4 border-b border-gray-200 flex-shrink-0 bg-primary-blue text-white rounded-t-xl">
+                <h3 class="text-xl font-semibold">Live Chat</h3>
+                <button id="close-chat-modal-btn" class="text-white hover:opacity-80 p-1">
+                    <i class="fas fa-xmark fa-lg"></i>
+                </button>
+             </div>
+             <!-- Content -->
+             <div id="chat-messages-modal" class="flex-grow p-4 space-y-4 overflow-y-auto custom-scrollbar bg-gray-50">
+                <!-- Chat messages will be appended here -->
+             </div>
+             <form id="chat-form-modal" class="flex-shrink-0 p-4 border-t border-gray-200 bg-white rounded-b-xl">
+                <div class="flex gap-2">
+                    <input type="text" id="chat-input-modal" class="form-input flex-grow" placeholder="Type a message...">
+                    <button type="submit" class="px-4 py-2 bg-primary-blue text-white font-semibold rounded-lg shadow-md hover:bg-soft-blue">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+             </form>
+        </div>
+    </div>
+    
+    <!-- Hidden elements for stream merging -->
+    <video id="hidden-cam-video" autoplay playsinline muted class="hidden"></video>
+    <video id="hidden-screen-video" autoplay playsinline muted class="hidden"></video>
+    <canvas id="merge-canvas" class="hidden" width="1280" height="720"></canvas>
+    
+    <!-- Socket.io Client -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <!-- CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/java/java.min.js"></script>
+
+
+    <!-- MAIN JAVASCRIPT LOGIC -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            
+            // --- Global State ---
+            let slotId = null;
+            let socket = null;
+            let token = null;
+            let localStream = null;
+            let localCameraStream = null;
+            let localScreenStream = null;
+            let localMicStream = null;
+            let peerConnection = null;
+            let interviewDetails = {};
+            let violationCount = 0;
+            let fullscreenActive = false;
+            let currentProblemId = null;
+            let currentAssignedProblems = [];
+            let currentChatHistory = [];
+            let drawLoopId = null;
+            let currentProblemDetails = {}; // Stores the fetched full problem details
+            let remoteDescriptionSet = false;
+            let webcamStream = null; // To hold the webcam stream for the form
+            let lobbyCheckInterval = null; // Interval to check lobby status
+            let lobbyCountdownInterval = null; // Interval for lobby timer
+
+            // --- Page State Elements ---
+            const pageStates = {
+                loading: document.getElementById('page-loading'),
+                detailsForm: document.getElementById('student-details-form'),
+                lobby: document.getElementById('interview-lobby'), // ADDED
+                room: document.getElementById('interview-room'),
+                completed: document.getElementById('interview-completed'),
+                shareModal: document.getElementById('screen-share-modal')
+            };
+            
+            // --- Details Form Elements (ADDED) ---
+            const detailsForm = document.getElementById('details-form');
+            const webcamPreview = document.getElementById('webcam-preview');
+            const photoCanvas = document.getElementById('photo-canvas');
+            const capturedPhotoEl = document.getElementById('captured-photo');
+            const capturePhotoBtn = document.getElementById('capture-photo-btn');
+            const submitDetailsBtn = document.getElementById('submit-details-btn');
+            const detailsSubmitMessage = document.getElementById('details-submit-message');
+            const photoError = document.getElementById('photo-error');
+            let capturedImageData = null;
+
+            // --- Lobby Elements (NEW) ---
+            const lobbyTitle = document.getElementById('lobby-title');
+            const lobbyMessage = document.getElementById('lobby-message');
+            const lobbyTimerContainer = document.getElementById('lobby-timer-container');
+            const lobbyTimer = document.getElementById('lobby-timer');
+
+            // --- Connection Status Elements ---
+            const connectionDot = document.getElementById('connection-dot');
+            const connectionText = document.getElementById('connection-text');
+
+            // --- DRAGGABLE CHAT Elements (NEW) ---
+            const floatingChatTrigger = document.getElementById('floating-chat-trigger');
+            const chatMessagesModal = document.getElementById('chat-messages-modal');
+            const chatFormModal = document.getElementById('chat-form-modal');
+            const chatInputModal = document.getElementById('chat-input-modal');
+            const chatModal = document.getElementById('chat-modal'); // This is the .draggable-window-bg
+            const openChatModalBtn = document.getElementById('open-chat-modal-btn');
+            const closeChatModalBtn = document.getElementById('close-chat-modal-btn');
+            const floatingChatBadge = document.getElementById('floating-chat-badge');
+            
+            // --- Video Elements ---
+            const localVideo = document.getElementById('student-preview');
+            const remoteVideo = document.getElementById('interviewer-video');
+            
+            // --- Problem & Code Elements ---
+            const problemsCardList = document.getElementById('problems-card-list');
+            const activeProblemTitle = document.getElementById('active-problem-title');
+            
+            const runBtn = document.getElementById('run-code-btn');
+            const submitBtn = document.getElementById('submit-code-btn');
+            const outputConsole = document.getElementById('output-console');
+            const outputResultsContainer = document.getElementById('output-results-container');
+            const languageSelect = document.getElementById('language-select');
+            
+            // --- NEW: Custom Input Element ---
+            const customInputArea = document.getElementById('custom-input-area');
+            
+            // --- NEW Problem View Elements ---
+            const problemViewTab = document.getElementById('problem-view-tab');
+            const problemViewContent = document.getElementById('problem-view-content');
+            const problemViewTitle = document.getElementById('problem-view-title');
+            const problemViewDescription = document.getElementById('problem-view-description');
+            const problemViewDetails = document.getElementById('problem-view-details');
+            const solveFromViewBtn = document.getElementById('solve-from-view-btn');
+            const codeEditorTab = document.getElementById('code-editor-tab');
+
+            let codeEditor;
+
+            // --- Hidden Merge Elements ---
+            const hiddenCamVideo = document.getElementById('hidden-cam-video');
+            const hiddenScreenVideo = document.getElementById('hidden-screen-video');
+            const mergeCanvas = document.getElementById('merge-canvas');
+            const mergeCtx = mergeCanvas.getContext('2d');
+            
+            const completedMessage = document.getElementById('completed-message');
+            const interviewerNameEl = document.getElementById('interviewer-name');
+            const interviewerVideoNameEl = document.getElementById('interviewer-video-name');
+            const timerEl = document.getElementById('timer-text');
+
+
+            // --- Helper: Change Page State ---
+            function showState(state, stateData = {}) {
+                console.log("Changing state to:", state, "with data:", stateData);
+                
+                // Stop any running intervals
+                if (lobbyCheckInterval) clearInterval(lobbyCheckInterval);
+                if (lobbyCountdownInterval) clearInterval(lobbyCountdownInterval);
+
+                Object.values(pageStates).forEach(el => el.style.display = 'none');
+                
+                if (pageStates[state]) {
+                    const elToShow = pageStates[state];
+                    
+                    if(state === 'shareModal') {
+                        elToShow.style.display = 'flex'; 
+                        elToShow.classList.add('visible');
+                        setTimeout(() => {
+                            elToShow.querySelector('.modal-center-content').classList.add('scale-100', 'opacity-100');
+                        }, 10);
+                    } else if (state === 'room') {
+                        elToShow.style.display = 'grid'; // Interview room is grid
+                        floatingChatTrigger.style.display = 'block';
+                    } else if (state === 'lobby') {
+                        elToShow.style.display = 'flex';
+                        setupLobby(stateData.startTime, stateData.hasSubmittedDetails);
+                    } else {
+                        elToShow.style.display = 'flex'; // Other states are flex
+                        floatingChatTrigger.style.display = 'none';
+                    }
+                } else {
+                    console.warn("Unknown state:", state);
+                    pageStates.loading.style.display = 'flex';
+                }
+            }
+            
+            // --- Helper: Update Connection Status ---
+            function updateConnectionStatus(isConnected, message = "Connected") {
+                if (isConnected) {
+                    connectionDot.classList.remove('bg-red-500', 'bg-yellow-500', 'animate-none');
+                    connectionDot.classList.add('bg-green-500', 'animate-pulse');
+                    connectionText.textContent = message;
+                    connectionText.classList.remove('text-red-500');
+                    connectionText.classList.add('text-gray-600');
+                } else {
+                    connectionDot.classList.remove('bg-green-500', 'bg-yellow-500', 'animate-pulse');
+                    connectionDot.classList.add('bg-red-500', 'animate-none');
+                    connectionText.textContent = message;
+                    connectionText.classList.remove('text-gray-600');
+                    connectionText.classList.add('text-red-600');
+                }
+            }
+
+            // --- 1. Initial Load & Auth ---
+            async function main() {
+                showState('loading');
+                const urlParams = new URLSearchParams(window.location.search);
+                token = urlParams.get('token');
+                if (!token) {
+                    document.body.innerHTML = `<div class="p-8 text-center text-red-600"><h2>Error: No token provided.</h2><p>This interview link is invalid.</p></div>`;
+                    return;
+                }
+                
+                await checkInterviewState();
+            }
+
+            // --- 2. State Check (Can be called multiple times) ---
+            async function checkInterviewState() {
+                 try {
+                    const response = await fetch('/api/public/interview-details', {
+                        headers: { 'x-auth-token': token }
+                    });
+                    
+                    interviewDetails = await response.json();
+                    if (!response.ok) throw new Error(interviewDetails.message || 'Authentication failed.');
+                    
+                    slotId = interviewDetails.slotId;
+                    interviewerNameEl.textContent = interviewDetails.interviewerName;
+                    interviewerVideoNameEl.textContent = `${interviewDetails.interviewerName}`;
+                    
+                    currentChatHistory = interviewDetails.chatHistory || [];
+                    currentAssignedProblems = interviewDetails.assignedProblems || [];
+                    currentProblemId = interviewDetails.currentProblemId || null;
+
+                    // --- NEW STATE ROUTING ---
+                    const roomState = interviewDetails.roomState;
+                    console.log("Received room state:", roomState);
+                    
+                    if (roomState === 'COMPLETED') {
+                        completedMessage.textContent = interviewDetails.message || "This interview has already been completed.";
+                        showState('completed');
+                    } else if (roomState === 'LOBBY') {
+                        showState('lobby', { 
+                            startTime: interviewDetails.startTime,
+                            hasSubmittedDetails: interviewDetails.studentDetailsSubmitted 
+                        });
+                    } else if (roomState === 'DETAILS_FORM') {
+                        setupDetailsForm();
+                        showState('detailsForm');
+                    } else if (roomState === 'INTERVIEW_ROOM') {
+                        // Details are submitted and interviewer is ready, proceed to screen share.
+                        showState('shareModal');
+                    } else {
+                        // Fallback
+                        showState('lobby', { 
+                            startTime: interviewDetails.startTime,
+                            hasSubmittedDetails: interviewDetails.studentDetailsSubmitted 
+                        });
+                    }
+                    // --- END NEW STATE ROUTING ---
+
+                } catch (error) {
+                    console.error("State check error:", error);
+                    let msg = error.message;
+                    if (msg.includes('completed') || msg.includes('expired')) {
+                        completedMessage.textContent = msg;
+                        showState('completed');
+                    } else {
+                        pageStates.loading.innerHTML = `<div class="p-8 text-center text-red-600"><h2>Error: ${msg}</h2><p>This interview link may be invalid or expired. Please contact the scheduler.</p></div>`;
+                    }
+                }
+            }
+
+            // --- 3. Lobby Setup (NEW) ---
+            function setupLobby(startTimeStr, hasSubmittedDetails) {
+                // Stop existing intervals
+                if (lobbyCheckInterval) clearInterval(lobbyCheckInterval);
+                if (lobbyCountdownInterval) clearInterval(lobbyCountdownInterval);
+
+                const startTime = new Date(startTimeStr);
+
+                // Update lobby text
+                if (hasSubmittedDetails) {
+                    lobbyTitle.textContent = "You're All Set!";
+                    lobbyMessage.textContent = "Your details are submitted. Please wait for the interviewer to start the session.";
+                    lobbyTimerContainer.style.display = 'none'; // Hide timer
+                } else {
+                    lobbyTitle.textContent = "Interview Scheduled";
+                    lobbyMessage.textContent = "Please wait. The pre-interview verification form will open 10 minutes before the start time.";
+                    lobbyTimerContainer.style.display = 'block'; // Show timer
+                }
+                
+                // Setup countdown timer
+                function updateCountdown() {
+                    const now = new Date();
+                    const timeLeftMs = startTime.getTime() - now.getTime();
+
+                    if (timeLeftMs <= 0) {
+                        lobbyTimer.textContent = "00:00:00";
+                        if (lobbyCountdownInterval) clearInterval(lobbyCountdownInterval);
+                        // Timer finished, we should re-check the state
+                        checkInterviewState();
+                    } else {
+                        const hours = Math.floor(timeLeftMs / (1000 * 60 * 60));
+                        const minutes = Math.floor((timeLeftMs % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((timeLeftMs % (1000 * 60)) / 1000);
+                        lobbyTimer.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    }
+                }
+                
+                if (!hasSubmittedDetails) {
+                    updateCountdown();
+                    lobbyCountdownInterval = setInterval(updateCountdown, 1000);
+                }
+
+                // Setup polling to check if state has changed (e.g., interviewer started)
+                lobbyCheckInterval = setInterval(checkInterviewState, 15000); // Check every 15 seconds
+            }
+
+            // --- 4. Student Details Form ---
+            async function setupDetailsForm() {
+                // Prefill form
+                const details = interviewDetails.studentDetails;
+                document.getElementById('fullName').value = details.candidateName || '';
+                document.getElementById('email').value = details.candidateEmail || '';
+                document.getElementById('rollNumber').value = details.rollNumber || '';
+                document.getElementById('collegeName').value = details.collegeName || '';
+                document.getElementById('departmentName').value = details.departmentName || '';
+
+                // Start webcam
+                try {
+                    webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    webcamPreview.srcObject = webcamStream;
+                    webcamPreview.play();
+                    submitDetailsBtn.disabled = true; // Disabled until photo is taken
+                } catch (err) {
+                    console.error("Failed to get webcam for details form:", err);
+                    photoError.textContent = "Failed to access webcam. Please allow camera permissions and refresh.";
+                    photoError.classList.remove('hidden');
+                    capturePhotoBtn.disabled = true;
+                }
+            }
+            
+            capturePhotoBtn.addEventListener('click', () => {
+                const context = photoCanvas.getContext('2d');
+                photoCanvas.width = webcamPreview.videoWidth;
+                photoCanvas.height = webcamPreview.videoHeight;
+                
+                // Mirror the canvas draw
+                context.translate(webcamPreview.videoWidth, 0);
+                context.scale(-1, 1);
+                context.drawImage(webcamPreview, 0, 0, photoCanvas.width, photoCanvas.height);
+                
+                capturedImageData = photoCanvas.toDataURL('image/jpeg', 0.9);
+                capturedPhotoEl.src = capturedImageData;
+                
+                webcamPreview.classList.add('hidden');
+                photoCanvas.classList.add('hidden');
+                capturedPhotoEl.classList.remove('hidden');
+                
+                capturePhotoBtn.textContent = 'Retake Photo';
+                submitDetailsBtn.disabled = false;
+
+                // Stop the webcam stream
+                if (webcamStream) {
+                    webcamStream.getTracks().forEach(track => track.stop());
+                    webcamStream = null;
+                }
+            });
+
+            detailsForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!capturedImageData) {
+                    photoError.textContent = "Please capture a photo before submitting.";
+                    photoError.classList.remove('hidden');
+                    return;
+                }
+                
+                submitDetailsBtn.disabled = true;
+                submitDetailsBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+                detailsSubmitMessage.textContent = 'Saving your details...';
+                detailsSubmitMessage.className = 'text-center text-sm mt-3 text-gray-600';
+
+                const payload = {
+                    candidateName: document.getElementById('fullName').value,
+                    candidateEmail: document.getElementById('email').value,
+                    rollNumber: document.getElementById('rollNumber').value,
+                    collegeName: document.getElementById('collegeName').value,
+                    departmentName: document.getElementById('departmentName').value,
+                    photo: capturedImageData
+                };
+
+                try {
+                    const response = await fetch('/api/public/student-details', {
+                        method: 'POST',
+                        headers: { 'x-auth-token': token, 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.message);
+
+                    detailsSubmitMessage.textContent = 'Success! Proceeding to interview...';
+                    detailsSubmitMessage.className = 'text-center text-sm mt-3 text-green-600';
+                    
+                    // Transition to the next step
+                    setTimeout(() => checkInterviewState(), 1000); // Re-check state
+
+                } catch (err) {
+                    console.error("Failed to submit details:", err);
+                    detailsSubmitMessage.textContent = `Error: ${err.message}`;
+                    detailsSubmitMessage.className = 'text-center text-sm mt-3 text-red-600';
+                    submitDetailsBtn.disabled = false;
+                    submitDetailsBtn.innerHTML = 'Submit Details & Proceed';
+                }
+            });
+            
+            // --- 5. Setup Interview Room (after screen share) ---
+            async function setupInterviewRoom() {
+                showState('room');
+                document.getElementById('timer').classList.remove('hidden');
+                document.getElementById('violation-counter').classList.remove('hidden');
+
+                codeEditor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+                    lineNumbers: true,
+                    theme: 'neat',
+                    mode: 'javascript',
+                    autoCloseBrackets: true,
+                    matchBrackets: true,
+                    lineWrapping: true,
+                });
+                
+                setTimeout(() => codeEditor.refresh(), 100);
+
+                codeEditor.setValue(interviewDetails.latestCode || `// Welcome! Use the 'Custom Input' tab and 'Run' button for your own code.\n`);
+                languageSelect.value = interviewDetails.latestLanguage || 'javascript';
+                codeEditor.setOption('mode', getCodeMirrorMode(languageSelect.value));
+                
+                renderChatHistory(currentChatHistory, true);
+                renderProblemCards(currentAssignedProblems);
+                
+                // Auto-select first problem if one is assigned
+                if (currentProblemId) {
+                    await handleProblemSelect(currentProblemId, false); // false = don't switch tab
+                } else if (currentAssignedProblems.length > 0) {
+                    const firstProblemId = currentAssignedProblems[0].id || currentAssignedProblems[0].problemId;
+                    await handleProblemSelect(firstProblemId, false);
+                } else {
+                    // No problems assigned, show placeholder
+                    populateProblemView(null);
+                }
+                
+                // --- Event Listeners ---
+                languageSelect.addEventListener('change', () => {
+                    codeEditor.setOption('mode', getCodeMirrorMode(languageSelect.value));
+                    emitCodeUpdate();
+                });
+                
+                // Click listener for problem cards
+                problemsCardList.addEventListener('click', (e) => {
+                    const viewBtn = e.target.closest('.view-problem-btn');
+                    if (viewBtn) {
+                        const problemId = viewBtn.dataset.problemId;
+                        handleProblemSelect(problemId, true); // true = switch tab
+                    }
+                });
+
+                let codeUpdateTimeout;
+                codeEditor.on('change', () => {
+                    clearTimeout(codeUpdateTimeout);
+                    codeUpdateTimeout = setTimeout(emitCodeUpdate, 500);
+                });
+                
+                chatFormModal.addEventListener('submit', sendChatMessage);
+                runBtn.addEventListener('click', () => runCode(false)); // Run (Custom Input)
+                submitBtn.addEventListener('click', () => runCode(true)); // Submit (Test Cases)
+                
+                // --- DRAGGABLE CHAT: Toggle Logic ---
+                openChatModalBtn.addEventListener('click', () => {
+                    if (chatModal.classList.contains('visible')) {
+                        hideAppModal(chatModal);
+                    } else {
+                        showAppModal(chatModal);
+                    }
+                });
+                closeChatModalBtn.addEventListener('click', () => hideAppModal(chatModal));
+                
+                // --- DRAGGABLE CHAT: Init ---
+                const chatModalContainer = document.getElementById('chat-modal-container');
+                const chatModalHandle = document.getElementById('chat-modal-handle');
+                if (chatModalContainer && chatModalHandle) {
+                    makeDraggable(chatModalContainer, chatModalHandle);
+                }
+                // --- END DRAGGABLE CHAT ---
+                
+                // Main workspace tab switching
+                document.querySelectorAll('.tab-btn[data-tab-group="main-workspace"]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const tabTargetId = btn.dataset.tabTarget;
+                        switchMainTab(tabTargetId);
+                    });
+                });
+                
+                // New "Solve" button
+                solveFromViewBtn.addEventListener('click', () => {
+                    switchMainTab('code-editor-tab');
+                });
+                
+                // Init Proctoting
+                setupViolationTracking();
+                startInterviewTimer(interviewDetails.startTime, 90);
+                enterFullscreen();
+
+                // Output panel tab switching
+                document.querySelectorAll('.tab-btn[data-tab-group="output"]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const tabGroup = btn.dataset.tabGroup;
+                        const tabTargetId = btn.dataset.tabTarget;
+                        
+                        document.querySelectorAll(`.tab-btn[data-tab-group="${tabGroup}"]`).forEach(t => t.classList.remove('active'));
+                        btn.classList.add('active');
+                        
+                        // Hide all content panes in this group
+                        document.querySelectorAll('.tab-content[data-tab-group="output"]').forEach(c => c.classList.remove('active'));
+                        // Show the target one
+                        document.getElementById(tabTargetId).classList.add('active');
+                    });
+                });
+                
+                // Auto-select "Custom Input" tab by default
+                document.querySelector('.tab-btn[data-tab-target="output-custom-input-tab"]').click();
+            }
+            
+            // --- Share Screen & Enter Button (VIDEO FIX & SCREEN SHARE FIX) ---
+            document.getElementById('share-and-enter-btn').onclick = async () => {
+                const btn = document.getElementById('share-and-enter-btn');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Starting...';
+                document.getElementById('screen-share-error').classList.add('hidden'); // Hide old errors
+                
+                try {
+                    // 1. Get streams AND check for "Entire Screen"
+                    await shareScreenAndCamera();
+                    
+                    // 2. CRITICAL FIX: Init WebRTC *after* streams are ready
+                    // This function now also connects the socket.
+                    await initWebRTC(); 
+                    
+                    // 3. Hide modal
+                    hideAppModal(pageStates.shareModal);
+                    
+                    // 4. Setup the rest of the room (CodeMirror, etc.)
+                    await setupInterviewRoom();
+
+                } catch (e) {
+                    console.error("Screen sharing startup failed:", e);
+                    let errMsg = "Failed to get screen share/camera permissions. Please try again.";
+                    
+                    // --- MODIFIED: Specific Error for Not Sharing Screen ---
+                    if (e.name === 'NotAllowedError') {
+                        errMsg = "Permission denied. You must allow access to continue.";
+                    } else if (e.message === 'ENTIRE_SCREEN_REQUIRED') {
+                        errMsg = "You MUST share your 'Entire Screen'. Sharing a window or tab is not allowed. Please try again.";
+                    }
+                    
+                    document.getElementById('screen-share-error').textContent = errMsg;
+                    document.getElementById('screen-share-error').classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.innerHTML = 'Share Screen & Enter';
+                    
+                    // Stop any streams that might have been partially captured
+                    if (localScreenStream) localScreenStream.getTracks().forEach(track => track.stop());
+                    if (localCameraStream) localCameraStream.getTracks().forEach(track => track.stop());
+                    if (localMicStream) localMicStream.getTracks().forEach(track => track.stop());
+                }
+            };
+            
+            function getCodeMirrorMode(lang) {
+                if (lang === 'python') return 'python';
+                if (lang === 'java') return 'text/x-java';
+                if (lang === 'cpp') return 'text/x-c++src';
+                return 'javascript';
+            }
+            
+            // --- Socket.io Setup (VIDEO FIX) ---
+            function initSocket() {
+                if (socket) return;
+                socket = io();
+                
+                socket.on('connect', () => {
+                    updateConnectionStatus(true, "Connected");
+                    socket.emit('join-interview-room', { slotId: slotId, role: 'student' });
+                    // NOTE: 'student-ready' is now sent from initWebRTC *after* tracks are added
+                });
+                
+                socket.on('disconnect', () => updateConnectionStatus(false, "Reconnecting..."));
+                socket.on('connect_error', () => updateConnectionStatus(false, "Connection Failed"));
+                
+                // This event is sent by the server when the student (re)joins
+                socket.on('interview-state-restore', (state) => {
+                     console.log('Received Interview State Restore:', state);
+                     currentChatHistory = state.chatHistory || [];
+                     currentAssignedProblems = state.assignedProblems || [];
+                     currentProblemId = state.currentProblemId || null;
+                     
+                     if (pageStates.room.style.display === 'grid') { // Check for 'grid'
+                        renderChatHistory(currentChatHistory, true);
+                        renderProblemCards(currentAssignedProblems);
+                        if (codeEditor) {
+                            codeEditor.setValue(state.latestCode || `// Click "View" on an assigned problem to begin.\n`);
+                            languageSelect.value = state.latestLanguage || 'javascript';
+                            codeEditor.setOption('mode', getCodeMirrorMode(languageSelect.value));
+                        }
+                        if (currentProblemId) {
+                            handleProblemSelect(currentProblemId, false);
+                        }
+                     }
+                });
+                
+                // This event is sent by the interviewer
+                socket.on('interview-started', () => {
+                    // Interviewer clicked start, re-check state
+                    checkInterviewState();
+                });
+                
+                socket.on('student-receive-problem-list', (problemList) => {
+                    console.log('Received updated problem list from interviewer:', problemList);
+                    currentAssignedProblems = problemList || [];
+                    renderProblemCards(currentAssignedProblems);
+                    
+                    if (problemList.length > 0 && !currentProblemId) {
+                        const latestProblem = problemList[problemList.length - 1];
+                        const latestProblemId = latestProblem.id || latestProblem.problemId; 
+                        handleProblemSelect(latestProblemId, true); // Auto-view the latest problem
+                    }
+                });
+
+                socket.on('receive-chat-message', (message) => {
+                    if (message.sender !== 'student') { 
+                         currentChatHistory.push(message);
+                         renderSingleMessage(message, false);
+                         if (!chatModal.classList.contains('visible')) {
+                             floatingChatBadge.classList.remove('hidden');
+                         }
+                    }
+                });
+
+                socket.on('interview-end', () => {
+                    if (drawLoopId) cancelAnimationFrame(drawLoopId);
+                    if (localStream) localStream.getTracks().forEach(track => track.stop());
+                    if (localCameraStream) localCameraStream.getTracks().forEach(track => track.stop());
+                    if (localScreenStream) localScreenStream.getTracks().forEach(track => track.stop());
+                    if (localMicStream) localMicStream.getTracks().forEach(track => track.stop()); // Stop mic
+                    if (peerConnection) peerConnection.close();
+                    
+                    completedMessage.textContent = "The interviewer has ended the session. Thank you for your time.";
+                    showState('completed');
+                });
+                
+                // --- WebRTC Socket Listeners ---
+                socket.on('webrtc-offer', async (offer) => {
+                    // This should now work, as peerConnection is guaranteed to be set
+                    if (!peerConnection) {
+                         console.error("Received offer but peerConnection is not ready. This shouldn't happen.");
+                         return;
+                    }
+                    console.log("Received WebRTC Offer");
+                    await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+                    remoteDescriptionSet = true;
+                    const answer = await peerConnection.createAnswer();
+                    await peerConnection.setLocalDescription(answer);
+                    socket.emit('webrtc-answer', { slotId: slotId, answer: answer });
+                    console.log("Sent WebRTC Answer");
+                });
+
+                socket.on('webrtc-answer', (answer) => {
+                    // Student should not receive answers, only send them.
+                    console.warn("Student received a 'webrtc-answer', which is unexpected.");
+                });
+
+                socket.on('webrtc-ice-candidate', (candidate) => {
+                    if (candidate && peerConnection && remoteDescriptionSet) {
+                        console.log("Received ICE candidate");
+                        peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                    }
+                });
+            }
+
+            // --- Chat Functions (DRAGGABLE CHAT FIX) ---
+            function sendChatMessage(e) {
+                e.preventDefault();
+                const text = chatInputModal.value.trim();
+                if (text === '') return;
+                const message = { sender: 'student', text: text, timestamp: new Date().toISOString() };
+                
+                currentChatHistory.push(message);
+                renderSingleMessage(message, true); 
+                
+                socket.emit('send-chat-message', { slotId: slotId, message: message });
+                
+                chatInputModal.value = '';
+            }
+
+            // --- Generic Modal Show/Hide (NEW) ---
+            function showAppModal(modal) {
+                if (!modal) return;
+                modal.classList.remove('hidden');
+                
+                requestAnimationFrame(() => { // Use rAF to ensure transition triggers
+                    modal.classList.add('visible');
+                    // Special focus logic for chat
+                    if (modal.id === 'chat-modal') {
+                        floatingChatBadge.classList.add('hidden');
+                        setTimeout(() => {
+                            chatMessagesModal.scrollTop = chatMessagesModal.scrollHeight;
+                            chatInputModal.focus();
+                        }, 200); // 200ms to match transition
+                    }
+                });
+            }
+
+            function hideAppModal(modal) {
+                 if (!modal) return;
+                 modal.classList.remove('visible');
+                 
+                 let duration = 300; // Default
+                 if (modal.id === 'chat-modal') duration = 200;
+                 
+                 setTimeout(() => {
+                    modal.classList.add('hidden');
+                 }, duration);
+            }
+            // --- END CHAT FIX ---
+
+            function renderChatHistory(history, isInitialLoad) {
+                chatMessagesModal.innerHTML = '';
+                history.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); 
+                history.forEach(msg => {
+                    const isSelf = msg.sender === 'student';
+                    renderSingleMessage(msg, isSelf);
+                });
+                if (isInitialLoad) {
+                     chatMessagesModal.scrollTop = chatMessagesModal.scrollHeight;
+                }
+            }
+
+            function renderSingleMessage(message, isSelf) {
+                const container = chatMessagesModal;
+                if (!container) return; 
+                
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `flex ${isSelf ? 'justify-end' : 'justify-start'}`;
+                
+                const time = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                msgDiv.innerHTML = `
+                    <div class="chat-bubble ${isSelf ? 'chat-bubble-self' : 'chat-bubble-other'}">
+                        <p class="text-sm">${message.text}</p>
+                        <p class="text-xs mt-1 opacity-70 ${isSelf ? 'text-right' : 'text-left'}">${time}</p>
+                    </div>
+                `;
+                container.appendChild(msgDiv);
+                container.scrollTop = container.scrollHeight; 
+            }
+            
+            // --- NEW: Main Workspace Tab Switcher ---
+            function switchMainTab(tabTargetId) {
+                // Handle Tab Buttons
+                document.querySelectorAll('.tab-btn[data-tab-group="main-workspace"]').forEach(t => t.classList.remove('active'));
+                document.querySelector(`.tab-btn[data-tab-target="${tabTargetId}"]`).classList.add('active');
+                
+                // Handle Tab Content
+                problemViewTab.style.display = 'none';
+                codeEditorTab.style.display = 'none';
+                
+                const tabToShow = document.getElementById(tabTargetId);
+                if (tabToShow) {
+                    // Code editor tab needs to be a flex container
+                    tabToShow.style.display = (tabTargetId === 'code-editor-tab') ? 'flex' : 'block';
+                }
+
+                if (tabTargetId === 'code-editor-tab') {
+                    codeEditor.refresh(); // Refresh CodeMirror
+                }
+            }
+
+            // --- Problem Functions ---
+            function renderProblemCards(problems) {
+                problemsCardList.innerHTML = '';
+                if (!problems || problems.length === 0) {
+                    problemsCardList.innerHTML = '<p class="text-gray-500 text-sm p-2">Waiting for interviewer to assign problems...</p>';
+                    populateProblemView(null); // Show placeholder
+                    return;
+                }
+                
+                problems.forEach(problem => {
+                    const id = problem.id || problem.problemId;
+                    const card = document.createElement('div');
+                    card.className = `problem-card ${id === currentProblemId ? 'active' : ''}`;
+                    card.dataset.problemId = id;
+                    card.innerHTML = `
+                        <h4 class="font-semibold text-gray-900">${problem.title}</h4>
+                        <div class="flex gap-2 mt-3">
+                            <button class="view-problem-btn px-3 py-1.5 text-xs font-bold rounded-md transition-colors bg-blue-600 text-white hover:bg-blue-700" data-problem-id="${id}">
+                                <i class="fas fa-eye mr-1"></i>View Problem
+                            </button>
+                        </div>
+                    `;
+                    problemsCardList.appendChild(card);
+                });
+            }
+            
+            async function handleProblemSelect(problemId, switchToTab) {
+                if (!problemId || problemId === '') {
+                    currentProblemId = null;
+                    activeProblemTitle.textContent = "No problem selected";
+                    interviewDetails.currentProblemTestCases = [];
+                    populateProblemView(null);
+                    return;
+                }
+                
+                // --- Visual Update ---
+                currentProblemId = problemId;
+                problemsCardList.querySelectorAll('.problem-card').forEach(card => {
+                    card.classList.remove('active');
+                    if (card.dataset.problemId === problemId) {
+                        card.classList.add('active');
+                    }
+                });
+                
+                try {
+                    let problem;
+                    // Use cached details if available
+                    if (currentProblemDetails[problemId]) {
+                        problem = currentProblemDetails[problemId];
+                    } else {
+                        const response = await fetch(`/api/public/interview-problem-details/${problemId}`, {
+                            headers: { 'x-auth-token': token }
+                        });
+                        problem = await response.json();
+                        if (!response.ok) throw new Error(problem.message);
+                        currentProblemDetails[problemId] = problem; // Cache full details
+                    }
+                    
+                    activeProblemTitle.textContent = `Solving: ${problem.title}`;
+                    interviewDetails.currentProblemTestCases = problem.testCases || []; 
+                    
+                    populateProblemView(problem); // Populate the new problem view
+                    
+                    if(switchToTab) {
+                        switchMainTab('problem-view-tab');
+                    }
+                    
+                } catch (error) {
+                    activeProblemTitle.textContent = `Error loading problem`;
+                    populateProblemView({
+                        title: 'Error',
+                        description: `Could not load details: ${error.message}`
+                    });
+                    if(switchToTab) {
+                        switchMainTab('problem-view-tab');
+                    }
+                }
+            }
+
+            // NEW: Function to populate the problem view tab
+            function populateProblemView(problem) {
+                if (!problem) {
+                    problemViewTitle.textContent = "No Problem Selected";
+                    problemViewDescription.textContent = "Please select a problem from the \"Assigned Problems\" list on the left, or use the \"Code Editor\" tab to write your own code.";
+                    problemViewDetails.innerHTML = "";
+                    solveFromViewBtn.disabled = true;
+                    submitBtn.disabled = true; // Disable submit if no problem
+                } else {
+                    problemViewTitle.textContent = problem.title || "Problem Details";
+                    problemViewDescription.textContent = problem.description || 'No description available.';
+                    
+                    let detailsHtml = "";
+                    if(problem.inputFormat) detailsHtml += `<h4 class="font-semibold text-gray-800 mb-1 mt-4">Input Format</h4><pre class="problem-pre">${problem.inputFormat}</pre>`;
+                    if(problem.outputFormat) detailsHtml += `<h4 class="font-semibold text-gray-800 mb-1 mt-4">Output Format</h4><pre class="problem-pre">${problem.outputFormat}</pre>`;
+                    if(problem.example) detailsHtml += `<h4 class="font-semibold text-gray-800 mb-1 mt-4">Example</h4><pre class="problem-pre">${problem.example}</pre>`;
+                    if(problem.constraints) detailsHtml += `<h4 class="font-semibold text-gray-800 mb-1 mt-4">Constraints</h4><pre class="problem-pre">${problem.constraints}</pre>`;
+                    
+                    problemViewDetails.innerHTML = detailsHtml;
+                    solveFromViewBtn.disabled = false;
+                    submitBtn.disabled = false; // Enable submit
+                }
+                // Run button is always enabled
+                runBtn.disabled = false;
+            }
+
+            
+            // --- Code Execution Functions (FREESTYLE COMPILER FIX) ---
+            function emitCodeUpdate() {
+                if (socket) {
+                    socket.emit('student-code-update', {
+                        slotId: slotId,
+                        code: codeEditor.getValue(),
+                        language: languageSelect.value
+                    });
+                }
+            }
+            
+            async function runCode(isSubmit) {
+                const code = codeEditor.getValue();
+                const language = languageSelect.value;
+                
+                let testCasesToRun = [];
+                let runOnlyFirstCase = false;
+                
+                if (isSubmit) {
+                    // --- SUBMIT LOGIC ---
+                    if (!currentProblemId) {
+                        outputConsole.textContent = "Please select an assigned problem before clicking 'Submit'.";
+                        outputConsole.className = 'output-console output-error p-4 text-sm h-full w-full !bg-transparent !rounded-none';
+                        document.querySelector('.tab-btn[data-tab-target="output-console-tab"]').click();
+                        return;
+                    }
+                    if (!interviewDetails.currentProblemTestCases || interviewDetails.currentProblemTestCases.length === 0) {
+                        outputConsole.textContent = "Error: Test cases for this problem are not loaded. Please re-select the problem.";
+                        outputConsole.className = 'output-console output-error p-4 text-sm h-full w-full !bg-transparent !rounded-none';
+                        document.querySelector('.tab-btn[data-tab-target="output-console-tab"]').click();
+                        return;
+                    }
+                    
+                    testCasesToRun = interviewDetails.currentProblemTestCases;
+                    runOnlyFirstCase = false;
+                    
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Submitting...';
+                    outputResultsContainer.innerHTML = '<p class="text-gray-500 p-4">Running all test cases...</p>';
+                    document.querySelector('.tab-btn[data-tab-target="output-results-tab"]').click();
+                    
+                } else {
+                    // --- RUN LOGIC (FREESTYLE) ---
+                    const customInput = customInputArea.value;
+                    testCasesToRun = [{ input: customInput, expected: 'N/A (Custom Run)' }];
+                    runOnlyFirstCase = true; // We only run this one case
+                    
+                    runBtn.disabled = true;
+                    runBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Running...';
+                    outputConsole.textContent = 'Executing with custom input...';
+                    outputConsole.className = 'output-console p-4 text-sm h-full w-full !bg-transparent !rounded-none';
+                    document.querySelector('.tab-btn[data-tab-target="output-console-tab"]').click();
+                }
+
+                let passedCount = 0;
+                let resultsHtml = '';
+                let allOutputs = [];
+                
+                const cases = runOnlyFirstCase ? testCasesToRun.slice(0, 1) : testCasesToRun;
+
+                for (let i = 0; i < cases.length; i++) {
+                    const testCase = cases[i];
+                    try {
+                        const response = await fetch('/api/compile', {
+                            method: 'POST',
+                            headers: { 'x-auth-token': token, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ language: language, code: code, input: testCase.input })
+                        });
+                        const result = await response.json();
+                        
+                        let output = (result.output || '').trim().replace(/\r\n/g, '\n');
+                        let expected = (testCase.expected || '').trim().replace(/\r\n/g, '\n');
+                        let passed = !result.stderr && output === expected;
+                        
+                        // For 'Run' (freestyle), we don't check pass/fail
+                        if (!isSubmit) passed = false; 
+                        
+                        let outputData = {
+                            input: testCase.input,
+                            expected: expected,
+                            output: result.stderr || output,
+                            passed: passed,
+                            error: !!result.stderr
+                        };
+                        allOutputs.push(outputData);
+
+                        if (passed) passedCount++;
+
+                        if (isSubmit) {
+                             resultsHtml += `
+                                <div class="test-case ${passed ? 'test-case-pass' : 'test-case-fail'}">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="font-bold text-base ${passed ? 'text-green-700' : 'text-red-700'}">Test Case ${i + 1}</span>
+                                        <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full ${passed ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}">${passed ? 'PASS' : 'FAIL'}</span>
+                                    </div>
+                                    <pre class="!bg-gray-800 !text-gray-200 !p-2 !text-xs !overflow-x-auto rounded mt-2">` +
+                                        `<span class="text-gray-400">Input:</span>\n${testCase.input || ' '}\n\n` +
+                                        `<span class="text-gray-400">Expected:</span>\n${expected}\n\n` +
+                                        `<span class="${passed ? 'text-gray-400' : 'text-red-400'}">Got:</span>\n${outputData.output || ' '}` +
+                                    `</pre>
+                                </div>
+                            `;
+                        } else {
+                            // Output for 'Run' (freestyle)
+                            outputConsole.textContent = 
+                                `--- Custom Input ---\n${testCase.input || ' '}\n\n` +
+                                `--- Output ---\n${outputData.output || ' '}`;
+                            outputConsole.className = `output-console p-4 text-sm h-full w-full !bg-transparent !rounded-none ${outputData.error ? 'output-error' : ''}`;
+                        }
+
+                    } catch (error) {
+                        const outputData = { error: error.message, passed: false };
+                        allOutputs.push(outputData);
+                        if (isSubmit) {
+                            resultsHtml += `<div class="test-case test-case-fail"><p class="text-red-600">Test Case ${i + 1} failed: ${error.message}</p></div>`;
+                        } else {
+                            outputConsole.textContent = `Error: ${error.message}`;
+                            outputConsole.className = 'output-console output-error p-4 text-sm h-full w-full !bg-transparent !rounded-none';
+                        }
+                    }
+                }
+                
+                if (socket) {
+                    socket.emit('student-code-output', {
+                        slotId: slotId,
+                        outputs: allOutputs,
+                        isSubmit: isSubmit
+                    });
+                }
+
+                if (isSubmit) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-check-double"></i>Submit';
+                    let summaryClass = passedCount === cases.length ? 'bg-green-100 text-green-800 border-green-300' : (passedCount > 0 ? 'bg-yellow-100 text-yellow-800 border-yellow-300' : 'bg-red-100 text-red-800 border-red-300');
+                    let summaryText = passedCount === cases.length ? 'All Test Cases Passed!' : `${passedCount} / ${cases.length} Test Cases Passed`;
+                    
+                    outputResultsContainer.innerHTML = `
+                        <div class="p-4 rounded-lg ${summaryClass} font-bold text-lg text-center mb-3">
+                            ${summaryText}
+                        </div>
+                        ${resultsHtml}
+                    `;
+                } else {
+                    runBtn.disabled = false;
+                    runBtn.innerHTML = '<i class="fas fa-play"></i>Run';
+                }
+            }
+
+
+            // --- Fullscreen & Violation Helpers ---
+            function enterFullscreen() {
+                const el = document.documentElement;
+                if (el.requestFullscreen) {
+                    el.requestFullscreen().catch(err => console.warn(`Fullscreen error: ${err.message}`));
+                } else if (el.webkitRequestFullscreen) {
+                    el.webkitRequestFullscreen();
+                }
+                fullscreenActive = true;
+            }
+
+            function setupViolationTracking() {
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'hidden') {
+                        violationCount++;
+                        updateViolations();
+                    }
+                });
+                document.addEventListener('fullscreenchange', () => {
+                    if (!document.fullscreenElement) {
+                        if(fullscreenActive) {
+                           violationCount++;
+                           updateViolations();
+                           fullscreenActive = false;
+                        }
+                    } else {
+                        fullscreenActive = true;
+                    }
+                });
+                function updateViolations() {
+                    const counter = document.getElementById('violation-counter');
+                    const text = document.getElementById('violation-count-text');
+                    if(counter && text) {
+                        text.textContent = `Violations: ${violationCount}`;
+                        counter.classList.remove('hidden');
+                        counter.classList.add('flex'); // Make sure it's visible
+                    }
+                    if (socket) {
+                        socket.emit('student-violation-count', { slotId: slotId, count: violationCount });
+                    }
+                }
+            }
+            
+            function startInterviewTimer(startTimeStr, durationMinutes) {
+                const duration = (durationMinutes || 90) * 60000;
+                const startTime = new Date(startTimeStr);
+                const endTime = new Date(startTime.getTime() + duration);
+                
+                function updateTimer() {
+                    const now = new Date();
+                    const timeLeft = endTime.getTime() - now.getTime();
+                    
+                    if (timeLeft <= 0) {
+                        const timeOver = now.getTime() - endTime.getTime();
+                        const minutes = Math.floor(timeOver / 60000);
+                        const seconds = Math.floor((timeOver % 60000) / 1000);
+                        timerEl.textContent = `+${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                        timerEl.classList.add('text-red-500');
+                    } else {
+                        const minutes = Math.floor(timeLeft / 60000);
+                        const seconds = Math.floor((timeLeft % 60000) / 1000);
+                        timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    }
+                }
+                updateTimer();
+                setInterval(updateTimer, 1000);
+            }
+
+            // --- Screen/Cam Share Functions (with Canvas Merging) ---
+            function startDrawLoop() {
+                if (drawLoopId) cancelAnimationFrame(drawLoopId);
+                
+                function draw() {
+                    mergeCtx.fillStyle = '#000000';
+                    mergeCtx.fillRect(0, 0, mergeCanvas.width, mergeCanvas.height);
+                    
+                    try {
+                        if (localScreenStream && hiddenScreenVideo.readyState >= 2) {
+                            mergeCtx.drawImage(hiddenScreenVideo, 0, 0, mergeCanvas.width, mergeCanvas.height);
+                        }
+                    } catch(e) { console.warn("Error drawing screen video:", e); }
+                    
+                    try {
+                        if (localCameraStream && hiddenCamVideo.readyState >= 2) {
+                            const pipWidth = mergeCanvas.width / 4.5; 
+                            const pipHeight = (pipWidth / 4) * 3; 
+                            const margin = 20;
+                            
+                            mergeCtx.save();
+                            mergeCtx.translate(mergeCanvas.width - pipWidth - margin, mergeCanvas.height - pipHeight - margin);
+                            mergeCtx.scale(-1, 1); 
+                            mergeCtx.drawImage(hiddenCamVideo, 0, 0, -pipWidth, pipHeight);
+                            mergeCtx.restore();
+                        }
+                    } catch(e) { console.warn("Error drawing camera video:", e); }
+                    
+                    drawLoopId = requestAnimationFrame(draw);
+                }
+                draw();
+            }
+            
+            // (SCREEN SHARE FIX)
+            async function shareScreenAndCamera() {
+                try {
+                    // Get Screen (video + system audio)
+                    localScreenStream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: "always" }, audio: true });
+                    
+                    // --- NEW: SCREEN SHARE CHECK ---
+                    const videoTrack = localScreenStream.getVideoTracks()[0];
+                    if (!videoTrack) throw new Error("No video track found in screen share.");
+                    const settings = videoTrack.getSettings();
+                    
+                    if (settings.displaySurface !== 'monitor') {
+                        // They shared a window or tab. Stop it!
+                        videoTrack.stop(); // Stop the track
+                        localScreenStream.getTracks().forEach(track => track.stop());
+                        throw new Error('ENTIRE_SCREEN_REQUIRED');
+                    }
+                    // --- END SCREEN SHARE CHECK ---
+                    
+                    hiddenScreenVideo.srcObject = localScreenStream;
+                    await hiddenScreenVideo.play();
+                    
+                    // Get Camera (video only)
+                    localCameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    hiddenCamVideo.srcObject = localCameraStream;
+                    await hiddenCamVideo.play();
+                    
+                    // Get Microphone (audio only)
+                    localMicStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+
+                    // Set self-preview
+                    localVideo.srcObject = localCameraStream;
+                    await localVideo.play();
+
+                    // Create stream from canvas
+                    const canvasStream = mergeCanvas.captureStream(30);
+                    
+                    // Add Screen Audio track
+                    const screenAudioTrack = localScreenStream.getAudioTracks()[0];
+                    if (screenAudioTrack) {
+                        canvasStream.addTrack(screenAudioTrack);
+                    }
+                    
+                    // Add Microphone Audio track
+                    const micAudioTrack = localMicStream.getAudioTracks()[0];
+                    if (micAudioTrack) {
+                        canvasStream.addTrack(micAudioTrack);
+                    }
+
+                    localStream = canvasStream; // This is the final stream to be sent
+                    startDrawLoop(); 
+                    
+                    localScreenStream.getVideoTracks()[0].onended = () => {
+                        console.warn("Screen sharing stopped by user.");
+                        if (drawLoopId) cancelAnimationFrame(drawLoopId);
+                        completedMessage.textContent = "Screen sharing was stopped. The interview has been terminated.";
+                        showState('completed');
+                        if (socket) socket.emit('interview-end', { slotId: slotId });
+                    };
+                    return true;
+
+                } catch(e) { 
+                    throw e; // Re-throw to be caught by the onclick handler
+                }
+            }
+            
+            // --- WebRTC Logic (VIDEO FIX) ---
+            async function initWebRTC() {
+                // 1. Connect socket *first*
+                if (!socket) initSocket();
+                
+                if (!localStream) {
+                    console.error("Local stream (merged stream) is not set up. Cannot proceed with WebRTC.");
+                    // This should not happen if logic is correct, but good to check.
+                    return;
+                }
+                
+                if (!socket) {
+                    console.error("Socket connection failed. Cannot init WebRTC.");
+                    return;
+                }
+                
+                remoteDescriptionSet = false; 
+                
+                if(peerConnection) {
+                    peerConnection.close();
+                    peerConnection = null;
+                }
+
+                peerConnection = new RTCPeerConnection({
+                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                });
+
+                // 2. Add tracks *after* PC is created
+                localStream.getTracks().forEach(track => {
+                    try {
+                        peerConnection.addTrack(track, localStream);
+                    } catch(e) {
+                        console.warn("Error adding track:", e);
+                    }
+                });
+                console.log("Local tracks added to PeerConnection");
+
+                peerConnection.ontrack = async (event) => {
+                    if (event.streams && event.streams[0]) {
+                        console.log("Received remote track from interviewer");
+                        remoteVideo.srcObject = event.streams[0];
+                        remoteVideo.poster = "https://placehold.co/600x400/333/999?text=Interviewer";
+                        try {
+                            await remoteVideo.play();
+                        } catch (e) {
+                            console.warn("Remote video play failed:", e);
+                        }
+                    }
+                };
+
+                peerConnection.onicecandidate = (event) => {
+                    if (event.candidate && remoteDescriptionSet) { // Only send if remote desc is set
+                        console.log("Sending ICE candidate");
+                        socket.emit('webrtc-ice-candidate', {
+                            slotId: slotId,
+                            candidate: event.candidate
+                        });
+                    }
+                };
+                
+                peerConnection.onconnectionstatechange = (e) => {
+                    const state = peerConnection.connectionState;
+                    console.log("WebRTC Connection State:", state);
+                    if(state === 'connected') {
+                        updateConnectionStatus(true, "WebRTC Connected");
+                    } else if (state === 'failed' || state === 'disconnected') {
+                        updateConnectionStatus(false, "WebRTC Failed");
+                    } else if (state === 'connecting') {
+                        updateConnectionStatus(true, "WebRTC Connecting...");
+                    }
+                };
+
+                // 3. Emit student-ready *after* tracks are added
+                console.log("Emitting 'student-ready' to interviewer");
+                socket.emit('student-ready', { slotId: slotId });
+            }
+            
+            // --- NEW: Draggable Window Logic (Copied from interviewer) ---
+            function makeDraggable(container, handle) {
+                let isDragging = false;
+                let offsetX, offsetY;
+
+                const onMouseDown = (e) => {
+                    // Only drag with left mouse button or single touch
+                    if (e.button === 0 || (e.touches && e.touches.length === 1)) {
+                        isDragging = true;
+                        handle.style.cursor = 'grabbing';
+                        
+                        const rect = container.getBoundingClientRect();
+                        
+                        // Convert to top/left positioning *at the start of the drag*
+                        if (container.style.position !== 'absolute') {
+                            container.style.position = 'absolute';
+                        }
+                        // Need to account for scroll, getBoundingClientRect is viewport-relative
+                        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+                        const startTop = rect.top + scrollTop;
+                        const startLeft = rect.left + scrollLeft;
+
+                        container.style.top = `${startTop}px`;
+                        container.style.left = `${startLeft}px`;
+                        container.style.bottom = 'auto'; // Clear old positioning
+                        container.style.right = 'auto'; // Clear old positioning
+                        container.style.transform = 'none'; // Clear animation/positioning
+                        
+                        const eventPos = e.touches ? e.touches[0] : e;
+                        offsetX = eventPos.clientX - startLeft;
+                        offsetY = eventPos.clientY - startTop;
+
+                        document.addEventListener('mousemove', onMouseMove);
+                        document.addEventListener('mouseup', onMouseUp);
+                        document.addEventListener('touchmove', onMouseMove, { passive: false });
+                        document.addEventListener('touchend', onMouseUp);
+                        
+                        if (e.preventDefault) e.preventDefault();
+                    }
+                };
+
+                const onMouseMove = (e) => {
+                    if (!isDragging) return;
+                    
+                    if (e.preventDefault) e.preventDefault(); // Prevent page scrolling
+                    
+                    const eventPos = e.touches ? e.touches[0] : e;
+                    
+                    // We don't need scroll offsets here because clientX/Y are viewport-relative
+                    let newTop = eventPos.clientY - offsetY;
+                    let newLeft = eventPos.clientX - offsetX;
+                    
+                    // Clamp to viewport
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
+                    const contRect = container.getBoundingClientRect(); // Get live dimensions
+                    
+                    if (newLeft < 0) newLeft = 0;
+                    if (newTop < 0) newTop = 0;
+                    if (newLeft + contRect.width > viewportWidth) newLeft = viewportWidth - contRect.width;
+                    if (newTop + contRect.height > viewportHeight) newTop = viewportHeight - contRect.height;
+
+                    container.style.top = `${newTop}px`;
+                    container.style.left = `${newLeft}px`;
+                };
+
+                const onMouseUp = () => {
+                    isDragging = false;
+                    handle.style.cursor = 'move';
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    document.removeEventListener('touchmove', onMouseMove);
+                    document.removeEventListener('touchend', onMouseUp);
+                };
+
+                handle.addEventListener('mousedown', onMouseDown);
+                handle.addEventListener('touchstart', onMouseDown, { passive: false });
+            }
+
+            // --- Start the application ---
+            main();
+        });
+    </script>
+</body>
+</html>
