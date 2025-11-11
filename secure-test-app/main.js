@@ -17,7 +17,7 @@ let isTestSubmitted = false;
 // --- MODIFIED BACKEND_URL for Local Testing ---
 // Set to localhost based on your error logs.
 // Change this back to 'https://www.testify-lac.com' for production.
-const BACKEND_URL = 'https://www.testify-lac.com/';
+const BACKEND_URL = 'https://www.testify-lac.com';
 console.log(`[Startup] Using Local Test backend URL: ${BACKEND_URL}`);
 
 // --- FORBIDDEN APPS LIST ---
