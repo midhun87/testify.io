@@ -390,7 +390,7 @@ ipcMain.handle('validate-token', async (event, token) => {
             throw new Error(data?.message || `Validation failed (Status: ${response.status})`);
         }
 
-        console.log(`[IPC validate-token] SUCCESS. Token valid for test: ${data?.title}`);
+        console.log(`[IPC validate-token] SUCCESS. Token valid for test: ${data?.title}. Is Mock: ${data.isMockTest}`);
         validatedTestData = data; // Store fetched test data globally in main process
         currentToken = token;     // Store the validated token globally
 
@@ -406,9 +406,11 @@ ipcMain.handle('validate-token', async (event, token) => {
         // Create the secure lockdown window for the next step
         mainWindow = createLockdownWindow();
 
-        // Load the candidate verification page into the new lockdown window
-        console.log('[IPC validate-token] Loading candidate verification page...');
+        // --- THIS IS THE CHANGE ---
+        // ALWAYS load the verification page, for both real and mock tests.
+        console.log('[IPC validate-token] Loading candidate verification page for all users (mock or real)...');
         await mainWindow.loadFile('candidate-verification.html');
+        // --- END OF CHANGE ---
 
         // Return success to the original (now closed) token entry window's JS
         return { isValid: true, error: null };
@@ -478,6 +480,10 @@ ipcMain.handle('fetch-colleges', async (event, testId) => {
     }
 });
 
+
+//
+// --- *** THIS IS THE CRITICAL FIX *** ---
+//
 // Handles submission of verification details from candidate-verification.js
 ipcMain.handle('submit-verification-details', async (event, receivedToken, details) => {
     console.log('[IPC submit-verification-details] Received details:', details);
@@ -485,13 +491,46 @@ ipcMain.handle('submit-verification-details', async (event, receivedToken, detai
     if (receivedToken !== currentToken) { console.error('[IPC submit-verification-details] Token mismatch!'); return { success: false, error: "Token mismatch error." }; }
     if (!details || !validatedTestData) { console.error('[IPC submit-verification-details] Missing details or original test data.'); return { success: false, error: "Internal error: Missing data." }; }
 
-    // Phase 1: Save Initial Details to Backend
+    
+    // --- NEW MOCK TEST LOGIC ---
+    if (validatedTestData.isMockTest === true) {
+        console.log('[IPC submit-verification-details] Mock test. Skipping backend save for verification details.');
+        
+        // Store details for the test page to fetch
+        // (This is a simplified way to pass details without DB)
+        validatedTestData.candidateDetails = details; 
+        console.log(`[IPC submit-verification-details] Mock User Details: ${JSON.stringify(details)}`);
+
+        // --- Phase 2: Load the Correct Test Page ---
+        try {
+            const isCodingTest = validatedTestData?.testType === 'coding';
+            console.log(`[IPC submit-verification-details] isCodingTest evaluated to: ${isCodingTest} (testType: ${validatedTestData?.testType})`);
+            const testPage = isCodingTest ? 'hiring-coding-test.html' : 'hiring-test.html';
+            
+            console.log(`[IPC submit-verification-details] Loading page: ${testPage}`);
+            await mainWindow.loadFile(testPage);
+            console.log(`[IPC submit-verification-details] Test page ${testPage} loaded.`);
+            
+            return { success: true }; // <<< IT RETURNS SUCCESS
+        
+        } catch (loadError) {
+            // Handle errors loading the HTML file
+            console.error(`[IPC submit-verification-details] Error loading test page:`, loadError);
+            dialog.showErrorBox('Loading Error', `Failed to load the test page: ${loadError.message}. Please restart the application.`);
+            return { success: false, error: `Load failed: ${loadError.message}` };
+        }
+    }
+    // --- END MOCK TEST LOGIC ---
+
+
+    // --- STANDARD HIRING FLOW ---
+    // (This code will only run if isMockTest is false)
+    console.log('[IPC submit-verification-details] Standard test. Saving details to backend...');
     try {
         const assignmentId = validatedTestData?.assignmentId;
         if (!assignmentId) throw new Error("Missing assignment ID in validated test data.");
 
         // Call the backend API to save the initial verification record
-        // This endpoint now saves to HIRING_TEST_RESULTS_TABLE with an 'init_' prefix
         const saveResponse = await fetch(`${BACKEND_URL}/api/save-initial-details`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-auth-token': currentToken },
@@ -503,24 +542,17 @@ ipcMain.handle('submit-verification-details', async (event, receivedToken, detai
     } catch (saveError) {
         // Handle errors during the save process
         console.error('[IPC submit-verification-details] Error saving initial details:', saveError);
-        dialog.showErrorBox('Initialization Error', `Failed to save verification details: ${saveError.message}. Please restart the application.`);
-        return { success: false, error: `Save failed: ${saveError.message}` };
+        // dialog.showErrorBox('Initialization Error', `Failed to save verification details: ${saveError.message}. Please restart the application.`);
+        return { success: false, error: `Save failed: ${saveError.message}` }; // <<< THIS IS THE SOURCE OF YOUR ERROR
     }
 
-    // Phase 2: Load the Correct Test Page
+    // Phase 2: Load the Correct Test Page (for standard flow)
     try {
-        //
-        // --- THIS IS THE FIX ---
-        //
-        // It will now correctly read the 'testType' property that the backend is sending.
         const isCodingTest = validatedTestData?.testType === 'coding';
-        
         console.log(`[IPC submit-verification-details] isCodingTest evaluated to: ${isCodingTest} (testType: ${validatedTestData?.testType})`);
 
-        // Select the appropriate HTML file
         const testPage = isCodingTest ? 'hiring-coding-test.html' : 'hiring-test.html';
 
-        // Load the selected test page into the current (lockdown) window
         console.log(`[IPC submit-verification-details] Loading page: ${testPage}`);
         await mainWindow.loadFile(testPage);
         console.log(`[IPC submit-verification-details] Test page ${testPage} loaded.`);
@@ -535,15 +567,30 @@ ipcMain.handle('submit-verification-details', async (event, receivedToken, detai
 });
 
 
-// Provides the validated token to the actual test page (hiring-test.html or hiring-coding-test.html)
+//
+// --- *** MODIFIED 'get-validated-token' HANDLER *** ---
+//
+// Provides the validated token AND mock status to the test pages
 ipcMain.handle('get-validated-token', (event) => {
-    // Security check: Ensure request comes from the current main window
+    // Security check
     if (!mainWindow || event.sender !== mainWindow.webContents) {
         console.warn('[IPC get-validated-token] Unauthorized request origin.');
-        return null;
+        return null; // Return null on failure
     }
-    console.log('[IPC get-validated-token] Providing token to test page.');
-    return currentToken; // Return the globally stored token
+    
+    // Check if we have the necessary data
+    if (!currentToken || !validatedTestData) {
+         console.error('[IPC get-validated-token] Error: currentToken or validatedTestData is missing.');
+         return null; // Return null on failure
+    }
+
+    console.log(`[IPC get-validated-token] Providing token and mock status (isMockTest: ${validatedTestData.isMockTest}).`);
+    
+    // Return an OBJECT, not just the token string
+    return { 
+        token: currentToken, 
+        isMockTest: validatedTestData.isMockTest || false 
+    };
 });
 
 // Fired from the test page upon successful submission to the backend
