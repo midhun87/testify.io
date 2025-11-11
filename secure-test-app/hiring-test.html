@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- ... existing head content ... -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,8 +9,9 @@
         script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;
         style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com;
         font-src 'self' https://fonts.gstatic.com;
-        img-src 'self' https://res.cloudinary.com data:;
-        connect-src 'self' https://www.testify-lac.com;
+        img-src 'self' https://res.cloudinary.com data: https://hirewithusjobapplications.s3.ap-south-1.amazonaws.com;
+        media-src 'self' https://hirewithusjobapplications.s3.ap-south-1.amazonaws.com;
+        connect-src 'self' https://www.testify-lac.com/ https://hirewithusjobapplications.s3.ap-south-1.amazonaws.com;
     ">
     <title>Hiring Test - TESTIFY</title>
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
@@ -54,6 +54,34 @@
             background-color: #FBBF24;
             border-radius: 50%;
             border: 2px solid white;
+        }
+        
+        /* NEW: Style for locked sections/questions */
+        .palette-btn.locked {
+            background-color: #fca5a5; /* red-300 */
+            color: #991b1b; /* red-800 */
+            border-color: #ef4444; /* red-500 */
+            cursor: not-allowed;
+            opacity: 0.8;
+            position: relative;
+            overflow: hidden;
+        }
+        .palette-btn.locked::before {
+            content: '\00d7'; /* '×' symbol */
+            position: absolute;
+            font-size: 2.5rem;
+            line-height: 1;
+            font-weight: bold;
+            color: rgba(153, 27, 27, 0.3); /* red-800 with opacity */
+            transform: rotate(10deg);
+        }
+        .palette-btn.locked:hover {
+            transform: none;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        .palette-btn.locked.active { /* If they are somehow on a locked q */
+            background-color: #ef4444;
+            color: white;
         }
 
         .modal-overlay {
@@ -180,10 +208,27 @@
                 <h1 id="test-title" class="ml-4 text-2xl font-extrabold text-indigo-800 tracking-tight">Loading Test...</h1>
             </div>
             <div class="flex items-center space-x-6">
-                <div class="flex items-center bg-red-100 border-2 border-red-200 rounded-lg px-4 py-1.5 shadow-inner">
-                    <span class="text-sm font-bold text-red-800 mr-3 uppercase tracking-wider">Time Left</span>
-                    <div id="timer" class="text-2xl font-extrabold text-red-600" style="font-variant-numeric: tabular-nums;">00:00</div>
+                
+                <!-- NEW: Section Timer Block (Hidden by default) -->
+                <div id="section-timer-block" class="hidden flex items-center space-x-4">
+                    <!-- Section Info -->
+                    <div class="text-right">
+                        <h2 id="header-section-title" class="text-base font-semibold text-indigo-800">Section A: Logical</h2>
+                        <p id="header-section-qualifying" class="text-xs font-medium text-gray-600">Qualifying: 10 Marks</p>
+                    </div>
+                    <!-- Section Timer -->
+                    <div class="flex items-center bg-red-100 border-2 border-red-200 rounded-lg px-4 py-1.5 shadow-inner">
+                        <span class="text-sm font-bold text-red-800 mr-3 uppercase tracking-wider">Section Time</span>
+                        <div id="section-timer" class="text-2xl font-extrabold text-red-600" style="font-variant-numeric: tabular-nums;">00:00</div>
+                    </div>
                 </div>
+
+                <!-- Original Global Timer Block (Will be hidden if section timers are used) -->
+                <div id="global-timer-block" class="flex items-center bg-red-100 border-2 border-red-200 rounded-lg px-4 py-1.5 shadow-inner">
+                    <span class="text-sm font-bold text-red-800 mr-3 uppercase tracking-wider">Time Left</span>
+                    <div id="global-timer" class="text-2xl font-extrabold text-red-600" style="font-variant-numeric: tabular-nums;">00:00</div>
+                </div>
+
                 <button id="submit-test-btn" class="px-6 py-2.5 bg-red-600 text-white font-bold rounded-xl shadow-lg hover:bg-red-700 transition-all transform hover:scale-[1.03] duration-200 disabled:bg-red-300 disabled:cursor-not-allowed">
                     Submit Test
                 </button>
@@ -234,6 +279,8 @@
                             <span class="absolute left-2.5 top-0 h-2 w-2 rounded-full bg-amber-400 border border-white"></span>
                             <span class="ml-1">Marked & Answered</span>
                         </div>
+                        <!-- NEW: Locked Legend Item -->
+                        <div class="flex items-center col-span-2"><span class="h-4 w-4 rounded-full bg-red-300 mr-2 border border-red-500 relative flex items-center justify-center"><span class="text-red-800 font-bold" style="font-size: 10px; line-height: 1;">×</span></span>Section Locked</div>
                     </div>
                 </div>
                  <!-- Palette Container -->
@@ -292,7 +339,13 @@
         const modalButtons = document.getElementById('modal-buttons');
 
         // Test Environment Elements
-        const timerDisplay = document.getElementById('timer');
+        const globalTimerDisplay = document.getElementById('global-timer');
+        const globalTimerBlock = document.getElementById('global-timer-block');
+        const sectionTimerDisplay = document.getElementById('section-timer');
+        const sectionTimerBlock = document.getElementById('section-timer-block');
+        const headerSectionTitle = document.getElementById('header-section-title');
+        const headerSectionQualifying = document.getElementById('header-section-qualifying');
+
         const submitTestBtn = document.getElementById('submit-test-btn');
         const prevBtn = document.getElementById('prev-btn');
         const nextBtn = document.getElementById('next-btn');
@@ -303,15 +356,20 @@
         // --- State Variables ---
         let token = null;
         let currentTest = null;
-        let allQuestions = [];
+        let allQuestions = []; // Will be { ...q, sectionTitle, sectionIndex }
         let currentQuestionIndex = 0;
-        let studentResponses = [];
-        let timerInterval;
-        let timeTaken = 0;
+        let studentResponses = []; // Will be { answer, marked, playCount }
+        
+        // Timer Variables
+        let globalTimerInterval = null;
+        let sectionTimerData = []; // [{ title, qualifyingMarks, duration, remaining, interval, locked }]
+        let activeSectionIndex = -1;
+        
+        let timeTaken = 0; // Total time in seconds, tracked by a simple interval
         let isSubmitting = false;
         let candidateDetails = {};
 
-        const BACKEND_URL = 'https://www.testify-lac.com';
+        const BACKEND_URL = 'https://www.testify-lac.com/';
 
 
         // --- Utility Functions ---
@@ -327,30 +385,18 @@
             }, duration);
         }
 
-        // --- UPDATED showErrorOnMainScreen ---
         function showErrorOnMainScreen(message) {
-            if (loader) { // Check if loader element exists
-                loader.classList.add('hidden');
-            } else {
-                console.error("Could not find 'loader' element to hide.");
-            }
-            if (errorMessageDiv) { // Check if error message element exists
+            if (loader) loader.classList.add('hidden');
+            if (errorMessageDiv) {
                 errorMessageDiv.classList.remove('hidden');
                 const pTag = errorMessageDiv.querySelector('p');
-                if (pTag) {
-                    pTag.textContent = message;
-                } else {
-                    console.error("Could not find paragraph tag inside 'error-message' div.");
-                    errorMessageDiv.textContent = message; // Fallback
-                }
+                if (pTag) pTag.textContent = message;
+                else errorMessageDiv.textContent = message; // Fallback
             } else {
-                console.error("Could not find 'error-message' element. Displaying message via showMessage.");
-                // Fallback to using the popup message if the main error div isn't found
                 showMessage(message, 'error', 10000);
             }
         }
 
-         // Updated showModal function (no changes needed from previous version)
          function showModal(message, type = 'confirm') {
             return new Promise(resolve => {
                 modalMessage.textContent = message;
@@ -359,6 +405,7 @@
                 modalErrorMessage.textContent = '';
                 modalButtons.classList.remove('hidden');
 
+                // Reset icon and buttons to default (confirm)
                 modalIcon.innerHTML = `<svg class="h-6 w-6 text-yellow-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`;
                 modalConfirmBtn.textContent = 'Confirm Submit';
                 modalConfirmBtn.className = 'px-8 py-2.5 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700';
@@ -396,6 +443,12 @@
                 modalCancelBtn.onclick = () => { confirmModal.classList.add('hidden'); resolveOnce(false); };
             });
          }
+         
+        function formatTime(seconds) {
+            let mins = Math.floor(seconds / 60);
+            let secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
 
         // --- Initialize Test ---
         async function initializeTest() {
@@ -409,21 +462,19 @@
                 window.electronAPI.onProctoringViolation((message) => {
                      console.warn('[Proctoring Violation Received]:', message);
                      showMessage(`Warning: ${message}. Further violations may lead to submission.`, 'warning', 6000);
-                     // forceSubmitTest(message); // Consider uncommenting if immediate submission on violation is desired
+                     // forceSubmitTest(message); // Uncomment for immediate submission on violation
                 });
 
                 await fetchTestDetails();
 
             } catch (error) {
                 console.error('Initialization Error:', error);
-                // Ensure showErrorOnMainScreen is called correctly
                 showErrorOnMainScreen(error.message || 'Failed to initialize the test environment.');
             }
         }
 
         // Fetch Test & Candidate Details
         async function fetchTestDetails() {
-            // ... (no changes needed in this function from previous version) ...
             if (!token) { showErrorOnMainScreen("Token error."); return; }
              console.log("Fetching test and candidate details...");
              loader.classList.remove('hidden');
@@ -440,7 +491,7 @@
                  const testData = await testResponse.json();
                  if (!testResponse.ok) throw new Error(testData.message || `Failed to load test details (Status: ${testResponse.status})`);
                  currentTest = testData;
-                 console.log("Fetched Test Details:", currentTest);
+                 console.log("Fetched Test Details. useSectionSettings:", currentTest.useSectionSettings);
 
                  const candData = await detailsResponse.json();
                  if (!detailsResponse.ok) throw new Error(candData.message || `Failed to fetch candidate details (Status: ${detailsResponse.status}). Please ensure you completed any initial verification steps.`);
@@ -452,7 +503,12 @@
                 );
 
                 if (allQuestions.length === 0) throw new Error("Test contains no questions.");
-                studentResponses = allQuestions.map(() => ({ answer: null, marked: false }));
+                
+                studentResponses = allQuestions.map(() => ({ 
+                    answer: null, 
+                    marked: false,
+                    playCount: 0 
+                }));
 
                 loader.classList.add('hidden');
                 startTest();
@@ -464,45 +520,252 @@
             }
         }
 
-        // Start Test Function
+        // --- Start Test Function ---
         function startTest() {
-             // ... (no changes needed in this function from previous version) ...
              console.log("Starting test UI...");
              mainContent.classList.add('hidden');
              testEnvironment.classList.remove('hidden');
              document.getElementById('test-title').textContent = currentTest?.title || 'Test';
-             if(currentTest?.duration) {
-                startTimer(currentTest.duration * 60);
+             
+             // --- TIMER BRANCH ---
+             if (currentTest.useSectionSettings) {
+                 console.log("[TIMER] Using Section-Specific Timers.");
+                 globalTimerBlock.classList.add('hidden');
+                 sectionTimerBlock.classList.remove('hidden');
+                 initializeSectionTimers();
              } else {
-                 console.error("Test duration missing!");
-                 showErrorOnMainScreen("Test configuration error: Duration missing.");
-                 return;
+                 console.log("[TIMER] Using Global Timer.");
+                 globalTimerBlock.classList.remove('hidden');
+                 sectionTimerBlock.classList.add('hidden');
+                 startGlobalTimer(); // The original timer function
              }
+             // --- END TIMER BRANCH ---
+
              renderPalette();
-             renderQuestion();
+             renderQuestion(); // This will render Q1, which should trigger the first section timer
              setTimeout(() => {
                 document.addEventListener('contextmenu', event => event.preventDefault());
                 console.log("Context menu listener attached.");
              }, 500);
          }
+         
+        // --- Global Timer Logic ---
+        function startGlobalTimer() {
+            const durationMinutes = parseInt(currentTest?.duration, 10);
+            if (isNaN(durationMinutes) || 0 >= durationMinutes) {
+                 console.error("Invalid Global Test Duration:", currentTest?.duration);
+                 showErrorOnMainScreen("Configuration error: Invalid test duration.");
+                 return;
+            }
+            let timer = durationMinutes * 60;
+            console.log(`[TIMER] Starting GLOBAL timer for ${timer}s`);
+            
+            clearInterval(globalTimerInterval);
+            globalTimerInterval = setInterval(() => {
+                 timeTaken++; timer--;
+                 globalTimerDisplay.textContent = formatTime(timer);
+                 if (0 >= timer) { 
+                     clearInterval(globalTimerInterval); 
+                     forceSubmitTest('Time Expired'); 
+                 }
+                 else if (timer <= 60 && !globalTimerDisplay.parentElement.classList.contains('animate-pulse')) {
+                      globalTimerDisplay.parentElement.classList.add('animate-pulse', 'border-red-400', 'bg-red-200');
+                      globalTimerDisplay.classList.add('text-red-700');
+                 }
+            }, 1000);
+        }
 
-        // Render Question, Palette, Navigation
-        // ... (renderQuestion, renderPalette, updatePalette, updateNavButtons, saveAnswer functions remain unchanged) ...
+        // --- Section Timer Logic ---
+        function initializeSectionTimers() {
+            sectionTimerData = currentTest.sections.map((s, index) => {
+                const duration = (parseInt(s.sectionTimer, 10) || 0) * 60;
+                return {
+                    title: s.title || `Section ${index + 1}`,
+                    qualifyingMarks: s.sectionQualifyingMarks || 0,
+                    duration: duration,
+                    remaining: duration,
+                    interval: null,
+                    locked: false
+                };
+            });
+            console.log("[TIMER] Section timers initialized:", sectionTimerData);
+            // The first section timer will be started by the first `renderQuestion()` call.
+        }
+        
+        function activateSectionTimer(sectionIndex) {
+            if (activeSectionIndex === sectionIndex || !currentTest.useSectionSettings) return;
+
+            // Stop the old timer
+            if (activeSectionIndex !== -1 && sectionTimerData[activeSectionIndex] && sectionTimerData[activeSectionIndex].interval) {
+                console.log(`[TIMER] Stopping timer for Section ${activeSectionIndex}`);
+                clearInterval(sectionTimerData[activeSectionIndex].interval);
+                sectionTimerData[activeSectionIndex].interval = null;
+            }
+            
+            activeSectionIndex = sectionIndex;
+            const timerData = sectionTimerData[activeSectionIndex];
+            if (!timerData) {
+                 console.error(`[TIMER] No timer data for section ${activeSectionIndex}`);
+                 return;
+            }
+
+            console.log(`[TIMER] Activating timer for Section ${activeSectionIndex} ("${timerData.title}"). Remaining: ${timerData.remaining}s`);
+
+            // Update Header UI
+            headerSectionTitle.textContent = timerData.title;
+            headerSectionQualifying.textContent = `Qualifying: ${timerData.qualifyingMarks} Marks`;
+            updateSectionTimerDisplay(); // Update display immediately
+
+            if (timerData.locked) {
+                console.log(`[TIMER] Section ${activeSectionIndex} is already locked.`);
+            } else if (!timerData.interval) {
+                // Start the new interval
+                timerData.interval = setInterval(() => {
+                    timerData.remaining--;
+                    timeTaken++; // Also increment total time taken
+                    updateSectionTimerDisplay();
+                    if (timerData.remaining <= 0) {
+                        lockAndAdvanceSection(activeSectionIndex);
+                    }
+                }, 1000);
+            }
+        }
+        
+        function updateSectionTimerDisplay() {
+            if (activeSectionIndex === -1) return;
+            const timerData = sectionTimerData[activeSectionIndex];
+            const timeStr = formatTime(timerData.remaining);
+            sectionTimerDisplay.textContent = timeStr;
+            
+            const timerParent = sectionTimerDisplay.parentElement;
+            if (timerData.remaining <= 60 && timerData.remaining > 0) {
+                if (!timerParent.classList.contains('animate-pulse')) {
+                    timerParent.classList.add('animate-pulse', 'border-red-400', 'bg-red-200');
+                    sectionTimerDisplay.classList.add('text-red-700');
+                }
+            } else {
+                 timerParent.classList.remove('animate-pulse', 'border-red-400', 'bg-red-200');
+                 sectionTimerDisplay.classList.remove('text-red-700');
+            }
+        }
+
+        function lockAndAdvanceSection(sectionIndexToLock) {
+            console.warn(`[TIMER] Locking Section ${sectionIndexToLock}!`);
+            const timerData = sectionTimerData[sectionIndexToLock];
+            if (!timerData || timerData.locked) return; // Already locked or invalid
+
+            clearInterval(timerData.interval);
+            timerData.interval = null;
+            timerData.locked = true;
+            timerData.remaining = 0;
+            
+            saveAnswer(); // Save the current answer before navigating
+            updatePalette(); // This will visually lock the section
+            showMessage(`Time is up for "${timerData.title}". This section is now locked.`, "warning", 5000);
+
+            // Find the *next* section
+            const nextSectionIndex = sectionIndexToLock + 1;
+            if (nextSectionIndex >= currentTest.sections.length) {
+                // This was the last section
+                console.log("[TIMER] Last section timer expired. Submitting test.");
+                forceSubmitTest('All section timers expired.');
+            } else {
+                // Advance to the first question of the *next* section
+                console.log(`[TIMER] Advancing to Section ${nextSectionIndex}`);
+                const firstQuestionOfNextSection = allQuestions.findIndex(q => q.sectionIndex === nextSectionIndex);
+                
+                if (firstQuestionOfNextSection !== -1) {
+                    currentQuestionIndex = firstQuestionOfNextSection;
+                    renderQuestion(); // This will render the new q and activate the new timer
+                } else {
+                    // This should not happen if sections have questions
+                    console.error("Could not find first question of next section. Submitting.");
+                    forceSubmitTest('Error advancing to next section.');
+                }
+            }
+        }
+        
+        function findNextAvailableQuestion() {
+            let nextAvailableIndex = -1;
+            // Start searching from the *next* question
+            for (let i = currentQuestionIndex + 1; i < allQuestions.length; i++) {
+                if (!sectionTimerData[allQuestions[i].sectionIndex].locked) {
+                    nextAvailableIndex = i;
+                    break;
+                }
+            }
+
+            if (nextAvailableIndex !== -1) {
+                currentQuestionIndex = nextAvailableIndex;
+                renderQuestion();
+            } else {
+                console.warn("No more available questions found. All remaining sections are locked.");
+                // This is the last available question, but they might go back.
+                // If we force submit, it prevents review. Let's just show a message.
+                showMessage("All subsequent sections are locked.", "info");
+                // Stay on the current question
+            }
+        }
+
+        // --- Render Question, Palette, Navigation ---
         function renderQuestion() {
-            if (!allQuestions || allQuestions.length === 0 || currentQuestionIndex >= allQuestions.length || !studentResponses[currentQuestionIndex]) {
+            if (!allQuestions || allQuestions.length === 0 || 0 > currentQuestionIndex || currentQuestionIndex >= allQuestions.length || !studentResponses[currentQuestionIndex]) {
                  console.error("Cannot render question: Invalid state.", { allQuestions, currentQuestionIndex, studentResponses });
                  showMessage("Error loading question. Please try navigating.", "error");
                  document.getElementById('question-content').innerHTML = '<p class="text-red-500 text-center font-semibold">Error loading question content.</p>';
                  return;
             }
+            
             const question = allQuestions[currentQuestionIndex];
             const response = studentResponses[currentQuestionIndex];
 
+            // --- SECTION TIMER/LOCK LOGIC ---
+            if (currentTest.useSectionSettings) {
+                const sectionIdx = question.sectionIndex;
+                if (sectionTimerData[sectionIdx].locked) {
+                    console.warn(`Attempted to render locked question ${currentQuestionIndex}`);
+                    // This question is locked, find the *next* available one
+                    // This should only happen if the *first* section is locked on load (e.g. 0 duration)
+                    findNextAvailableQuestion(); 
+                    return; // Stop rendering this locked question
+                }
+                // If not locked, activate this section's timer
+                activateSectionTimer(sectionIdx);
+            }
+            // --- END SECTION TIMER/LOCK LOGIC ---
+
             document.getElementById('section-title').textContent = `${question.sectionTitle}`;
             document.getElementById('question-counter').textContent = `Question ${currentQuestionIndex + 1} of ${allQuestions.length}`;
-
             const questionContent = document.getElementById('question-content');
 
+            // Media HTML Logic (same as coding test)
+            let mediaHtml = '';
+            if (question.media && question.media.url) {
+                switch (question.media.type) {
+                    case 'image':
+                        mediaHtml = `<div class="w-full max-h-80 flex justify-center items-center bg-gray-100 rounded-lg mb-4 border border-gray-200 overflow-hidden"><img src="${question.media.url}" alt="Question media" class="w-full h-full object-contain"></div>`;
+                        break;
+                    case 'video':
+                        mediaHtml = `<video src="${question.media.url}" controls class="w-full rounded-lg mb-4 border border-gray-200"></video>`;
+                        break;
+                    case 'audio':
+                        const playLimit = question.media.playLimit || 1;
+                        const currentPlayCount = response.playCount || 0;
+                        const isAudioDisabled = currentPlayCount >= playLimit;
+                        const playsRemaining = Math.max(0, playLimit - currentPlayCount);
+                        mediaHtml = `
+                        <div class="bg-gray-100 p-4 rounded-lg mb-4 border border-gray-300">
+                            <audio id="question-audio" src="${question.media.url}" ${isAudioDisabled ? '' : 'controls'} class="w-full" ${isAudioDisabled ? 'disabled' : ''}></audio>
+                            <div class="flex justify-between items-center mt-2">
+                                <span id="audio-play-counter" class="text-sm font-medium text-gray-700">Plays Remaining: <span class="font-bold text-indigo-600">${playsRemaining}</span></span>
+                                <span id="audio-play-message" class="text-sm font-semibold text-red-600 ${isAudioDisabled ? '' : 'hidden'}">All plays used.</span>
+                            </div>
+                        </div>`;
+                        break;
+                }
+            }
+
+            // Options HTML Logic
             let optionsHtml = '';
             if (question.type && question.type.startsWith('mcq')) {
                 const inputType = question.type === 'mcq-single' ? 'radio' : 'checkbox';
@@ -517,11 +780,7 @@
                         } else { // checkbox
                             isChecked = Array.isArray(response.answer) && response.answer.map(String).includes(String(i));
                         }
-                        return `
-                            <div>
-                                <input type="${inputType}" name="option" value="${i}" id="option-${i}" class="custom-radio" ${isChecked ? 'checked' : ''}>
-                                <label for="option-${i}" class="option-label">${opt}</label>
-                            </div>`;
+                        return `<div><input type="${inputType}" name="option" value="${i}" id="option-${i}" class="custom-radio" ${isChecked ? 'checked' : ''}><label for="option-${i}" class="option-label">${opt}</label></div>`;
                     }).join('');
                  }
             } else if (question.type === 'fill-blank') {
@@ -532,31 +791,79 @@
                  optionsHtml = "<p class='text-red-500'>Error: Unknown question type.</p>";
             }
             const sanitizedQuestionText = (question.text || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            questionContent.innerHTML = `<p class="text-xl mb-6 font-medium text-gray-800">${sanitizedQuestionText}</p><div class="space-y-3">${optionsHtml}</div>`;
+            
+            questionContent.innerHTML = `
+                <div class="mb-6">${mediaHtml}</div>
+                <p class="text-xl mb-6 font-medium text-gray-800">${sanitizedQuestionText}</p>
+                <div class="space-y-3">${optionsHtml}</div>
+            `;
+            
+            // Audio Player Event Listeners
+            const audioEl = document.getElementById('question-audio');
+            if (audioEl && !audioEl.disabled) {
+                let isCurrentlyPlaying = false;
+                audioEl.onplay = () => {
+                    if (isCurrentlyPlaying) return; 
+                    isCurrentlyPlaying = true;
+                    const response = studentResponses[currentQuestionIndex];
+                    const limit = allQuestions[currentQuestionIndex].media.playLimit || 1;
+                    response.playCount = (response.playCount || 0) + 1;
+                    const playsRemaining = Math.max(0, limit - response.playCount);
+                    const counterEl = document.getElementById('audio-play-counter');
+                    if (counterEl) counterEl.innerHTML = `Plays Remaining: <span class="font-bold text-indigo-600">${playsRemaining}</span>`;
+                    
+                    if (response.playCount >= limit) {
+                        audioEl.controls = false; 
+                        audioEl.disabled = true;  
+                        audioEl.pause();
+                        const msgEl = document.getElementById('audio-play-message');
+                        if (msgEl) msgEl.classList.remove('hidden');
+                    }
+                };
+                audioEl.onpause = () => { isCurrentlyPlaying = false; };
+                audioEl.onended = () => { isCurrentlyPlaying = false; };
+            }
+
             updateNavButtons();
             updatePalette();
         }
 
          function renderPalette() {
-            const paletteContainer = document.getElementById('palette-container');
             paletteContainer.innerHTML = '';
             const questionsBySection = allQuestions.reduce((acc, q, i) => {
                 const sectionIdx = q.sectionIndex ?? 0;
-                if (!acc[sectionIdx]) acc[sectionIdx] = { title: q.sectionTitle || 'Section', questions: [] };
+                if (!acc[sectionIdx]) {
+                    const sectionInfo = currentTest.sections[sectionIdx];
+                    acc[sectionIdx] = { 
+                        title: sectionInfo.title || 'Section', 
+                        isLocked: currentTest.useSectionSettings ? sectionTimerData[sectionIdx].locked : false,
+                        questions: [] 
+                    };
+                }
                 acc[sectionIdx].questions.push({ index: i });
                 return acc;
             }, {});
 
             Object.values(questionsBySection).forEach(section => {
                  const sectionDiv = document.createElement('div');
-                 sectionDiv.innerHTML = `<h3 class="font-bold text-lg mb-3 text-gray-800">${section.title}</h3>`;
+                 let lockIcon = section.isLocked ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500 ml-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd" /></svg>' : '';
+                 sectionDiv.innerHTML = `<h3 class="font-bold text-lg mb-3 text-gray-800 flex items-center">${section.title} ${lockIcon}</h3>`;
                  const grid = document.createElement('div');
                  grid.className = 'grid grid-cols-5 gap-3';
                  section.questions.forEach(qInfo => {
                      const btn = document.createElement('button');
                      btn.textContent = qInfo.index + 1;
-                     btn.className = 'palette-btn h-11 w-11 flex items-center justify-center rounded-lg font-semibold';
-                     btn.onclick = () => { saveAnswer(); currentQuestionIndex = qInfo.index; renderQuestion(); };
+                     btn.className = `palette-btn h-11 w-11 flex items-center justify-center rounded-lg font-semibold ${section.isLocked ? 'locked' : ''}`;
+                     btn.onclick = () => { 
+                        const index = qInfo.index;
+                        if (currentTest.useSectionSettings && sectionTimerData[allQuestions[index].sectionIndex].locked) {
+                            showMessage("This section is locked.", "warning");
+                            return;
+                        }
+                        saveAnswer(); 
+                        currentQuestionIndex = index; 
+                        renderQuestion(); 
+                    };
                      grid.appendChild(btn);
                  });
                  sectionDiv.appendChild(grid);
@@ -568,8 +875,17 @@
         function updatePalette() {
              Array.from(document.querySelectorAll('.palette-btn')).forEach((btn) => {
                  const i = parseInt(btn.textContent) - 1;
-                 const response = studentResponses[i] || { answer: null, marked: false };
+                 if (i < 0 || i >= studentResponses.length) return; // Safety check
+                 
+                 const response = studentResponses[i];
                  btn.classList.remove('active', 'answered', 'marked');
+                 
+                 // Skip if locked
+                 if(btn.classList.contains('locked')) {
+                     if (i === currentQuestionIndex) btn.classList.add('active'); // Still show active if selected
+                     return;
+                 }
+
                  let isAnswered = false;
                  if (Array.isArray(response.answer)) isAnswered = response.answer.length > 0;
                  else isAnswered = response.answer !== null && response.answer !== undefined && String(response.answer).trim() !== '';
@@ -581,8 +897,26 @@
          }
 
         function updateNavButtons() {
-            prevBtn.disabled = currentQuestionIndex === 0;
-            nextBtn.disabled = currentQuestionIndex === allQuestions.length - 1;
+            // Find next/prev *available* question
+            let prevAvailable = -1;
+            for(let i = currentQuestionIndex - 1; i >= 0; i--) {
+                if (!currentTest.useSectionSettings || !sectionTimerData[allQuestions[i].sectionIndex].locked) {
+                    prevAvailable = i;
+                    break;
+                }
+            }
+            
+            let nextAvailable = -1;
+            for(let i = currentQuestionIndex + 1; i < allQuestions.length; i++) {
+                if (!currentTest.useSectionSettings || !sectionTimerData[allQuestions[i].sectionIndex].locked) {
+                    nextAvailable = i;
+                    break;
+                }
+            }
+
+            prevBtn.disabled = prevAvailable === -1;
+            nextBtn.disabled = nextAvailable === -1;
+
             const markBtn = markReviewBtn;
             if (!studentResponses[currentQuestionIndex]) return;
 
@@ -601,8 +935,10 @@
              if (!allQuestions[currentQuestionIndex]) return;
              const question = allQuestions[currentQuestionIndex];
              if (!studentResponses[currentQuestionIndex]) {
-                 studentResponses[currentQuestionIndex] = { answer: null, marked: false };
+                 studentResponses[currentQuestionIndex] = { answer: null, marked: false, playCount: 0 };
              }
+             // Don't save if section is locked
+             if(currentTest.useSectionSettings && sectionTimerData[question.sectionIndex].locked) return;
 
              if (question.type === 'mcq-single') {
                  const selected = document.querySelector('#question-content input[name="option"]:checked');
@@ -618,23 +954,69 @@
          }
 
 
-        // Event Listeners (submitTestBtn updated)
-        nextBtn.addEventListener('click', () => { saveAnswer(); if (currentQuestionIndex < allQuestions.length - 1) { currentQuestionIndex++; renderQuestion(); } });
-        prevBtn.addEventListener('click', () => { saveAnswer(); if (currentQuestionIndex > 0) { currentQuestionIndex--; renderQuestion(); } });
-        markReviewBtn.addEventListener('click', () => { if (!studentResponses[currentQuestionIndex]) studentResponses[currentQuestionIndex] = { answer: null, marked: false }; studentResponses[currentQuestionIndex].marked = !studentResponses[currentQuestionIndex].marked; updateNavButtons(); updatePalette(); });
+        // Event Listeners
+        nextBtn.addEventListener('click', () => { 
+            saveAnswer(); 
+            // Find next available
+            let nextIndex = -1;
+            for(let i = currentQuestionIndex + 1; i < allQuestions.length; i++) {
+                if (!currentTest.useSectionSettings || !sectionTimerData[allQuestions[i].sectionIndex].locked) {
+                    nextIndex = i;
+                    break;
+                }
+            }
+            if (nextIndex !== -1) { 
+                currentQuestionIndex = nextIndex; 
+                renderQuestion(); 
+            } else {
+                showMessage("You are at the last available question.", "info");
+            }
+        });
+        prevBtn.addEventListener('click', () => { 
+            saveAnswer(); 
+            // Find previous available
+            let prevIndex = -1;
+            for(let i = currentQuestionIndex - 1; i >= 0; i--) {
+                if (!currentTest.useSectionSettings || !sectionTimerData[allQuestions[i].sectionIndex].locked) {
+                    prevIndex = i;
+                    break;
+                }
+            }
+            if (prevIndex !== -1) { 
+                currentQuestionIndex = prevIndex; 
+                renderQuestion(); 
+            }
+        });
+        markReviewBtn.addEventListener('click', () => { 
+            if (!studentResponses[currentQuestionIndex]) {
+                 studentResponses[currentQuestionIndex] = { answer: null, marked: false, playCount: 0 }; 
+            }
+            studentResponses[currentQuestionIndex].marked = !studentResponses[currentQuestionIndex].marked; 
+            updateNavButtons(); 
+            updatePalette(); 
+        });
 
         submitTestBtn.addEventListener('click', async () => {
             console.log("Submit button clicked.");
             saveAnswer();
-            const unanswered = studentResponses.filter(r => { if (Array.isArray(r.answer)) return r.answer.length === 0; return r.answer === null || r.answer === undefined || String(r.answer).trim() === ''; }).length;
+            const unanswered = studentResponses.filter(r => { 
+                // Check if section is locked. If so, don't count as unanswered.
+                const q = allQuestions[studentResponses.indexOf(r)];
+                if (currentTest.useSectionSettings && sectionTimerData[q.sectionIndex].locked) return false;
+                // Regular check
+                if (Array.isArray(r.answer)) return r.answer.length === 0; 
+                return r.answer === null || r.answer === undefined || String(r.answer).trim() === ''; 
+            }).length;
             const marked = studentResponses.filter(r => r.marked).length;
+            
             let msg = `Are you sure you want to submit?`;
-            if (unanswered > 0) msg += `\n${unanswered} question(s) are unanswered.`;
+            if (unanswered > 0) msg += `\n${unanswered} accessible question(s) are unanswered.`;
             if (marked > 0) msg += `\n${marked} question(s) are marked for review.`;
+            
             const confirm = await showModal(msg, 'confirm');
             if (confirm) {
                 console.log("User confirmed submission.");
-                performSubmission();
+                await performSubmission();
             } else {
                 console.log("Submission cancelled by user.");
             }
@@ -642,35 +1024,19 @@
 
 
         // Proctoring and Submission
-        function startTimer(duration) {
-            // ... (timer logic unchanged) ...
-             let timer = duration;
-             clearInterval(timerInterval);
-             timerInterval = setInterval(() => {
-                 timeTaken++; timer--;
-                 let minutes = Math.floor(timer / 60); let seconds = timer % 60;
-                 timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                 if (timer <= 0) { clearInterval(timerInterval); forceSubmitTest('Time Expired'); }
-                 else if (timer <= 60 && !timerDisplay.parentElement.classList.contains('animate-pulse')) {
-                      timerDisplay.parentElement.classList.add('animate-pulse', 'border-red-400', 'bg-red-200');
-                      timerDisplay.classList.add('text-red-700');
-                 }
-             }, 1000);
-        }
-
         async function forceSubmitTest(reason) {
-            // ... (forceSubmit logic unchanged) ...
             if (isSubmitting) return;
             isSubmitting = true;
             console.warn(`Force submitting test. Reason: ${reason}`);
-            clearInterval(timerInterval);
+            clearInterval(globalTimerInterval);
+            sectionTimerData.forEach(s => clearInterval(s.interval));
+
             submitTestBtn.disabled = true; prevBtn.disabled = true; nextBtn.disabled = true; markReviewBtn.disabled = true;
             await showModal(`Violation: ${reason}. Submitting automatically.`, 'violation');
             await new Promise(resolve => setTimeout(resolve, 1500));
             await performSubmission(reason);
         }
 
-        // --- UPDATED performSubmission with Logging ---
         async function performSubmission(violationReason = null) {
             if (isSubmitting && !violationReason) {
                  console.log("Submission already in progress.");
@@ -680,16 +1046,14 @@
             console.log("Attempting submission...");
 
             saveAnswer();
-            clearInterval(timerInterval);
+            clearInterval(globalTimerInterval);
+            sectionTimerData.forEach(s => clearInterval(s.interval));
 
             // Disable UI
             submitTestBtn.disabled = true; prevBtn.disabled = true; nextBtn.disabled = true; markReviewBtn.disabled = true;
             document.querySelectorAll('.palette-btn').forEach(btn => btn.disabled = true);
-
-            // Show submitting state in the modal
             showModal("Submitting...", 'submitting');
 
-            // Prepare payload
             const finalAnswers = studentResponses.map(r => r.answer);
 
             if (!candidateDetails || !candidateDetails.fullName) {
@@ -697,7 +1061,6 @@
                 await showModal("Critical Error: Candidate details missing. Cannot submit.", 'error');
                 isSubmitting = false;
                  document.querySelectorAll('.palette-btn').forEach(btn => btn.disabled = false);
-                // Re-enable buttons carefully based on state
                 submitTestBtn.disabled = false;
                 prevBtn.disabled = currentQuestionIndex === 0;
                 nextBtn.disabled = currentQuestionIndex === allQuestions.length - 1;
@@ -706,9 +1069,8 @@
             }
              console.log("Candidate details verified for payload:", candidateDetails);
 
-
             const payload = {
-                answers: finalAnswers,
+                answers: finalAnswers, 
                 timeTaken,
                 violationReason,
                 fullName: candidateDetails.fullName,
@@ -718,24 +1080,19 @@
                 profileImageUrl: candidateDetails.profileImageUrl || null
             };
 
-            const submitUrl = `${BACKEND_URL}/api/public/submit-test`; // Define URL clearly
-            console.log(`Submitting Payload to ${submitUrl}:`, JSON.stringify(payload)); // Log payload and URL
+            const submitUrl = `${BACKEND_URL}/api/public/submit-test`; 
+            console.log(`Submitting Payload to ${submitUrl}:`, JSON.stringify(payload).substring(0, 500) + '...'); 
 
             try {
-                const response = await fetch(submitUrl, { // Use defined URL
+                const response = await fetch(submitUrl, { 
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-auth-token': token
-                    },
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                     body: JSON.stringify(payload)
                 });
 
-                // --- ADDED: Log status and attempt to get text/json ---
                 console.log("Backend Response Status:", response.status, response.statusText);
                 let result;
                 try {
-                     // Check content type before parsing
                     const contentType = response.headers.get("content-type");
                     if (contentType && contentType.indexOf("application/json") !== -1) {
                         result = await response.json();
@@ -743,25 +1100,19 @@
                     } else {
                         result = await response.text();
                         console.log("Backend Response Body (Text):", result);
-                         // If response wasn't OK but we got text, throw an error using that text
                          if (!response.ok) {
                              throw new Error(result || `Submission failed with status: ${response.status}`);
                          }
-                         // If response was OK but not JSON, maybe treat as success but log warning
-                         result = { message: "Submission received (non-JSON response)." }; // Create a placeholder result
+                         result = { message: "Submission received (non-JSON response)." }; 
                          console.warn("Received non-JSON success response from backend.");
                     }
                 } catch (parseError) {
                      console.error("Error parsing backend response:", parseError);
-                     // If parsing failed even on error, throw a generic error
                      if (!response.ok) {
                          throw new Error(`Submission failed with status: ${response.status} (Could not parse response)`);
                      }
-                     // If parsing failed on success (unlikely), treat as error for safety
                      throw new Error("Received an unparseable success response from the server.");
                 }
-                // --- End Added Logging ---
-
 
                 if (!response.ok) {
                     throw new Error(result.message || `Submission failed with status: ${response.status}`);
@@ -784,10 +1135,16 @@
 
                  // Re-enable UI
                  submitTestBtn.disabled = false;
-                 prevBtn.disabled = currentQuestionIndex === 0;
-                 nextBtn.disabled = currentQuestionIndex === allQuestions.length - 1;
+                 // Re-enable nav buttons based on *available* questions
+                 updateNavButtons();
                  markReviewBtn.disabled = false;
-                 document.querySelectorAll('.palette-btn').forEach(btn => btn.disabled = false);
+                 document.querySelectorAll('.palette-btn').forEach(btn => {
+                     // Only re-enable non-locked buttons
+                     const i = parseInt(btn.textContent) - 1;
+                     if (!currentTest.useSectionSettings || !sectionTimerData[allQuestions[i].sectionIndex].locked) {
+                         btn.disabled = false;
+                     }
+                 });
 
                  console.log("[SUBMIT ERROR] Submission failed, UI re-enabled.");
                  return;
@@ -805,4 +1162,3 @@
     </script>
 </body>
 </html>
-

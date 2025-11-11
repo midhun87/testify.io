@@ -1,24 +1,31 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-console.log('Preload script loaded.'); // Log when preload starts
+console.log('[Preload] Script executing...'); // Log start
 
 contextBridge.exposeInMainWorld('electronAPI', {
+    // --- Generic Functions ---
+    getEnv: () => ipcRenderer.invoke('get-env'), // Needed by test pages
+
+    // --- System Check Functions ---
+    checkRunningApps: () => ipcRenderer.invoke('check-running-apps'),
+    checkScreenRecording: () => ipcRenderer.invoke('check-screen-recording'),
+    notifySystemCheckPassed: () => ipcRenderer.send('system-check-passed'),
+    quitApp: () => ipcRenderer.send('quit-app'),
+
     // --- Token Entry Page Functions ---
     validateToken: (token) => ipcRenderer.invoke('validate-token', token),
-    // ** NEW: Get initial data for verification page **
+
+    // --- Verification Page Functions ---
     getInitialVerificationData: () => ipcRenderer.invoke('get-initial-verification-data'),
-    // ** NEW: Upload photo via main process **
     uploadPhoto: (imageDataUrl) => ipcRenderer.invoke('upload-photo', imageDataUrl),
-     // ** NEW: Fetch colleges via main process **
     fetchColleges: (testId) => ipcRenderer.invoke('fetch-colleges', testId),
-    // ** NEW: Submit final verification details **
     submitVerificationDetails: (token, details) => ipcRenderer.invoke('submit-verification-details', token, details),
 
     // --- Test Page Functions ---
-    getValidatedToken: () => ipcRenderer.invoke('get-validated-token'),
-    onProctoringViolation: (callback) => ipcRenderer.on('proctoring-violation', (event, message) => callback(message)),
+    getValidatedToken: () => ipcRenderer.invoke('get-validated-token'), // Needed by test pages
+    onProctoringViolation: (callback) => ipcRenderer.on('proctoring-violation', (_event, value) => callback(value)), // Renamed event for clarity
     notifyTestSubmitted: () => ipcRenderer.send('test-submitted-successfully')
 });
 
-console.log('electronAPI exposed to main world.'); // Log successful exposure
+console.log('[Preload] electronAPI exposed to main world.'); // Log success
 

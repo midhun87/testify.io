@@ -3,28 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Updated CSP to allow Tailwind, Google Fonts, Cloudinary, Font Awesome, and inline scripts/styles -->
-    <meta http-equiv="Content-Security-Policy" content="
-        default-src 'self';
-        script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com;
-        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com;
-        font-src 'self' https://fonts.gstatic.com;
-        img-src 'self' https://res.cloudinary.com data:;
-        connect-src 'self' https://www.testify-lac.com;
-    ">
+    <!-- 
+      Removed the CSP meta tag as it's often problematic in Electron 
+      and should be set in the main process if needed.
+    -->
     <title>Candidate Verification - TESTIFY</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" /> <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            /* Prevent text selection */
             -webkit-user-select: none; /* Safari */
             -ms-user-select: none; /* IE 10+ */
             user-select: none; /* Standard syntax */
         }
-        /* Spinner color */
+
+        /* --- Loading Spinner --- */
         .spinner {
              border-top-color: currentColor; /* Inherit text color (white) */
              animation: spin 1s linear infinite;
@@ -33,7 +29,8 @@
              from { transform: rotate(0deg); }
              to { transform: rotate(360deg); }
          }
-         /* Add a subtle transition for the main container appearance */
+
+         /* --- Page Fade-in Animation --- */
          .fade-in {
              animation: fadeInAnimation 0.5s ease-out forwards;
              opacity: 0;
@@ -43,13 +40,8 @@
              to { opacity: 1; transform: translateY(0); }
          }
 
-        /* Camera Preview Fix */
-        #camera-feed { display: block; }
-        #camera-placeholder { display: none; align-items: center; justify-content: center; flex-direction: column; text-align: center; color: #ef4444; font-size: 0.875rem; height: 100%; background-color: #f3f4f6; /* Lighter gray */ }
-        #camera-placeholder.show { display: flex; }
-        #camera-placeholder i { font-size: 2rem; margin-bottom: 0.5rem; }
-
-         /* Message Box Styling */
+        /* --- Message Box Styling (for candidate-verification.js) --- */
+         /* This is the style your script expects, which fixes the error */
          .message-box {
              position: fixed;
              top: 20px;
@@ -74,91 +66,190 @@
          .message-box.success { background-color: #10b981; }
          .message-box.info    { background-color: #3b82f6; }
 
-         /* Custom styles for select arrow */
+        /* --- Custom Select Arrow --- */
          .custom-select {
             appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-            background-position: right 0.75rem center;
-            background-repeat: no-repeat;
-            background-size: 1.25em;
+            background-image: none; /* Remove default */
          }
+
+        /* --- Camera Placeholder --- */
+        #camera-placeholder.show { display: flex; }
+        
+        /* --- Input Focus Shadow --- */
+        .input-focus-shadow {
+            transition: all 0.2s ease-in-out;
+        }
+        .input-focus-shadow:focus-within {
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3); /* indigo-500 with opacity */
+            border-color: #6366F1; /* indigo-500 */
+        }
+        
     </style>
 </head>
-<!-- Body styled to match the login page and support a footer -->
-<body class="bg-gradient-to-br from-purple-50 via-white to-blue-50 flex flex-col min-h-screen antialiased">
+<body class="bg-gradient-to-br from-indigo-50 via-[#EEF2FF] to-purple-50 flex flex-col min-h-screen antialiased text-gray-800">
+
+    <!-- 
+      This div is required by your candidate-verification.js (line 18, 32)
+      Adding it back fixes the console error.
+    -->
     <div id="message-box-container"></div>
 
-    <!-- Main content area to center the card -->
-    <!-- Increased padding for taller screens, max-w-xl for a single column -->
+    <!-- Main Content Area -->
     <main class="flex-grow flex items-center justify-center p-4 py-8">
-        <!-- Card styling matched to login page: padding, shadow, border-radius -->
-        <!-- Changed max-w-4xl to max-w-xl for a single-column layout -->
-        <div class="bg-white p-10 sm:p-12 rounded-3xl shadow-2xl w-full max-w-xl fade-in">
+        
+        <!-- Flat White Card (Replaced Glassmorphism) -->
+        <div class="bg-white p-8 sm:p-12 rounded-3xl shadow-2xl w-full max-w-5xl fade-in">
             
-            <!-- Logo added to the top of the card for consistency -->
-            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="Testify Logo" class="h-16 w-auto mx-auto mb-8">
+            <!-- Header -->
+            <div class="text-center mb-6">
+                <!-- Logo -->
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="TESTIFY Logo" class="h-16 w-auto mx-auto mb-4 transition-all duration-300 hover:opacity-80">
+                <!-- Tagline -->
+                <p class="text-sm text-indigo-700/80 font-medium">Empowering Fair Assessments.</p>
+            </div>
 
-            <!-- Header styling matched to login page -->
-            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-8">Candidate Verification</h2>
+            <!-- Step Indicator -->
+            <div class="text-center text-xs font-medium text-gray-500 mb-2">Step 1 of 3: Candidate Verification</div>
             
-            <!-- Form layout changed from grid to single-column flex -->
-            <form id="candidate-details-form" class="space-y-6">
+            <!-- Security Badge: Styled to match image -->
+            <div class="flex items-center justify-center space-x-2 bg-indigo-100 text-indigo-700 text-xs px-3 py-1.5 rounded-full mb-8 max-w-max mx-auto">
+                <i class="fa-solid fa-shield-halved fa-fw w-4 h-4"></i>
+                <span>AI-powered ID Validation</span>
+            </div>
+            
+            <form id="candidate-details-form" class="mt-8">
                 
-                <!-- Section for text details -->
-                <div class="space-y-5">
-                    <div>
-                        <label for="student-name" class="block text-sm font-medium text-gray-700 mb-2 text-left">Full Name</label>
-                        <!-- Input styling matched to login page: rounded-xl, bg-gray-50, etc. -->
-                        <input type="text" id="student-name" placeholder="Enter your full name" required class="mt-1 block w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-xl shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder-gray-400 transition">
-                    </div>
-                    <div>
-                        <label for="roll-number" class="block text-sm font-medium text-gray-700 mb-2 text-left">Roll Number / ID</label>
-                        <input type="text" id="roll-number" placeholder="Enter your unique ID" required class="mt-1 block w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-xl shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder-gray-400 transition">
-                    </div>
-                    <div>
-                        <label for="college-select" class="block text-sm font-medium text-gray-700 mb-2 text-left">College Name</label>
-                        <select id="college-select" required class="custom-select mt-1 block w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-xl shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder-gray-400 transition">
-                            <option value="" disabled selected>Loading colleges...</option>
-                            <!-- Options populated by JS -->
-                        </select>
-                    </div>
-                    <div>
-                        <label for="department" class="block text-sm font-medium text-gray-700 mb-2 text-left">Department</label>
-                        <input type="text" id="department" placeholder="Enter your department" required class="mt-1 block w-full px-4 py-3 border border-gray-200 bg-gray-50 rounded-xl shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm placeholder-gray-400 transition">
-                    </div>
-                </div>
-                
-                <!-- Divider -->
-                <hr class="border-gray-200">
+                <!-- Two-column grid for form and camera -->
+                <div class="grid md:grid-cols-2 md:gap-x-12 gap-y-8">
+                    
+                    <!-- Column 1: Form Fields -->
+                    <div class="space-y-6">
+                        
+                        <!-- Input: Full Name (New Design) -->
+                        <div class="relative input-focus-shadow bg-gray-50 border border-gray-300 rounded-xl shadow-sm">
+                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
+                                <i class="fa-solid fa-user fa-fw"></i>
+                            </span>
+                            <input type="text" id="student-name" name="student-name" placeholder="Full Name" required aria-label="Full Name"
+                                   class="block w-full pl-10 pr-4 py-3.5 border-none bg-transparent rounded-xl text-sm transition-all placeholder-gray-500 outline-none">
+                        </div>
 
-                <!-- Section for photo capture -->
-                <div classs="space-y-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2 text-left">Live Photo Capture</label>
-                    <!-- Camera container matched to rounded-xl style -->
-                    <div id="camera-container" class="mt-2 bg-gray-100 rounded-xl overflow-hidden aspect-video relative border border-gray-200 shadow-sm">
-                         <video id="camera-feed" class="w-full h-full object-cover" autoplay playsinline muted></video>
-                         <img id="captured-photo" class="absolute top-0 left-0 w-full h-full object-cover hidden">
-                         <!-- Placeholder matched with rounded-xl style -->
-                         <div id="camera-placeholder" class="absolute inset-0 rounded-xl"><i class="fas fa-video-slash"></i><span id="camera-placeholder-text">Camera initializing...</span></div>
-                    </div>
-                    <canvas id="capture-canvas" class="hidden"></canvas>
-                    <!-- Buttons styled to be rounded-xl -->
-                    <div id="capture-buttons" class="flex space-x-3 mt-4">
-                        <button type="button" id="capture-btn" class="flex-1 px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-150 disabled:opacity-50" disabled>
-                            Capture Photo
-                        </button>
-                        <button type="button" id="recapture-btn" class="hidden flex-1 px-4 py-2.5 border border-gray-300 text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-150">
-                            Recapture
-                        </button>
-                    </div>
-                    <p id="camera-error" class="text-xs text-red-600 hidden text-center pt-2"></p>
-                    <p id="upload-progress" class="text-xs text-indigo-600 hidden text-center pt-2 font-medium"></p>
-                </div>
+                        <!-- Input: Roll Number (New Design) -->
+                        <div class="relative input-focus-shadow bg-gray-50 border border-gray-300 rounded-xl shadow-sm">
+                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
+                                <i class="fa-solid fa-id-card fa-fw"></i>
+                            </span>
+                            <input type="text" id="roll-number" name="roll-number" placeholder="Roll Number / ID" required aria-label="Roll Number / ID"
+                                   class="block w-full pl-10 pr-4 py-3.5 border-none bg-transparent rounded-xl text-sm transition-all placeholder-gray-500 outline-none" autocomplete="off">
+                        </div>
 
-                <!-- Submit Button -->
-                <div class="pt-6"> <!-- Added padding-top -->
-                    <!-- Main submit button styled just like the login page -->
-                    <button type="submit" id="start-test-btn" class="w-full flex items-center justify-center px-6 py-4 border border-transparent text-lg font-semibold rounded-xl shadow-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transform transition duration-150 ease-in-out active:scale-[.98]">
+                        <!-- Select: College Name (New Design) -->
+                        <div class="relative input-focus-shadow bg-gray-50 border border-gray-300 rounded-xl shadow-sm">
+                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 z-10">
+                                <i class="fa-solid fa-building-columns fa-fw"></i>
+                            </span>
+                            <select id="college-select" name="college-select" required aria-label="Select your college"
+                                    class="custom-select block w-full pl-10 pr-10 py-3.5 border-none bg-transparent rounded-xl text-sm transition-all appearance-none text-gray-500 invalid:text-gray-500 valid:text-gray-900 outline-none">
+                                <option value="" disabled selected>Select your college</option>
+                                <!-- Options populated by candidate-verification.js -->
+                            </select>
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 transition-colors pointer-events-none">
+                                <i class="fa-solid fa-chevron-down fa-fw text-xs"></i>
+                            </span>
+                        </div>
+
+                        <!-- Select: Department (New Design) -->
+                        <div class="relative input-focus-shadow bg-gray-50 border border-gray-300 rounded-xl shadow-sm">
+                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 z-10">
+                                <i class="fa-solid fa-graduation-cap fa-fw"></i>
+                            </span>
+                            <select id="department" name="department" required aria-label="Select your department"
+                                    class="custom-select block w-full pl-10 pr-10 py-3.5 border-none bg-transparent rounded-xl text-sm transition-all appearance-none text-gray-500 invalid:text-gray-500 valid:text-gray-900 outline-none">
+                                <option value="" disabled selected>Select your department</option>
+                                <option value="CSE">Computer Science and Engineering (CSE)</option>
+                                <option value="ECE">Electronics and Communication Engineering (ECE)</option>
+                                <option value="EEE">Electrical and Electronics Engineering (EEE)</option>
+                                <option value="ME">Mechanical Engineering (ME)</option>
+                                <option value="CE">Civil Engineering (CE)</option>
+                                <option value="IT">Information Technology (IT)</option>
+                                <option value="AIML">Artificial Intelligence and Machine Learning (AIML)</option>
+                                <option value="AIDS">Artificial Intelligence and Data Science (AIDS)</option>
+                                <option value="DS">Data Science (DS)</option>
+                                <option value="IoT">Internet of Things (IoT)</option>
+                                <option value="CS">Cyber Security (CS)</option>
+                                <option value="CSBS">Computer Science and Business Systems (CSBS)</option>
+                                <option value="SE">Software Engineering (SE)</option>
+                                <option value="RA">Robotics and Automation (RA)</option>
+                                <option value="Mechatronics">Mechatronics Engineering</option>
+                                <option value="EIE">Electronics and Instrumentation Engineering (EIE)</option>
+                                <option value="ICE">Instrumentation and Control Engineering (ICE)</option>
+                                <option value="ARE">Automation and Robotics Engineering</option>
+                                <option value="IE">Industrial Engineering</option>
+                                <option value="MEng">Manufacturing Engineering</option>
+                                <option value="Auto">Automobile Engineering</option>
+                                <option value="EnvE">Environmental Engineering</option>
+                                <option value="TransE">Transportation Engineering</option>
+                                <option value="CTM">Construction Technology and Management</option>
+                                <option value="StructE">Structural Engineering</option>
+                                <option value="ChE">Chemical Engineering (ChE)</option>
+                                <option value="BT">Biotechnology (BT)</option>
+                                <option value="BME">Biomedical Engineering (BME)</option>
+                                <option value="MSME">Materials Science and Metallurgical Engineering (MSME)</option>
+                                <option value="PE">Petroleum Engineering (PE)</option>
+                                <option value="FT">Food Technology</option>
+                                <option value="AE">Aerospace Engineering (AE)</option>
+                                <option value="MarineE">Marine Engineering</option>
+                                <option value="MiningE">Mining Engineering</option>
+                                <option value="AgriE">Agricultural Engineering</option>
+                                <option value="TextE">Textile Engineering</option>
+                                <option value="NucE">Nuclear Engineering</option>
+                            </select>
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 transition-colors pointer-events-none">
+                                <i class="fa-solid fa-chevron-down fa-fw text-xs"></i>
+                            </span>
+                        </div>
+                    </div> <!-- End Column 1 -->
+                    
+                    <!-- Column 2: Camera Capture -->
+                    <div class="space-y-4 flex flex-col">
+                        <label class="block text-sm font-medium text-indigo-800 text-left">Live Photo Capture</label>
+                        
+                        <!-- Camera Frame -->
+                        <div class="p-0.5 bg-gray-200 rounded-2xl shadow-lg flex-grow">
+                            <div id="camera-container" class="bg-gray-900 rounded-[15px] overflow-hidden aspect-video relative border-4 border-transparent h-full">
+                                <video id="camera-feed" class="w-full h-full object-cover" autoplay playsinline muted></video>
+                                <img id="captured-photo" class="absolute top-0 left-0 w-full h-full object-cover hidden">
+                                <!-- Camera Placeholder/Error State: Styled to match image -->
+                                <div id="camera-placeholder" class="hidden absolute inset-0 bg-gray-900 text-red-400 flex-col items-center justify-center space-y-3 p-4 text-center">
+                                    <i class="fas fa-video-slash fa-3x"></i>
+                                    <span id="camera-placeholder-text" class="font-semibold text-lg">Camera not found or permission denied.</span>
+                                    <span class="text-sm text-gray-400">Please allow camera access in your browser settings and refresh the page.</span>
+                                </div>
+                            </div>
+                        </div>
+                        <canvas id="capture-canvas" class="hidden"></canvas>
+                        
+                        <!-- Camera Buttons: Styled to match image -->
+                        <div id="capture-buttons" class="flex justify-center space-x-3 pt-2">
+                            <!-- Button style matches the gray button in your screenshot -->
+                            <button type="button" id="capture-btn" class="w-full px-5 py-3 border border-transparent text-sm font-semibold rounded-xl shadow-md text-gray-700 bg-gray-200 hover:bg-gray-300 disabled:bg-gray-200 disabled:shadow-none transition-all duration-300 transform hover:scale-105 active:scale-[.98] disabled:opacity-70 disabled:cursor-not-allowed">
+                                Capture Photo
+                            </button>
+                            <button type="button" id="recapture-btn" class="hidden w-full px-5 py-3 border border-gray-300 text-sm font-semibold rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-150 transform hover:scale-105 active:scale-[.98]">
+                                Recapture
+                            </button>
+                        </div>
+                        
+                        <!-- Progress / Error messages for camera -->
+                        <p id="camera-error" class="text-xs text-red-600 hidden text-center pt-1"></p>
+                        <p id="upload-progress" class="text-xs text-indigo-600 hidden text-center pt-1 font-medium"></p>
+                    </div> <!-- End Column 2 -->
+
+                </div> <!-- End Grid -->
+
+                <!-- Submit Button: Moved outside the grid, styled to match image -->
+                <div class="pt-10">
+                    <button type="submit" id="start-test-btn" class="w-full flex items-center justify-center px-6 py-4 border border-transparent text-lg font-semibold rounded-xl shadow-xl text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:from-gray-500 disabled:to-gray-500 disabled:cursor-not-allowed transform transition-all duration-300 hover:scale-[1.03] active:scale-[.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         <svg id="start-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                         <span id="start-btn-text">Proceed to Test</span>
                     </button>
@@ -168,18 +259,36 @@
         </div>
     </main>
 
-    <!-- Footer copied from the login page for consistency -->
-    <footer class="w-full p-6">
-        <div class="flex items-center justify-center space-x-3 max-w-lg mx-auto">
-            <!-- Gemini Logo -->
-            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo" class="h-6 w-auto opacity-70">
-            <!-- Text -->
-            <span class="text-base font-medium text-gray-500">Testify</span>
+    <!-- Footer -->
+    <footer class="w-full p-6 mt-12">
+        <!-- Gradient Divider -->
+        <hr class="border-t-0 bg-gradient-to-r from-transparent via-indigo-200 to-transparent h-0.5 w-full max-w-xs mx-auto mb-6">
+        
+        <div class="flex flex-col items-center justify-center space-y-4">
+            <!-- Social Icons -->
+            <div class="flex space-x-6 text-gray-500">
+                <a href="#" title="LinkedIn" class="hover:text-indigo-600 transition-colors duration-200">
+                    <i class="fa-brands fa-linkedin-in fa-lg"></i>
+                </a>
+                <a href="#" title="Twitter / X" class="hover:text-indigo-600 transition-colors duration-200">
+                    <i class="fa-brands fa-twitter fa-lg"></i>
+                </a>
+                <a href="#" title="Website" class="hover:text-indigo-600 transition-colors duration-200">
+                    <i class="fa-solid fa-globe fa-lg"></i>
+                </a>
+            </div>
+            <!-- Copyright -->
+            <p class="text-sm text-gray-500 font-medium">
+                TESTIFY &copy; 2025
+            </p>
         </div>
     </footer>
 
-    <!-- Ensure this points to the correct JS file for this page -->
+    <!-- 
+      All JavaScript logic is now handled by your external file.
+      This script tag links to it.
+    -->
     <script src="./candidate-verification.js"></script>
+    
 </body>
 </html>
-

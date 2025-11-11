@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' https://res.cloudinary.com;">
+    <title>System Check</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Added Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-user-select: none; user-select: none; }
+        /* Matched gradient to other pages */
+        .fade-in {
+             animation: fadeInAnimation 0.5s ease-out forwards;
+             opacity: 0;
+         }
+         @keyframes fadeInAnimation {
+             from { opacity: 0; transform: translateY(10px); }
+             to { opacity: 1; transform: translateY(0); }
+         }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 via-white to-blue-50 flex flex-col min-h-screen antialiased">
+
+    <main class="flex-grow flex items-center justify-center p-4">
+        <!-- Matched card style to token-entry page -->
+        <div class="bg-white p-10 sm:p-12 rounded-3xl shadow-2xl max-w-lg w-full text-center fade-in">
+            
+            <!-- Added Logo -->
+            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1761650455/TESTIFY-SECURE_TEST_bpv8vp.png" alt="Testify Logo" class="h-16 w-auto mx-auto mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">System Check</h1>
+            <!-- Updated status message -->
+            <p id="status-message" class="text-gray-500 mb-8 text-sm sm:text-base">Click below to start the system check.</p>
+
+            <!-- Restyled Check Items - Added ID and hidden class -->
+            <div id="check-items-container" class="space-y-3 text-left hidden">
+                <!-- Camera Check -->
+                <div id="check-camera" class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="check-icon w-6 text-center text-gray-400"><i class="fas fa-spinner fa-spin"></i></div>
+                    <span class="ml-3 font-medium text-gray-700">Camera Access</span>
+                </div>
+                <!-- Mic Check -->
+                <div id="check-mic" class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="check-icon w-6 text-center text-gray-400"><i class="fas fa-spinner fa-spin"></i></div>
+                    <span class="ml-3 font-medium text-gray-700">Microphone Access</span>
+                </div>
+                <!-- App Check -->
+                <div id="check-apps" class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="check-icon w-6 text-center text-gray-400"><i class="fas fa-spinner fa-spin"></i></div>
+                    <span class="ml-3 font-medium text-gray-700">Conflicting Applications</span>
+                </div>
+                <!-- Recording Check -->
+                <div id="check-recording" class="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div class="check-icon w-6 text-center text-gray-400"><i class="fas fa-spinner fa-spin"></i></div>
+                    <span class="ml-3 font-medium text-gray-700">Screen Recording</span>
+                </div>
+            </div>
+
+            <!-- Error/Success Area -->
+            <div id="results-area" class="mt-6 hidden">
+                <div id="failure-box" class="hidden p-4 bg-red-50 border border-red-200 rounded-lg text-left">
+                    <h3 class="font-semibold text-red-800 flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        System Check Failed
+                    </h3>
+                    <p id="failure-reason" class="text-sm text-red-700 mt-2 pl-6" style="line-height: 1.6;">One or more checks failed.</p>
+                </div>
+                <div id="success-box" class="hidden p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <h3 class="font-semibold text-green-800 flex items-center justify-center">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        System Check Passed!
+                    </h3>
+                    <p class="text-sm text-green-700 mt-1">Proceeding to test...</p>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div id="button-container" class="mt-8 space-y-3">
+                <!-- Start Button - ADDED -->
+                <button id="start-btn" class="w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-semibold rounded-xl shadow-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform transition duration-150 ease-in-out active:scale-[.98]">
+                    Start System Check
+                </button>
+                <!-- Retry Button - Styled as primary -->
+                <button id="retry-btn" class="hidden w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-semibold rounded-xl shadow-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform transition duration-150 ease-in-out active:scale-[.98]">
+                    Retry Checks
+                </button>
+                <!-- Quit Button - Styled as secondary/danger -->
+                <button id="quit-btn" class="hidden w-full flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-semibold rounded-xl shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transform transition duration-150 ease-in-out active:scale-[.98]">
+                    Quit Application
+                </button>
+            </div>
+
+        </div>
+    </main>
+    
+    <!-- Fixed the script tag -->
+    <script src="./system-check.js"></script>
+</body>
+</html>

@@ -10,7 +10,7 @@
   },
   "keywords": [],
   "author": {
-    "name": "TESTIFY & HireWithUS",
+    "name": "Testify Secure Test | Xeta Solutions",
     "email": "support@testify-lac.com"
   },
   "license": "ISC",
@@ -20,6 +20,7 @@
     "electron-builder": "^24.6.4"
   },
   "dependencies": {
+    "axios": "^1.13.2",
     "node-fetch": "^2.7.0"
   },
   "build": {
@@ -28,6 +29,8 @@
     "files": [
       "main.js",
       "preload.js",
+      "system-check.html",
+      "system-check.js",
       "token-entry.html",
       "token-entry.js",
       "candidate-verification.html",
@@ -55,4 +58,3 @@
     }
   }
 }
-

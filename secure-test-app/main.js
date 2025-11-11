@@ -14,9 +14,11 @@ let currentToken = null;
 let isTestSubmitted = false;
 
 
-// --- HARDCODED BACKEND_URL for Production ---
-const BACKEND_URL = 'https://www.testify-lac.com';
-console.log(`[Startup] Using fixed PRODUCTION backend URL: ${BACKEND_URL}`);
+// --- MODIFIED BACKEND_URL for Local Testing ---
+// Set to localhost based on your error logs.
+// Change this back to 'https://www.testify-lac.com' for production.
+const BACKEND_URL = 'https://www.testify-lac.com/';
+console.log(`[Startup] Using Local Test backend URL: ${BACKEND_URL}`);
 
 // --- FORBIDDEN APPS LIST ---
 const FORBIDDEN_APPS_WINDOWS = [
@@ -489,6 +491,7 @@ ipcMain.handle('submit-verification-details', async (event, receivedToken, detai
         if (!assignmentId) throw new Error("Missing assignment ID in validated test data.");
 
         // Call the backend API to save the initial verification record
+        // This endpoint now saves to HIRING_TEST_RESULTS_TABLE with an 'init_' prefix
         const saveResponse = await fetch(`${BACKEND_URL}/api/save-initial-details`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'x-auth-token': currentToken },
@@ -506,17 +509,13 @@ ipcMain.handle('submit-verification-details', async (event, receivedToken, detai
 
     // Phase 2: Load the Correct Test Page
     try {
-        // Determine if it's a coding test based on the structure of validatedTestData
-        // (Checks for sections array with a problems array inside the first section)
-        const isCodingTest = !!(
-            validatedTestData &&
-            Array.isArray(validatedTestData.sections) &&
-            validatedTestData.sections.length > 0 &&
-            validatedTestData.sections[0].problems &&
-            Array.isArray(validatedTestData.sections[0].problems) &&
-            validatedTestData.sections[0].problems.length > 0
-        );
-        console.log(`[IPC submit-verification-details] isCodingTest evaluated to: ${isCodingTest}`);
+        //
+        // --- THIS IS THE FIX ---
+        //
+        // It will now correctly read the 'testType' property that the backend is sending.
+        const isCodingTest = validatedTestData?.testType === 'coding';
+        
+        console.log(`[IPC submit-verification-details] isCodingTest evaluated to: ${isCodingTest} (testType: ${validatedTestData?.testType})`);
 
         // Select the appropriate HTML file
         const testPage = isCodingTest ? 'hiring-coding-test.html' : 'hiring-test.html';
@@ -559,4 +558,3 @@ ipcMain.on('test-submitted-successfully', (event) => {
     app.quit(); // Quit the Electron application
 });
 // --- End IPC Handlers ---
-
