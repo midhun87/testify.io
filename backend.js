@@ -846,6 +846,13 @@ app.get('/reset-password', (req, res) => res.sendFile(path.join(__dirname, 'publ
 app.get('/signup', (req, res) => res.sendFile(path.join(__dirname, 'public', 'signup.html')));
 app.get('/T&C', (req, res) => res.sendFile(path.join(__dirname, 'public', 'T&C.html')));
 app.get('/verify-certificate', (req, res) => res.sendFile(path.join(__dirname, 'public', 'verify-certificate.html')));
+app.get('/Beta-Version', (req, res) => res.sendFile(path.join(__dirname, 'public', 'mock.html')));
+app.get('/HireWithUs', (req, res) => res.sendFile(path.join(__dirname, 'public', 'HireWithUs.html')));
+app.get('/signup', (req, res) => res.sendFile(path.join(__dirname, 'public', 'signup.html')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'signup.html')));
+
+
+
 
 // --- Student Page Routes ---
 app.get('/student/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'dashboard.html')));
@@ -869,6 +876,7 @@ app.get('/student/test-history', (req, res) => res.sendFile(path.join(__dirname,
 app.get('/student/Test', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'Test.html')));
 app.get('/student/view-certificate', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'view-certificate.html')));
 app.get('/student/view-course', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'view-course.html')));
+
 
 // --- Admin Page Routes ---
 app.get('/admin/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'dashboard.html')));
@@ -913,6 +921,72 @@ app.get('/admin/view-all-certificates', (req, res) => res.sendFile(path.join(__d
 app.get('/admin/view-applications', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'view-applications.html')));
 app.get('/admin/view-certificate', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'view-certificate.html')));
 app.get('/admin/view-fullscreen-results', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin', 'view-fullscreen-results.html')));
+
+//hiring interviewer portal routes
+app.get('/interviewer/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'interviewer', 'dashboard.html')));
+app.get('/interviewer/interview-page', (req, res) => res.sendFile(path.join(__dirname, 'public', 'interviewer', 'interview-page.html')));
+app.get('/interviewer/my-schedule', (req, res) => res.sendFile(path.join(__dirname, 'public', 'interviewer', 'my-schedule.html')));
+
+//hiring candidate portal routes
+app.get('/candidate/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'candidate', 'dashboard.html')));
+app.get('/candidate/interview-page', (req, res) => res.sendFile(path.join(__dirname, 'public', 'candidate', 'interview-page.html')));
+app.get('/candidate/join-interview', (req, res) => res.sendFile(path.join(__dirname, 'public', 'candidate', 'join-interview.html')));
+
+// jobportal routes
+// Job Portal Routes
+app.get('/jobportal/job-application', (req, res) => 
+    res.sendFile(path.join(__dirname, 'public', 'jobportal', 'job-application.html'))
+);
+
+app.get('/jobportal/student-edit-application', (req, res) => 
+    res.sendFile(path.join(__dirname, 'public', 'jobportal', 'student-edit-application.html'))
+);
+
+app.get('/jobportal/student-interview-room', (req, res) => 
+    res.sendFile(path.join(__dirname, 'public', 'jobportal', 'student-interview-room.html'))
+);
+
+app.get('/jobportal/student-job-board', (req, res) => 
+    res.sendFile(path.join(__dirname, 'public', 'jobportal', 'student-job-board.html'))
+);
+
+app.get('/jobportal/student-login', (req, res) => 
+    res.sendFile(path.join(__dirname, 'public', 'jobportal', 'student-login.html'))
+);
+
+app.get('/jobportal/student-my-applications', (req, res) => 
+    res.sendFile(path.join(__dirname, 'public', 'jobportal', 'student-my-applications.html'))
+);
+
+app.get('/jobportal/student-my-tests', (req, res) => 
+    res.sendFile(path.join(__dirname, 'public', 'jobportal', 'student-my-tests.html'))
+);
+
+app.get('/jobportal/student-register', (req, res) => 
+    res.sendFile(path.join(__dirname, 'public', 'jobportal', 'student-regsiter.html'))
+);
+
+// hiring moderator portal routes
+
+app.get('/hiring/assign-coding-test', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-assign-coding-test.html')));
+app.get('/hiring/assign-test', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-assign-test.html')));
+app.get('/hiring/coding-test-results', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-coding-test-results.html')));
+app.get('/hiring/create-coding-test', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-create-coding-test.html')));
+app.get('/hiring/create-job', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-create-job.html')));
+app.get('/hiring/create-problem', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-create-problem.html')));
+app.get('/hiring/create-test', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-create-test.html')));
+app.get('/hiring/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-dashboard.html')));
+app.get('/hiring/interview-reports', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-interview-reports.html')));
+app.get('/hiring/jobs', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-jobs.html')));
+app.get('/hiring/manage-colleges', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-manage-colleges.html')));
+app.get('/hiring/manage-interviewers', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-manage-interviewers.html')));
+app.get('/hiring/manage-tests', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-manage-tests.html')));
+app.get('/hiring/moderator-login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-moderator-login.html')));
+app.get('/hiring/report-details', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-report-details.html')));
+app.get('/hiring/schedule-interview', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-schedule-interview.html')));
+app.get('/hiring/test-history', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-test-history.html')));
+app.get('/hiring/test-reports', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-test-reports.html')));
+app.get('/hiring/view-applicants', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-view-applicants.html')));
 
 app.use(express.static('public'));
 app.use('/moderator', express.static(path.join(__dirname, 'public/moderator')));
@@ -15557,5 +15631,6 @@ app.post('/api/public/request-mock-token', async (req, res) => {
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
 
 
