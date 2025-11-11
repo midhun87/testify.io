@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Room - HIRE WITH US</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <!-- Using the default light theme -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/neat.min.css">
+
+    <style>
+        /* --- NEW LIGHT THEME --- */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* bg-gray-100 */
+            color: #1f2937; /* bg-gray-800 */
+            overflow: hidden;
+        }
+        
+        /* Custom Panel Style (Red box on compiler, Blue box on chat/video) */
+        .panel {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb; /* border-gray-200 */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Custom scrollbar for light mode */
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f3f4f6; }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #d1d5db; /* gray-300 */
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; /* gray-400 */ }
+
+        /* CodeMirror Light Theme */
+        .CodeMirror {
+            height: 100%;
+            font-size: 14px;
+            line-height: 1.6;
+            background: #ffffff;
+            border-radius: 0 0 0.5rem 0.5rem;
+            border-top: 1px solid #e5e7eb;
+        }
+        .cm-s-neat.CodeMirror { background: #ffffff; color: #1f2937; }
+        .CodeMirror-gutters { background: #f9fafb !important; border-right: 1px solid #e5e7eb; }
+        .CodeMirror-linenumbers { color: #6b7280; }
+        .cm-s-neat .CodeMirror-cursor { border-left: 2px solid #4f46e5; }
+        
+        /* Tab Styles (Light) */
+        .tab-btn {
+            @apply flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-800 hover:bg-gray-100 -mb-px transition-all;
+        }
+        .tab-btn.active {
+            @apply text-indigo-600 border-indigo-600 bg-white;
+        }
+        .tab-content { @apply hidden; }
+        .tab-content.active { @apply block; }
+
+        /* Video Feed Styles */
+        .video-feed {
+            @apply w-full h-full object-cover;
+            transform: scaleX(-1);
+        }
+        .remote-video {
+            transform: scaleX(1); /* Interviewer video is not mirrored */
+        }
+
+        /* Page state containers */
+        #page-loading, #student-details-form, #interview-lobby, #interview-room, #interview-completed {
+            display: none;
+            flex-direction: column;
+        }
+        
+        /* Preformatted text styles for problems (Light) */
+        .problem-pre {
+            @apply bg-gray-100 p-4 rounded-md text-sm text-gray-700 font-mono whitespace-pre-wrap border border-gray-300;
+        }
+        
+        /* Output Console (Keeping dark for readability) */
+        .output-console {
+            background-color: #111827; /* gray-900 */
+            color: #e5e7eb; /* gray-200 */
+            font-family: 'Menlo', 'Consolas', monospace;
+        }
+        .output-console.output-error { color: #f87171; /* red-400 */ }
+        
+        /* Test Case Results (Light) */
+        .test-case { @apply p-3 rounded-lg border; }
+        .test-case-pass {
+            background-color: #f0fdf4; /* green-50 */
+            border-color: #bbf7d0; /* green-200 */
+        }
+        .test-case-fail {
+            background-color: #fef2f2; /* red-50 */
+            border-color: #fecaca; /* red-200 */
+        }
+        
+        /* Chat bubble styles (Light) */
+        .chat-bubble { @apply p-3 rounded-2xl max-w-[80%]; }
+        .chat-bubble-self { @apply bg-indigo-600 text-white rounded-br-lg ml-auto; }
+        .chat-bubble-other { @apply bg-gray-200 text-gray-800 rounded-bl-lg mr-auto; }
+
+        /* Modal Styles */
+        #modal-backdrop {
+            @apply fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity;
+        }
+        #modal-container {
+            @apply fixed inset-0 z-10 flex items-center justify-center p-4;
+        }
+        #modal-panel {
+            @apply bg-white rounded-lg shadow-xl transform transition-all max-w-3xl w-full;
+        }
+    </style>
+</head>
+
+<body class="flex flex-col h-screen antialiased">
+
+    <!-- Header (Light) -->
+    <header class="flex-shrink-0 flex items-center justify-between h-16 bg-white border-b border-gray-200 px-4 md:px-6 z-20 shadow-sm">
+        <!-- Left: Logo & Title -->
+        <div class="flex items-center gap-3">
+            <img class="h-8 w-8" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="HireWithUs Logo">
+            <span class="text-xl font-bold text-gray-800 hidden sm:inline">Interview Room</span>
+        </div>
+        
+        <!-- Right: Status & Info -->
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 text-sm">
+                <span class="text-gray-500">Interviewer:</span>
+                <span id="interviewer-name" class="font-medium text-gray-900">Loading...</span>
+            </div>
+            
+            <div id="connection-status" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 border border-gray-300">
+                <div id="connection-dot" class="w-2.5 h-2.5 bg-yellow-500 rounded-full"></div>
+                <span id="connection-text" class="text-xs font-medium text-gray-600">Connecting...</span>
+            </div>
+
+            <!-- Violation Counter -->
+            <div id="violation-counter" class="hidden items-center gap-2 px-3 py-1.5 rounded-full bg-red-100 border border-red-300">
+                <i class="fas fa-exclamation-triangle text-red-500"></i>
+                <span id="violation-count-text" class="text-xs font-bold text-red-700">Violations: 0</span>
+            </div>
+            
+            <!-- Timer -->
+            <div id="timer" class="hidden items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 border border-gray-300">
+                <i class="far fa-clock text-indigo-600"></i>
+                <span id="timer-text" class="text-sm font-mono font-medium text-gray-900">--:--</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow flex flex-col h-[calc(100vh-4rem)]">
+
+        <!-- State 1: Page Loading -->
+        <div id="page-loading" class="flex-grow flex items-center justify-center p-8 text-center">
+            <i class="fas fa-spinner fa-spin fa-3x text-indigo-500"></i>
+            <h2 class="mt-6 text-2xl font-bold text-gray-900">Connecting to Interview...</h2>
+            <p class="text-gray-500 mt-2">Please wait while we verify your interview link and restore your session.</p>
+        </div>
+
+        <!-- State 2: Student Details Form (Light) -->
+        <div id="student-details-form" class="flex-grow items-center justify-center p-4 overflow-y-auto custom-scrollbar">
+            <div class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl p-6 md:p-8 border border-gray-200">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Verify Your Details</h2>
+                <p class="text-gray-600 mb-8">Please confirm your details and capture a photo before entering the lobby. This photo will be used for verification by the interviewer.</p>
+                
+                <form id="student-data-form">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                        <!-- Left: Form Fields -->
+                        <div class="space-y-5">
+                            <div>
+                                <label for="candidateName" class="block text-sm font-medium text-gray-700">Full Name</label>
+                                <input type="text" id="candidateName" class="mt-1.5 block w-full bg-gray-50 border-gray-300 rounded-lg shadow-sm text-gray-900 focus:ring-indigo-500 focus:border-indigo-500" required>
+                            </div>
+                            <div>
+                                <label for="candidateEmail" class="block text-sm font-medium text-gray-700">Email Address</label>
+                                <input type="email" id="candidateEmail" class="mt-1.5 block w-full bg-gray-50 border-gray-300 rounded-lg shadow-sm text-gray-900 focus:ring-indigo-500 focus:border-indigo-500" required>
+                            </div>
+                            <div>
+                                <label for="rollNumber" class="block text-sm font-medium text-gray-700">Roll Number</label>
+                                <input type="text" id="rollNumber" class="mt-1.5 block w-full bg-gray-50 border-gray-300 rounded-lg shadow-sm text-gray-900 focus:ring-indigo-500 focus:border-indigo-500" required>
+                            </div>
+                            <div>
+                                <label for="collegeName" class="block text-sm font-medium text-gray-700">College Name</label>
+                                <input type="text" id="collegeName" class="mt-1.5 block w-full bg-gray-50 border-gray-300 rounded-lg shadow-sm text-gray-900 focus:ring-indigo-500 focus:border-indigo-500" required>
+                            </div>
+                            <div>
+                                <label for="departmentName" class="block text-sm font-medium text-gray-700">Department Name</label>
+                                <input type="text" id="departmentName" class="mt-1.5 block w-full bg-gray-50 border-gray-300 rounded-lg shadow-sm text-gray-900 focus:ring-indigo-500 focus:border-indigo-500" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Right: Photo Capture -->
+                        <div class="space-y-4 flex flex-col">
+                            <label class="block text-sm font-medium text-gray-700">Capture Photo</label>
+                            <div class="w-full aspect-video bg-gray-200 rounded-lg overflow-hidden border border-gray-300">
+                                <video id="webcam-feed" class="w-full h-full object-cover" autoplay playsinline poster="https://placehold.co/600x400/E5E7EB/6B7280?text=Waiting+for+Webcam..."></video>
+                            </div>
+                            <button type="button" id="capture-photo-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                <i class="fas fa-camera"></i>Capture Photo
+                            </button>
+                            <canvas id="photo-canvas" class="hidden"></canvas>
+                            <div id="photo-preview-container" class="hidden text-center mt-2">
+                                <img id="photo-preview" class="w-32 h-24 object-cover mx-auto rounded-lg border-2 border-green-500 shadow-lg">
+                                <p class="text-green-600 text-sm font-medium mt-2"><i class="fas fa-check-circle mr-1"></i>Photo captured!</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 pt-6 border-t border-gray-200 flex justify-between items-center">
+                        <p id="form-message" class="text-red-600 text-sm"></p>
+                        <button type="submit" id="submit-details-btn" class="px-6 py-2.5 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all" disabled>
+                            Proceed to Lobby
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- State 3: Interview Lobby (Light) -->
+        <div id="interview-lobby" class="flex-grow flex items-center justify-center p-8 text-center">
+            <div class="bg-white p-10 rounded-2xl shadow-2xl max-w-lg w-full border border-gray-200">
+                <img id="lobby-student-photo" src="https://placehold.co/128x128/E5E7EB/4B5563?text=You" alt="Student Photo" class="w-32 h-32 rounded-full border-4 border-indigo-500 shadow-lg mx-auto">
+                <h2 id="lobby-welcome" class="mt-6 text-3xl font-bold text-gray-900">Welcome!</h2>
+                <p class="text-gray-600 text-lg mt-2">You are checked in for your interview.</p>
+                
+                <div class="my-10 space-y-4">
+                    <div class="flex items-center justify-center gap-4">
+                        <img id="lobby-interviewer-photo" src="https://placehold.co/80x80/D1D5DB/6B7280?text=?" alt="Interviewer" class="w-20 h-20 rounded-full border-2 border-gray-300">
+                        <div class="text-left">
+                            <span class="text-sm text-gray-500">Your Interviewer</span>
+                            <p id="lobby-interviewer-name" class="font-semibold text-gray-900 text-lg">[Interviewer Name]</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Status Text -->
+                    <div id="lobby-status-text" class="mt-6 p-4 bg-gray-100 rounded-lg border border-gray-200">
+                        <h3 id="lobby-status-title" class="text-2xl font-semibold text-yellow-600"><i class="fas fa-hourglass-half fa-spin mr-2"></i>Waiting...</h3>
+                        <p id="lobby-status-desc" class="text-gray-600 mt-2">We will connect you as soon as the interviewer joins.</p>
+                    </div>
+
+                    <!-- Button to enter interview -->
+                    <button id="enter-interview-btn" class="hidden mt-8 px-8 py-3 bg-green-600 text-white text-lg font-semibold rounded-lg shadow-lg hover:bg-green-700 transition-all transform hover:scale-105 w-full">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Click to Enter Interview
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Screen Share Permission Modal (Light) -->
+        <div id="screen-share-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4">
+            <div class="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-md w-full">
+                <i class="fas fa-desktop fa-3x text-indigo-500 mb-5"></i>
+                <h2 class="text-2xl font-bold text-gray-900 mb-3">Screen Sharing Required</h2>
+                <p class="text-gray-600 mb-6">This is a proctored interview. You must share your <strong class="text-indigo-600">Entire Screen</strong> and <strong class="text-indigo-600">Camera</strong> to proceed. This is mandatory.</p>
+                
+                <p id="screen-share-error" class="hidden text-red-600 text-sm mb-4 font-medium"></p>
+
+                <button id="share-and-enter-btn" class="w-full px-6 py-3 bg-indigo-600 text-white text-lg font-semibold rounded-lg shadow-lg hover:bg-indigo-700 transition-all transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                    Share Screen & Enter
+                </button>
+                <p class="text-xs text-gray-400 mt-4">Your screen and camera will be streamed to the interviewer.</p>
+            </div>
+        </div>
+
+        <!-- State 4: Interview Room (NEW 2-COLUMN LAYOUT) -->
+        <!-- Blue Box: w-full md:w-[36%] lg:w-1/3 -->
+        <!-- Red Box: w-full md:w-[64%] lg:w-2/3 -->
+        <div id="interview-room" class="flex-grow flex flex-col md:flex-row w-full h-full overflow-hidden p-3 gap-3">
+            
+            <!-- Left Column: Video & Chat (BLUE BOX) -->
+            <div class="w-full md:w-[36%] lg:w-1/3 h-full flex flex-col gap-3">
+                <!-- Video Feeds (Top part of Blue Box) -->
+                <div class="flex-shrink-0 panel p-4">
+                    <h2 class="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                        <i class="fas fa-video text-indigo-500"></i>Video Feeds
+                    </h2>
+                    
+                    <!-- VIDEO FIX: Use grid for equal columns -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <!-- Interviewer Video (Main View) -->
+                        <div class="relative w-full aspect-video bg-gray-200 rounded-lg overflow-hidden border border-gray-300">
+                            <video id="interviewer-video" class="video-feed remote-video" autoplay playsinline poster="https://placehold.co/300x225/E5E7EB/6B7280?text=Interviewer"></video>
+                            <span id="interviewer-video-name" class="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 text-white text-xs rounded-md font-medium">Interviewer</span>
+                        </div>
+                        <!-- Student Preview (Small View) -->
+                        <div class="relative w-full aspect-video bg-gray-200 rounded-lg overflow-hidden border border-gray-300">
+                            <video id="student-preview" class="video-feed" autoplay playsinline muted poster="https://placehold.co/300x225/E5E7EB/6B7280?text=You"></video>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Panel (Bottom part of Blue Box - GREEN BOX AREA) -->
+                <!-- CRITICAL SCROLL FIX: Ensure parent has flex-grow and min-h-0 and child has overflow-y-auto -->
+                <div class="flex-grow flex flex-col panel overflow-hidden min-h-0">
+                    <h2 class="text-lg font-bold text-gray-900 p-4 border-b border-gray-200 flex-shrink-0 flex items-center gap-2">
+                        <i class="fas fa-comments text-indigo-500"></i>Chat
+                    </h2>
+                    <!-- Chat messages container with SCROLLING -->
+                    <div id="chat-messages" class="flex-grow p-4 space-y-4 overflow-y-auto custom-scrollbar bg-gray-50">
+                        <!-- Chat messages appended here -->
+                    </div>
+                    <form id="chat-form" class="flex-shrink-0 p-3.5 border-t border-gray-200">
+                        <div class="flex gap-2">
+                            <input type="text" id="chat-input" class="flex-grow bg-white border-gray-300 rounded-lg shadow-sm text-gray-900 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="Type a message...">
+                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right Column: Compiler & Output (RED BOX) -->
+            <!-- CRITICAL FIX: Add flex-grow to ensure this column takes up all remaining horizontal space -->
+            <div class="w-full md:w-[64%] lg:w-2/3 h-full flex flex-col panel overflow-hidden flex-grow">
+                <!-- Compiler Header (YELLOW & PINK BOXES) -->
+                <div class="flex-shrink-0 flex items-center justify-between p-3 bg-white border-b border-gray-200">
+                    <div class="flex items-center gap-3">
+                        <!-- Language Selector (YELLOW BOX) -->
+                        <select id="language-select" class="form-select bg-gray-50 border-gray-300 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500 text-sm rounded-md shadow-sm">
+                            <option value="javascript">JavaScript</option>
+                            <option value="python">Python</option>
+                            <option value="java">Java</option>
+                            <option value="cpp">C++</option>
+                        </select>
+                        <!-- NEW "View Problem" Button (PINK BOX) -->
+                        <button id="view-problem-btn" class="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-md hover:bg-gray-200 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <i class="fas fa-tasks"></i>View Problem
+                        </button>
+                        <!-- Problem Dropdown -->
+                        <select id="problem-select" class="form-select bg-gray-50 border-gray-300 text-gray-900 focus:ring-indigo-500 focus:border-indigo-500 text-sm rounded-md shadow-sm">
+                            <option value="">-- No problems assigned --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <!-- Run Button -->
+                        <button id="run-code-btn" class="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white font-medium rounded-md hover:bg-gray-700 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                            <i class="fas fa-play"></i>Run
+                        </button>
+                        <!-- Submit Button -->
+                        <button id="submit-code-btn" class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-300 disabled:cursor-not-allowed">
+                            <i class="fas fa-check-double"></i>Submit
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Code Editor (Flex Grow) -->
+                <!-- CRITICAL FIX: Set explicit vertical size distribution (e.g., h-3/5 for editor) -->
+                <div class="flex-grow h-3/5 overflow-hidden relative">
+                    <textarea id="code-editor"></textarea>
+                </div>
+
+                <!-- Output Panel (Fixed Height) -->
+                <!-- CRITICAL FIX: Set explicit vertical size distribution (e.g., h-2/5 for output) -->
+                <div class="flex-shrink-0 h-2/5 flex flex-col border-t border-gray-200">
+                    <!-- Output Tabs -->
+                    <div class="flex-shrink-0 border-b border-gray-200 bg-gray-50">
+                        <nav class="flex" aria-label="Output Tabs">
+                            <button class="tab-btn active" data-tab-group="output" data-tab-target="output-console-tab">
+                                <i class="fas fa-terminal"></i>Console
+                            </button>
+                            <button class="tab-btn" data-tab-group="output" data-tab-target="output-results-tab">
+                                <i class="fas fa-tasks"></i>Test Results
+                            </button>
+                        </nav>
+                    </div>
+                    
+                    <!-- Console Tab -->
+                    <div id="output-console-tab" class="tab-content active flex-grow overflow-y-auto custom-scrollbar" data-tab-group="output">
+                        <pre id="output-console" class="output-console p-4 text-sm h-full w-full !bg-transparent !rounded-none">Run "Submit" to see test case results here.</pre>
+                    </div>
+                    
+                    <!-- Results Tab -->
+                    <div id="output-results-tab" class="tab-content flex-grow overflow-y-auto custom-scrollbar" data-tab-group="output">
+                        <div id="output-results-container" class="p-4 space-y-3">
+                            <p class="text-gray-500 italic p-4">Run "Submit" to see test case results here.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- State 5: Interview Completed (Light) -->
+        <div id="interview-completed" class="flex-grow flex items-center justify-center p-8 text-center">
+            <div class="bg-white p-10 rounded-2xl shadow-2xl max-w-lg w-full border border-gray-200">
+                <i class="fas fa-check-circle fa-4x text-green-500 mb-6"></i>
+                <h2 class="mt-6 text-3xl font-bold text-gray-900">Interview Completed</h2>
+                <p id="completed-message" class="text-gray-600 text-lg mt-2">The interviewer has ended the session.</p>
+                <p class="text-gray-500 mt-6">Thank you for your time. You may now safely close this window.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- NEW: Problem Details Modal -->
+    <div id="problem-modal" class="hidden" role="dialog" aria-modal="true">
+        <div id="modal-backdrop" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        <div id="modal-container" class="fixed inset-0 z-10 flex items-center justify-center p-4">
+            <div id="modal-panel" class="bg-white rounded-lg shadow-xl transform transition-all max-w-3xl w-full">
+                <!-- Modal Header -->
+                <div class="flex items-start justify-between p-5 border-b border-gray-200 rounded-t">
+                    <h3 id="modal-problem-title" class="text-2xl font-bold text-gray-900">
+                        Loading Problem...
+                    </h3>
+                    <button type="button" id="modal-close-btn" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto inline-flex items-center">
+                        <i class="fas fa-times fa-lg"></i>
+                        <span class="sr-only">Close modal</span>
+                    </button>
+                </div>
+                <!-- Modal Body -->
+                <div id="modal-problem-content" class="p-6 space-y-5 overflow-y-auto custom-scrollbar" style="max-height: 70vh;">
+                    <!-- Content will be populated by JS -->
+                    <p id="modal-problem-description" class="text-base leading-relaxed text-gray-600"></p>
+                    
+                    <div id="modal-problem-example-container" class="hidden">
+                        <h4 class="font-semibold text-gray-800 mb-2">Example</h4>
+                        <pre id="modal-problem-example" class="problem-pre"></pre>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div id="modal-problem-input-container" class="hidden">
+                            <h4 class="font-semibold text-gray-800 mb-2">Input Format</h4>
+                            <pre id="modal-problem-input-format" class="problem-pre"></pre>
+                        </div>
+                        <div id="modal-problem-output-container" class="hidden">
+                            <h4 class="font-semibold text-gray-800 mb-2">Output Format</h4>
+                            <pre id="modal-problem-output-format" class="problem-pre"></pre>
+                        </div>
+                    </div>
+                    
+                    <div id="modal-problem-constraints-container" class="hidden">
+                        <h4 class="font-semibold text-gray-800 mb-2">Constraints</h4>
+                        <pre id="modal-problem-constraints" class="problem-pre"></pre>
+                    </div>
+                </div>
+                <!-- Modal Footer -->
+                <div class="flex items-center p-4 border-t border-gray-200 rounded-b">
+                    <button type="button" id="modal-close-btn-bottom" class="px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition-all">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Hidden elements for stream merging -->
+    <video id="hidden-cam-video" autoplay playsinline muted class="hidden"></video>
+    <video id="hidden-screen-video" autoplay playsinline muted class="hidden"></video>
+    <canvas id="merge-canvas" class="hidden" width="1280" height="720"></canvas>
+    
+    <!-- Socket.io Client -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <!-- CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/matchbrackets.min.js"></script>
+
+    <!-- MAIN JAVASCRIPT LOGIC -->
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            
+            // --- Global State ---
+            let slotId = null;
+            let socket = null;
+            let token = null;
+            let localStream = null;
+            let localCameraStream = null;
+            let localScreenStream = null;
+            let peerConnection = null;
+            let capturedPhotoData = null; 
+            let interviewDetails = {};
+            let violationCount = 0;
+            let fullscreenActive = false;
+            let currentProblemId = null;
+            let currentAssignedProblems = [];
+            let currentChatHistory = [];
+            let drawLoopId = null;
+
+            // --- Page State Elements ---
+            const pageStates = {
+                loading: document.getElementById('page-loading'),
+                form: document.getElementById('student-details-form'),
+                lobby: document.getElementById('interview-lobby'),
+                room: document.getElementById('interview-room'),
+                completed: document.getElementById('interview-completed')
+            };
+            
+            // --- Connection Status Elements ---
+            const connectionDot = document.getElementById('connection-dot');
+            const connectionText = document.getElementById('connection-text');
+
+            // --- Form Elements ---
+            const studentDataForm = document.getElementById('student-data-form');
+            const candidateNameEl = document.getElementById('candidateName');
+            const candidateEmailEl = document.getElementById('candidateEmail');
+            const rollNumberEl = document.getElementById('rollNumber');
+            const collegeNameEl = document.getElementById('collegeName');
+            const departmentNameEl = document.getElementById('departmentName');
+            const webcamFeed = document.getElementById('webcam-feed');
+            const capturePhotoBtn = document.getElementById('capture-photo-btn');
+            const photoCanvas = document.getElementById('photo-canvas');
+            const photoPreviewContainer = document.getElementById('photo-preview-container');
+            const photoPreview = document.getElementById('photo-preview');
+            const submitDetailsBtn = document.getElementById('submit-details-btn');
+            const formMessage = document.getElementById('form-message');
+
+            // --- Lobby Elements ---
+            const lobbyStudentPhoto = document.getElementById('lobby-student-photo');
+            const lobbyWelcome = document.getElementById('lobby-welcome');
+            const lobbyStatusTitle = document.getElementById('lobby-status-title');
+            const lobbyStatusDesc = document.getElementById('lobby-status-desc');
+            const lobbyInterviewerName = document.getElementById('lobby-interviewer-name');
+            const lobbyInterviewerPhoto = document.getElementById('lobby-interviewer-photo');
+            const enterInterviewBtn = document.getElementById('enter-interview-btn');
+            const screenShareModal = document.getElementById('screen-share-modal');
+            const shareAndEnterBtn = document.getElementById('share-and-enter-btn');
+            const screenShareError = document.getElementById('screen-share-error');
+
+            // --- Interview Room Elements (Left Column) ---
+            const chatMessages = document.getElementById('chat-messages');
+            const chatForm = document.getElementById('chat-form');
+            const chatInput = document.getElementById('chat-input');
+            const localVideo = document.getElementById('student-preview');
+            const remoteVideo = document.getElementById('interviewer-video');
+            
+            // --- Interview Room Elements (Right Column) ---
+            const problemSelect = document.getElementById('problem-select'); // Hidden dropdown
+            const viewProblemBtn = document.getElementById('view-problem-btn'); // NEW Button
+            const runBtn = document.getElementById('run-code-btn');
+            const submitBtn = document.getElementById('submit-code-btn');
+            const outputConsole = document.getElementById('output-console');
+            const outputResultsContainer = document.getElementById('output-results-container');
+            const languageSelect = document.getElementById('language-select');
+            let codeEditor;
+
+            // --- Header Elements ---
+            const interviewerNameEl = document.getElementById('interviewer-name');
+            const interviewerVideoNameEl = document.getElementById('interviewer-video-name');
+            const timerEl = document.getElementById('timer-text'); 
+            const violationCounterEl = document.getElementById('violation-counter');
+            const violationCountText = document.getElementById('violation-count-text');
+
+            // --- Modal Elements ---
+            const problemModal = document.getElementById('problem-modal');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+            const modalCloseBtnBottom = document.getElementById('modal-close-btn-bottom');
+            const modalProblemTitle = document.getElementById('modal-problem-title');
+            const modalProblemDescription = document.getElementById('modal-problem-description');
+            const modalProblemExampleContainer = document.getElementById('modal-problem-example-container');
+            const modalProblemExample = document.getElementById('modal-problem-example');
+            const modalProblemInputContainer = document.getElementById('modal-problem-input-container');
+            const modalProblemInputFormat = document.getElementById('modal-problem-input-format');
+            const modalProblemOutputContainer = document.getElementById('modal-problem-output-container');
+            const modalProblemOutputFormat = document.getElementById('modal-problem-output-format');
+            const modalProblemConstraintsContainer = document.getElementById('modal-problem-constraints-container');
+            const modalProblemConstraints = document.getElementById('modal-problem-constraints');
+            
+            // --- Hidden Merge Elements ---
+            const hiddenCamVideo = document.getElementById('hidden-cam-video');
+            const hiddenScreenVideo = document.getElementById('hidden-screen-video');
+            const mergeCanvas = document.getElementById('merge-canvas');
+            const mergeCtx = mergeCanvas.getContext('2d');
+            
+            const completedMessage = document.getElementById('completed-message');
+
+            
+            // --- Helper: Change Page State ---
+            function showState(state) {
+                console.log("Changing state to:", state);
+                Object.values(pageStates).forEach(el => el.style.display = 'none');
+                if (pageStates[state]) {
+                    pageStates[state].style.display = 'flex'; 
+                } else {
+                    console.warn("Unknown state:", state);
+                    pageStates.loading.style.display = 'flex';
+                }
+            }
+            
+            // --- Helper: Update Connection Status ---
+            function updateConnectionStatus(isConnected, message = "Connected") {
+                if (isConnected) {
+                    connectionDot.classList.remove('bg-red-500', 'bg-yellow-500', 'animate-none');
+                    connectionDot.classList.add('bg-green-500', 'animate-pulse');
+                    connectionText.textContent = message;
+                    connectionText.classList.remove('text-red-500');
+                    connectionText.classList.add('text-gray-600');
+                } else {
+                    connectionDot.classList.remove('bg-green-500', 'bg-yellow-500', 'animate-pulse');
+                    connectionDot.classList.add('bg-red-500', 'animate-none');
+                    connectionText.textContent = message;
+                    connectionText.classList.remove('text-gray-600');
+                    connectionText.classList.add('text-red-600');
+                }
+            }
+
+            // --- 1. Initial Load & Auth ---
+            async function main() {
+                showState('loading');
+                const urlParams = new URLSearchParams(window.location.search);
+                token = urlParams.get('token');
+                if (!token) {
+                    document.body.innerHTML = `<div class="p-8 text-center text-red-600"><h2>Error: No token provided.</h2><p>This interview link is invalid.</p></div>`;
+                    return;
+                }
+                try {
+                    const response = await fetch('/api/public/interview-details', {
+                        headers: { 'x-auth-token': token }
+                    });
+                    interviewDetails = await response.json();
+                    if (!response.ok) throw new Error(interviewDetails.message || 'Authentication failed.');
+                    
+                    slotId = interviewDetails.slotId;
+                    interviewerNameEl.textContent = interviewDetails.interviewerName;
+                    interviewerVideoNameEl.textContent = `${interviewDetails.interviewerName}`;
+                    
+                    currentChatHistory = interviewDetails.chatHistory || [];
+                    currentAssignedProblems = interviewDetails.assignedProblems || [];
+                    currentProblemId = interviewDetails.currentProblemId || null;
+
+                    if (interviewDetails.status === 'COMPLETED') {
+                        completedMessage.textContent = interviewDetails.message || "This interview has already been completed.";
+                        showState('completed');
+                    } else if (!interviewDetails.studentDetailsSubmitted) {
+                        await setupForm();
+                    } else {
+                        interviewDetails.candidateName = interviewDetails.studentDetails.candidateName;
+                        interviewDetails.candidatePhotoUrl = interviewDetails.studentDetails.candidatePhotoUrl;
+                        await setupLobby();
+                    }
+                } catch (error) {
+                    console.error("Initial load error:", error);
+                    let msg = error.message;
+                    if (msg.includes('completed') || msg.includes('expired')) {
+                        completedMessage.textContent = msg;
+                        showState('completed');
+                    } else {
+                        document.body.innerHTML = `<div class="p-8 text-center text-red-600"><h2>Error: ${msg}</h2><p>This interview link may be invalid or expired. Please refresh.</p></div>`;
+                    }
+                }
+            }
+
+            // --- 2. Setup Form (if needed) ---
+            async function setupForm() {
+                showState('form');
+                
+                candidateNameEl.value = interviewDetails.studentDetails.candidateName || '';
+                candidateEmailEl.value = interviewDetails.studentDetails.candidateEmail || '';
+                rollNumberEl.value = interviewDetails.studentDetails.rollNumber || '';
+                collegeNameEl.value = interviewDetails.studentDetails.collegeName || '';
+                departmentNameEl.value = interviewDetails.studentDetails.departmentName || '';
+
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    webcamFeed.srcObject = stream;
+                    webcamFeed.poster = "";
+                    await webcamFeed.play();
+                } catch (e) {
+                    formMessage.textContent = 'Could not access webcam. Please enable camera permissions.';
+                    capturePhotoBtn.disabled = true;
+                }
+
+                capturePhotoBtn.addEventListener('click', () => {
+                    const context = photoCanvas.getContext('2d');
+                    photoCanvas.width = webcamFeed.videoWidth;
+                    photoCanvas.height = webcamFeed.videoHeight;
+                    context.translate(webcamFeed.videoWidth, 0);
+                    context.scale(-1, 1);
+                    context.drawImage(webcamFeed, 0, 0, webcamFeed.videoWidth, webcamFeed.videoHeight);
+                    
+                    capturedPhotoData = photoCanvas.toDataURL('image/jpeg', 0.9);
+                    photoPreview.src = capturedPhotoData;
+                    photoPreviewContainer.classList.remove('hidden');
+                    submitDetailsBtn.disabled = false;
+                    
+                    if (webcamFeed.srcObject) {
+                        webcamFeed.srcObject.getTracks().forEach(track => track.stop());
+                        webcamFeed.poster = "https://placehold.co/600x400/E5E7EB/6B7280?text=Camera+Off";
+                    }
+                });
+
+                studentDataForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    submitDetailsBtn.disabled = true;
+                    submitDetailsBtn.textContent = 'Submitting...';
+                    formMessage.textContent = '';
+                    try {
+                        const payload = {
+                            candidateName: candidateNameEl.value,
+                            candidateEmail: candidateEmailEl.value,
+                            rollNumber: rollNumberEl.value,
+                            collegeName: collegeNameEl.value,
+                            departmentName: departmentNameEl.value,
+                            photo: capturedPhotoData
+                        };
+                        
+                        interviewDetails.candidateName = payload.candidateName;
+                        interviewDetails.candidatePhotoUrl = capturedPhotoData;
+                        
+                        const response = await fetch('/api/public/student-details', {
+                            method: 'POST',
+                            headers: { 'x-auth-token': token, 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        
+                        if (!response.ok) {
+                            const err = await response.json();
+                            throw new Error(err.message || 'Failed to submit details');
+                        }
+                        await setupLobby();
+                    } catch (error) {
+                        formMessage.textContent = error.message;
+                        submitDetailsBtn.disabled = false;
+                        submitDetailsBtn.textContent = 'Proceed to Lobby';
+                    }
+                });
+            }
+            
+            // --- 3. Setup Lobby (if form skipped or after submit) ---
+            async function setupLobby() {
+                showState('form'); // Close the webcam stream if it was open
+                if (webcamFeed.srcObject) {
+                    webcamFeed.srcObject.getTracks().forEach(track => track.stop());
+                }
+                
+                showState('lobby');
+                
+                lobbyWelcome.textContent = `Welcome, ${interviewDetails.candidateName}!`;
+                lobbyStudentPhoto.src = capturedPhotoData || interviewDetails.candidatePhotoUrl; 
+                lobbyInterviewerName.textContent = interviewDetails.interviewerName;
+                if (interviewDetails.interviewerPhotoUrl) {
+                    lobbyInterviewerPhoto.src = interviewDetails.interviewerPhotoUrl;
+                }
+
+                enterInterviewBtn.addEventListener('click', () => {
+                    screenShareModal.style.display = 'flex';
+                });
+                
+                shareAndEnterBtn.addEventListener('click', async () => {
+                    shareAndEnterBtn.disabled = true;
+                    shareAndEnterBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Starting...';
+                    screenShareError.classList.add('hidden');
+                    screenShareError.textContent = '';
+
+                    try {
+                        await shareScreenAndCamera(); 
+                        enterFullscreen();
+                        setupInterviewRoom();
+                        screenShareModal.style.display = 'none';
+                    } catch (err) {
+                        console.error(err);
+                        let errMsg = "Failed to get screen share permissions. This is required to continue. Please try again and select 'Entire Screen'.";
+                        if (err.name === 'NotAllowedError') {
+                            errMsg = "Permission denied. You must select 'Entire Screen' and click 'Share' to continue.";
+                        } else if (err.name === 'NotFoundError') {
+                            errMsg = "No screen found. Please ensure a display is connected.";
+                        }
+                        
+                        screenShareError.textContent = errMsg;
+                        screenShareError.classList.remove('hidden');
+                        shareAndEnterBtn.disabled = false;
+                        shareAndEnterBtn.innerHTML = 'Share Screen & Enter';
+                    }
+                });
+
+                initSocket(); 
+                
+                if (interviewDetails.status === 'ACTIVE') {
+                    lobbyStatusTitle.innerHTML = "<i class='fas fa-check-circle text-green-500 mr-2'></i>Interviewer is Ready!";
+                    lobbyStatusDesc.textContent = "Please click the button below to join.";
+                    enterInterviewBtn.classList.remove('hidden');
+                }
+            }
+
+            // --- 4. Setup Interview Room (after lobby) ---
+            async function setupInterviewRoom() {
+                showState('room');
+                document.getElementById('timer').classList.remove('hidden');
+                violationCounterEl.classList.remove('hidden');
+
+                codeEditor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+                    lineNumbers: true,
+                    theme: 'neat', // Light theme
+                    mode: 'javascript',
+                    autoCloseBrackets: true,
+                    matchBrackets: true,
+                    lineWrapping: true,
+                });
+                
+                setTimeout(() => codeEditor.refresh(), 100);
+
+                codeEditor.setValue(interviewDetails.latestCode || `// Welcome! Your code will be saved automatically.\n`);
+                languageSelect.value = interviewDetails.latestLanguage || 'javascript';
+                codeEditor.setOption('mode', getCodeMirrorMode(languageSelect.value));
+                renderChatHistory(currentChatHistory);
+                renderProblemDropdown(currentAssignedProblems);
+                
+                // Select the current problem ID in the dropdown (if it exists)
+                if (currentProblemId) {
+                    problemSelect.value = currentProblemId;
+                }
+                
+                languageSelect.addEventListener('change', () => {
+                    codeEditor.setOption('mode', getCodeMirrorMode(languageSelect.value));
+                    emitCodeUpdate();
+                });
+                
+                let codeUpdateTimeout;
+                codeEditor.on('change', () => {
+                    clearTimeout(codeUpdateTimeout);
+                    codeUpdateTimeout = setTimeout(emitCodeUpdate, 500);
+                });
+                
+                chatForm.addEventListener('submit', sendChatMessage);
+                
+                // --- NEW: Problem Modal Logic ---
+                viewProblemBtn.addEventListener('click', () => {
+                    const selectedProblemId = problemSelect.value;
+                    if (!selectedProblemId || selectedProblemId === '') {
+                        // Custom Alert for No Problem Selected
+                        viewProblemBtn.textContent = "Select a problem first!";
+                        viewProblemBtn.classList.add('bg-red-100', 'text-red-700');
+                        setTimeout(() => {
+                           viewProblemBtn.textContent = "View Problem";
+                           viewProblemBtn.classList.remove('bg-red-100', 'text-red-700');
+                        }, 2000);
+                        return;
+                    }
+                    // Fetch problem details and SHOW the modal
+                    populateAndShowProblemModal(selectedProblemId);
+                });
+                
+                modalCloseBtn.addEventListener('click', () => problemModal.style.display = 'none');
+                modalCloseBtnBottom.addEventListener('click', () => problemModal.style.display = 'none');
+                // --- End Modal Logic ---
+                
+                runBtn.addEventListener('click', () => runCode(false));
+                submitBtn.addEventListener('click', () => runCode(true));
+                
+                if (!socket) initSocket();
+                
+                setupViolationTracking();
+                
+                // Tab switching logic (for output panel)
+                document.querySelectorAll('.tab-btn[data-tab-group="output"]').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const tabGroup = btn.dataset.tabGroup;
+                        const tabTargetId = btn.dataset.tabTarget;
+                        
+                        document.querySelectorAll(`.tab-btn[data-tab-group="${tabGroup}"]`).forEach(t => t.classList.remove('active'));
+                        btn.classList.add('active');
+                        
+                        const contentParent = btn.closest('.h-2\\/5');
+                        if (contentParent) {
+                             contentParent.querySelectorAll(`.tab-content[data-tab-group="${tabGroup}"]`).forEach(c => c.classList.remove('active', 'block'));
+                        }
+                       
+                        const targetContent = document.getElementById(tabTargetId);
+                        if (targetContent) {
+                            targetContent.classList.add('active', 'block');
+                        }
+                    });
+                });
+                
+                document.querySelector('.tab-btn[data-tab-target="output-console-tab"]').click();
+                
+                await initWebRTC();
+                startInterviewTimer(interviewDetails.startTime, 90);
+            }
+            
+            function getCodeMirrorMode(lang) {
+                if (lang === 'python') return 'python';
+                if (lang === 'java') return 'text/x-java';
+                if (lang === 'cpp') return 'text/x-c++src';
+                return 'javascript';
+            }
+
+            // --- Socket.io Setup ---
+            function initSocket() {
+                if (socket) return;
+                socket = io();
+                
+                socket.on('connect', () => {
+                    updateConnectionStatus(true, "Connected");
+                    // CRITICAL: Request the full state on connect
+                    socket.emit('join-interview-room', { slotId: slotId, role: 'student' });
+                });
+                
+                socket.on('disconnect', () => updateConnectionStatus(false, "Reconnecting..."));
+                socket.on('connect_error', () => updateConnectionStatus(false, "Connection Failed"));
+                
+                // CRITICAL: New Listener for restoring state on hard refresh/initial load
+                socket.on('interview-state-restore', (state) => {
+                     console.log('Received Interview State Restore:', state);
+                     currentChatHistory = state.chatHistory || [];
+                     currentAssignedProblems = state.assignedProblems || [];
+                     currentProblemId = state.currentProblemId || null;
+                     
+                     // Only render if the interview room is visible
+                     if (pageStates.room.style.display === 'flex') {
+                        renderChatHistory(currentChatHistory);
+                        renderProblemDropdown(currentAssignedProblems);
+                        if (codeEditor) {
+                            codeEditor.setValue(state.latestCode || `// Welcome! Your code will be saved automatically.\n`);
+                            languageSelect.value = state.latestLanguage || 'javascript';
+                            codeEditor.setOption('mode', getCodeMirrorMode(languageSelect.value));
+                        }
+                     }
+                });
+
+                socket.on('interview-started', () => {
+                    if (pageStates.lobby.style.display === 'flex') {
+                        lobbyStatusTitle.innerHTML = "<i class='fas fa-check-circle text-green-500 mr-2'></i>Interviewer is Ready!";
+                        lobbyStatusDesc.textContent = "Please click the button below to join.";
+                        enterInterviewBtn.classList.remove('hidden');
+                    }
+                });
+                
+                // CRITICAL: Listener for new problems assigned by interviewer
+                socket.on('student-receive-problem-list', (problemList) => {
+                    console.log('Received updated problem list from interviewer:', problemList);
+                    currentAssignedProblems = problemList || [];
+                    renderProblemDropdown(currentAssignedProblems);
+                    if (problemList.length > 0) {
+                        const latestProblem = problemList[problemList.length - 1];
+                        const latestProblemId = latestProblem.id || latestProblem.problemId; 
+                        
+                        // Update currentProblemId only if it changed
+                        if (currentProblemId !== latestProblemId) {
+                           currentProblemId = latestProblemId; 
+                           problemSelect.value = latestProblemId;
+                           // Optionally auto-fetch the details of the new problem
+                           populateAndShowProblemModal(latestProblemId, false); 
+                        } else {
+                            problemSelect.value = currentProblemId;
+                        }
+                    }
+                });
+
+                // --- CHAT FIX: Handle messages ---
+                socket.on('receive-chat-message', (message) => {
+                    // This listener receives all messages (including its own after broadcast)
+                    if (!currentChatHistory.find(m => m.timestamp === message.timestamp && m.text === message.text)) {
+                         currentChatHistory.push(message);
+                    }
+                    const isSelf = message.sender === 'student'; // Check if I am the sender
+                    renderSingleMessage(message, isSelf);
+                });
+
+                socket.on('interview-end', () => {
+                    if (localStream) localStream.getTracks().forEach(track => track.stop());
+                    if (localCameraStream) localCameraStream.getTracks().forEach(track => track.stop());
+                    if (localScreenStream) localScreenStream.getTracks().forEach(track => track.stop());
+                    if (peerConnection) peerConnection.close();
+                    if (drawLoopId) cancelAnimationFrame(drawLoopId);
+                    completedMessage.textContent = "The interviewer has ended the session.";
+                    showState('completed');
+                    // Emit to server to update status in DB just in case
+                    if (socket) socket.emit('interview-end', { slotId: slotId }); 
+                });
+            }
+
+            // --- Chat Functions ---
+            function sendChatMessage(e) {
+                e.preventDefault();
+                const text = chatInput.value.trim();
+                if (text === '') return;
+                const message = { sender: 'student', text: text, timestamp: new Date().toISOString() };
+                
+                // Only emit. The server will broadcast it back.
+                socket.emit('send-chat-message', { slotId: slotId, message: message });
+                
+                chatInput.value = '';
+            }
+
+            function renderChatHistory(history) {
+                chatMessages.innerHTML = '';
+                // Sort by timestamp just in case they arrive out of order
+                history.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); 
+                history.forEach(msg => {
+                    const isSelf = msg.sender === 'student';
+                    renderSingleMessage(msg, isSelf);
+                });
+                // CRITICAL FIX: Ensure scroll to bottom on initial load
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function renderSingleMessage(message, isSelf) {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `chat-bubble ${isSelf ? 'chat-bubble-self' : 'chat-bubble-other'}`;
+                // Sanitize text by setting textContent
+                msgDiv.textContent = message.text; 
+                chatMessages.appendChild(msgDiv);
+                // CRITICAL FIX: Ensure scroll to bottom after every new message
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            // --- Problem Functions (MODIFIED) ---
+            function renderProblemDropdown(problems) {
+                problemSelect.innerHTML = '';
+                if (!problems || problems.length === 0) {
+                    problemSelect.innerHTML = '<option value="">-- No problems assigned --</option>';
+                    currentProblemId = null;
+                    return;
+                }
+                
+                // Add the default placeholder option
+                const defaultOption = document.createElement('option');
+                defaultOption.value = "";
+                defaultOption.textContent = "-- Select an assigned problem --";
+                problemSelect.appendChild(defaultOption);
+                
+                // --- PROBLEM LIST FIX: Show all problems ---
+                problems.forEach(problem => {
+                    const option = document.createElement('option');
+                    // Use problem.id first, then fallback to problem.problemId
+                    option.value = problem.id || problem.problemId; 
+                    option.textContent = problem.title;
+                    problemSelect.appendChild(option);
+                });
+                
+                // Re-select the currentProblemId (which holds the ID of the last assigned problem)
+                if (currentProblemId) {
+                    problemSelect.value = currentProblemId;
+                    // Auto-fetch details of the current problem in the background
+                    populateAndShowProblemModal(currentProblemId, false);
+                }
+            }
+            
+            // --- MODIFIED: Added 'show' parameter for auto-fetching test cases ---
+            let isFetchingProblem = false;
+            async function populateAndShowProblemModal(problemId, show = true) {
+                if (!problemId || isFetchingProblem) return;
+                isFetchingProblem = true;
+                
+                if (show) {
+                    problemModal.style.display = 'block';
+                    modalProblemTitle.textContent = 'Loading Problem...';
+                    modalProblemDescription.textContent = '';
+                    modalProblemExampleContainer.style.display = 'none';
+                    modalProblemInputContainer.style.display = 'none';
+                    modalProblemOutputContainer.style.display = 'none';
+                    modalProblemConstraintsContainer.style.display = 'none';
+                }
+
+                try {
+                    const response = await fetch(`/api/public/interview-problem-details/${problemId}`, {
+                         headers: { 'x-auth-token': token }
+                    });
+                    const problem = await response.json();
+                    if (!response.ok) throw new Error(problem.message);
+
+                    if (show) {
+                        // Populate the modal
+                        modalProblemTitle.textContent = problem.title || 'Untitled Problem';
+                        modalProblemDescription.textContent = problem.description || 'No description provided.';
+                        
+                        if(problem.example) {
+                            modalProblemExample.textContent = problem.example;
+                            modalProblemExampleContainer.style.display = 'block';
+                        } else { modalProblemExampleContainer.style.display = 'none'; }
+                        
+                        if(problem.inputFormat) {
+                            modalProblemInputFormat.textContent = problem.inputFormat;
+                            modalProblemInputContainer.style.display = 'block';
+                        } else { modalProblemInputContainer.style.display = 'none'; }
+                        
+                        if(problem.outputFormat) {
+                            modalProblemOutputFormat.textContent = problem.outputFormat;
+                            modalProblemOutputContainer.style.display = 'block';
+                        } else { modalProblemOutputContainer.style.display = 'none'; }
+                        
+                        if(problem.constraints) {
+                            modalProblemConstraints.textContent = problem.constraints;
+                            modalProblemConstraintsContainer.style.display = 'block';
+                        } else { modalProblemConstraintsContainer.style.display = 'none'; }
+                    }
+                    
+                    // Store test cases locally for the run/submit function
+                    interviewDetails.currentProblemTestCases = problem.testCases || []; 
+                    currentProblemId = problemId; // Confirm the current problem ID
+
+                } catch (error) {
+                    console.error("Failed to fetch problem details:", error);
+                    if (show) {
+                        modalProblemTitle.textContent = 'Error Loading Problem';
+                        modalProblemDescription.textContent = error.message;
+                    }
+                } finally {
+                    isFetchingProblem = false;
+                }
+            }
+
+            // --- Code Execution Functions ---
+            function emitCodeUpdate() {
+                if (socket) {
+                    // Emit to server to save and send to interviewer
+                    socket.emit('student-code-update', {
+                        slotId: slotId,
+                        code: codeEditor.getValue(),
+                        language: languageSelect.value
+                    });
+                }
+            }
+            
+            async function runCode(isSubmit) {
+                const selectedProblemId = problemSelect.value;
+                if (!selectedProblemId || selectedProblemId === '') {
+                    outputConsole.textContent = "Please select a problem before running/submitting code.";
+                    outputConsole.className = 'output-console output-error p-4 text-sm h-full w-full !bg-transparent !rounded-none';
+                    document.querySelector('.tab-btn[data-tab-target="output-console-tab"]').click();
+                    return;
+                }
+
+                // Ensure test cases are loaded for the current problem
+                if (selectedProblemId !== currentProblemId || !interviewDetails.currentProblemTestCases) {
+                    // Fetch test cases without showing modal
+                    await populateAndShowProblemModal(selectedProblemId, false); 
+                }
+                
+                if (!interviewDetails.currentProblemTestCases || interviewDetails.currentProblemTestCases.length === 0) {
+                    outputConsole.textContent = "Error: Failed to load test cases for the selected problem. Cannot run.";
+                    outputConsole.className = 'output-console output-error p-4 text-sm h-full w-full !bg-transparent !rounded-none';
+                    document.querySelector('.tab-btn[data-tab-target="output-console-tab"]').click();
+                    return;
+                }
+                
+                const code = codeEditor.getValue();
+                const language = languageSelect.value;
+                const testCasesToRun = interviewDetails.currentProblemTestCases || [];
+                
+                if (testCasesToRun.length === 0) {
+                    outputConsole.textContent = "No test cases found for this problem. Cannot run.";
+                    outputConsole.className = 'output-console output-error p-4 text-sm h-full w-full !bg-transparent !rounded-none';
+                    document.querySelector('.tab-btn[data-tab-target="output-console-tab"]').click();
+                    return;
+                }
+                
+                const runOnlyFirstCase = !isSubmit;
+
+                if (isSubmit) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Submitting...';
+                    outputResultsContainer.innerHTML = '<p class="text-gray-500 p-4">Running all test cases...</p>';
+                    document.querySelector('.tab-btn[data-tab-target="output-results-tab"]').click();
+                } else {
+                    runBtn.disabled = true;
+                    runBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Running...';
+                    outputConsole.textContent = 'Executing...';
+                    outputConsole.className = 'output-console p-4 text-sm h-full w-full !bg-transparent !rounded-none';
+                    document.querySelector('.tab-btn[data-tab-target="output-console-tab"]').click();
+                }
+
+                let passedCount = 0;
+                let resultsHtml = '';
+                let allOutputs = [];
+                
+                const cases = runOnlyFirstCase ? testCasesToRun.slice(0, 1) : testCasesToRun;
+
+                for (let i = 0; i < cases.length; i++) {
+                    const testCase = cases[i];
+                    try {
+                        const response = await fetch('/api/compile', {
+                            method: 'POST',
+                            headers: { 'x-auth-token': token, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ language: language, code: code, input: testCase.input })
+                        });
+                        const result = await response.json();
+                        
+                        let output = (result.output || '').trim().replace(/\r\n/g, '\n');
+                        let expected = (testCase.expected || '').trim().replace(/\r\n/g, '\n');
+                        let passed = !result.stderr && output === expected;
+                        
+                        let outputData = {
+                            input: testCase.input,
+                            expected: expected,
+                            output: result.stderr || output,
+                            passed: passed,
+                            error: !!result.stderr
+                        };
+                        allOutputs.push(outputData);
+
+                        if (passed) passedCount++;
+
+                        if (isSubmit) {
+                            resultsHtml += `
+                                <div class="test-case ${passed ? 'test-case-pass' : 'test-case-fail'}">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="font-bold text-base ${passed ? 'text-green-700' : 'text-red-700'}">Test Case ${i + 1}</span>
+                                        <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full ${passed ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}">${passed ? 'PASS' : 'FAIL'}</span>
+                                    </div>
+                                    <pre class="!bg-gray-800 !text-gray-200 !p-2 !text-xs !overflow-x-auto">` +
+                                        `<span class="text-gray-400">Input:</span>\n${testCase.input}\n\n` +
+                                        `<span class="text-gray-400">Expected:</span>\n${expected}\n\n` +
+                                        `<span class="${passed ? 'text-gray-400' : 'text-red-400'}">Got:</span>\n${outputData.output}` +
+                                    `</pre>
+                                </div>
+                            `;
+                        } else {
+                            outputConsole.textContent = 
+                                `--- Test Case 1 ---\n` +
+                                `Input:\n${testCase.input}\n\n` +
+                                `Expected Output:\n${expected}\n\n` +
+                                `Got Output:\n${outputData.output}\n\n` +
+                                `Result: ${passed ? 'PASSED' : 'FAILED'}`;
+                            outputConsole.className = `output-console p-4 text-sm h-full w-full !bg-transparent !rounded-none ${passed ? '' : 'output-error'}`;
+                        }
+
+                    } catch (error) {
+                        const outputData = { error: error.message, passed: false };
+                        allOutputs.push(outputData);
+                        if (isSubmit) {
+                            resultsHtml += `<div class="test-case test-case-fail"><p class="text-red-600">Test Case ${i + 1} failed: ${error.message}</p></div>`;
+                        } else {
+                            outputConsole.textContent = `Error: ${error.message}`;
+                            outputConsole.className = 'output-console output-error p-4 text-sm h-full w-full !bg-transparent !rounded-none';
+                        }
+                    }
+                }
+                
+                // Emit the results and code to the interviewer
+                socket.emit('student-code-output', {
+                    slotId: slotId,
+                    outputs: allOutputs,
+                    isSubmit: isSubmit
+                });
+
+                if (isSubmit) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-check-double"></i>Submit';
+                    let summaryClass = passedCount === cases.length ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300';
+                    let summaryText = passedCount === cases.length ? 'All Test Cases Passed!' : `${passedCount} / ${cases.length} Test Cases Passed`;
+                    
+                    outputResultsContainer.innerHTML = `
+                        <div class="p-4 rounded-lg ${summaryClass} font-bold text-lg text-center mb-3">
+                            ${summaryText}
+                        </div>
+                        ${resultsHtml}
+                    `;
+                } else {
+                    runBtn.disabled = false;
+                    runBtn.innerHTML = '<i class="fas fa-play"></i>Run';
+                }
+            }
+
+            // --- Fullscreen & Violation Helpers ---
+            function enterFullscreen() {
+                const el = document.documentElement;
+                if (el.requestFullscreen) {
+                    el.requestFullscreen().catch(err => console.warn(`Fullscreen error: ${err.message}`));
+                } else if (el.webkitRequestFullscreen) {
+                    el.webkitRequestFullscreen();
+                }
+                fullscreenActive = true;
+            }
+
+            function setupViolationTracking() {
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'hidden') {
+                        violationCount++;
+                        updateViolations();
+                    }
+                });
+                document.addEventListener('fullscreenchange', () => {
+                    if (!document.fullscreenElement) {
+                        if(fullscreenActive) {
+                           violationCount++;
+                           updateViolations();
+                           fullscreenActive = false;
+                        }
+                    } else {
+                        fullscreenActive = true;
+                    }
+                });
+                function updateViolations() {
+                    violationCountText.textContent = `Violations: ${violationCount}`;
+                    if (socket) {
+                        socket.emit('student-violation-count', { slotId: slotId, count: violationCount });
+                    }
+                }
+            }
+            
+            function startInterviewTimer(startTimeStr, durationMinutes) {
+                const duration = (durationMinutes || 90) * 60000;
+                const startTime = new Date(startTimeStr);
+                const endTime = new Date(startTime.getTime() + duration);
+                
+                function updateTimer() {
+                    const now = new Date();
+                    const timeLeft = endTime.getTime() - now.getTime();
+                    
+                    if (timeLeft <= 0) {
+                        const timeOver = now.getTime() - endTime.getTime();
+                        const minutes = Math.floor(timeOver / 60000);
+                        const seconds = Math.floor((timeOver % 60000) / 1000);
+                        timerEl.textContent = `+${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                        timerEl.classList.add('text-red-500');
+                    } else {
+                        const minutes = Math.floor(timeLeft / 60000);
+                        const seconds = Math.floor((timeLeft % 60000) / 1000);
+                        timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    }
+                }
+                updateTimer();
+                setInterval(updateTimer, 1000);
+            }
+
+            // --- Screen/Cam Share Functions (with Canvas Merging) ---
+            function startDrawLoop() {
+                if (drawLoopId) cancelAnimationFrame(drawLoopId);
+                
+                function draw() {
+                    // Draw screen share first (main view)
+                    mergeCtx.fillStyle = '#000000';
+                    mergeCtx.fillRect(0, 0, mergeCanvas.width, mergeCanvas.height);
+                    
+                    try {
+                        if (localScreenStream && hiddenScreenVideo.readyState >= 2) {
+                            mergeCtx.drawImage(hiddenScreenVideo, 0, 0, mergeCanvas.width, mergeCanvas.height);
+                        }
+                    } catch(e) { console.warn("Error drawing screen video:", e); }
+                    
+                    // --- VIDEO FIX: Draw camera on top as PiP ---
+                    try {
+                        if (localCameraStream && hiddenCamVideo.readyState >= 2) {
+                            const pipWidth = mergeCanvas.width / 4.5; // Picture-in-Picture width
+                            const pipHeight = (pipWidth / 4) * 3; // 4:3 aspect ratio
+                            const margin = 20;
+                            
+                            // Draw PiP in bottom-right corner
+                            mergeCtx.save();
+                            // Move to bottom right corner
+                            mergeCtx.translate(mergeCanvas.width - pipWidth - margin, mergeCanvas.height - pipHeight - margin);
+                            mergeCtx.scale(-1, 1); // Mirror the camera feed
+                            mergeCtx.drawImage(hiddenCamVideo, 0, 0, -pipWidth, pipHeight);
+                            mergeCtx.restore();
+                        }
+                    } catch(e) { console.warn("Error drawing camera video:", e); }
+                    // --- END VIDEO FIX ---
+                    
+                    drawLoopId = requestAnimationFrame(draw);
+                }
+                draw();
+            }
+            
+            async function shareScreenAndCamera() {
+                try {
+                    // 1. Get Screen Stream
+                    localScreenStream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: "always" }, audio: true });
+                    hiddenScreenVideo.srcObject = localScreenStream;
+                    await hiddenScreenVideo.play();
+                    
+                    // 2. Get Camera Stream
+                    localCameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    hiddenCamVideo.srcObject = localCameraStream;
+                    await hiddenCamVideo.play();
+
+                    // 3. Create Canvas Stream (visuals only)
+                    const canvasStream = mergeCanvas.captureStream(30);
+                    
+                    // 4. Add audio track from screen share (if it exists)
+                    const screenAudioTrack = localScreenStream.getAudioTracks()[0];
+                    if (screenAudioTrack) {
+                        canvasStream.addTrack(screenAudioTrack);
+                    }
+
+                    // 5. This merged stream is sent to the interviewer
+                    localStream = canvasStream;
+                    startDrawLoop(); // Start drawing canvas
+                    
+                    localScreenStream.getVideoTracks()[0].onended = () => {
+                        console.warn("Screen sharing stopped by user.");
+                        if (drawLoopId) cancelAnimationFrame(drawLoopId);
+                        completedMessage.textContent = "Screen sharing was stopped. The interview has been terminated.";
+                        showState('completed');
+                        if (socket) socket.emit('interview-end', { slotId: slotId });
+                    };
+                    return true;
+
+                } catch(e) { 
+                    console.error('Error sharing screen and camera', e); 
+                    throw e;
+                }
+            }
+            
+            // --- WebRTC Logic ---
+            async function initWebRTC() {
+                if (!localStream) {
+                    console.error("Local stream (merged canvas) is not available. Cannot init WebRTC.");
+                    return;
+                }
+                
+                // --- VIDEO FIX: Set student preview to *camera only* ---
+                if (localCameraStream) {
+                    localVideo.srcObject = localCameraStream;
+                    localVideo.poster = "";
+                    await localVideo.play();
+                } else {
+                    // Fallback just in case camera failed but screen didn't
+                    localVideo.srcObject = localStream;
+                    console.warn("localCameraStream not available, falling back to merged stream for preview.");
+                }
+                // --- END VIDEO FIX ---
+                
+                if (!socket) {
+                    console.error("Socket connection lost. Cannot init WebRTC.");
+                    return;
+                }
+
+                peerConnection = new RTCPeerConnection({
+                    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+                });
+
+                // Send the merged stream (screen + camera PiP) to the interviewer
+                localStream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, localStream);
+                });
+
+                peerConnection.ontrack = async (event) => {
+                    if (event.streams && event.streams[0]) {
+                        remoteVideo.srcObject = event.streams[0];
+                        remoteVideo.poster = "";
+                        try {
+                            await remoteVideo.play();
+                        } catch (e) {
+                            console.warn("Remote video play failed:", e);
+                        }
+                    }
+                };
+
+                peerConnection.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        socket.emit('webrtc-ice-candidate', {
+                            slotId: slotId,
+                            candidate: event.candidate
+                        });
+                    }
+                };
+                
+                peerConnection.onconnectionstatechange = (e) => {
+                    console.log("WebRTC Connection State:", peerConnection.connectionState);
+                    if(peerConnection.connectionState === 'connected') {
+                        updateConnectionStatus(true, "WebRTC Connected");
+                    } else if (peerConnection.connectionState === 'failed' || peerConnection.connectionState === 'disconnected') {
+                        updateConnectionStatus(false, "WebRTC Failed");
+                    } else if (peerConnection.connectionState === 'connecting') {
+                        updateConnectionStatus(true, "WebRTC Connecting...");
+                    }
+                };
+
+                socket.on('webrtc-offer', async (offer) => {
+                    console.log('Received WebRTC offer');
+                    await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+                    const answer = await peerConnection.createAnswer();
+                    await peerConnection.setLocalDescription(answer);
+                    socket.emit('webrtc-answer', { slotId: slotId, answer: answer });
+                });
+
+                socket.on('webrtc-answer', (answer) => {
+                    console.log('Received WebRTC answer');
+                    peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+                });
+
+                socket.on('webrtc-ice-candidate', (candidate) => {
+                    if (candidate) {
+                        peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+                    }
+                });
+
+                socket.emit('student-ready', { slotId: slotId });
+            }
+
+            // --- Start the application ---
+            main();
+        });
+    </script>
+</body>
+</html>
