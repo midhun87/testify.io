@@ -15481,23 +15481,66 @@ app.post('/api/public/request-mock-token', async (req, res) => {
             to: email,
             subject: `Your Trial Test Link for ${testTitle}`, // Updated subject
             html: `
-                <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-                    <h2>Hello ${name},</h2>
-                    <p>Thank you for signing up to help us test our application! Your feedback is extremely valuable.</p>
-                    <p>Please click the link below to get your unique access token and download the secure trial application.
-                    <br><strong>This link is valid for 24 hours.</strong></p>
-                    
-                    <a href="${tokenLink}" style="display: inline-block; padding: 12px 20px; margin: 15px 0; font-size: 16px; font-weight: bold; color: #ffffff; background-color: #4F46E5; text-decoration: none; border-radius: 5px;">
-                        Get Your Trial Token & Download App
-                    </a>
+                <div style="font-family: 'Inter', Arial, sans-serif; background-color: #f9fafb; color: #1f2937; padding: 30px 20px;">
+  <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 12px rgba(79,70,229,0.08);">
+    
+    <!-- Header / Branding -->
+    <div style="background: linear-gradient(90deg, #4F46E5, #7C3AED); padding: 24px 0; text-align: center;">
+      <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" 
+           alt="Testify Logo" 
+           style="height: 50px; width: auto; border-radius: 8px;">
+      <h1 style="color: #ffffff; font-size: 22px; margin-top: 10px; letter-spacing: 0.5px;">Testify Secure Mock Assessment (Beta)</h1>
+    </div>
 
-                    <p style="font-size: 0.9em; color: #555;">If the button doesn't work, please copy and paste this URL into your browser:<br>
-                    <span style="font-family: monospace; font-size: 0.9em; color: #333;">${tokenLink}</span>
-                    </p>
-                    
-                    <p>We look forward to your feedback!</p>
-                    <p>Best regards,<br>The Testify Team</p>
-                </div>
+    <!-- Body -->
+    <div style="padding: 30px;">
+      <h2 style="font-size: 20px; color: #111827;">Hello ${name},</h2>
+      <p style="font-size: 15px; color: #374151; margin-top: 10px;">
+        🎉 Thank you for joining our <strong>Beta Testing Program</strong>!  
+        Your participation helps us enhance transparency and security in online assessments.
+      </p>
+
+      <p style="margin-top: 15px; color: #4B5563;">
+        Click the button below to access your <strong>unique trial token</strong> and download the 
+        <strong>Testify Secure Test Application</strong>.
+        <br><em>This link will expire in 24 hours.</em>
+      </p>
+
+      <!-- CTA Button -->
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${tokenLink}" 
+           style="display: inline-block; background: linear-gradient(90deg, #4F46E5, #7C3AED); color: #ffffff; font-weight: 600; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-size: 16px; letter-spacing: 0.3px; box-shadow: 0 4px 10px rgba(79,70,229,0.2);">
+          🔑 Get Your Trial Token & Download App
+        </a>
+      </div>
+
+      <!--<p style="font-size: 14px; color: #6B7280;">-->
+      <!--  If the button doesn’t work, copy and paste this URL into your browser:-->
+      <!--</p>-->
+      <!--<p style="background-color: #f3f4f6; border-left: 3px solid #4F46E5; padding: 10px; border-radius: 5px; font-family: monospace; color: #1f2937; font-size: 13px; word-break: break-all;">-->
+      <!--  ${tokenLink}-->
+      <!--</p>-->
+
+      <p style="margin-top: 20px; color: #4B5563;">
+        Once installed, launch the Testify application, paste your token, and begin your secure mock test.  
+        Your feedback will directly help us shape the next generation of **AI-Proctored Assessments**.
+      </p>
+
+      <p style="margin-top: 25px; font-size: 15px; color: #111827;">
+        Best regards,<br>
+        <strong>The Testify Team</strong><br>
+        <span style="font-size: 13px; color: #6B7280;">A Xeta Solutions Initiative</span>
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="background-color: #f3f4f6; text-align: center; padding: 16px; font-size: 13px; color: #6B7280;">
+      © 2025 Testify • All rights reserved.<br>
+      This is a Beta communication from <strong>Xeta Solutions</strong>.
+    </div>
+  </div>
+</div>
+
             `
         };
 
@@ -15514,4 +15557,5 @@ app.post('/api/public/request-mock-token', async (req, res) => {
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
 
