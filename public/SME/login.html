@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SME & Staff Login - HIRE WITH US</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-image: linear-gradient(to top, #f3e7e9 0%, #e3eeff 99%, #e3eeff 100%);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center">
+
+    <div class="w-full max-w-md p-8 space-y-8 bg-white shadow-2xl rounded-2xl">
+        <div class="flex flex-col items-center">
+            <img class="h-16 w-16 mb-4" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo">
+            <h2 class="text-3xl font-extrabold text-center text-gray-900">
+                Staff Portal Login
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                (SME / Admin / Moderator)
+            </p>
+        </div>
+        
+        <form id="login-form" class="space-y-6">
+            <div>
+                <label for="email-address" class="block text-sm font-medium text-gray-700">Email address</label>
+                <input id="email-address" name="email" type="email" autocomplete="email" required
+                       class="mt-1 appearance-none rounded-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                       placeholder="Enter your email address">
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input id="password" name="password" type="password" autocomplete="current-password" required
+                       class="mt-1 appearance-none rounded-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                       placeholder="Enter your password">
+            </div>
+
+            <div>
+                <button type="submit" id="login-btn"
+                        class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400">
+                    Sign in
+                </button>
+            </div>
+        </form>
+        <div id="login-message" class="text-center text-sm"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('login-form');
+            const loginBtn = document.getElementById('login-btn');
+            const messageDiv = document.getElementById('login-message');
+
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                messageDiv.textContent = '';
+                loginBtn.disabled = true;
+                loginBtn.textContent = 'Signing in...';
+
+                const email = document.getElementById('email-address').value;
+                const password = document.getElementById('password').value;
+
+                try {
+                    // This is your existing login endpoint from backend.js
+                    const response = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Login failed.');
+                    }
+
+                    // Save token and user info
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+
+                    // --- Role-Based Redirection ---
+                    if (data.user.role === 'SME') {
+                        messageDiv.textContent = 'Success! Redirecting to SME Dashboard...';
+                        messageDiv.className = 'text-center text-sm text-green-600';
+                        window.location.href = 'sme-dashboard.html';
+                    } else if (data.user.role === 'Hiring Moderator') {
+                        messageDiv.textContent = 'Success! Redirecting to Hiring Portal...';
+                        messageDiv.className = 'text-center text-sm text-green-600';
+                        // Adjust this path if your moderator dashboard is different
+                        window.location.href = 'hiring-manage-tests.html';
+                    } else if (data.user.role === 'Admin') {
+                        messageDiv.textContent = 'Success! Redirecting to Admin Portal...';
+                        messageDiv.className = 'text-center text-sm text-green-600';
+                        // Adjust this path to your main admin page
+                        window.location.href = 'admin/admin-manage-smes.html';
+                    } else {
+                        // Handle other roles (like 'Student')
+                        throw new Error('Access denied. This portal is for staff only.');
+                    }
+
+                } catch (error) {
+                    messageDiv.textContent = error.message;
+                    messageDiv.className = 'text-center text-sm text-red-600';
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Sign in';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

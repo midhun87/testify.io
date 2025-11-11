@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SME Dashboard - HIRE WITH US</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        .stat-card { transition: all 0.2s ease-in-out; }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.07); }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo">
+                <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
+            </div>
+            <!-- SME Sidebar will be injected by sme-common.js -->
+            <nav class="flex-grow p-4 overflow-y-auto" id="sidebar-nav"></nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6 sticky top-0 z-10">
+                <h1 class="text-2xl font-bold text-gray-800">SME Dashboard</h1>
+                <!-- User Menu will be injected by sme-common.js -->
+                <div id="user-menu-container"></div>
+            </div>
+
+            <main class="p-6 md:p-10">
+                <div id="welcome-message" class="mb-8">
+                    <h2 class="text-3xl font-bold text-gray-900">Welcome, SME User!</h2>
+                    <p class="mt-1 text-lg text-gray-600">This is your portal to create and manage the question library.</p>
+                </div>
+
+                <!-- Quick Access Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Manage Coding Problems Card -->
+                    <a href="sme-manage-problems.html" class="stat-card bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex items-center space-x-5">
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center justify-center h-16 w-16 rounded-full bg-indigo-100 text-indigo-600">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-xl font-semibold text-gray-900">Manage Coding Problems</h3>
+                            <p class="text-sm text-gray-500 mt-1">Create, edit, and delete individual coding questions for the library.</p>
+                        </div>
+                    </a>
+
+                    <!-- Manage Aptitude Tests Card -->
+                    <a href="sme-manage-tests.html" class="stat-card bg-white p-6 rounded-xl shadow-lg border border-gray-200 flex items-center space-x-5">
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center justify-center h-16 w-16 rounded-full bg-purple-100 text-purple-600">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-xl font-semibold text-gray-900">Manage Aptitude Tests</h3>
+                            <p class="text-sm text-gray-500 mt-1">Build, edit, and delete full MCQ-based tests for the library.</p>
+                        </div>
+                    </a>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Import the new sme-common.js file -->
+    <script src="sme-common.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize the page, SME auth check, and sidebar
+            initializeSmePage('Dashboard');
+            
+            // Set welcome message dynamically
+            const userString = localStorage.getItem('user');
+            if (userString) {
+                const user = JSON.parse(userString);
+                const welcomeEl = document.getElementById('welcome-message');
+                if (welcomeEl) {
+                    welcomeEl.querySelector('h2').textContent = `Welcome, ${user.fullName || 'SME User'}!`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
