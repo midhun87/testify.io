@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage SME Accounts - HIRE WITH US</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        .card-shadow { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+            <div class="flex items-center justify-center h-20 border-b border-gray-700">
+                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Logo">
+                <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
+            </div>
+            <nav class="flex-grow p-4 overflow-y-auto" id="sidebar-nav">
+                <!-- Static Admin Sidebar Links (since common.js is removed) -->
+                <a href="#" class="sidebar-link flex items-center py-3 px-4 rounded-lg text-gray-300 hover:bg-gray-700">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Dashboard
+                </a>
+                <a href="#" class="sidebar-link active flex items-center py-3 px-4 rounded-lg text-white bg-gray-900">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    Manage SMEs
+                </a>
+                <a href="#" class="sidebar-link flex items-center py-3 px-4 rounded-lg text-gray-300 hover:bg-gray-700">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    Manage Moderators
+                </a>
+                <!-- Add other admin-specific links here -->
+            </nav>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+                <h1 class="text-2xl font-bold text-gray-800">Manage SME Accounts</h1>
+                <div id="user-menu-container">
+                    <!-- Static User Menu (since common.js is removed) -->
+                    <div class="relative">
+                        <button class="flex items-center focus:outline-none">
+                            <span class="hidden md:inline-block mr-3 font-semibold text-gray-700">Admin User</span>
+                            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <!-- Dropdown can be added here if needed -->
+                    </div>
+                </div>
+            </div>
+
+            <main class="flex-1 p-6 md:p-10">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    
+                    <!-- Create SME Form -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white p-6 rounded-xl shadow-lg card-shadow">
+                            <h2 class="text-xl font-semibold text-gray-800 mb-6 border-b pb-3">Create New SME</h2>
+                            <form id="create-sme-form" class="space-y-4">
+                                <div>
+                                    <label for="sme-name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                                    <input type="text" id="sme-name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                <div>
+                                    <label for="sme-email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                                    <input type="email" id="sme-email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                <div>
+                                    <label for="sme-password" class="block text-sm font-medium text-gray-700">Set Password</label>
+                                    <input type="password" id="sme-password" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                </div>
+                                <button type="submit" id="create-sme-btn" class="w-full inline-flex justify-center py-2.5 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                    Create SME Account
+                                </button>
+                                <div id="form-message" class="text-sm text-center"></div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Existing SMEs List -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white p-6 rounded-xl shadow-lg card-shadow">
+                            <h2 class="text-xl font-semibold text-gray-800 mb-6 border-b pb-3">Existing Subject Matter Experts</h2>
+                            <div id="sme-list-loading" class="text-center py-8 text-gray-500">Loading SME accounts...</div>
+                            <div id="sme-list-container" class="space-y-4">
+                                <!-- SME list will be dynamically populated here -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+            <h3 id="confirm-title" class="text-lg font-bold text-gray-900">Confirm Deletion</h3>
+            <p id="confirm-message" class="mt-2 text-sm text-gray-600">Are you sure?</p>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="confirm-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
+                <button id="confirm-ok-btn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- <script src="../common.js"></script>  REMOVED THIS LINE -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // This assumes your common.js handles sidebar injection and user menu
+            // and that this page is in an 'admin' folder.
+            // initializePage('Manage SMEs', 'admin');  REMOVED THIS LINE
+            
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'login.html'; // Redirect to main login
+                return;
+            }
+
+            const smeListContainer = document.getElementById('sme-list-container');
+            const smeListLoading = document.getElementById('sme-list-loading');
+            const createSmeForm = document.getElementById('create-sme-form');
+            const createSmeBtn = document.getElementById('create-sme-btn');
+            const formMessage = document.getElementById('form-message');
+
+            // Confirm Modal Elements
+            const confirmModal = document.getElementById('confirm-modal');
+            const confirmTitle = document.getElementById('confirm-title');
+            const confirmMessageEl = document.getElementById('confirm-message');
+            const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+            const confirmOkBtn = document.getElementById('confirm-ok-btn');
+            let confirmCallback = null;
+
+            // --- Modal Functions ---
+            const showConfirmModal = (title, message, onConfirm) => {
+                confirmTitle.textContent = title;
+                confirmMessageEl.textContent = message;
+                confirmCallback = onConfirm;
+                confirmModal.classList.remove('hidden');
+            };
+            
+            const hideConfirmModal = () => {
+                confirmModal.classList.add('hidden');
+                confirmCallback = null;
+            };
+            
+            confirmOkBtn.addEventListener('click', () => {
+                if (confirmCallback) {
+                    confirmCallback();
+                }
+                hideConfirmModal();
+            });
+            confirmCancelBtn.addEventListener('click', hideConfirmModal);
+
+            // --- Fetch and Render SMEs ---
+            async function fetchSmes() {
+                smeListLoading.style.display = 'block';
+                smeListContainer.innerHTML = '';
+                try {
+                    const response = await fetch('/api/admin/smes', {
+                        headers: { 'x-auth-token': token }
+                    });
+                    if (!response.ok) {
+                        if (response.status === 403) {
+                             throw new Error('Access denied. Only Admins can view this page.');
+                        }
+                        throw new Error('Failed to fetch SME accounts.');
+                    }
+                    const smes = await response.json();
+                    renderSmeList(smes);
+                } catch (error) {
+                    smeListLoading.style.display = 'none';
+                    smeListContainer.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+                }
+            }
+
+            function renderSmeList(smes) {
+                smeListLoading.style.display = 'none';
+                if (smes.length === 0) {
+                    smeListContainer.innerHTML = `<p class="text-gray-500 text-center">No SME accounts found.</p>`;
+                    return;
+                }
+
+                smes.forEach(sme => {
+                    const smeCard = document.createElement('div');
+                    smeCard.className = 'flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200';
+                    smeCard.innerHTML = `
+                        <div>
+                            <p class="font-semibold text-gray-800">${sme.fullName}</p>
+                            <p class="text-sm text-gray-500">${sme.email}</p>
+                        </div>
+                        <button class="delete-sme-btn text-sm font-medium text-red-600 hover:text-red-800" data-email="${sme.email}" data-name="${sme.fullName}">
+                            Delete
+                        </button>
+                    `;
+                    smeListContainer.appendChild(smeCard);
+                });
+
+                // Attach delete listeners
+                smeListContainer.querySelectorAll('.delete-sme-btn').forEach(button => {
+                    button.addEventListener('click', () => {
+                        handleDeleteSme(button.dataset.email, button.dataset.name);
+                    });
+                });
+            }
+
+            // --- Handle Create SME ---
+            createSmeForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                createSmeBtn.disabled = true;
+                createSmeBtn.textContent = 'Creating...';
+                formMessage.textContent = '';
+
+                const fullName = document.getElementById('sme-name').value;
+                const email = document.getElementById('sme-email').value;
+                const password = document.getElementById('sme-password').value;
+
+                try {
+                    const response = await fetch('/api/admin/smes', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-auth-token': token
+                        },
+                        body: JSON.stringify({ fullName, email, password })
+                    });
+                    
+                    const result = await response.json();
+                    if (!response.ok) {
+                        throw new Error(result.message || 'Failed to create account.');
+                    }
+
+                    formMessage.textContent = result.message;
+                    formMessage.className = 'text-sm text-center text-green-600';
+                    createSmeForm.reset();
+                    fetchSmes(); // Refresh the list
+
+                } catch (error) {
+                    formMessage.textContent = error.message;
+                    formMessage.className = 'text-sm text-center text-red-600';
+                } finally {
+                    createSmeBtn.disabled = false;
+                    createSmeBtn.textContent = 'Create SME Account';
+                }
+            });
+
+            // --- Handle Delete SME ---
+            function handleDeleteSme(email, name) {
+                showConfirmModal(
+                    'Delete SME Account?',
+                    `Are you sure you want to delete the account for ${name} (${email})? This action cannot be undone.`,
+                    async () => {
+                        try {
+                            const response = await fetch(`/api/admin/smes/${email}`, {
+                                method: 'DELETE',
+                                headers: { 'x-auth-token': token }
+                            });
+                            const result = await response.json();
+                            if (!response.ok) {
+                                throw new Error(result.message || 'Failed to delete account.');
+                            }
+                            fetchSmes(); // Refresh list
+                        } catch (error) {
+                            alert(error.message); // Show error in a simple alert
+                        }
+                    }
+                );
+            }
+
+            // Initial load
+            fetchSmes();
+        });
+    </script>
+</body>
+</html>
