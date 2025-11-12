@@ -3812,33 +3812,63 @@ app.post('/api/admin/impact-stats', authMiddleware, upload.single('flyerImage'),
 // --- COMPILER ENDPOINT (REVISED WITH JUDGE0) ---
 // =================================================================
 app.post('/api/compile', authMiddleware, async (req, res) => {
+    // Middleware ensures req.user exists if token is valid
     const { language, code, input } = req.body;
+    const ONECOMPILER_API_KEY = process.env.ONECOMPILER_API_KEY || '09ccf0b69bmsh066f3a3bc867b99p178664jsna5e9720da3f6'; // Use ENV Var
 
-    // Basic validation
     if (!language || code === undefined || code === null) { // Allow empty code, but not missing
-        return res.status(400).json({
-            message: 'Language and code are required.'
-        });
+        return res.status(400).json({ message: 'Language and code are required.' });
+    }
+    if (!ONECOMPILER_API_KEY || ONECOMPILER_API_KEY === 'YOUR_ONECOMPILER_RAPIDAPI_KEY') {
+        console.error("[COMPILE API] OneCompiler API Key not configured!");
+        return res.status(500).json({ message: 'Compilation service key is not configured on the server.' });
+    }
+
+    const languageMap = { 'c': 'c', 'cpp': 'cpp', 'java': 'java', 'python': 'python', 'javascript': 'javascript' };
+    const fileNames = { 'c': 'main.c', 'cpp': 'main.cpp', 'java': 'Main.java', 'python': 'main.py', 'javascript': 'index.js' };
+    const langIdentifier = languageMap[language];
+    const fileName = fileNames[language];
+
+    if (!langIdentifier) {
+        return res.status(400).json({ message: `Language '${language}' is not supported.` });
     }
 
     try {
-        // Use the new helper function
-        const result = await compileWithCustomCompiler(language, code, input);
-        // Send back the structured result
-        res.json({
-            output: result.output, // Combined stdout/stderr for basic display
-            stdout: result.stdout,
-            stderr: result.stderr,
-            status: result.status // Include the status from the compiler API
+        const submissionPayload = {
+            language: langIdentifier,
+            stdin: input || "",
+            files: [{ name: fileName, content: code }]
+        };
+
+        const submissionResponse = await fetch('https://onecompiler-apis.p.rapidapi.com/api/v1/run', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-RapidAPI-Key': ONECOMPILER_API_KEY,
+                'X-RapidAPI-Host': 'onecompiler-apis.p.rapidapi.com'
+            },
+            body: JSON.stringify(submissionPayload)
         });
+
+        const result = await submissionResponse.json(); // Always try to parse JSON
+
+        if (!submissionResponse.ok) {
+            console.error("OneCompiler API Error:", submissionResponse.status, result);
+            // Try to extract a meaningful error message
+            const errorMessage = result?.message || result?.stderr || `Execution failed (Status: ${submissionResponse.status})`;
+            return res.status(500).json({ message: `Compilation Service Error: ${errorMessage}` });
+        }
+
+        // Combine stdout, stderr, and exception for output
+        let output = result.stdout || '';
+        if (result.stderr) output += `\nError:\n${result.stderr}`;
+        if (result.exception) output += `\nException:\n${result.exception}`;
+
+        res.json({ output: output || 'Execution finished with no output.' }); // Provide default message
+
     } catch (error) {
-        console.error("[/api/compile] Error:", error);
-        // Send a generic server error and the error message from the helper
-        res.status(500).json({
-            message: 'Server error during compilation.',
-            // Send the specific error message from the helper for debugging on client-side if needed
-            output: error.message
-        });
+        console.error("[COMPILE API] Fetch or JSON Parsing Error:", error);
+        res.status(500).json({ message: 'Server error communicating with the compilation service.' });
     }
 });
 
@@ -15631,6 +15661,7 @@ app.post('/api/public/request-mock-token', async (req, res) => {
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
 
 
 
