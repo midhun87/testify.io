@@ -3,22 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Applications - Testify</title>
+    <!-- Updated Title -->
+    <title>My Applications - Xeta Solutions</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-        <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
+    <!-- Updated Icon -->
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png">
 
     <style> body { font-family: 'Poppins', sans-serif; } </style>
 </head>
 <body class="bg-gray-100">
 
-    <header class="bg-white shadow-sm">
+    <!-- Updated Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-40 border-b border-slate-200">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758718248/EduDevelopers_logo_m1h9db.png" alt="EduDevelopers Logo" class="h-10 w-auto">
-                <span class="text-2xl font-bold text-gray-800">EduDevelopers</span>
+            <a href="edudevelopers.html" class="flex items-center space-x-3">
+                <!-- Updated Logo and Name -->
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg" alt="Xeta Solutions Logo" class="h-10 w-auto">
+                <span class="text-2xl font-bold text-gray-800 hidden sm:inline">Xeta Solutions</span>
+            </a>
+            <div>
+                 <!-- UPDATED: Links point to correct .html files -->
+                 <a href="edudevelopers.html" class="text-gray-600 hover:text-indigo-600 font-medium px-4">Home</a>
+                 <a href="careers.html" class="text-gray-600 hover:text-indigo-600 font-medium px-4">Find Jobs</a>
+                 <a href="my-applications.html" class="text-indigo-600 font-bold px-4">My Applications</a>
             </div>
-            <div><a href="carrers.html" class="text-gray-600 hover:text-indigo-600 font-medium">Find Jobs</a></div>
         </nav>
     </header>
 
@@ -137,17 +146,24 @@
                 applicationsContainer.innerHTML = '';
                 apps.forEach(app => {
                     const statusStyles = {
-                        Received: 'bg-blue-100 text-blue-800', 'Under Review': 'bg-yellow-100 text-yellow-800',
-                        Interview: 'bg-purple-100 text-purple-800', Hired: 'bg-green-100 text-green-800',
-                        Rejected: 'bg-red-100 text-red-800',
+                        'Received': 'bg-blue-100 text-blue-800', 
+                        'Under Review': 'bg-yellow-100 text-yellow-800',
+                        'Interview': 'bg-purple-100 text-purple-800', 
+                        'Hired': 'bg-green-100 text-green-800',
+                        'Rejected': 'bg-red-100 text-red-800',
+                        'Applied': 'bg-blue-100 text-blue-800' 
                     };
                     const statusClass = statusStyles[app.status] || 'bg-gray-100 text-gray-800';
                     const appliedDate = new Date(app.appliedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
                     
-                    const isEditable = new Date() < new Date(app.jobDeadline);
+                    const isEditable = app.jobDeadline && (new Date() < new Date(app.jobDeadline));
+                    
+                    // --- THIS IS THE FIX ---
+                    // Added &jobId=${app.jobId} and &jobTitle=${encodeURIComponent(app.jobTitle)} to the href
                     const editButtonHTML = isEditable ? 
-                        `<a href="apply.html?applicationId=${app.applicationId}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Edit Application</a>` :
+                        `<a href="apply.html?applicationId=${app.applicationId}&jobId=${app.jobId}&jobTitle=${encodeURIComponent(app.jobTitle)}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Edit Application</a>` :
                         `<span class="text-sm text-gray-400">Deadline Passed</span>`;
+                    // --- END OF FIX ---
 
                     const appCard = `
                         <div class="bg-white p-6 rounded-lg shadow-md">
@@ -169,4 +185,3 @@
     </script>
 </body>
 </html>
-
