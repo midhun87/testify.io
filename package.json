@@ -1,6 +1,9 @@
 {
   "dependencies": {
+    "@aws-sdk/client-chime-sdk-meetings": "^3.930.0",
     "@aws-sdk/client-dynamodb": "^3.873.0",
+    "@aws-sdk/client-kinesis-video": "^3.932.0",
+    "@aws-sdk/client-kinesis-video-signaling": "^3.932.0",
     "@aws-sdk/client-rekognition": "^3.876.0",
     "@aws-sdk/client-s3": "^3.921.0",
     "@aws-sdk/client-sesv2": "^3.901.0",
@@ -18,6 +21,7 @@
     "face-api.js": "^0.22.2",
     "google-auth-library": "^10.3.0",
     "googleapis": "^161.0.0",
+    "helmet": "^8.1.0",
     "http": "^0.0.1-security",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
