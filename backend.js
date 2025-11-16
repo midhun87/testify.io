@@ -24,7 +24,7 @@ const stream = require('stream')
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const S3_BUCKET_NAME = "hirewithusjobapplications"; 
 const AWS_S3_REGION = "ap-south-1"; 
-
+const CORRECT_JOBS_TABLE_NAME = "TestifyJobs";
 const HIRING_TRIAL_USERS_TABLE = "HiringTrialUsers";
 const HIRING_USERS_TABLE = "HiringUsers";
 const HIRING_COLLEGES_TABLE = "HiringColleges";
@@ -39,10 +39,38 @@ const JOBS_TABLE = "HiringJobs"; // Use the correct table name
 const HIRING_CODE_SNIPPETS_TABLE = "HiringCodeSnippets"; // New table for saving snippets
 const HIRING_APTITUDE_TESTS_TABLE = "HiringAptitudeTests";
 const HIRING_INTERVIEWS_TABLE = "HiringInterviews"; // Table for interview slots, events, & evaluations
+const APPLICATIONS_TABLE_NAME = "TestifyApplications";
+
 
 const ZOOM_ACCOUNT_ID = process.env.ZOOM_ACCOUNT_ID || 'bq5-fIbESBONjaZAr184uA';
 const ZOOM_CLIENT_ID = process.env.ZOOM_CLIENT_ID || 'CXxbks94RlmD_90vofVqg';
 const ZOOM_CLIENT_SECRET = process.env.ZOOM_CLIENT_SECRET || 'XXoYPmG5z8rSf1J6Fov7iXSminmBRuO9';
+
+// [ADD THESE]
+const {
+    KinesisVideoClient,
+    CreateSignalingChannelCommand,
+    GetSignalingChannelEndpointCommand,
+    DeleteSignalingChannelCommand,
+    DescribeSignalingChannelCommand
+} = require("@aws-sdk/client-kinesis-video");
+
+const {
+    KinesisVideoSignalingClient,
+    GetIceServerConfigCommand
+} = require("@aws-sdk/client-kinesis-video-signaling");
+
+// [ADD THIS]
+// This is the client for creating/managing channels
+const kinesisVideoClient = new KinesisVideoClient({
+    region: process.env.AWS_REGION || "ap-south-1",
+    credentials: {
+        accessKeyId: 'AKIAT4YSUMZD52BNBCAB', // Your existing key
+        secretAccessKey: process.env.CHIME_AWS_SECRET_ACCESS_KEY || 'jCJQY7lfiv1LylIqLpzFl9kz96r4FgLcKL+SueGh' // Your existing secret
+    }
+});
+
+const liveTestSessions = {};
 
 //Mails by SES
 
@@ -127,6 +155,9 @@ const server = http.createServer(app); // FIX: Create the HTTP server
 const io = new Server(server, { cors: { origin: "*" } }); // FIX: Attach socket.io to the server
 const PORT = 3000;
 const JWT_SECRET = 'your-super-secret-key-for-jwt-in-production';
+
+
+
 
 async function compileWithCustomCompiler(language, code, input) {
     // --- IMPORTANT: This is your custom compiler URL ---
@@ -688,7 +719,136 @@ io.on('connection', (socket) => {
     
     socket.on('disconnect', () => console.log('User disconnected:', socket.id));
 
+    socket.on('moderator-join', () => {
+    console.log(`[PROCTORING] Moderator ${socket.id} joined the dashboard.`);
+    socket.join(MODERATOR_ROOM_ID);
 });
+
+// [REPLACE your entire io.on('connection', ...) block with this one]
+
+// This object will track which students are in which test
+
+
+    socket.on('moderator-join-test', (data) => {
+        const { testId } = data;
+        if (!testId) return;
+
+        console.log(`[PROCTORING] Moderator ${socket.id} joined dashboard for test ${testId}.`);
+        socket.join(testId); // Join the room for this testId
+
+        // Send the moderator all students who are *already* in the session
+        const existingStudents = liveTestSessions[testId] || [];
+        socket.emit('existing-students', existingStudents);
+    });
+
+    socket.on('student-join', (data) => {
+        const { testId, candidateDetails, channelARN } = data; // Student now sends their channelARN
+        if (!testId || !candidateDetails || !channelARN) {
+             console.error("[PROCTORING] Invalid student-join event:", data);
+             return;
+        }
+
+        const studentInfo = {
+            socketId: socket.id,
+            testId: testId,
+            channelARN: channelARN, // Store the ARN
+            candidateDetails: candidateDetails
+        };
+
+        console.log(`[PROCTORING] Student ${candidateDetails.fullName} (${socket.id}) joined test ${testId}.`);
+
+        socket.data.studentInfo = studentInfo; 
+
+        // Join the room for this specific test
+        socket.join(testId);
+
+        // Add student to our live session tracker
+        if (!liveTestSessions[testId]) {
+            liveTestSessions[testId] = [];
+        }
+        liveTestSessions[testId].push(studentInfo);
+
+        // Tell all moderators *in this test's room* a new student is here
+        socket.to(testId).emit('new-student-joined', studentInfo);
+    });
+
+    socket.on('proctoring-alert', (data) => {
+        if (!data.alert || !socket.data.studentInfo) return;
+
+        const testId = socket.data.studentInfo.testId;
+        if (!testId) return;
+
+        console.log(`[PROCTORING] Alert from student ${socket.id} in test ${testId}: ${data.alert}`);
+
+        // Send this to all moderators *in this test's room*
+        socket.to(testId).emit('proctoring-alert', {
+            alert: data.alert,
+            studentSocketId: socket.id,
+            studentInfo: socket.data.studentInfo
+        });
+    });
+
+    // Handle 1-to-1 chat
+    socket.on('proctoring-chat', (data) => {
+        const { targetSocketId, message, isFromModerator } = data;
+        if (!targetSocketId || !message) return;
+
+        let senderName;
+        let eventName;
+
+        if (isFromModerator) {
+            // Message from moderator to student
+            senderName = "Moderator";
+            eventName = 'proctoring-chat'; // Student listens for this
+            console.log(`[CHAT] Moderator ${socket.id} to Student ${targetSocketId}: ${message}`);
+        } else {
+            // Message from student to moderators
+            senderName = socket.data.studentInfo?.candidateDetails?.fullName || "Student";
+            eventName = 'proctoring-chat'; // Moderator also listens for this
+            console.log(`[CHAT] Student ${socket.id} to Moderator ${targetSocketId}: ${message}`);
+        }
+
+        // Emit to the specific target socket (student or moderator)
+        socket.to(targetSocketId).emit(eventName, {
+            message: message,
+            senderName: senderName,
+            studentSocketId: isFromModerator ? targetSocketId : socket.id // Always include student ID
+        });
+    });
+
+    // Handle suspend command
+    socket.on('proctoring-command', (data) => {
+        const { targetSocketId, command } = data;
+        if (!targetSocketId || !command) return;
+
+        console.log(`[PROCTORING] Relaying command '${command}' from ${socket.id} to ${targetSocketId}`);
+
+        socket.to(targetSocketId).emit('proctoring-command', {
+            command: command
+        });
+    });
+
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+        if (socket.data.studentInfo) {
+            const { testId, socketId } = socket.data.studentInfo;
+            console.log(`[PROCTORING] Student ${socket.data.studentInfo.candidateDetails.fullName} disconnected from test ${testId}.`);
+
+            // Remove student from our session tracker
+            if (liveTestSessions[testId]) {
+                liveTestSessions[testId] = liveTestSessions[testId].filter(student => student.socketId !== socketId);
+            }
+
+            // Tell all moderators *in this test's room* this student left
+            socket.to(testId).emit('student-left', {
+                studentSocketId: socket.id,
+                studentInfo: socket.data.studentInfo
+            });
+        }
+    });
+});
+
+
 
 async function endQuestionAndShowStats(liveQuizId) {
     try {
@@ -849,7 +1009,6 @@ app.get('/verify-certificate', (req, res) => res.sendFile(path.join(__dirname, '
 app.get('/Beta-Version', (req, res) => res.sendFile(path.join(__dirname, 'public', 'mock.html')));
 app.get('/HireWithUs', (req, res) => res.sendFile(path.join(__dirname, 'public', 'HireWithUs.html')));
 app.get('/signup', (req, res) => res.sendFile(path.join(__dirname, 'public', 'signup.html')));
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'signup.html')));
 
 
 
@@ -876,6 +1035,8 @@ app.get('/student/test-history', (req, res) => res.sendFile(path.join(__dirname,
 app.get('/student/Test', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'Test.html')));
 app.get('/student/view-certificate', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'view-certificate.html')));
 app.get('/student/view-course', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'view-course.html')));
+app.get('/student/quiz-join', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student', 'quiz-join.html')));
+
 
 
 // --- Admin Page Routes ---
@@ -987,6 +1148,9 @@ app.get('/hiring/schedule-interview', (req, res) => res.sendFile(path.join(__dir
 app.get('/hiring/test-history', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-test-history.html')));
 app.get('/hiring/test-reports', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-test-reports.html')));
 app.get('/hiring/view-applicants', (req, res) => res.sendFile(path.join(__dirname, 'public', 'hiring', 'hiring-view-applicants.html')));
+
+
+
 
 app.use(express.static('public'));
 app.use('/moderator', express.static(path.join(__dirname, 'public/moderator')));
@@ -3812,63 +3976,33 @@ app.post('/api/admin/impact-stats', authMiddleware, upload.single('flyerImage'),
 // --- COMPILER ENDPOINT (REVISED WITH JUDGE0) ---
 // =================================================================
 app.post('/api/compile', authMiddleware, async (req, res) => {
-    // Middleware ensures req.user exists if token is valid
     const { language, code, input } = req.body;
-    const ONECOMPILER_API_KEY = process.env.ONECOMPILER_API_KEY || '09ccf0b69bmsh066f3a3bc867b99p178664jsna5e9720da3f6'; // Use ENV Var
 
+    // Basic validation
     if (!language || code === undefined || code === null) { // Allow empty code, but not missing
-        return res.status(400).json({ message: 'Language and code are required.' });
-    }
-    if (!ONECOMPILER_API_KEY || ONECOMPILER_API_KEY === 'YOUR_ONECOMPILER_RAPIDAPI_KEY') {
-        console.error("[COMPILE API] OneCompiler API Key not configured!");
-        return res.status(500).json({ message: 'Compilation service key is not configured on the server.' });
-    }
-
-    const languageMap = { 'c': 'c', 'cpp': 'cpp', 'java': 'java', 'python': 'python', 'javascript': 'javascript' };
-    const fileNames = { 'c': 'main.c', 'cpp': 'main.cpp', 'java': 'Main.java', 'python': 'main.py', 'javascript': 'index.js' };
-    const langIdentifier = languageMap[language];
-    const fileName = fileNames[language];
-
-    if (!langIdentifier) {
-        return res.status(400).json({ message: `Language '${language}' is not supported.` });
+        return res.status(400).json({
+            message: 'Language and code are required.'
+        });
     }
 
     try {
-        const submissionPayload = {
-            language: langIdentifier,
-            stdin: input || "",
-            files: [{ name: fileName, content: code }]
-        };
-
-        const submissionResponse = await fetch('https://onecompiler-apis.p.rapidapi.com/api/v1/run', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-RapidAPI-Key': ONECOMPILER_API_KEY,
-                'X-RapidAPI-Host': 'onecompiler-apis.p.rapidapi.com'
-            },
-            body: JSON.stringify(submissionPayload)
+        // Use the new helper function
+        const result = await compileWithCustomCompiler(language, code, input);
+        // Send back the structured result
+        res.json({
+            output: result.output, // Combined stdout/stderr for basic display
+            stdout: result.stdout,
+            stderr: result.stderr,
+            status: result.status // Include the status from the compiler API
         });
-
-        const result = await submissionResponse.json(); // Always try to parse JSON
-
-        if (!submissionResponse.ok) {
-            console.error("OneCompiler API Error:", submissionResponse.status, result);
-            // Try to extract a meaningful error message
-            const errorMessage = result?.message || result?.stderr || `Execution failed (Status: ${submissionResponse.status})`;
-            return res.status(500).json({ message: `Compilation Service Error: ${errorMessage}` });
-        }
-
-        // Combine stdout, stderr, and exception for output
-        let output = result.stdout || '';
-        if (result.stderr) output += `\nError:\n${result.stderr}`;
-        if (result.exception) output += `\nException:\n${result.exception}`;
-
-        res.json({ output: output || 'Execution finished with no output.' }); // Provide default message
-
     } catch (error) {
-        console.error("[COMPILE API] Fetch or JSON Parsing Error:", error);
-        res.status(500).json({ message: 'Server error communicating with the compilation service.' });
+        console.error("[/api/compile] Error:", error);
+        // Send a generic server error and the error message from the helper
+        res.status(500).json({
+            message: 'Server error during compilation.',
+            // Send the specific error message from the helper for debugging on client-side if needed
+            output: error.message
+        });
     }
 });
 
@@ -6844,11 +6978,15 @@ app.get('/api/admin/applications/:jobId', authMiddleware, async (req, res) => {
     const { jobId } = req.params;
     try {
         const { Items } = await docClient.send(new ScanCommand({
-            TableName: "TestifyApplications",
+            TableName: APPLICATIONS_TABLE_NAME, // <--- UPDATED TABLE
             FilterExpression: "jobId = :jid",
             ExpressionAttributeValues: { ":jid": jobId }
         }));
-        Items.sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt));
+
+        if (Items) {
+            Items.sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt));
+        }
+        
         res.json(Items);
     } catch (error) {
         console.error("Get Applications Error:", error);
@@ -6885,63 +7023,67 @@ app.get('/api/careers/jobs', async (req, res) => {
  * @desc    Public: Submit a detailed job application with file uploads
  * @access  Public
  */
+/**
+ * @route   POST /api/careers/apply/:jobId
+ * @desc    Public: Submit a detailed job application with file uploads
+ * @access  Public
+ */
 app.post('/api/careers/apply/:jobId',
     upload.any(), // Use upload.any() to accept all files with dynamic names
     async (req, res) => {
         const { jobId } = req.params;
         const {
             firstName, lastName, email, phone,
-            education, // This is now a JSON string
-            experiences, // This is also a JSON string
+            address, city, country,
+            education, experiences,
             linkedinUrl, githubUrl, portfolioUrl,
-            govtIdType // New field for Government ID type
+            coverLetter, govtIdType
         } = req.body;
 
-        if (!firstName || !lastName || !email || !phone) {
-            return res.status(400).json({ message: 'Personal details are required.' });
+        if (!firstName || !lastName || !email || !phone || !address || !city || !country) {
+            return res.status(400).json({ message: 'Personal details, including address, city, and country, are required.' });
         }
 
         try {
-            // *** FIX: Corrected the table name and the primary key to find the job ***
             const { Item: job } = await docClient.send(new GetCommand({ 
-                TableName: "TestifyTests", 
-                Key: { testId: jobId } 
+                TableName: CORRECT_JOBS_TABLE_NAME, 
+                Key: { jobId: jobId }
             }));
 
             if (!job) {
                 return res.status(404).json({ message: 'Job opening not found.' });
             }
 
-            // Helper function to upload a file buffer to Cloudinary
-            const uploadToCloudinary = async (file) => {
-                const b64 = Buffer.from(file.buffer).toString("base64");
-                const dataURI = `data:${file.mimetype};base64,${b64}`;
-                return await cloudinary.uploader.upload(dataURI, {
-                    folder: "job_applications",
-                    resource_type: "auto"
-                });
-            };
+            // Check for duplicate applications
+            const { Items: existingApps } = await docClient.send(new ScanCommand({
+                TableName: APPLICATIONS_TABLE_NAME, // <--- UPDATED TABLE
+                FilterExpression: "jobId = :jid AND (email = :email OR phone = :phone)",
+                ExpressionAttributeValues: {
+                    ":jid": jobId,
+                    ":email": email,
+                    ":phone": phone
+                },
+                Limit: 1
+            }));
 
-            // Process all incoming files dynamically
+            if (existingApps && existingApps.length > 0) {
+                return res.status(400).json({ message: 'You have already applied for this job with this email or phone number.' });
+            }
+
+            // Process file uploads
             const files = req.files;
             let passportPhotoUrl, resumeUrl, govtIdUrl;
             const educationCertificates = {};
             const experienceCertificates = {};
 
-            for (const file of files) {
-                const result = await uploadToCloudinary(file);
-                if (file.fieldname === 'passportPhoto') {
-                    passportPhotoUrl = result.secure_url;
-                } else if (file.fieldname === 'resume') {
-                    resumeUrl = result.secure_url;
-                } else if (file.fieldname === 'govtId') {
-                    govtIdUrl = result.secure_url;
-                } else if (file.fieldname.startsWith('education_certificate_')) {
-                    const index = file.fieldname.split('_')[2];
-                    educationCertificates[index] = result.secure_url;
-                } else if (file.fieldname.startsWith('experience_certificate_')) {
-                    const index = file.fieldname.split('_')[2];
-                    experienceCertificates[index] = result.secure_url;
+            if (files) {
+                for (const file of files) {
+                    const result = await uploadToS3(file); // Assumes uploadToS3 helper
+                    if (file.fieldname === 'passportPhoto') passportPhotoUrl = result.secure_url;
+                    else if (file.fieldname === 'resume') resumeUrl = result.secure_url;
+                    else if (file.fieldname === 'govtId') govtIdUrl = result.secure_url;
+                    else if (file.fieldname.startsWith('education_certificate_')) educationCertificates[file.fieldname.split('_')[2]] = result.secure_url;
+                    else if (file.fieldname.startsWith('experience_certificate_')) experienceCertificates[file.fieldname.split('_')[2]] = result.secure_url;
                 }
             }
 
@@ -6949,42 +7091,161 @@ app.post('/api/careers/apply/:jobId',
                 return res.status(400).json({ message: 'Passport photo and resume are mandatory.' });
             }
 
-            // Parse and enrich education data with certificate URLs
             const educationData = JSON.parse(education || '[]').map((edu, index) => ({
                 ...edu,
                 certificateUrl: educationCertificates[index] || null
             }));
 
-            // Parse and enrich experience data with certificate URLs
             const experienceData = JSON.parse(experiences || '[]').map((exp, index) => ({
                 ...exp,
                 certificateUrl: experienceCertificates[index] || null
             }));
-
+            
+            const addressData = { street: address, city: city, country: country };
             const applicationId = `app_${uuidv4()}`;
+
             const newApplication = {
-                applicationId,
-                jobId,
-                jobTitle: job.title,
+                applicationId, jobId, jobTitle: job.title,
                 firstName, lastName, email, phone,
-                passportPhotoUrl,
-                resumeUrl,
-                govtId: {
-                    type: govtIdType,
-                    url: govtIdUrl || null
-                },
+                address: addressData,
+                coverLetter: coverLetter || null,
+                passportPhotoUrl, resumeUrl,
+                govtId: { type: govtIdType, url: govtIdUrl || null },
                 education: educationData,
                 experiences: experienceData,
-                links: {
-                    linkedin: linkedinUrl,
-                    github: githubUrl,
-                    portfolio: portfolioUrl
-                },
+                links: { linkedin: linkedinUrl, github: githubUrl, portfolio: portfolioUrl },
                 status: 'Received',
                 appliedAt: new Date().toISOString()
             };
 
-            await docClient.send(new PutCommand({ TableName: "TestifyApplications", Item: newApplication }));
+            // Save to the "TestifyApplications" table
+            await docClient.send(new PutCommand({ TableName: APPLICATIONS_TABLE_NAME, Item: newApplication })); // <--- UPDATED TABLE
+
+            // Send confirmation email (simplified for brevity)
+            try {
+                const mailOptions = {
+                    to: email,
+                    subject: `Application Received - ${job.title}`,
+                    html: `<!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <title>Application Received</title>
+                            <style>
+                                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+                                body {
+                                    font-family: 'Poppins', Arial, sans-serif;
+                                    margin: 0;
+                                    padding: 0;
+                                    background-color: #f8fafc;
+                                    color: #334155;
+                                }
+                                .container {
+                                    width: 90%;
+                                    max-width: 600px;
+                                    margin: 20px auto;
+                                    background-color: #ffffff;
+                                    border: 1px solid #e2e8f0;
+                                    border-radius: 12px;
+                                    overflow: hidden;
+                                    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+                                }
+                                .header {
+                                    padding: 24px;
+                                    text-align: center;
+                                    border-bottom: 1px solid #e2e8f0;
+                                }
+                                .header img {
+                                    height: 40px;
+                                    width: auto;
+                                }
+                                .content {
+                                    padding: 32px;
+                                    line-height: 1.6;
+                                }
+                                .content h1 {
+                                    font-size: 22px;
+                                    font-weight: 700;
+                                    color: #1e293b;
+                                    margin-top: 0;
+                                    margin-bottom: 16px;
+                                }
+                                .content p {
+                                    font-size: 16px;
+                                    margin-bottom: 16px;
+                                }
+                                .content strong {
+                                    color: #1e293b;
+                                }
+                                .info-box {
+                                    background-color: #f8fafc;
+                                    border: 1px solid #e2e8f0;
+                                    border-radius: 8px;
+                                    padding: 20px;
+                                    margin: 24px 0;
+                                }
+                                .info-box p {
+                                    margin: 0;
+                                    font-size: 15px;
+                                }
+                                .button-container {
+                                    text-align: center;
+                                    margin-top: 24px;
+                                }
+                                .button {
+                                    display: inline-block;
+                                    background-color: #4f46e5;
+                                    color: #ffffff;
+                                    text-decoration: none;
+                                    padding: 12px 24px;
+                                    border-radius: 8px;
+                                    font-weight: 500;
+                                    font-size: 16px;
+                                }
+                                .footer {
+                                    background-color: #f8fafc;
+                                    border-top: 1px solid #e2e8f0;
+                                    padding: 24px 32px;
+                                    text-align: center;
+                                    font-size: 13px;
+                                    color: #64748b;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="container">
+                                <div class="header">
+                                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg" alt="Xeta Solutions Logo">
+                                </div>
+                                <div class="content">
+                                    <h1>Thank You For Applying!</h1>
+                                    <p>Hello <strong>${firstName}</strong>,</p>
+                                    <p>We have successfully received your application for the position of <strong>${job.title}</strong> at <strong>Xeta Solutions</strong>.</p>
+                                    
+                                    <div class="info-box">
+                                        <p>Your Application ID is: <strong>${applicationId}</strong></p>
+                                    </div>
+                                    
+                                    <p>Our hiring team will review your application and will be in touch if your qualifications match our needs. You can check the status of all your applications at any time by visiting the "My Applications" page.</p>
+                                    
+                                    <div class="button-container">
+                                        <a href="https:/testify-lac.com/my-applications" class="button">Check Application Status</a>
+                                    </div>
+                                    
+                                    <p style="margin-top: 24px; margin-bottom: 0;">Best regards,<br>Talent Acquisition Team<br><strong>Xeta Solutions</strong></p>
+                                </div>
+                                <div class="footer">
+                                    &copy; ${new Date().getFullYear()} Xeta Solutions. All rights reserved.
+                                </div>
+                            </div>
+                        </body>
+                        </html>`
+                };
+                await sendEmailWithSES(mailOptions);
+            } catch (emailError) {
+                console.error(`Failed to send confirmation email to ${email}:`, emailError);
+            }
 
             res.status(201).json({ message: 'Application submitted successfully! We will be in touch.' });
 
@@ -7127,14 +7388,16 @@ app.patch('/api/admin/applications/status', authMiddleware, async (req, res) => 
     if (!applicationId || !status) {
         return res.status(400).json({ message: 'Application ID and new status are required.' });
     }
+    
     const validStatuses = ['Received', 'Under Review', 'Interview', 'Hired', 'Rejected'];
     if (!validStatuses.includes(status)) {
         return res.status(400).json({ message: 'Invalid status value.' });
     }
+    
     try {
         await docClient.send(new UpdateCommand({
-            TableName: "TestifyApplications",
-            Key: { applicationId },
+            TableName: APPLICATIONS_TABLE_NAME, // <--- UPDATED TABLE
+            Key: { applicationId }, // Assumes 'applicationId' is the Primary Key
             UpdateExpression: "set #status = :s",
             ExpressionAttributeNames: { "#status": "status" },
             ExpressionAttributeValues: { ":s": status }
@@ -7145,8 +7408,6 @@ app.patch('/api/admin/applications/status', authMiddleware, async (req, res) => 
         res.status(500).json({ message: 'Server error updating application status.' });
     }
 });
-
-
 app.get('/api/check-auth', authMiddleware, async (req, res) => {
     // The authMiddleware already verifies the token and populates req.user.
     // This endpoint re-fetches user data to ensure it's fresh (e.g., role changes, blocks).
@@ -7208,39 +7469,118 @@ app.post('/api/careers/send-view-otp', async (req, res) => {
     const emailLower = email.toLowerCase();
 
     try {
-        // First, check if any applications exist for this email to prevent unnecessary OTP sends.
-        const { Items } = await docClient.send(new QueryCommand({
-            TableName: "TestifyApplications",
-            IndexName: "email-index",
-            KeyConditionExpression: "email = :email",
-            ExpressionAttributeValues: { ":email": emailLower }
+        const { Items } = await docClient.send(new ScanCommand({
+            TableName: APPLICATIONS_TABLE_NAME, // <--- UPDATED TABLE
+            FilterExpression: "email = :email",
+            ExpressionAttributeValues: { ":email": emailLower },
+            Limit: 1
         }));
 
         if (!Items || Items.length === 0) {
             return res.status(404).json({ message: 'No applications found for this email address.' });
         }
 
-        // Generate and store OTP (using the existing in-memory store)
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expirationTime = Date.now() + 5 * 60 * 1000; // 5-minute validity
 
-        // The 'otpStore' object should already be defined at the top of your backend.js
         otpStore[emailLower] = { otp, expirationTime };
         console.log(`Generated application view OTP for ${email}: ${otp}`);
 
-        // Send the OTP via email
         const mailOptions = {
-            from: '"TESTIFY" <support@testify-lac.com>',
+            from: '"Xeta Solutions" <support@testify-lac.com>',
             to: email,
             subject: 'Your Application Status Verification Code',
-            html: `
-                <div style="font-family: Arial, sans-serif; text-align: center; color: #333;">
-                    <h2>TESTIFY Application Status</h2>
-                    <p>Your verification code is:</p>
-                    <p style="font-size: 24px; font-weight: bold; letter-spacing: 3px; color: #4F46E5;">${otp}</p>
-                    <p>This code will expire in 5 minutes.</p>
-                </div>
-            `
+            html: `<div style="
+    font-family: 'Poppins', Arial, sans-serif;
+    max-width: 480px;
+    margin: auto;
+    padding: 0;
+    background: #f8fafc;
+">
+
+    <!-- Card -->
+    <div style="
+        background: #ffffff;
+        padding: 32px;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+        text-align: center;
+    ">
+
+        <!-- Logo -->
+        <img 
+            src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg" 
+            alt="Xeta Solutions Logo" 
+            style="height: 48px; margin-bottom: 25px;"
+        />
+
+        <!-- Title -->
+        <h2 style="color: #0f172a; font-weight: 600; margin-bottom: 8px; font-size: 22px;">
+            Verification Code
+        </h2>
+
+        <p style="font-size: 15px; color: #475569; margin-top: 0;">
+            Please use the code below to continue your verification.
+        </p>
+
+        <!-- OTP Box -->
+        <div style="
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: 10px;
+            color: #4F46E5;
+            background: #eef2ff;
+            padding: 16px 0;
+            border-radius: 12px;
+            margin: 28px 0;
+            border: 1px solid #c7d2fe;
+        ">
+            ${otp}
+        </div>
+
+        <p style="font-size: 14px; color: #64748b; margin-top: 0;">
+            This code is valid for the next <strong>5 minutes</strong>.
+        </p>
+
+        <p style="font-size: 13px; color: #94a3b8; margin-top: 22px;">
+            If you did not request this code, please ignore this email.
+        </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="
+        text-align: center;
+        color: #94a3b8;
+        font-size: 12px;
+        margin-top: 18px;
+        padding: 16px 10px;
+        line-height: 18px;
+    ">
+        <p style="margin: 4px 0; font-weight: 500; color: #64748b;">
+            Xeta Solutions Pvt. Ltd.
+        </p>
+        <p style="margin: 4px 0;">
+            Hyderabad, Telangana, India
+        </p>
+        <p style="margin: 4px 0;">
+            This is an automated message. Please do not reply.
+        </p>
+
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 12px auto; width: 70%;" />
+
+        <p style="margin: 4px 0;">
+            © ${new Date().getFullYear()} Xeta Solutions. All rights reserved.
+        </p>
+
+        <p style="margin: 4px 0;">
+            <a href="https://www.testify-lac.com/T&C.html" style="color: #6366f1; text-decoration: none;">Privacy Policy</a> ·
+            <a href="mailto:Support@xetasolutions.in" style="color: #6366f1; text-decoration: none;">Contact Support</a>
+        </p>
+    </div>
+
+</div>
+`
         };
 
        await sendEmailWithSES(mailOptions);
@@ -7264,21 +7604,17 @@ app.post('/api/careers/verify-view-otp', async (req, res) => {
     }
     const emailLower = email.toLowerCase();
 
-    // Verify the OTP
     const storedOtpData = otpStore[emailLower];
     if (!storedOtpData || storedOtpData.otp !== otp || Date.now() > storedOtpData.expirationTime) {
         return res.status(400).json({ message: 'Invalid or expired verification code.' });
     }
 
     try {
-        // OTP is valid, remove it to prevent reuse
         delete otpStore[emailLower];
 
-        // Fetch applications using the GSI for efficiency
-        const { Items: applications } = await docClient.send(new QueryCommand({
-            TableName: "TestifyApplications",
-            IndexName: "email-index",
-            KeyConditionExpression: "email = :email",
+        const { Items: applications } = await docClient.send(new ScanCommand({
+            TableName: APPLICATIONS_TABLE_NAME, // <--- UPDATED TABLE
+            FilterExpression: "email = :email",
             ExpressionAttributeValues: { ":email": emailLower }
         }));
 
@@ -7286,25 +7622,22 @@ app.post('/api/careers/verify-view-otp', async (req, res) => {
             return res.json([]);
         }
 
-        // Fetch job details to get the application deadline for the "Edit" button logic
         const jobIds = [...new Set(applications.map(app => app.jobId))];
-        // FIX: The primary key for jobs in TestifyTests is 'testId'
-        const keys = jobIds.map(jobId => ({ testId: jobId }));
+        const keys = jobIds.map(jobId => ({ jobId: jobId }));
         
+        if (keys.length === 0) {
+             return res.json(applications);
+        }
+
         const { Responses } = await docClient.send(new BatchGetCommand({
-            // FIX: Jobs are stored in the 'TestifyTests' table
-            RequestItems: { "TestifyTests": { Keys: keys } }
+            RequestItems: { [CORRECT_JOBS_TABLE_NAME]: { Keys: keys } }
         }));
         
-        // FIX: Read the response from the correct table name
-        const jobs = Responses.TestifyTests || [];
-        // FIX: Map using 'testId' as the key from the job object
-        const jobDeadlineMap = new Map(jobs.map(j => [j.testId, j.applicationDeadline]));
+        const jobs = Responses[CORRECT_JOBS_TABLE_NAME] || [];
+        const jobDeadlineMap = new Map(jobs.map(j => [j.jobId, j.applicationDeadline]));
 
-        // Enrich application data with the deadline
         const enrichedApplications = applications.map(app => ({
             ...app,
-            // The lookup key 'app.jobId' is correct here as it matches the 'testId' in the map
             jobDeadline: jobDeadlineMap.get(app.jobId) || null
         }));
 
@@ -7317,7 +7650,6 @@ app.post('/api/careers/verify-view-otp', async (req, res) => {
         res.status(500).json({ message: 'Server error fetching applications.' });
     }
 });
-
 app.get('/api/public/hiring-application/:applicationId', async (req, res) => {
     const { applicationId } = req.params;
     try {
@@ -12430,16 +12762,14 @@ const uploadToCloudinary = (file) => {
 
 const uploadToS3 = (file) => {
     console.log(`[uploadToS3] Attempting to upload: ${file.fieldname}, mimetype: ${file.mimetype}`);
-
     // Create a unique file key (path in S3)
     const fileKey = `job_applications/${uuidv4()}-${file.originalname.replace(/\s+/g, '_')}`;
 
     const params = {
-        Bucket: S3_BUCKET_NAME,
+        Bucket: S3_BUCKET_NAME, // Use the bucket you specified
         Key: fileKey,
         Body: file.buffer,
-        ContentType: file.mimetype, // This is CRITICAL for PDFs to open correctly
-        // ACL: 'public-read'         // Make the file publicly viewable // --- MODIFICATION: REMOVE THIS LINE ---
+        ContentType: file.mimetype,
     };
 
     return new Promise(async (resolve, reject) => {
@@ -12448,7 +12778,7 @@ const uploadToS3 = (file) => {
             // Construct the public URL
             const url = `https://${S3_BUCKET_NAME}.s3.${AWS_S3_REGION}.amazonaws.com/${fileKey}`;
             console.log(`[uploadToS3] SUCCESS for field: ${file.fieldname}. URL: ${url}`);
-            resolve(url); // Resolve with the URL string
+            resolve({ secure_url: url }); // Return in a format similar to Cloudinary's
         } catch (error) {
             console.error(`[uploadToS3] FAILED for field: ${file.fieldname}. Error:`, error);
             reject(error);
@@ -15657,11 +15987,248 @@ app.post('/api/public/request-mock-token', async (req, res) => {
         res.status(500).json({ message: 'Server error processing your request.' });
     }
 });
+// [REPLACE your old /api/proctoring/join with this]
+
+// [ADD THIS NEW ENDPOINT]
+// This is what the moderator dashboard calls to get viewer credentials for *each* student
+app.post('/api/proctoring/viewer-credentials', hiringModeratorAuth, async (req, res) => {
+    const { channelARN } = req.body;
+    const moderatorId = req.user.email; // The moderator's unique ID
+
+    if (!channelARN) {
+        return res.status(400).json({ message: 'Channel ARN is required.' });
+    }
+
+    console.log(`[KVS Viewer] Moderator ${moderatorId} requests credentials for ${channelARN}`);
+
+    try {
+        // 1. Get the Signaling Channel Endpoint
+        const endpointResponse = await kinesisVideoClient.send(new GetSignalingChannelEndpointCommand({
+            ChannelARN: channelARN,
+            SingleMasterChannelEndpointConfiguration: {
+                Protocols: ["WSS", "HTTPS"],
+                Role: "VIEWER" // The moderator is the VIEWER
+            }
+        }));
+
+        const wssEndpoint = endpointResponse.ResourceEndpointList.find(ep => ep.Protocol === "WSS").ResourceEndpoint;
+        const httpsEndpoint = endpointResponse.ResourceEndpointList.find(ep => ep.Protocol === "HTTPS").ResourceEndpoint;
+
+        // 2. Get ICE Server (TURN) configuration
+        const signalingClient = new KinesisVideoSignalingClient({
+            region: process.env.AWS_REGION || "ap-south-1",
+            endpoint: httpsEndpoint,
+            credentials: {
+                accessKeyId: 'AKIAT4YSUMZD52BNBCAB', // Your existing key
+                secretAccessKey: process.env.CHIME_AWS_SECRET_ACCESS_KEY || 'jCJQY7lfiv1LylIqLpzFl9kz96r4FgLcKL+SueGh' // Your existing secret
+            }
+        });
+
+        const iceServerResponse = await signalingClient.send(new GetIceServerConfigCommand({
+            ChannelARN: channelARN,
+            Service: "TURN"
+        }));
+
+        const iceServers = iceServerResponse.IceServerList.map(server => ({
+            urls: server.Uris,
+            username: server.Username,
+            credential: server.Password,
+        }));
+
+        // 3. Send all this information to the frontend
+        res.json({
+            role: "VIEWER",
+            channelARN: channelARN,
+            wssEndpoint: wssEndpoint,
+            httpsEndpoint: httpsEndpoint,
+            iceServers: iceServers,
+            externalUserId: moderatorId
+        });
+
+    } catch (error) {
+        console.error(`[KVS Viewer] Error getting credentials for ${channelARN}:`, error);
+        res.status(500).json({ message: 'Error creating viewer credentials.' });
+    }
+});
+/**
+ * @route   POST /api/proctoring/join
+ * @desc    Student (MASTER) joins the proctoring session and gets KVS credentials
+ * @access  Private (authMiddleware)
+ */
+app.post('/api/proctoring/join', authMiddleware, async (req, res) => {
+    const { testId, role } = req.body;
+    const studentEmail = req.user.email;
+    const externalUserId = `student_${studentEmail}_${testId}`; // Unique ID for KVS
+
+    if (role !== 'STUDENT') {
+        return res.status(400).json({ message: 'Invalid role for this endpoint.' });
+    }
+
+    // Create a unique, valid channel name
+    const channelName = `proctor_${testId}_${studentEmail.replace(/[^a-zA-Z0-9_.-]/g, '_')}`.substring(0, 256);
+    console.log(`[KVS Master] Join request for channel: ${channelName}`);
+
+    try {
+        let channelARN;
+
+        // 1. Check if channel exists, if not, create it
+        try {
+            const describeResponse = await kinesisVideoClient.send(new DescribeSignalingChannelCommand({
+                ChannelName: channelName
+            }));
+            channelARN = describeResponse.ChannelInfo.ChannelARN;
+            console.log(`[KVS Master] Found existing channel: ${channelARN}`);
+        } catch (error) {
+            if (error.name === 'ResourceNotFoundException') {
+                console.log(`[KVS Master] Channel not found, creating...`);
+                const createResponse = await kinesisVideoClient.send(new CreateSignalingChannelCommand({
+                    ChannelName: channelName,
+                    ChannelType: 'SINGLE_MASTER' // Student is the single master
+                }));
+                channelARN = createResponse.ChannelARN;
+                console.log(`[KVS Master] Created new channel: ${channelARN}`);
+            } else {
+                throw error; // Re-throw other errors
+            }
+        }
+
+        // 2. Get Signaling Channel Endpoints
+        const endpointResponse = await kinesisVideoClient.send(new GetSignalingChannelEndpointCommand({
+            ChannelARN: channelARN,
+            SingleMasterChannelEndpointConfiguration: {
+                Protocols: ["WSS", "HTTPS"],
+                Role: "MASTER" // Student is the MASTER
+            }
+        }));
+
+        const wssEndpoint = endpointResponse.ResourceEndpointList.find(ep => ep.Protocol === "WSS").ResourceEndpoint;
+        const httpsEndpoint = endpointResponse.ResourceEndpointList.find(ep => ep.Protocol === "HTTPS").ResourceEndpoint;
+        
+        console.log(`[KVS Master] Got endpoints: WSS: ${wssEndpoint}, HTTPS: ${httpsEndpoint}`);
+
+        // 3. Get ICE Server (TURN) Configuration
+        const signalingClient = new KinesisVideoSignalingClient({
+            region: process.env.AWS_REGION || "ap-south-1",
+            endpoint: httpsEndpoint, // Use the HTTPS endpoint for this client
+            credentials: {
+                accessKeyId: 'AKIAT4YSUMZD52BNBCAB', // Your existing key
+                secretAccessKey: process.env.CHIME_AWS_SECRET_ACCESS_KEY || 'jCJQY7lfiv1LylIqLpzFl9kz96r4FgLcKL+SueGh' // Your existing secret
+            }
+        });
+
+        const iceServerResponse = await signalingClient.send(new GetIceServerConfigCommand({
+            ChannelARN: channelARN,
+            Service: "TURN" // Use TURN for NAT traversal
+        }));
+
+        const iceServers = iceServerResponse.IceServerList.map(server => ({
+            urls: server.Uris,
+            username: server.Username,
+            credential: server.Password,
+        }));
+        
+        console.log(`[KVS Master] Got ${iceServers.length} ICE servers.`);
+
+        // 4. Send all credentials to the student's frontend
+        res.json({
+            role: "MASTER",
+            channelARN: channelARN,
+            wssEndpoint: wssEndpoint,
+            httpsEndpoint: httpsEndpoint,
+            iceServers: iceServers,
+            externalUserId: externalUserId // The unique ID for this student
+        });
+
+    } catch (error) {
+        console.error(`[KVS Master] Error joining channel ${channelName}:`, error);
+        res.status(500).json({ message: 'Error initializing proctoring session.' });
+    }
+});
+app.put('/api/admin/jobs/:jobId', authMiddleware, async (req, res) => {
+    // 1. Check for Admin role
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    const { jobId } = req.params;
+    const { title, location, department, description, applicationDeadline } = req.body;
+
+    // 2. Validate input
+    if (!title || !location || !department || !description || !applicationDeadline) {
+        return res.status(400).json({ message: 'All job fields, including deadline, are required.' });
+    }
+
+    try {
+        // 3. Check if the job exists (optional, but good practice)
+        const { Item: existingJob } = await docClient.send(new GetCommand({
+            TableName: CORRECT_JOBS_TABLE_NAME,
+            Key: { jobId: jobId }
+        }));
+
+        if (!existingJob) {
+            return res.status(404).json({ message: 'Job not found.' });
+        }
+        
+        // 4. Prepare and execute the Update command
+        const updateParams = {
+            TableName: CORRECT_JOBS_TABLE_NAME,
+            Key: { jobId: jobId },
+            UpdateExpression: "SET title = :t, #loc = :l, department = :d, description = :desc, applicationDeadline = :ad",
+            ExpressionAttributeNames: {
+                "#loc": "location" // "location" can be a reserved word
+            },
+            ExpressionAttributeValues: {
+                ":t": title,
+                ":l": location,
+                ":d": department,
+                ":desc": description,
+                ":ad": applicationDeadline
+            },
+            ReturnValues: "UPDATED_NEW" // Return the updated item
+        };
+
+        await docClient.send(new UpdateCommand(updateParams));
+
+        res.status(200).json({ message: 'Job updated successfully!' });
+
+    } catch (error) {
+        console.error("Update Job Error:", error);
+        res.status(500).json({ message: 'Server error updating job.' });
+    }
+});
+
+/**
+ * @route   DELETE /api/admin/jobs/:jobId
+ * @desc    Admin: Delete a job opening
+ * @access  Private (Admin Only)
+ */
+app.delete('/api/admin/jobs/:jobId', authMiddleware, async (req, res) => {
+    // 1. Check for Admin role
+    if (req.user.role !== 'Admin') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+
+    const { jobId } = req.params;
+
+    try {
+        // 2. Execute the Delete command
+        await docClient.send(new DeleteCommand({
+            TableName: CORRECT_JOBS_TABLE_NAME,
+            Key: { jobId: jobId }
+        }));
+
+        // Note: You might also want to delete associated applications from "TestifyApplications"
+        // (This would require a more complex operation to find and batch-delete them)
+
+        res.status(200).json({ message: 'Job deleted successfully.' });
+
+    } catch (error) {
+        console.error("Delete Job Error:", error);
+        res.status(500).json({ message: 'Server error deleting job.' });
+    }
+});
+
 
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-
-
-
-
