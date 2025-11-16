@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Updated Title -->
+    <!-- Updated Title and Icon -->
     <title>Careers at Xeta Solutions</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Updated Favicon -->
+    <!-- Updated Icon -->
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png">
 
     <style>
@@ -23,23 +23,35 @@
             overflow: hidden;
             transition: max-height 0.5s ease-in-out;
         }
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
 
     <!-- Header -->
-    <header class="bg-white shadow-sm sticky top-0 z-40">
+    <header class="bg-white shadow-sm sticky top-0 z-40 border-b border-slate-200">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <!-- Updated Full Logo -->
+            <a href="edudevelopers.html" class="flex items-center space-x-3">
+                <!-- Updated Logo and Name -->
                 <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg" alt="Xeta Solutions Logo" class="h-10 w-auto">
-                <!-- Updated Company Name -->
-                <span class="text-2xl font-bold text-gray-800">Xeta Solutions</span>
-            </div>
+                <span class="text-2xl font-bold text-gray-800 hidden sm:inline">Xeta Solutions</span>
+            </a>
             <div>
-                 <!-- Note: You might want to update this link's href later -->
-                 <a href="xetasolutions_home.html" class="text-gray-600 hover:text-indigo-600 font-medium px-4">Home</a>
-                 <a href="my-applications.html" class="text-gray-600 hover:text-indigo-600 font-medium">My Applications</a>
+                 <a href="welcome" class="text-gray-600 hover:text-indigo-600 font-medium px-4">Home</a>
+                 <a href="my-applications" class="text-gray-600 hover:text-indigo-600 font-medium">My Applications</a>
             </div>
         </nav>
     </header>
@@ -50,7 +62,7 @@
         <section class="bg-indigo-700 text-white">
             <div class="container mx-auto px-6 py-20 text-center">
                 <h1 class="text-4xl md:text-5xl font-bold mb-4">Join Our Mission</h1>
-                <p class="text-lg md:text-xl text-indigo-200 max-w-3xl mx-auto">Join Us in Transforming Hiring, Learning, and Technology with Innovation.</p>
+                <p class="text-lg md:text-xl text-indigo-200 max-w-3xl mx-auto">We're building the future of enterprise solutions. If you're passionate about technology, problem-solving, and innovation, you've come to the right place.</p>
             </div>
         </section>
 
@@ -75,15 +87,15 @@
 
                     <!-- Error State -->
                      <div id="error" class="hidden text-center py-10 bg-red-50 border border-red-200 rounded-lg">
-                         <p class="text-red-700 font-medium">Could not load job openings.</p>
-                         <p class="text-red-600 mt-2">Please try again later.</p>
-                     </div>
+                        <p class="text-red-700 font-medium">Could not load job openings.</p>
+                        <p class="text-red-600 mt-2">Please try again later.</p>
+                    </div>
 
                     <!-- No Jobs State -->
                      <div id="no-jobs" class="hidden text-center py-10 bg-blue-50 border border-blue-200 rounded-lg">
-                         <p class="text-blue-700 font-medium">No Open Positions Currently</p>
-                         <p class="text-blue-600 mt-2">Please check back soon for new opportunities!</p>
-                     </div>
+                        <p class="text-blue-700 font-medium">No Open Positions Currently</p>
+                        <p class="text-blue-600 mt-2">Please check back soon for new opportunities!</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -104,7 +116,7 @@
                 jobsContainer.appendChild(loadingDiv);
 
                 try {
-                    // This API endpoint is fictional. You would replace this with your actual API.
+                    // This API endpoint remains the same
                     const response = await fetch('/api/careers/jobs'); 
                     if (!response.ok) throw new Error('Network response was not ok');
                     const jobs = await response.json();
@@ -121,19 +133,6 @@
                     jobsContainer.innerHTML = '';
                     jobsContainer.appendChild(errorDiv);
                     errorDiv.style.display = 'block';
-                    
-                    // --- FAKE DATA FOR DEMO ---
-                    // In a real scenario, you'd remove this. This is just
-                    // to show the layout since the API will fail.
-                    console.log("Demoing with fake data as API failed.");
-                    const fakeJobs = [
-                        { jobId: 1, title: "Senior Frontend Developer", department: "Engineering", location: "Remote", description: "Responsibilities:\n- Develop user-facing features.\n- Build reusable code and libraries.\n- Ensure technical feasibility of UI/UX designs.\n\nRequirements:\n* 5+ years of React experience.\n* Strong proficiency in JavaScript.\n* Experience with Tailwind CSS." },
-                        { jobId: 2, title: "Product Manager - EdTech", department: "Product", location: "New York, NY", description: "About the role:\nWe are seeking a Product Manager to own the roadmap for our core learning platform. You will work with designers, engineers, and educators to define and deliver features that improve learning outcomes.\n\nWhat you'll do:\n- Define product strategy and roadmap.\n- Gather and prioritize product requirements.\n- Work closely with engineering to deliver features." }
-                    ];
-                    displayJobs(fakeJobs);
-                    errorDiv.style.display = 'none'; // Hide error since we are showing demo data
-                    // --- END OF FAKE DATA ---
-
                 } finally {
                      loadingDiv.style.display = 'none';
                 }
@@ -214,7 +213,6 @@
 
                     const header = jobCard.querySelector(`[data-job-id="${job.jobId}"]`);
                     header.addEventListener('click', (e) => {
-                        // Don't toggle if the 'Apply' button was clicked
                         if (e.target.closest('a')) return;
                         
                         const content = document.getElementById(`desc-${job.jobId}`);
