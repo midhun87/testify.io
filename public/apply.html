@@ -3,20 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Updated Title -->
-    <title>Apply at Xeta Solutions</title>
+    <!-- Updated Title and Icon -->
+    <title>Apply for Job - Xeta Solutions</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Updated Font to Poppins for consistency -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Updated Favicon -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Updated Icon -->
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png">
 
     <style>
         body {
-            /* Updated Font */
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             background-color: #f8fafc; /* slate-50 */
@@ -32,18 +28,26 @@
             from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        /* Custom file input styles */
+        
+        /* Professional File Input */
         .file-input-wrapper {
             position: relative;
             overflow: hidden;
-            display: inline-block;
+            display: block; /* Changed to block for full width */
             cursor: pointer;
-        }
-        .file-input-button {
             border: 2px dashed #d1d5db; /* gray-300 */
+            border-radius: 0.5rem; /* rounded-lg */
             transition: background-color 0.2s, border-color 0.2s;
         }
-        .file-input-wrapper:hover .file-input-button {
+        .file-input-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem; /* p-6 */
+            min-height: 120px;
+        }
+        .file-input-wrapper:hover {
             background-color: #f0f5ff; /* indigo-50 */
             border-color: #4f46e5; /* indigo-600 */
         }
@@ -56,6 +60,18 @@
             height: 100%;
             cursor: pointer;
         }
+        .file-info {
+            font-size: 0.875rem; /* text-sm */
+            color: #64748b; /* slate-500 */
+            margin-top: 0.5rem; /* mt-2 */
+            display: block;
+            font-weight: 500;
+        }
+        .file-info.file-selected {
+            color: #16a34a; /* green-600 */
+            font-weight: 600;
+        }
+
         /* Webkit scrollbar styling */
         ::-webkit-scrollbar {
             width: 8px;
@@ -70,16 +86,61 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
+
+        /* Styling for the new stepper */
+        .stepper-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem; /* p-4 */
+            border-radius: 0.75rem; /* rounded-xl */
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .stepper-item.completed {
+            background-color: #f0fdf4; /* green-50 */
+            border-color: #bbf7d0; /* green-200 */
+        }
+        .stepper-item.active {
+            background-color: #eef2ff; /* indigo-50 */
+            border-color: #c7d2fe; /* indigo-200 */
+            box-shadow: 0 4px 10px -4px rgba(79, 70, 229, 0.2);
+        }
+        .stepper-item.default {
+            background-color: #f8fafc; /* slate-50 */
+            border-color: #e2e8f0; /* slate-200 */
+        }
+        .stepper-icon {
+            flex-shrink: 0;
+            width: 2.5rem; /* w-10 */
+            height: 2.5rem; /* h-10 */
+            border-radius: 9999px; /* rounded-full */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        .stepper-icon.completed {
+            background-color: #22c55e; /* green-500 */
+            color: white;
+        }
+        .stepper-icon.active {
+            background-color: #4f46e5; /* indigo-600 */
+            color: white;
+        }
+        .stepper-icon.default {
+            background-color: #e2e8f0; /* slate-200 */
+            color: #64748b; /* slate-500 */
+        }
     </style>
 </head>
 <body class="bg-slate-50">
 
     <header class="bg-white border-b border-slate-200">
         <nav class="container mx-auto px-4 lg:px-6 py-3 flex justify-between items-center">
-            <!-- Updated Logo and Name -->
-            <a href="careers.html" class="flex items-center space-x-3">
+            <a href="edudevelopers.html" class="flex items-center space-x-3">
+                <!-- Updated Logo and Name -->
                 <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg" alt="Xeta Solutions Logo" class="h-10 w-auto">
-                <span class="text-2xl font-bold text-slate-800">Xeta Solutions</span>
+                <span class="text-2xl font-bold text-slate-800 hidden sm:inline">Xeta Solutions</span>
             </a>
             <div class="hidden md:flex items-center space-x-6">
                 <a href="careers.html" class="text-slate-600 hover:text-indigo-600 font-medium transition-colors">All Jobs</a>
@@ -97,40 +158,41 @@
             
             <div id="application-content" class="hidden">
                  <div class="text-left mb-8">
-                     <h1 id="page-title" class="text-3xl md:text-4xl font-bold text-slate-900">Job Application</h1>
-                     <p id="job-title-header" class="mt-2 text-lg text-indigo-600 font-semibold">Loading...</p>
-                 </div>
+                    <h1 id="page-title" class="text-3xl md:text-4xl font-bold text-slate-900">Job Application</h1>
+                    <p id="job-title-header" class="mt-2 text-lg text-indigo-600 font-semibold">Loading...</p>
+                </div>
 
-                 <div class="lg:grid lg:grid-cols-12 lg:gap-12">
-                     <!-- Vertical Stepper -->
-                     <aside class="lg:col-span-3 mb-8 lg:mb-0">
-                         <div id="progress-bar" class="space-y-6">
-                             <!-- Step indicators will be injected here -->
-                         </div>
-                     </aside>
+                <div class="lg:grid lg:grid-cols-12 lg:gap-12">
+                    <!-- Vertical Stepper (New Design) -->
+                    <aside class="lg:col-span-4 mb-8 lg:mb-0">
+                        <div id="progress-bar" class="space-y-4">
+                            <!-- Step indicators will be injected here -->
+                        </div>
+                    </aside>
 
-                     <!-- Form Content -->
-                     <div class="lg:col-span-9">
-                         <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg">
-                             <form id="application-form" class="space-y-8">
-                                 <!-- Form steps will be injected here -->
-                                 <div id="form-feedback" class="text-sm pt-4"></div>
-                                 <!-- Navigation Buttons -->
-                                 <div id="navigation-buttons" class="pt-6 border-t border-slate-200 flex justify-between items-center">
-                                     <button type="button" id="prev-btn" class="text-slate-700 bg-slate-200 hover:bg-slate-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">Previous</button>
-                                     <button type="button" id="next-btn" class="text-white bg-indigo-600 hover:bg-indigo-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors focus:ring-4 focus:ring-indigo-300">Next Step</button>
-                                     <button type="submit" id="submit-button" class="hidden w-full md:w-auto text-white bg-green-600 hover:bg-green-700 font-medium rounded-lg text-lg px-8 py-3 text-center transition-colors focus:ring-4 focus:ring-green-300">Submit Application</button>
-                                 </div>
-                             </form>
-                         </div>
-                     </div>
-                 </div>
+                    <!-- Form Content -->
+                    <div class="lg:col-span-8">
+                        <div class="bg-white p-6 md:p-10 rounded-2xl shadow-lg">
+                            <form id="application-form" class="space-y-8">
+                                <!-- Form steps will be injected here -->
+                                <div id="form-feedback" class="text-sm pt-4"></div>
+                                <!-- Navigation Buttons -->
+                                <div id="navigation-buttons" class="pt-6 border-t border-slate-200 flex justify-between items-center">
+                                    <button type="button" id="prev-btn" class="text-slate-700 bg-slate-200 hover:bg-slate-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">Previous</button>
+                                    <button type="button" id="next-btn" class="text-white bg-indigo-600 hover:bg-indigo-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors focus:ring-4 focus:ring-indigo-300">Next Step</button>
+                                    <button type="submit" id="submit-button" class="hidden w-full md:w-auto text-white bg-green-600 hover:bg-green-700 font-medium rounded-lg text-lg px-8 py-3 text-center transition-colors focus:ring-4 focus:ring-green-300">Submit Application</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
+            // All element getters remain the same
             const pageLoader = document.getElementById('page-loader');
             const applicationContent = document.getElementById('application-content');
             const applicationForm = document.getElementById('application-form');
@@ -149,53 +211,98 @@
             const isEditMode = !!applicationId;
 
             let currentStep = 0;
+            
+            // --- UPDATED STEPS ---
             const steps = [
                 { name: "Personal Details", icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>` },
-                { name: "Education", icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 14l9-5-9-5-9 5 9 5z" /><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-5.998 12.078 12.078 0 01.665-6.479L12 14z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6" /></svg>`},
-                { name: "Experience", icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>` },
+                { name: "Professional Experience", icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>` },
+                { name: "Educational Details", icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 14l9-5-9-5-9 5 9 5z" /><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-5.998 12.078 12.078 0 01.665-6.479L12 14z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6" /></svg>`},
                 { name: "Links & Documents", icon: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>` }
             ];
+            // --- END UPDATED STEPS ---
 
             let eduCounter = 0;
             let expCounter = 0;
 
+            // --- UPDATED RENDERFORMHTML FUNCTION ---
             function renderFormHTML() {
-                const inputClasses = "bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5 transition";
-                // --- Upgraded "Add" Button Style ---
-                const addBtnClasses = "mt-4 inline-flex items-center px-3 py-2 border border-dashed border-slate-400 text-sm font-medium rounded-md text-slate-600 hover:bg-slate-100 hover:border-slate-500 transition-colors";
-                const addIcon = `<svg class="w-4 h-4 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>`;
-
+                const inputClasses = "bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full p-3 transition";
+                const labelClasses = "block mb-2 text-sm font-medium text-slate-700";
+                
                 applicationForm.insertAdjacentHTML('afterbegin', `
                     <!-- Step 1: Personal Details -->
                     <div class="form-step active" data-step="0">
                         <h2 class="text-2xl font-semibold mb-6 text-slate-800">Personal Details</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div><label for="firstName" class="block mb-2 text-sm font-medium text-slate-700">First Name</label><input type="text" name="firstName" class="${inputClasses}" required></div>
-                            <div><label for="lastName" class="block mb-2 text-sm font-medium text-slate-700">Last Name</label><input type="text" name="lastName" class="${inputClasses}" required></div>
-                            <div><label for="email" class="block mb-2 text-sm font-medium text-slate-700">Email Address</label><input type="email" name="email" class="${inputClasses} ${isEditMode ? 'bg-slate-200 cursor-not-allowed' : ''}" required ${isEditMode ? 'readonly' : ''}></div>
-                            <div><label for="phone" class="block mb-2 text-sm font-medium text-slate-700">Mobile Number</label><input type="tel" name="phone" class="${inputClasses}" required></div>
+                            <div><label for="firstName" class="${labelClasses}">First Name *</label><input type="text" name="firstName" class="${inputClasses}" required></div>
+                            <div><label for="lastName" class="${labelClasses}">Last Name *</label><input type="text" name="lastName" class="${inputClasses}" required></div>
+                            <div><label for="email" class="${labelClasses}">Email Address *</label><input type="email" name="email" class="${inputClasses} ${isEditMode ? 'bg-slate-200 cursor-not-allowed' : ''}" required ${isEditMode ? 'readonly' : ''}></div>
+                            <div><label for="phone" class="${labelClasses}">Mobile Number *</label><input type="tel" name="phone" class="${inputClasses}" required></div>
+                            <!-- FIELDS MADE MANDATORY -->
+                            <div class="md:col-span-2"><label for="address" class="${labelClasses}">Address *</label><textarea name="address" rows="3" class="${inputClasses}" required></textarea></div>
+                            <div><label for="city" class="${labelClasses}">City *</label><input type="text" name="city" class="${inputClasses}" required></div>
+                            <div><label for="country" class="${labelClasses}">Country *</label><input type="text" name="country" class="${inputClasses}" required></div>
                         </div>
                     </div>
-                    <!-- Step 2: Education -->
+                    
+                    <!-- Step 2: Experience (Moved up) -->
                     <div class="form-step" data-step="1">
-                         <h2 class="text-2xl font-semibold mb-6 text-slate-800">Educational Details</h2>
-                         <div id="education-container" class="space-y-6"></div>
-                         <button type="button" id="add-education" class="${addBtnClasses}">${addIcon}Add Education</button>
-                    </div>
-                    <!-- Step 3: Experience -->
-                    <div class="form-step" data-step="2">
                         <h2 class="text-2xl font-semibold mb-6">Professional Experience</h2>
                         <div id="experience-container" class="space-y-6"></div>
-                        <button type="button" id="add-experience" class="${addBtnClasses}">${addIcon}Add Experience</button>
+                        <button type="button" id="add-experience" class="mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">+ Add Experience</button>
                     </div>
+
+                    <!-- Step 3: Education (Moved down) -->
+                    <div class="form-step" data-step="2">
+                         <h2 class="text-2xl font-semibold mb-6 text-slate-800">Educational Details</h2>
+                         <div id="education-container" class="space-y-6"></div>
+                         <button type="button" id="add-education" class="mt-4 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors">+ Add Education</button>
+                    </div>
+
                     <!-- Step 4: Links & Documents -->
                     <div class="form-step" data-step="3">
                         <h2 class="text-2xl font-semibold mb-6">Links & Documents</h2>
                         <div class="space-y-8">
-                             <div><h3 class="font-medium text-slate-800 mb-3">Professional Links</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div><label for="linkedinUrl" class="block mb-2 text-sm font-medium text-slate-700">LinkedIn URL</label><input type="url" name="linkedinUrl" id="linkedinUrl" class="${inputClasses}"></div><div><label for="githubUrl" class="block mb-2 text-sm font-medium text-slate-700">GitHub URL</label><input type="url" name="githubUrl" id="githubUrl" class="${inputClasses}"></div><div><label for="portfolioUrl" class="block mb-2 text-sm font-medium text-slate-700">Portfolio URL</label><input type="url" name="portfolioUrl" id="portfolioUrl" class="${inputClasses}"></div></div></div>
-                             <div><h3 class="font-medium text-slate-800 mb-4">Upload Documents</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                 <div><label for="passportPhoto" class="block mb-2 text-sm font-medium text-slate-700">Passport Photo</label><div class="file-input-wrapper w-full"><div id="passportPhoto-ui" class="file-input-button rounded-lg p-4 text-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-slate-400 mb-2 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><span class="font-medium text-indigo-600">Drag & drop</span><span class="text-slate-500"> or click</span><span id="passportPhoto-info" class="text-xs text-slate-500 mt-1 block">JPG, PNG (Max 2MB)</span></div><input type="file" name="passportPhoto" id="passportPhoto" class="file-input" accept="image/jpeg, image/png"></div></div>
-                                 <div><label for="resume" class="block mb-2 text-sm font-medium text-slate-700">Resume/CV</label><div class="file-input-wrapper w-full"><div id="resume-ui" class="file-input-button rounded-lg p-4 text-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-slate-400 mb-2 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg><span class="font-medium text-indigo-600">Drag & drop</span><span class="text-slate-500"> or click</span><span id="resume-info" class="text-xs text-slate-500 mt-1 block">PDF, DOCX (Max 5MB)</span></div><input type="file" name="resume" id="resume" class="file-input" accept=".pdf,.doc,.docx"></div></div>
+                             <div>
+                                <h3 class="font-medium text-slate-800 mb-3">Professional Links</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div><label for="linkedinUrl" class="${labelClasses}">LinkedIn URL</label><input type="url" name="linkedinUrl" id="linkedinUrl" class="${inputClasses}"></div>
+                                    <div><label for="githubUrl" class="${labelClasses}">GitHub URL</label><input type="url" name="githubUrl" id="githubUrl" class="${inputClasses}"></div>
+                                    <div class="md:col-span-2"><label for="portfolioUrl" class="${labelClasses}">Portfolio URL</label><input type="url" name="portfolioUrl" id="portfolioUrl" class="${inputClasses}"></div>
+                                </div>
+                             </div>
+                             
+                             <!-- New Cover Letter Section -->
+                             <div>
+                                <h3 class="font-medium text-slate-800 mb-3">Cover Letter (Optional)</h3>
+                                <div><textarea name="coverLetter" rows="5" class="${inputClasses}" placeholder="Tell us why you're a great fit for this role..."></textarea></div>
+                             </div>
+
+                             <div>
+                                <h3 class="font-medium text-slate-800 mb-4">Upload Documents *</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                 <div>
+                                    <label for="passportPhoto" class="block mb-2 text-sm font-medium text-slate-700">Passport Photo *</label>
+                                    <div class="file-input-wrapper">
+                                        <div id="passportPhoto-ui" class="file-input-button">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-slate-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                            <span class="font-medium text-indigo-600">Click to upload</span>
+                                            <span id="passportPhoto-info" class="file-info">JPG, PNG (Max 2MB)</span>
+                                        </div>
+                                        <input type="file" name="passportPhoto" id="passportPhoto" class="file-input" accept="image/jpeg, image/png" required>
+                                    </div>
+                                 </div>
+                                 <div>
+                                    <label for="resume" class="block mb-2 text-sm font-medium text-slate-700">Resume/CV *</label>
+                                    <div class="file-input-wrapper">
+                                        <div id="resume-ui" class="file-input-button">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-slate-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                                            <span class="font-medium text-indigo-600">Click to upload</span>
+                                            <span id="resume-info" class="file-info">PDF, DOCX (Max 5MB)</span>
+                                        </div>
+                                        <input type="file" name="resume" id="resume" class="file-input" accept=".pdf,.doc,.docx" required>
+                                    </div>
+                                 </div>
                                  <div class="md:col-span-2">
                                      <label for="govtIdType" class="block mb-2 text-sm font-medium text-slate-700">Government Issued ID</label>
                                      <select name="govtIdType" id="govtIdType" class="${inputClasses} mb-4">
@@ -206,13 +313,11 @@
                                          <option value="Driving License">Driving License</option>
                                          <option value="Passport">Passport</option>
                                      </select>
-                                     <div class="file-input-wrapper w-full">
-                                         <div id="govtId-ui" class="file-input-button rounded-lg p-4 text-center">
-                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-slate-400 mb-2 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 012-2h2a2 2 0 012 2v1m-6 0h6" />
-                                             </svg>
-                                             <span class="font-medium text-indigo-600">Drag & drop</span><span class="text-slate-500"> or click</span>
-                                             <span id="govtId-info" class="text-xs text-slate-500 mt-1 block">JPG, PNG, PDF (Max 2MB)</span>
+                                     <div class="file-input-wrapper">
+                                         <div id="govtId-ui" class="file-input-button">
+                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-slate-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 012-2h2a2 2 0 012 2v1m-6 0h6" /></svg>
+                                             <span class="font-medium text-indigo-600">Upload ID Picture</span>
+                                             <span id="govtId-info" class="file-info">JPG, PNG, PDF (Max 2MB)</span>
                                          </div>
                                          <input type="file" name="govtId" id="govtId" class="file-input" accept="image/jpeg,image/png,.pdf">
                                      </div>
@@ -222,61 +327,61 @@
                     </div>
                 `);
                 
+                // Add file input listeners
                 ['passportPhoto', 'resume', 'govtId'].forEach(id => {
                     const input = document.getElementById(id);
                     const infoEl = document.getElementById(`${id}-info`);
-                    const uiEl = document.getElementById(`${id}-ui`);
-                    const defaultText = uiEl.querySelector(`#${id}-info`).textContent;
-                    
                     input.addEventListener('change', () => {
                         if(input.files.length > 0) {
-                            const fileName = input.files.length > 1 ? `${input.files.length} files selected` : input.files[0].name;
-                            infoEl.textContent = fileName;
-                            infoEl.classList.add('text-green-600', 'font-semibold');
+                             const fileName = input.files.length > 1 ? `${input.files.length} files selected` : input.files[0].name;
+                             infoEl.textContent = fileName;
+                             infoEl.classList.add('file-selected');
                         } else {
-                            infoEl.textContent = defaultText;
-                            infoEl.classList.remove('text-green-600', 'font-semibold');
+                            infoEl.textContent = infoEl.dataset.defaultText;
+                            infoEl.classList.remove('file-selected');
                         }
                     });
+                     infoEl.dataset.defaultText = infoEl.textContent;
                 });
             }
+            // --- END UPDATED RENDERFORMHTML ---
 
+            // --- UPDATED PROGRESS BAR ---
             function updateProgressBar() {
                 progressBar.innerHTML = '';
                 steps.forEach((step, index) => {
                     let state = 'default';
                     if (index < currentStep) state = 'completed';
                     else if (index === currentStep) state = 'active';
+                    
+                    let iconContent;
+                    let textClasses;
 
-                    let content;
                     switch (state) {
                         case 'completed':
-                            content = `
-                                <div class="flex items-center p-4 bg-green-50 rounded-lg">
-                                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                    </div>
-                                    <div class="ml-4"><p class="font-semibold text-green-700">${step.name}</p></div>
-                                </div>`;
+                            iconContent = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+                            textClasses = "text-green-700 font-semibold";
                             break;
                         case 'active':
-                            content = `
-                                <div class="flex items-center p-4 bg-indigo-50 border-l-4 border-indigo-500 rounded-lg">
-                                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center">${step.icon}</div>
-                                    <div class="ml-4"><p class="font-semibold text-indigo-700">${step.name}</p></div>
-                                </div>`;
+                            iconContent = step.icon;
+                            textClasses = "text-indigo-700 font-semibold";
                             break;
-                        default: // 'default'
-                            content = `
-                                <div class="flex items-center p-4 bg-slate-100 rounded-lg">
-                                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center">${step.icon}</div>
-                                    <div class="ml-4"><p class="font-medium text-slate-500">${step.name}</p></div>
-                                </div>`;
+                        default:
+                            iconContent = step.icon;
+                            textClasses = "text-slate-500 font-medium";
                             break;
                     }
-                    progressBar.innerHTML += content;
+                    
+                    progressBar.innerHTML += `
+                        <div class="stepper-item ${state}">
+                            <div class="stepper-icon ${state}">${iconContent}</div>
+                            <div class="ml-4">
+                                <p class="${textClasses}">${step.name}</p>
+                            </div>
+                        </div>`;
                 });
             }
+            // --- END UPDATED PROGRESS BAR ---
 
             function showStep(stepIndex) {
                 document.querySelectorAll('.form-step').forEach(step => step.classList.remove('active'));
@@ -296,7 +401,13 @@
             
             function validateStep(stepIndex) {
                 const currentStepElement = document.querySelector(`.form-step[data-step="${stepIndex}"]`);
-                const inputs = currentStepElement.querySelectorAll('input[required], textarea[required]');
+                // Do not validate experience step if it's not mandatory
+                if (stepIndex === 1) { // Step 1 is "Professional Experience"
+                     formFeedback.innerHTML = '';
+                     return true;
+                }
+                
+                const inputs = currentStepElement.querySelectorAll('input[required], textarea[required], select[required]');
                 let isValid = true;
                 inputs.forEach(input => {
                     input.classList.remove('border-red-500', 'ring-red-500');
@@ -326,6 +437,7 @@
                 }
             });
 
+            // --- ADD EDUCATION FIELD (No changes needed) ---
             function addEducationField(edu = {}) {
                 const container = document.getElementById('education-container');
                 const div = document.createElement('div');
@@ -371,23 +483,40 @@
                 });
             }
             
+            // --- UPDATED ADD EXPERIENCE FIELD ---
             function addExperienceField(exp = {}) {
                 const container = document.getElementById('experience-container');
                 const div = document.createElement('div');
                 const expId = expCounter++;
                 div.className = 'p-4 border border-slate-200 rounded-lg bg-slate-50 relative';
                 const inputClasses = "bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5 transition";
+                const labelClasses = "block mb-2 text-sm font-medium text-slate-700";
+
                 div.innerHTML = `
                     <button type="button" class="absolute top-3 right-3 text-slate-400 hover:text-red-600 hover:bg-red-100 rounded-full p-1 transition-colors" onclick="this.parentElement.remove()">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                     </button>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" name="exp_title" placeholder="Job Title" class="${inputClasses}" value="${exp.title || ''}">
-                        <input type="text" name="exp_company" placeholder="Company" class="${inputClasses}" value="${exp.company || ''}">
+                    <!-- NEW: Experience Type Dropdown -->
+                    <div class="mb-4">
+                        <label class="${labelClasses}">Type of Experience</label>
+                        <select name="exp_type" class="${inputClasses}">
+                            <option value="Full-time" ${exp.type === 'Full-time' ? 'selected' : ''}>Full-time</option>
+                            <option value="Internship" ${exp.type === 'Internship' ? 'selected' : ''}>Internship</option>
+                        </select>
                     </div>
-                    <textarea name="exp_desc" placeholder="Responsibilities..." rows="3" class="mt-3 block p-2.5 w-full text-sm ${inputClasses}">${exp.description || ''}</textarea>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- REMOVED 'required' from inputs -->
+                        <div><label class="${labelClasses}">Job Title</label><input type="text" name="exp_title" placeholder="e.g., Software Engineer" class="${inputClasses}" value="${exp.title || ''}"></div>
+                        <div><label class="${labelClasses}">Company</label><input type="text" name="exp_company" placeholder="e.g., Google" class="${inputClasses}" value="${exp.company || ''}"></div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                         <div><label class="${labelClasses}">Start Date</label><input type="month" name="exp_start_date" class="${inputClasses}" value="${exp.startDate || ''}"></div>
+                         <div><label class="${labelClasses}">End Date</label><input type="month" name="exp_end_date" class="${inputClasses}" value="${exp.endDate || ''}"></div>
+                    </div>
+                    <div class="mt-4"><label class="flex items-center space-x-2"><input type="checkbox" name="exp_current" class="rounded text-indigo-600 focus:ring-indigo-500"><span class="text-sm text-slate-700">I currently work here</span></label></div>
+                    <div class="mt-4"><label class="${labelClasses}">Responsibilities</label><textarea name="exp_desc" placeholder="Describe your role and achievements..." rows="3" class="mt-1 block p-2.5 w-full text-sm ${inputClasses}">${exp.description || ''}</textarea></div>
                      <div class="mt-4">
-                        <label for="exp_cert_${expId}" class="block mb-2 text-sm font-medium text-slate-700">Experience Certificate (Optional)</label>
+                        <label for="exp_cert_${expId}" class="${labelClasses}">Experience Certificate (Optional)</label>
                         <div class="file-input-wrapper w-full">
                             <div class="file-input-button rounded-lg p-3 text-center flex items-center justify-center text-sm">
                                 <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -398,6 +527,16 @@
                     </div>
                 `;
                 container.appendChild(div);
+
+                // Add listener for checkbox to disable end date
+                const endDateInput = div.querySelector('[name="exp_end_date"]');
+                const currentCheckbox = div.querySelector('[name="exp_current"]');
+                currentCheckbox.addEventListener('change', () => {
+                    endDateInput.disabled = currentCheckbox.checked;
+                    if(currentCheckbox.checked) {
+                        endDateInput.value = '';
+                    }
+                });
 
                 const fileInput = div.querySelector(`#exp_cert_${expId}`);
                 const infoEl = div.querySelector(`#exp-cert-info-${expId}`);
@@ -412,6 +551,7 @@
                     }
                 });
             }
+            // --- END UPDATED ADD EXPERIENCE FIELD ---
             
             async function initialize() {
                 if (!jobId) {
@@ -425,15 +565,13 @@
                 if (isEditMode) {
                     pageTitle.textContent = 'Edit Your Application';
                     jobTitleHeader.textContent = `Editing Application #${applicationId}`;
-                    // In a real app, you would fetch the existing application data here
-                    // and populate the form, e.g.:
-                    // const appData = await fetchApplicationData(applicationId);
-                    // populateForm(appData);
+                    // TODO: Add logic to fetch and populate existing data
                 } else {
                     const jobTitle = urlParams.get('jobTitle') || 'a valuable role';
                     jobTitleHeader.textContent = `For the role of ${jobTitle}`;
-                    addEducationField(); // Add one blank education field by default
-                    addExperienceField(); // Add one blank experience field by default
+                    // Add one empty field for each by default
+                    addEducationField(); 
+                    addExperienceField();
                 }
 
                 showStep(0);
@@ -442,6 +580,7 @@
                 applicationForm.addEventListener('submit', handleFormSubmit);
             }
             
+            // --- UPDATED HANDLEFORMSUBMIT ---
             async function handleFormSubmit(e) {
                 e.preventDefault();
                 if (!validateStep(currentStep)) return;
@@ -452,6 +591,7 @@
 
                 const formData = new FormData(applicationForm);
 
+                // Collect dynamic education data
                 const education = [];
                 document.querySelectorAll('#education-container > div').forEach(div => {
                     const type = div.querySelector('[name="edu_type"]').value;
@@ -464,59 +604,65 @@
                 });
                 formData.append('education', JSON.stringify(education));
 
+                // Collect dynamic experience data
                 const experiences = [];
                 document.querySelectorAll('#experience-container > div').forEach(div => {
+                    const type = div.querySelector('[name="exp_type"]').value; // GET NEW TYPE
                     const title = div.querySelector('[name="exp_title"]').value;
-                    const company = div.querySelector('[name"exp_company"]').value;
+                    const company = div.querySelector('[name="exp_company"]').value;
+                    const startDate = div.querySelector('[name="exp_start_date"]').value;
+                    const endDate = div.querySelector('[name="exp_end_date"]').value;
+                    const isCurrent = div.querySelector('[name="exp_current"]').checked;
                     const description = div.querySelector('[name="exp_desc"]').value;
+                    // Only add if title and company are present
                     if(title && company) {
-                        experiences.push({ title, company, description });
+                        experiences.push({ type, title, company, startDate, endDate: isCurrent ? 'Present' : endDate, description });
                     }
                 });
                 formData.append('experiences', JSON.stringify(experiences));
                 
-                // Remove individual fields that are now in JSON
+                // Remove individual dynamic fields that are now in JSON
                 formData.delete('edu_type');
                 formData.delete('edu_institute');
                 formData.delete('edu_stream');
                 formData.delete('edu_score');
+                formData.delete('exp_type'); // REMOVE NEW TYPE
                 formData.delete('exp_title');
                 formData.delete('exp_company');
+                formData.delete('exp_start_date');
+                formData.delete('exp_end_date');
+                formData.delete('exp_current');
                 formData.delete('exp_desc');
 
                 const url = isEditMode ? `/api/careers/application/${applicationId}` : `/api/careers/apply/${jobId}`;
                 const method = isEditMode ? 'PUT' : 'POST';
 
                 try {
-                    // *** This is the fetch call to the backend ***
-                    // We'll mock a successful response for demo purposes
-                    // const response = await fetch(url, {
-                    //     method: method,
-                    //     body: formData // FormData handles multipart/form-data automatically
-                    // });
-                    
-                    // --- MOCK API CALL (for demo) ---
-                    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
-                    const mockResponse = {
-                        ok: true,
-                        json: async () => ({
-                            message: isEditMode ? "Your application has been updated successfully!" : "Your application has been submitted successfully!",
-                            applicationId: applicationId || '12345-ABC'
-                        })
-                    };
-                    // const response = mockResponse;
-                    // --- END MOCK API CALL ---
+                    // This fetch call correctly points to your backend endpoint
+                    const response = await fetch(url, {
+                        method: method,
+                        body: formData 
+                    });
 
-                    // *** Uncomment the line below and remove the mock to use the real fetch ***
-                    const response = await fetch(url, { method: method, body: formData });
-                    
                     const result = await response.json();
                     if (!response.ok) {
                         throw new Error(result.message || 'An unknown error occurred.');
                     }
                     
                     formFeedback.innerHTML = `<div class="p-4 text-green-800 bg-green-100 rounded-lg flex items-center"><svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>${result.message}</div>`;
-                    if (!isEditMode) applicationForm.reset();
+                    if (!isEditMode) {
+                        applicationForm.reset();
+                        // Reset file input UI text
+                        ['passportPhoto', 'resume', 'govtId'].forEach(id => {
+                            const infoEl = document.getElementById(`${id}-info`);
+                            infoEl.textContent = infoEl.dataset.defaultText;
+                            infoEl.classList.remove('file-selected');
+                        });
+                        document.querySelectorAll('[id^="edu-cert-info-"], [id^="exp-cert-info-"]').forEach(infoEl => {
+                             infoEl.textContent = infoEl.dataset.defaultText;
+                             infoEl.classList.remove('text-green-600', 'font-semibold');
+                        });
+                    }
                     
                     setTimeout(() => {
                         applicationContent.innerHTML = `<div class="text-center bg-white p-12 rounded-2xl shadow-lg"><svg class="w-24 h-24 mx-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><h2 class="text-3xl font-bold text-slate-800 mt-6">Thank You!</h2><p class="mt-2 text-slate-600">${result.message}</p><a href="careers.html" class="mt-8 inline-block text-white bg-indigo-600 hover:bg-indigo-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Back to Careers</a></div>`;
