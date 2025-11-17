@@ -39,7 +39,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen">
 
     <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-40 border-b border-slate-200">
@@ -57,7 +57,7 @@
     </header>
 
     <!-- Main Content -->
-    <main>
+    <main class="flex-grow">
         <!-- Hero Section -->
         <section class="bg-indigo-700 text-white">
             <div class="container mx-auto px-6 py-20 text-center">
@@ -87,19 +87,67 @@
 
                     <!-- Error State -->
                      <div id="error" class="hidden text-center py-10 bg-red-50 border border-red-200 rounded-lg">
-                        <p class="text-red-700 font-medium">Could not load job openings.</p>
-                        <p class="text-red-600 mt-2">Please try again later.</p>
-                    </div>
+                         <p class="text-red-700 font-medium">Could not load job openings.</p>
+                         <p class="text-red-600 mt-2">Please try again later.</p>
+                     </div>
 
                     <!-- No Jobs State -->
                      <div id="no-jobs" class="hidden text-center py-10 bg-blue-50 border border-blue-200 rounded-lg">
-                        <p class="text-blue-700 font-medium">No Open Positions Currently</p>
-                        <p class="text-blue-600 mt-2">Please check back soon for new opportunities!</p>
-                    </div>
+                         <p class="text-blue-700 font-medium">No Open Positions Currently</p>
+                         <p class="text-blue-600 mt-2">Please check back soon for new opportunities!</p>
+                     </div>
                 </div>
             </div>
         </section>
     </main>
+
+    <!-- 
+      NEW Footer
+      - Added as requested with hiring note and email contacts.
+    -->
+    <footer class="bg-gray-800 text-gray-300 py-16">
+        <div class="container mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+                
+                <!-- Hiring Process Note -->
+                <div class="md:col-span-2">
+                    <h4 class="text-lg font-semibold text-white mb-4">A Note on Our Hiring Process</h4>
+                    <div class="bg-gray-700 p-4 rounded-lg border border-indigo-500">
+                        <p class="text-gray-300">
+                            <strong class="text-white">Important:</strong> Xeta Solutions will <strong class="underline">never</strong> charge any fees or ask for payment at any stage of the hiring process.
+                        </p>
+                        <p class="text-gray-400 mt-2">
+                            Please be cautious of any fraudulent communication. All official communication will come from a verified email address.
+                        </p>
+                    </div>
+                </div>
+    
+                <!-- Contact Information -->
+                <div>
+                    <h4 class="text-lg font-semibold text-white mb-4">Contact & Support</h4>
+                    <ul class="space-y-3 text-gray-400">
+                        <li>
+                            <span class="font-medium text-gray-200 block">HR & Careers:</span>
+                            <a href="mailto:hr.careers@xetasolutions.in" class="hover:text-indigo-400 transition-colors text-sm">hr.careers@xetasolutions.in</a>
+                        </li>
+                        <li>
+                            <span class="font-medium text-gray-200 block">General Careers:</span>
+                            <a href="mailto:careers@xetasolutions.in" class="hover:text-indigo-400 transition-colors text-sm">careers@xetasolutions.in</a>
+                        </li>
+                        <li>
+                            <span class="font-medium text-gray-200 block">Testify Portal Support:</span>
+                            <a href="mailto:support@testify-lac.com" class="hover:text-indigo-400 transition-colors text-sm">support@testify-lac.com</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Copyright -->
+            <div class="mt-12 border-t border-gray-700 pt-8 text-center text-gray-500">
+                &copy; 2025 Xeta Solutions. All rights reserved.
+            </div>
+        </div>
+    </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -112,8 +160,10 @@
                 loadingDiv.style.display = 'block';
                 errorDiv.style.display = 'none';
                 noJobsDiv.style.display = 'none';
-                jobsContainer.innerHTML = ''; // Clear previous content
-                jobsContainer.appendChild(loadingDiv);
+                
+                // Keep the loading spinner visible until content is ready
+                const existingContent = jobsContainer.querySelectorAll('.bg-white');
+                existingContent.forEach(child => child.remove());
 
                 try {
                     // This API endpoint remains the same
@@ -122,19 +172,16 @@
                     const jobs = await response.json();
                     
                     if (jobs.length === 0) {
-                        jobsContainer.innerHTML = '';
-                        jobsContainer.appendChild(noJobsDiv);
+                        loadingDiv.style.display = 'none';
                         noJobsDiv.style.display = 'block';
                     } else {
+                        loadingDiv.style.display = 'none';
                         displayJobs(jobs);
                     }
                 } catch (err) {
                     console.error('Failed to fetch jobs:', err);
-                    jobsContainer.innerHTML = '';
-                    jobsContainer.appendChild(errorDiv);
+                    loadingDiv.style.display = 'none';
                     errorDiv.style.display = 'block';
-                } finally {
-                     loadingDiv.style.display = 'none';
                 }
             }
             
@@ -181,7 +228,13 @@
             }
 
             function displayJobs(jobs) {
+                // Clear any states (like "no jobs" if it was there before)
                 jobsContainer.innerHTML = '';
+                // Re-add the state containers for future fetches
+                jobsContainer.appendChild(loadingDiv);
+                jobsContainer.appendChild(errorDiv);
+                jobsContainer.appendChild(noJobsDiv);
+
                 jobs.forEach((job) => {
                     const formattedDescription = formatDescription(job.description);
                     const jobCard = document.createElement('div');
@@ -209,7 +262,8 @@
                            ${formattedDescription}
                         </div>
                     `;
-                    jobsContainer.appendChild(jobCard);
+                    // Prepend job cards so the state divs stay at the bottom
+                    jobsContainer.prepend(jobCard);
 
                     const header = jobCard.querySelector(`[data-job-id="${job.jobId}"]`);
                     header.addEventListener('click', (e) => {
