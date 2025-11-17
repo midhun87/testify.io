@@ -35,153 +35,47 @@
         <div class="max-w-4xl mx-auto">
             <h1 class="text-3xl font-bold text-gray-900 mb-8">My Job Applications</h1>
             
-            <div id="auth-section" class="bg-white p-8 rounded-lg shadow-md">
+            <!-- MODIFIED: Auth section -->
+            <div id="auth-section" class="bg-white p-8 rounded-lg shadow-md overflow-hidden">
                 <h2 class="text-xl font-semibold text-gray-800">Check Your Application Status</h2>
-                <p class="text-gray-600 mt-2">Enter your email to receive a code to view your submitted applications.</p>
-                <div id="auth-feedback" class="mt-4 text-sm"></div>
                 
-                <form id="email-form" class="mt-4 space-y-4">
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
-                        <input type="email" id="email" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                <!-- NEW: "Coming Soon" Message -->
+                <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <!-- Heroicon: information-circle -->
+                            <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-blue-800">This feature is coming soon!</h3>
+                            <div class="mt-2 text-sm text-blue-700">
+                                <p>Our team is working for this feature. In the meantime, all updates regarding your application will be sent to your mail.</p>
+                            </div>
+                        </div>
                     </div>
-                    <button type="submit" id="send-otp-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">Send Code</button>
-                </form>
+                </div>
 
-                <form id="otp-form" class="hidden mt-4 space-y-4">
-                     <div>
-                        <label for="otp" class="block text-sm font-medium text-gray-700">Verification Code</label>
-                        <input type="text" id="otp" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
-                    </div>
-                    <button type="submit" id="verify-otp-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">View Applications</button>
-                </form>
+                <!-- MODIFIED: Blurred form as a visual preview -->
+                <div class="mt-6 filter blur-sm pointer-events-none opacity-60" aria-hidden="true">
+                    <p class="text-gray-600 mt-2">Enter your email to receive a code to view your submitted applications.</p>
+                    <form id="email-form" class="mt-4 space-y-4">
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                            <input type="email" id="email" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" disabled>
+                        </div>
+                        <button type="submit" id="send-otp-btn" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600" disabled>Send Code</button>
+                    </form>
+                </div>
+                <!-- REMOVED: OTP Form and auth-feedback div -->
             </div>
 
+            <!-- This container is hidden by default, which is fine -->
             <div id="applications-container" class="hidden mt-8 space-y-6"></div>
         </div>
     </main>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const emailForm = document.getElementById('email-form');
-            const otpForm = document.getElementById('otp-form');
-            const authFeedback = document.getElementById('auth-feedback');
-            const applicationsContainer = document.getElementById('applications-container');
-            const authSection = document.getElementById('auth-section');
-
-            const emailInput = document.getElementById('email');
-            const otpInput = document.getElementById('otp');
-            const sendOtpBtn = document.getElementById('send-otp-btn');
-            const verifyOtpBtn = document.getElementById('verify-otp-btn');
-
-            emailInput.value = localStorage.getItem('applicantEmail') || '';
-
-            emailForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const email = emailInput.value.trim();
-                if (!email) return;
-
-                sendOtpBtn.disabled = true;
-                sendOtpBtn.textContent = 'Sending...';
-                authFeedback.innerHTML = '';
-
-                try {
-                    const response = await fetch('/api/careers/send-view-otp', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email })
-                    });
-                    const result = await response.json();
-                    if (!response.ok) throw new Error(result.message);
-                    
-                    authFeedback.innerHTML = `<div class="p-3 bg-green-100 text-green-800 rounded-lg">${result.message}</div>`;
-                    localStorage.setItem('applicantEmail', email);
-                    emailForm.classList.add('hidden');
-                    otpForm.classList.remove('hidden');
-
-                } catch (error) {
-                    authFeedback.innerHTML = `<div class="p-3 bg-red-100 text-red-800 rounded-lg">${error.message}</div>`;
-                } finally {
-                    sendOtpBtn.disabled = false;
-                    sendOtpBtn.textContent = 'Send Code';
-                }
-            });
-
-            otpForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const email = emailInput.value.trim();
-                const otp = otpInput.value.trim();
-
-                verifyOtpBtn.disabled = true;
-                verifyOtpBtn.textContent = 'Verifying...';
-                authFeedback.innerHTML = '';
-
-                try {
-                    const response = await fetch('/api/careers/verify-view-otp', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, otp })
-                    });
-                    const applications = await response.json();
-                    if (!response.ok) throw new Error(applications.message);
-                    
-                    authSection.classList.add('hidden');
-                    applicationsContainer.classList.remove('hidden');
-                    displayApplications(applications);
-
-                } catch (error) {
-                    authFeedback.innerHTML = `<div class="p-3 bg-red-100 text-red-800 rounded-lg">${error.message}</div>`;
-                } finally {
-                    verifyOtpBtn.disabled = false;
-                    verifyOtpBtn.textContent = 'View Applications';
-                }
-            });
-
-            function displayApplications(apps) {
-                if (apps.length === 0) {
-                    applicationsContainer.innerHTML = `<div class="text-center py-16 bg-white rounded-lg shadow"><h3 class="text-xl font-semibold text-gray-800">No applications found for this email.</h3></div>`;
-                    return;
-                }
-
-                applicationsContainer.innerHTML = '';
-                apps.forEach(app => {
-                    const statusStyles = {
-                        'Received': 'bg-blue-100 text-blue-800', 
-                        'Under Review': 'bg-yellow-100 text-yellow-800',
-                        'Interview': 'bg-purple-100 text-purple-800', 
-                        'Hired': 'bg-green-100 text-green-800',
-                        'Rejected': 'bg-red-100 text-red-800',
-                        'Applied': 'bg-blue-100 text-blue-800' 
-                    };
-                    const statusClass = statusStyles[app.status] || 'bg-gray-100 text-gray-800';
-                    const appliedDate = new Date(app.appliedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-                    
-                    const isEditable = app.jobDeadline && (new Date() < new Date(app.jobDeadline));
-                    
-                    // --- THIS IS THE FIX ---
-                    // Added &jobId=${app.jobId} and &jobTitle=${encodeURIComponent(app.jobTitle)} to the href
-                    const editButtonHTML = isEditable ? 
-                        `<a href="apply.html?applicationId=${app.applicationId}&jobId=${app.jobId}&jobTitle=${encodeURIComponent(app.jobTitle)}" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">Edit Application</a>` :
-                        `<span class="text-sm text-gray-400">Deadline Passed</span>`;
-                    // --- END OF FIX ---
-
-                    const appCard = `
-                        <div class="bg-white p-6 rounded-lg shadow-md">
-                            <div class="flex flex-col sm:flex-row justify-between sm:items-start">
-                                <div>
-                                    <h2 class="text-xl font-bold text-gray-900">${app.jobTitle}</h2>
-                                    <p class="text-sm text-gray-500 mt-1">Applied on ${appliedDate}</p>
-                                </div>
-                                <div class="flex items-center space-x-4 mt-4 sm:mt-0">
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusClass}">${app.status}</span>
-                                    ${editButtonHTML}
-                                </div>
-                            </div>
-                        </div>`;
-                    applicationsContainer.innerHTML += appCard;
-                });
-            }
-        });
-    </script>
+    <!-- REMOVED: Entire script block -->
 </body>
 </html>
