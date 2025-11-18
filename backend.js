@@ -40,7 +40,7 @@ const HIRING_CODE_SNIPPETS_TABLE = "HiringCodeSnippets"; // New table for saving
 const HIRING_APTITUDE_TESTS_TABLE = "HiringAptitudeTests";
 const HIRING_INTERVIEWS_TABLE = "HiringInterviews"; // Table for interview slots, events, & evaluations
 const APPLICATIONS_TABLE_NAME = "TestifyApplications";
-
+const xlsx = require('xlsx');
 
 const ZOOM_ACCOUNT_ID = process.env.ZOOM_ACCOUNT_ID || 'bq5-fIbESBONjaZAr184uA';
 const ZOOM_CLIENT_ID = process.env.ZOOM_CLIENT_ID || 'CXxbks94RlmD_90vofVqg';
@@ -7381,7 +7381,8 @@ app.get('/api/student/applications', studentAuthMiddleware, async (req, res) => 
 // });
 
 app.patch('/api/admin/applications/status', authMiddleware, async (req, res) => {
-    if (req.user.role !== 'Admin') {
+    // UPDATED: Allow Admin or Hiring Moderator
+    if (req.user.role !== 'Admin' && req.user.role !== 'Hiring Moderator') {
         return res.status(403).json({ message: 'Access denied.' });
     }
     const { applicationId, status } = req.body;
@@ -7389,20 +7390,190 @@ app.patch('/api/admin/applications/status', authMiddleware, async (req, res) => 
         return res.status(400).json({ message: 'Application ID and new status are required.' });
     }
     
-    const validStatuses = ['Received', 'Under Review', 'Interview', 'Hired', 'Rejected'];
+    const validStatuses = ['Received', 'Under Review', 'Communication Round','Aptitude & Reasoning Round ','Basic Coding Round','Advanced Coding Round','Interview', 'Hired', 'Rejected'];
     if (!validStatuses.includes(status)) {
         return res.status(400).json({ message: 'Invalid status value.' });
     }
     
     try {
+        // 1. Fetch the application to get applicant details
+        const { Item: application } = await docClient.send(new GetCommand({
+            TableName: APPLICATIONS_TABLE_NAME,
+            Key: { applicationId }
+        }));
+
+        if (!application) {
+            return res.status(404).json({ message: 'Application not found.' });
+        }
+
+        // 2. Update the status in the database
         await docClient.send(new UpdateCommand({
-            TableName: APPLICATIONS_TABLE_NAME, // <--- UPDATED TABLE
-            Key: { applicationId }, // Assumes 'applicationId' is the Primary Key
+            TableName: APPLICATIONS_TABLE_NAME,
+            Key: { applicationId },
             UpdateExpression: "set #status = :s",
             ExpressionAttributeNames: { "#status": "status" },
             ExpressionAttributeValues: { ":s": status }
         }));
-        res.json({ message: 'Application status updated successfully.' });
+
+        // 3. Send notification email to the applicant
+        const applicantEmail = application.email;
+        const applicantName = application.firstName || 'Applicant';
+        const jobTitle = application.jobTitle || 'the position you applied for';
+        
+        const subject = `Update on your application for ${jobTitle}`;
+        const body = `
+           <div style="font-family: 'Segoe UI', Arial, sans-serif; background:#eef1f7; padding:40px;">
+  <div style="
+      max-width:650px;
+      margin:0 auto;
+      background:#ffffff;
+      padding:0;
+      border-radius:14px;
+      overflow:hidden;
+      box-shadow:0 6px 20px rgba(0,0,0,0.08);
+  ">
+
+      <!-- Header Banner -->
+      <div style="
+          background:linear-gradient(135deg, #4F46E5, #6366F1);
+          padding:28px 40px;
+          color:white;
+      ">
+          <h2 style="margin:0; font-size:24px; font-weight:600;">
+              Application Status Update
+          </h2>
+      </div>
+
+      <!-- Body -->
+      <div style="padding:32px 40px;">
+
+          <p style="font-size:16px; color:#1e293b; margin-top:0;">
+              Hello ${applicantName},
+          </p>
+
+          <p style="font-size:15px; color:#475569; line-height:1.7;">
+              We're reaching out to update you regarding your application for the 
+              <strong>${jobTitle}</strong> position at <strong>Xeta Solutions</strong>.
+          </p>
+
+          <!-- Status Highlight Box -->
+          <div style="
+              background:#f1f5ff;
+              border-left:5px solid #4F46E5;
+              padding:18px 22px;
+              border-radius:8px;
+              margin:24px 0;
+          ">
+              <p style="margin:0; font-size:18px; color:#1e1b4b;">
+                  <strong>Status:</strong> 
+                  <span style="color:#4338ca; font-weight:800;">${status}</span>
+              </p>
+          </div>
+
+          <!-- Instruction Box -->
+          <div style="
+              background:#fafafa;
+              border:1px solid #e2e8f0;
+              padding:24px;
+              border-radius:10px;
+              margin-bottom:28px;
+          ">
+              <h3 style="margin:0 0 14px 0; font-size:17px; color:#1e293b; font-weight:600;">
+                  Application Stages & Important Instructions
+              </h3>
+
+              <p style="font-size:14px; color:#475569; line-height:1.7; margin-top:0;">
+                  Our team is currently developing an applicant portal where you can track your application status. 
+                  Until then, you will receive all updates directly via email.
+              </p>
+
+              <ul style="padding-left:18px; margin:0;">
+                  <li style="font-size:14px; color:#334155; margin-bottom:10px;">
+                      <strong>Received:</strong> Your application has been successfully received.
+                  </li>
+                  <li style="font-size:14px; color:#334155; margin-bottom:10px;">
+                      <strong>Under Review:</strong> Our team is reviewing your application.
+                  </li>
+                  <li style="font-size:14px; color:#334155; margin-bottom:10px;">
+                      <strong>Communication Round:</strong> You have been shortlisted and are eligible for the Communication Round.
+                  </li>
+                  <li style="font-size:14px; color:#334155; margin-bottom:10px;">
+                      <strong>Aptitude & Reasoning Round:</strong> You cleared the previous stage and are now eligible for the Aptitude & Reasoning test.
+                  </li>
+                  <li style="font-size:14px; color:#334155; margin-bottom:10px;">
+                      <strong>Basic Coding Round:</strong> You cleared earlier rounds and are eligible for the Basic Coding test.
+                  </li>
+                  <li style="font-size:14px; color:#334155; margin-bottom:10px;">
+                      <strong>Advanced Coding Round:</strong> You cleared the Basic Coding Round and can attempt the Advanced Coding test.
+                  </li>
+                  <li style="font-size:14px; color:#334155; margin-bottom:10px;">
+                      <strong>Interview:</strong> You have cleared all previous rounds and are now eligible for the interview process.
+                  </li>
+                  <li style="font-size:14px; color:#334155; margin-bottom:10px;">
+                      <strong>Hired:</strong> Congratulations! You have been selected. Our team will reach out with onboarding details.
+                  </li>
+                  <li style="font-size:14px; color:#334155;">
+                      <strong>Rejected:</strong> We appreciate your effort and interest. Unfortunately, you were not selected at this time.
+                  </li>
+              </ul>
+
+              <div style="margin-top:18px; padding:14px 18px; background:#eef2ff; border-left:4px solid #4F46E5; border-radius:6px;">
+                  <p style="margin:0; font-size:14px; color:#3730a3; line-height:1.6;">
+                      <strong>Note:</strong> For all rounds such as Communication, Aptitude & Reasoning, Basic Coding, 
+                      Advanced Coding, and Interview —  
+                      tests will be conducted through our official portal 
+                      <strong>Testify (A Product of Xeta Solutions)</strong>.  
+                      You will be notified <strong>2 days before the scheduled test.</strong>
+                  </p>
+              </div>
+          </div>
+
+          <p style="font-size:15px; color:#475569; line-height:1.7;">
+              This is an auto-generated email. For any queries regarding your application, feel free to reach out to us:
+          </p>
+
+          <div style="margin:20px 0; padding:16px 20px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+              <p style="margin:0; font-size:14px; color:#334155; line-height:1.7;">
+                  <strong>HR & Careers:</strong>  
+                  <a href="mailto:hr.careers@xetasolutions.in" style="color:#4F46E5; text-decoration:none;">
+                      hr.careers@xetasolutions.in
+                  </a>
+                  <br>
+                  <strong>General Careers:</strong>  
+                  <a href="mailto:careers@xetasolutions.in" style="color:#4F46E5; text-decoration:none;">
+                      careers@xetasolutions.in
+                  </a>
+              </p>
+          </div>
+
+          <!-- Divider -->
+          <hr style="border:none; border-top:1px solid #e5e7eb; margin:34px 0;">
+
+          <!-- Footer -->
+          <p style="font-size:14px; color:#6b7280; line-height:1.6; margin:0;">
+              Best regards,<br>
+              <strong style="color:#1e293b;">Talent Acquisition Team,</strong><br>
+              <strong style="color:#1e293b;">Xeta Solutions</strong>
+          </p>
+
+      </div>
+  </div>
+
+  <!-- Footer Note -->
+  <p style="text-align:center; font-size:12px; color:#94a3b8; margin-top:18px;">
+      © ${new Date().getFullYear()} Xeta Solutions. All rights reserved.
+  </p>
+</div>
+
+        `;
+
+        await sendEmailWithSES({
+            to: applicantEmail,
+            subject: subject,
+            html: body
+        });
+
+        res.json({ message: 'Application status updated and applicant notified.' });
     } catch (error) {
         console.error("Update Application Status Error:", error);
         res.status(500).json({ message: 'Server error updating application status.' });
@@ -7469,8 +7640,9 @@ app.post('/api/careers/send-view-otp', async (req, res) => {
     const emailLower = email.toLowerCase();
 
     try {
+        // --- This uses HIRING_APPLICATIONS_TABLE ("TestifyApplications") as requested ---
         const { Items } = await docClient.send(new ScanCommand({
-            TableName: APPLICATIONS_TABLE_NAME, // <--- UPDATED TABLE
+            TableName: HIRING_APPLICATIONS_TABLE, // This is "TestifyApplications"
             FilterExpression: "email = :email",
             ExpressionAttributeValues: { ":email": emailLower },
             Limit: 1
@@ -7490,97 +7662,15 @@ app.post('/api/careers/send-view-otp', async (req, res) => {
             from: '"Xeta Solutions" <support@testify-lac.com>',
             to: email,
             subject: 'Your Application Status Verification Code',
-            html: `<div style="
-    font-family: 'Poppins', Arial, sans-serif;
-    max-width: 480px;
-    margin: auto;
-    padding: 0;
-    background: #f8fafc;
-">
-
-    <!-- Card -->
-    <div style="
-        background: #ffffff;
-        padding: 32px;
-        border-radius: 14px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.05);
-        text-align: center;
-    ">
-
-        <!-- Logo -->
-        <img 
-            src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg" 
-            alt="Xeta Solutions Logo" 
-            style="height: 48px; margin-bottom: 25px;"
-        />
-
-        <!-- Title -->
-        <h2 style="color: #0f172a; font-weight: 600; margin-bottom: 8px; font-size: 22px;">
-            Verification Code
-        </h2>
-
-        <p style="font-size: 15px; color: #475569; margin-top: 0;">
-            Please use the code below to continue your verification.
-        </p>
-
-        <!-- OTP Box -->
-        <div style="
-            font-size: 34px;
-            font-weight: 700;
-            letter-spacing: 10px;
-            color: #4F46E5;
-            background: #eef2ff;
-            padding: 16px 0;
-            border-radius: 12px;
-            margin: 28px 0;
-            border: 1px solid #c7d2fe;
-        ">
-            ${otp}
-        </div>
-
-        <p style="font-size: 14px; color: #64748b; margin-top: 0;">
-            This code is valid for the next <strong>5 minutes</strong>.
-        </p>
-
-        <p style="font-size: 13px; color: #94a3b8; margin-top: 22px;">
-            If you did not request this code, please ignore this email.
-        </p>
-    </div>
-
-    <!-- Footer -->
-    <div style="
-        text-align: center;
-        color: #94a3b8;
-        font-size: 12px;
-        margin-top: 18px;
-        padding: 16px 10px;
-        line-height: 18px;
-    ">
-        <p style="margin: 4px 0; font-weight: 500; color: #64748b;">
-            Xeta Solutions Pvt. Ltd.
-        </p>
-        <p style="margin: 4px 0;">
-            Hyderabad, Telangana, India
-        </p>
-        <p style="margin: 4px 0;">
-            This is an automated message. Please do not reply.
-        </p>
-
-        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 12px auto; width: 70%;" />
-
-        <p style="margin: 4px 0;">
-            © ${new Date().getFullYear()} Xeta Solutions. All rights reserved.
-        </p>
-
-        <p style="margin: 4px 0;">
-            <a href="https://www.testify-lac.com/T&C.html" style="color: #6366f1; text-decoration: none;">Privacy Policy</a> ·
-            <a href="mailto:Support@xetasolutions.in" style="color: #6366f1; text-decoration: none;">Contact Support</a>
-        </p>
-    </div>
-
-</div>
-`
+            html: `
+                <div style="font-family: 'Poppins', Arial, sans-serif; text-align: center; color: #333; padding: 20px; border: 1px solid #eee; border-radius: 8px; max-width: 400px; margin: auto;">
+                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg" alt="Xeta Solutions Logo" style="height: 40px; margin-bottom: 20px;">
+                    <h2 style="color: #1e293b;">Application Status</h2>
+                    <p style="font-size: 16px; color: #334155;">Your verification code is:</p>
+                    <p style="font-size: 28px; font-weight: bold; letter-spacing: 3px; color: #4F46E5; background-color: #f8fafc; padding: 10px 15px; border-radius: 6px;">${otp}</p>
+                    <p style="font-size: 14px; color: #64748b;">This code will expire in 5 minutes.</p>
+                </div>
+            `
         };
 
        await sendEmailWithSES(mailOptions);
@@ -7591,7 +7681,6 @@ app.post('/api/careers/send-view-otp', async (req, res) => {
         res.status(500).json({ message: 'Server error. Please try again later.' });
     }
 });
-
 /**
  * @route   POST /api/careers/verify-view-otp
  * @desc    Public: Verify OTP and fetch all applications for that email.
@@ -7612,8 +7701,9 @@ app.post('/api/careers/verify-view-otp', async (req, res) => {
     try {
         delete otpStore[emailLower];
 
+        // --- This uses HIRING_APPLICATIONS_TABLE ("TestifyApplications") as requested ---
         const { Items: applications } = await docClient.send(new ScanCommand({
-            TableName: APPLICATIONS_TABLE_NAME, // <--- UPDATED TABLE
+            TableName: HIRING_APPLICATIONS_TABLE, // This is "TestifyApplications"
             FilterExpression: "email = :email",
             ExpressionAttributeValues: { ":email": emailLower }
         }));
@@ -7650,41 +7740,149 @@ app.post('/api/careers/verify-view-otp', async (req, res) => {
         res.status(500).json({ message: 'Server error fetching applications.' });
     }
 });
-app.get('/api/public/hiring-application/:applicationId', async (req, res) => {
-    const { applicationId } = req.params;
-    try {
-        // 1. Fetch the application from the correct table, TestifyApplications
-        const { Item: application } = await docClient.send(new GetCommand({
-            TableName: "TestifyApplications",
-            Key: { applicationId }
-        }));
 
-        if (!application) {
-            return res.status(404).json({ message: "Application not found." });
+app.put('/api/public/hiring-application/:applicationId',
+    upload.any(), // Use upload.any() to accept all files with dynamic names
+    async (req, res) => {
+        const { applicationId } = req.params;
+        console.log(`[APP_UPDATE_START] Attempting to update application ${applicationId}`);
+
+        // Extract text fields from req.body
+        const {
+            firstName, lastName, email, phone,
+            address, // JSON string for address object
+            education, // JSON string for education array
+            experiences, // JSON string for experience array
+            linkedinUrl, githubUrl, portfolioUrl,
+            coverLetter, govtIdType,
+            // Fields to track existing file URLs if no new file is uploaded
+            existingPassportPhotoUrl,
+            existingResumeUrl,
+            existingGovtIdUrl
+        } = req.body;
+
+        try {
+            // --- 1. Fetch the existing application ---
+            console.log(`[APP_UPDATE_FETCH_APP] Fetching application ${applicationId} from ${APPLICATIONS_TABLE_NAME}`);
+            const { Item: application } = await docClient.send(new GetCommand({
+                TableName: APPLICATIONS_TABLE_NAME,
+                Key: { applicationId }
+            }));
+
+            if (!application) {
+                console.warn(`[APP_UPDATE_ERROR] Application ${applicationId} not found.`);
+                return res.status(404).json({ message: "Application not found." });
+            }
+            // Security check: ensure email matches
+            if (application.email !== email) {
+                 console.warn(`[APP_UPDATE_AUTH_FAIL] Email mismatch for ${applicationId}.`);
+                 return res.status(403).json({ message: "You are not authorized to update this application." });
+            }
+
+            // --- 2. Fetch the associated job and verify the deadline ---
+            console.log(`[APP_UPDATE_FETCH_JOB] Fetching job ${application.jobId} from ${CORRECT_JOBS_TABLE_NAME}`);
+            const { Item: job } = await docClient.send(new GetCommand({
+                TableName: CORRECT_JOBS_TABLE_NAME,
+                Key: { jobId: application.jobId } 
+            }));
+
+            if (!job) {
+                 console.error(`[APP_UPDATE_ERROR] Associated job ${application.jobId} not found.`);
+                 return res.status(404).json({ message: "Associated job opening not found." });
+            }
+            if (new Date() > new Date(job.applicationDeadline)) {
+                 console.warn(`[APP_UPDATE_ERROR] Deadline passed for job ${application.jobId}.`);
+                return res.status(403).json({ message: "The application deadline has passed. Cannot update." });
+            }
+
+            // --- 3. Process File Uploads ---
+            const files = req.files || [];
+            console.log(`[APP_UPDATE_UPLOAD] Processing ${files.length} potential file uploads.`);
+            
+            // These will hold the *final* URLs to be saved
+            let passportPhotoUrl = existingPassportPhotoUrl || application.passportPhotoUrl || null;
+            let resumeUrl = existingResumeUrl || application.resumeUrl || null;
+            let govtIdUrl = existingGovtIdUrl || application.govtId?.url || null;
+            
+            const educationCertificates = {};
+            const experienceCertificates = {};
+
+            for (const file of files) {
+                const s3Url = await uploadToS3(file); // Assumes uploadToS3 helper
+                if (file.fieldname === 'passportPhoto') passportPhotoUrl = s3Url;
+                else if (file.fieldname === 'resume') resumeUrl = s3Url;
+                else if (file.fieldname === 'govtId') govtIdUrl = s3Url;
+                else if (file.fieldname.startsWith('education_certificate_')) {
+                    const index = file.fieldname.split('_')[2];
+                    educationCertificates[index] = s3Url;
+                } else if (file.fieldname.startsWith('experience_certificate_')) {
+                    const index = file.fieldname.split('_')[2];
+                    experienceCertificates[index] = s3Url;
+                }
+            }
+
+            // --- 4. Parse and Enrich JSON Data ---
+            let educationData = JSON.parse(education || '[]').map((edu, index) => ({
+                ...edu,
+                // Use new upload, or existing URL from form, or fallback to original data
+                certificateUrl: educationCertificates[index] || edu.certificateUrl || null
+            }));
+
+            let experienceData = JSON.parse(experiences || '[]').map((exp, index) => ({
+                ...exp,
+                certificateUrl: experienceCertificates[index] || exp.certificateUrl || null
+            }));
+
+            let addressData = JSON.parse(address || '{}');
+            
+            // --- 5. Prepare the UpdateCommand ---
+            const updateParams = {
+                TableName: APPLICATIONS_TABLE_NAME,
+                Key: { applicationId },
+                UpdateExpression: `SET 
+                    firstName = :fn, 
+                    lastName = :ln, 
+                    phone = :ph, 
+                    address = :addr, 
+                    coverLetter = :cl, 
+                    passportPhotoUrl = :ppUrl, 
+                    resumeUrl = :rUrl, 
+                    govtId = :gid, 
+                    education = :edu, 
+                    experiences = :exp, 
+                    links = :links
+                `,
+                ExpressionAttributeValues: {
+                    ":fn": firstName,
+                    ":ln": lastName,
+                    ":ph": phone,
+                    ":addr": addressData,
+                    ":cl": coverLetter || null,
+                    ":ppUrl": passportPhotoUrl,
+                    ":rUrl": resumeUrl,
+                    ":gid": { type: govtIdType, url: govtIdUrl },
+                    ":edu": educationData,
+                    ":exp": experienceData,
+                    ":links": { 
+                        linkedin: linkedinUrl, 
+                        github: githubUrl, 
+                        portfolio: portfolioUrl 
+                    }
+                },
+                ReturnValues: "NONE"
+            };
+
+            await docClient.send(new UpdateCommand(updateParams));
+
+            console.log(`[APP_UPDATE_SUCCESS] Application ${applicationId} updated successfully.`);
+            res.status(200).json({ message: 'Application updated successfully!' });
+
+        } catch (error) {
+            console.error(`[APP_UPDATE_FATAL_ERROR] Failed to update application ${applicationId}:`, error);
+            res.status(500).json({ message: 'Server error updating application. Please try again later.' });
         }
-
-        // 2. Fetch the associated job to check the deadline and get the title
-        const { Item: job } = await docClient.send(new GetCommand({
-            TableName: "TestifyTests",
-            Key: { testId: application.jobId } 
-        }));
-
-        if (!job) {
-             return res.status(404).json({ message: "Associated job not found." });
-        }
-        
-        // 3. Check if the deadline has passed (for display purposes on the frontend)
-        const isEditable = new Date() < new Date(job.applicationDeadline);
-        
-        // 4. Send back the application data along with job title and editable status
-        res.json({ ...application, jobTitle: job.title, isEditable });
-
-    } catch (error) {
-        console.error("Get Single Hiring Application Error:", error);
-        res.status(500).json({ message: 'Server error fetching application.' });
     }
-});
-
+);
 app.post('/api/hiring/coding-problems', hiringModeratorAuth, async (req, res) => {
     const { title, description, difficulty, score, inputFormat, outputFormat, constraints, example, testCases } = req.body;
     if (!title || !description || !difficulty || !score || !testCases || testCases.length === 0) {
@@ -16227,7 +16425,68 @@ app.delete('/api/admin/jobs/:jobId', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Server error deleting job.' });
     }
 });
+app.get('/api/admin/applications/excel/:jobId', authMiddleware, async (req, res) => {
+    if (req.user.role !== 'Admin' && req.user.role !== 'Hiring Moderator') {
+        return res.status(403).json({ message: 'Access denied.' });
+    }
+    const { jobId } = req.params;
 
+    try {
+        // 1. Fetch all applications for the job
+        const { Items: applications } = await docClient.send(new ScanCommand({
+            TableName: APPLICATIONS_TABLE_NAME,
+            FilterExpression: "jobId = :jid",
+            ExpressionAttributeValues: { ":jid": jobId }
+        }));
+
+        if (!applications || applications.length === 0) {
+            return res.status(404).json({ message: 'No applications found to export.' });
+        }
+
+        // 2. Format data for Excel
+        const worksheetData = applications.map(app => {
+            // Flatten complex objects for cleaner Excel columns
+            const education = (app.education || []).map(edu => `${edu.type || ''} - ${edu.institute || ''} (${edu.stream || ''}, ${edu.score || ''})`).join('; ');
+            const experience = (app.experiences || []).map(exp => `${exp.title || ''} at ${exp.company || ''}`).join('; ');
+            
+            return {
+                'Application ID': app.applicationId,
+                'First Name': app.firstName,
+                'Last Name': app.lastName,
+                'Email': app.email,
+                'Phone': app.phone,
+                'Status': app.status,
+                'Applied At': new Date(app.appliedAt).toLocaleString(),
+                'Address': `${app.address?.street || ''}, ${app.address?.city || ''}, ${app.address?.country || ''}`,
+                'Education': education,
+                'Experience': experience,
+                'LinkedIn': app.links?.linkedin || 'N/A',
+                'GitHub': app.links?.github || 'N/A',
+                'Portfolio': app.links?.portfolio || 'N/A',
+                'Resume URL': app.resumeUrl,
+                'Photo URL': app.passportPhotoUrl,
+                'Govt ID Type': app.govtId?.type || 'N/A',
+                'Govt ID URL': app.govtId?.url || 'N/A',
+                'Cover Letter': app.coverLetter || 'N/A'
+            };
+        });
+
+        // 3. Create Excel workbook and buffer
+        const wb = xlsx.utils.book_new();
+        const ws = xlsx.utils.json_to_sheet(worksheetData);
+        xlsx.utils.book_append_sheet(wb, ws, 'Applications');
+        const buffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+        // 4. Send the file as a download
+        res.setHeader('Content-Disposition', `attachment; filename="applications_${jobId}.xlsx"`);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.send(buffer);
+
+    } catch (error) {
+        console.error("Excel Export Error:", error);
+        res.status(500).json({ message: 'Server error exporting Excel file.' });
+    }
+});
 
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
