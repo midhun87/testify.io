@@ -8,6 +8,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body { font-family: 'Poppins', sans-serif; }
         .sidebar-link:hover { background-color: #4f46e5; }
@@ -15,6 +18,11 @@
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
         details[open] summary .details-arrow { transform: rotate(180deg); }
+        /* Style for disabled button */
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -45,7 +53,8 @@
                 if (!response.ok) { throw new Error('Session invalid'); }
 
                 const user = await response.json();
-                if (user.role !== 'Admin') {
+                // Both Admin and Hiring Moderator can view this page
+                if (user.role !== 'Admin' && user.role !== 'Hiring Moderator') {
                     root.innerHTML = `
                         <div class="flex flex-col items-center justify-center h-screen bg-gray-100">
                             <div class="p-8 bg-white shadow-lg rounded-lg text-center">
@@ -68,16 +77,21 @@
         }
         
         function renderPage(authToken) {
+            // Use a generic back link, as this page is used by multiple roles
+            const backLink = document.referrer.includes('manage-jobs.html') 
+                ? 'manage-jobs.html' 
+                : (document.referrer.includes('hiring-jobs.html') ? 'hiring-jobs.html' : '#');
+
             root.innerHTML = `
                 <div class="flex h-screen bg-gray-100">
                     <!-- Sidebar -->
                     <div class="w-64 bg-gray-800 text-white flex flex-col">
-                        <div class="flex items-center justify-center h-20 border-b border-gray-700">
-                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo" class="h-10 w-auto mr-2">
-                            <span class="text-2xl font-bold">Testify Admin</span>
+                        <div class="flex items-center justify-center h-20 border-b border-gray-700 px-4">
+                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg" alt="Xeta Solutions Logo" class="h-10 w-auto rounded-md">
+                            <span class="text-xl font-bold ml-3">Xeta Solutions</span>
                         </div>
                         <nav class="flex-1 px-4 py-6 space-y-2">
-                            <a href="manage-jobs.html" class="sidebar-link active flex items-center px-4 py-2 rounded-lg">
+                            <a href="${backLink}" class="sidebar-link active flex items-center px-4 py-2 rounded-lg">
                                 <svg class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                                 Job Openings
                             </a>
@@ -91,9 +105,16 @@
                         </header>
                         <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
                             <div class="container mx-auto">
-                                <div class="mb-6">
-                                    <a href="manage-jobs.html" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">&larr; Back to All Jobs</a>
-                                    <h2 id="page-title" class="text-2xl font-bold text-gray-800 mt-2">Applications for...</h2>
+                                <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <a href="${backLink}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">&larr; Back to All Jobs</a>
+                                        <h2 id="page-title" class="text-2xl font-bold text-gray-800 mt-2">Applications for...</h2>
+                                    </div>
+                                    <!-- NEW: Download Button -->
+                                    <button id="download-excel-btn" class="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-60 disabled:cursor-not-allowed">
+                                        <i class="fas fa-file-excel mr-2"></i>
+                                        Download Excel
+                                    </button>
                                 </div>
                                 <div id="applications-container" class="space-y-4">
                                     <div id="loading-apps" class="text-center p-8">
@@ -113,21 +134,26 @@
             const loadingDiv = document.getElementById('loading-apps');
             const applicationsContainer = document.getElementById('applications-container');
             const pageTitle = document.getElementById('page-title');
+            const downloadBtn = document.getElementById('download-excel-btn');
+
+            // Get Job ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const jobId = urlParams.get('jobId');
+            const jobTitle = urlParams.get('jobTitle');
 
             async function fetchApplications() {
-                const urlParams = new URLSearchParams(window.location.search);
-                const jobId = urlParams.get('jobId');
-                const jobTitle = urlParams.get('jobTitle');
-
                 if (!jobId) {
                     pageTitle.textContent = 'Error: No Job ID specified.';
                     loadingDiv.innerHTML = '<p class="text-red-600">Could not identify job.</p>';
+                    downloadBtn.disabled = true;
                     return;
                 }
 
                 pageTitle.textContent = `Applications for "${jobTitle || 'this job'}"`;
                 
                 try {
+                    // This endpoint needs to be correct (admin or hiring)
+                    // We assume a generic /api/admin/applications/:jobId endpoint
                     const response = await fetch(`/api/admin/applications/${jobId}`, {
                         headers: { 'x-auth-token': authToken }
                     });
@@ -139,6 +165,7 @@
 
                 } catch (error) {
                     loadingDiv.innerHTML = `<div class="text-center p-4 bg-red-50 text-red-700 rounded-lg">${error.message}</div>`;
+                    downloadBtn.disabled = true;
                 }
             }
 
@@ -148,8 +175,11 @@
                 
                 if (applications.length === 0) {
                     applicationsContainer.innerHTML = `<div class="text-center p-8 bg-white rounded-lg shadow-md text-gray-500">No applications received for this job yet.</div>`;
+                    downloadBtn.disabled = true; // Disable download if no apps
                     return;
                 }
+
+                downloadBtn.disabled = false; // Enable download if apps exist
 
                 applications.forEach(app => {
                     const appliedDate = new Date(app.appliedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -185,7 +215,7 @@
                             ${app.govtId && app.govtId.url ? `<a href="${app.govtId.url}" target="_blank" class="text-gray-600 hover:underline">View ${app.govtId.type || 'Govt. ID'}</a>` : ''}
                         </div>`;
                     
-                    const statusOptions = ['Received', 'Under Review', 'Interview', 'Hired', 'Rejected'];
+                    const statusOptions = ['Received', 'Under Review', 'Communication Round','Aptitude & Reasoning Round ','Basic Coding Round','Advanced Coding Round','Interview', 'Hired', 'Rejected'];
                     const statusDropdownHTML = `
                         <select data-appid="${app.applicationId}" class="status-dropdown bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5">
                             ${statusOptions.map(s => `<option value="${s}" ${app.status === s ? 'selected' : ''}>${s}</option>`).join('')}
@@ -227,6 +257,10 @@
                                     ${linksHTML}
                                     ${documentsHTML}
                                 </div>
+                                <div class="mt-6">
+                                    <h4 class="font-semibold text-gray-700">Cover Letter</h4>
+                                    <p class="mt-2 text-sm text-gray-600 italic bg-gray-50 p-3 rounded-md">${app.coverLetter || 'No cover letter provided.'}</p>
+                                </div>
                             </div>
                         </details>`;
                     applicationsContainer.appendChild(card);
@@ -261,7 +295,6 @@
             }
 
             async function updateApplicationStatus(applicationId, newStatus, authToken) {
-                const originalDropdown = document.querySelector(`select[data-appid="${applicationId}"]`);
                 try {
                     const response = await fetch('/api/admin/applications/status', {
                         method: 'PATCH',
@@ -273,13 +306,46 @@
                     });
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.message);
-                    showFeedback('Status updated successfully!', 'success');
+                    // UPDATED: New success message
+                    showFeedback('Status updated! Applicant has been notified.', 'success');
                 } catch (error) {
                     console.error('Update Status Error:', error);
                     showFeedback(error.message, 'error');
                     fetchApplications(); // Refresh to get original state
                 }
             }
+
+            // NEW: Event listener for Excel download
+            downloadBtn.addEventListener('click', async () => {
+                downloadBtn.textContent = 'Preparing...';
+                downloadBtn.disabled = true;
+                try {
+                    const response = await fetch(`/api/admin/applications/excel/${jobId}`, {
+                        headers: { 'x-auth-token': authToken }
+                    });
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.message || 'Failed to generate Excel file.');
+                    }
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `applications_${jobTitle || jobId}_${new Date().toISOString().split('T')[0]}.xlsx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                    showFeedback('Excel file download started!', 'success');
+                } catch (error) {
+                    console.error('Excel Download Error:', error);
+                    showFeedback(error.message, 'error');
+                } finally {
+                    downloadBtn.innerHTML = '<i class="fas fa-file-excel mr-2"></i>Download Excel';
+                    downloadBtn.disabled = false;
+                }
+            });
 
             fetchApplications();
         }
