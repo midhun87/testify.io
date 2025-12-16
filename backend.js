@@ -161,7 +161,7 @@ const JWT_SECRET = 'your-super-secret-key-for-jwt-in-production';
 
 async function compileWithCustomCompiler(language, code, input) {
     // --- IMPORTANT: This is your custom compiler URL ---
-    const compilerUrl = 'https://compiler-api-6k95.onrender.com';
+    const compilerUrl = 'http://54.156.227.20:8000';
 
     const languageMap = {
         'c': 'c',
@@ -5663,14 +5663,10 @@ const SQL_TABLE_NAME = "TestifyCompilerScores";
 // Helper function to run SQL queries using the OneCompiler API.
 // This replaces the local sqlite3 implementation.
 const runQueryWithOneCompiler = async (schema, query) => {
-    // It's recommended to store this API key in environment variables for security.
-    const ONECOMPILER_API_KEY = process.env.ONECOMPILER_API_KEY || '09ccf0b69bmsh066f3a3bc867b99p178664jsna5e9720da3f6';
-
-    // Combine schema (CREATE, INSERT statements) and the user's query into a single script.
     const fullScript = `${schema || ''}\n\n${query || ''}`;
 
     const payload = {
-        language: "mysql", // OneCompiler uses 'mysql' for standard SQL execution
+        language: "mysql",
         stdin: "",
         files: [{
             name: "script.sql",
@@ -5679,53 +5675,40 @@ const runQueryWithOneCompiler = async (schema, query) => {
     };
 
     try {
-        const response = await fetch('https://onecompiler-apis.p.rapidapi.com/api/v1/run', {
+        const response = await fetch('http://54.156.227.20:8000/', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-RapidAPI-Key': '22be928fe3msh1ad95638f83d75cp18c454jsn9883d64a5a33',
-                'X-RapidAPI-Host': 'onecompiler-apis.p.rapidapi.com'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(payload)
         });
 
         const result = await response.json();
 
-        // Check for compilation or runtime errors from the API response
         if (!response.ok || result.stderr || result.exception) {
-            throw new Error(result.stderr || result.exception || result.message || 'An error occurred during SQL execution.');
+            throw new Error(
+                result.stderr || result.exception || result.message || 'SQL execution failed'
+            );
         }
 
-        // Parse the raw stdout from OneCompiler into the { columns, values } format
         const output = (result.stdout || '').trim();
-        if (!output) {
-            // Query ran successfully but produced no rows
-            return { columns: [], values: [] };
-        }
+        if (!output) return { columns: [], values: [] };
 
         const lines = output.split('\n');
-        const headerLine = lines.shift();
-        if (!headerLine) {
-            return { columns: [], values: [] };
-        }
-        
-        // OneCompiler's SQL output is typically tab-separated
-        const columns = headerLine.split('\t');
-        
+        const columns = lines.shift().split('\t');
+
         const values = lines.map(line => {
-            const rowValues = line.split('\t');
-            const rowObject = {};
-            columns.forEach((col, index) => {
-                rowObject[col] = rowValues[index] !== undefined ? rowValues[index] : null;
+            const row = {};
+            line.split('\t').forEach((val, i) => {
+                row[columns[i]] = val ?? null;
             });
-            return rowObject;
+            return row;
         });
 
         return { columns, values };
 
     } catch (error) {
-        console.error("OneCompiler SQL Execution Error:", error.message);
-        // Re-throw the error so it's sent to the client
+        console.error("SQL Execution Error:", error.message);
         throw error;
     }
 };
@@ -16491,3 +16474,4 @@ app.get('/api/admin/applications/excel/:jobId', authMiddleware, async (req, res)
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
