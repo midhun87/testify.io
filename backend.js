@@ -65,8 +65,8 @@ const {
 const kinesisVideoClient = new KinesisVideoClient({
     region: process.env.AWS_REGION || "ap-south-1",
     credentials: {
-        accessKeyId: 'AKIAT4YSUMZD52BNBCAB', // Your existing key
-        secretAccessKey: process.env.CHIME_AWS_SECRET_ACCESS_KEY || 'jCJQY7lfiv1LylIqLpzFl9kz96r4FgLcKL+SueGh' // Your existing secret
+        accessKeyId: 'AKIA5FK6RJPRHX72KY6Y', // Your existing key
+        secretAccessKey: process.env.CHIME_AWS_SECRET_ACCESS_KEY || '3hzF6sQAAH7gqJtld2WcAc8rI2CXXHPPS4zW55J9' // Your existing secret
     }
 });
 
@@ -79,8 +79,8 @@ const { SESv2Client, SendEmailCommand } = require("@aws-sdk/client-sesv2");
 const sesClient = new SESv2Client({
     region: process.env.AWS_REGION || 'ap-south-1',
     credentials: {
-        accessKeyId: process.env.AWS_SES_ACCESS_KEY_ID || 'AKIAT4YSUMZD755UHGW7',
-        secretAccessKey: process.env.AWS_SES_SECRET_ACCESS_KEY || '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'
+        accessKeyId: process.env.AWS_SES_ACCESS_KEY_ID || 'AKIAS2VS4CZ2Q4RQV4WX',
+        secretAccessKey: process.env.AWS_SES_SECRET_ACCESS_KEY || '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'
     }
 });
 
@@ -123,8 +123,8 @@ async function sendEmailWithSES(mailOptions) {
 const s3Client = new S3Client({
     region: process.env.AWS_REGION || 'ap-south-1',
     credentials: {
-        accessKeyId: 'AKIAT4YSUMZD755UHGW7', // Using same keys as DynamoDB/SES
-        secretAccessKey: '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'
+        accessKeyId: 'AKIA5FK6RJPRHX72KY6Y', // Using same keys as DynamoDB/SES
+        secretAccessKey: '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'
     }
 });
 
@@ -168,7 +168,7 @@ async function compileWithCustomCompiler(language, code, input) {
         'cpp': 'cpp',
         'python': 'python',
         'javascript': 'javascript',
-        'java': 'java' // Assuming your compiler supports java
+        'java': 'java' 
     };
 
     const compilerLanguage = languageMap[language];
@@ -961,8 +961,8 @@ app.get('/api/interviewer/my-schedule', interviewerAuth, async (req, res) => {
 const client = new DynamoDBClient({
     region: 'ap-south-1',
     credentials: {
-        accessKeyId: 'AKIAT4YSUMZD755UHGW7',
-        secretAccessKey: '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'
+        accessKeyId: 'AKIA5FK6RJPRHX72KY6Y',
+        secretAccessKey: '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'
     }
 });
 const docClient = DynamoDBDocumentClient.from(client);
@@ -16200,8 +16200,8 @@ app.post('/api/proctoring/viewer-credentials', hiringModeratorAuth, async (req, 
             region: process.env.AWS_REGION || "ap-south-1",
             endpoint: httpsEndpoint,
             credentials: {
-                accessKeyId: 'AKIAT4YSUMZD52BNBCAB', // Your existing key
-                secretAccessKey: process.env.CHIME_AWS_SECRET_ACCESS_KEY || 'jCJQY7lfiv1LylIqLpzFl9kz96r4FgLcKL+SueGh' // Your existing secret
+                accessKeyId: 'AKIA5FK6RJPRHX72KY6Y', // Your existing key
+                secretAccessKey: process.env.CHIME_AWS_SECRET_ACCESS_KEY || '3hzF6sQAAH7gqJtld2WcAc8rI2CXXHPPS4zW55J9' // Your existing secret
             }
         });
 
@@ -16292,8 +16292,8 @@ app.post('/api/proctoring/join', authMiddleware, async (req, res) => {
             region: process.env.AWS_REGION || "ap-south-1",
             endpoint: httpsEndpoint, // Use the HTTPS endpoint for this client
             credentials: {
-                accessKeyId: 'AKIAT4YSUMZD52BNBCAB', // Your existing key
-                secretAccessKey: process.env.CHIME_AWS_SECRET_ACCESS_KEY || 'jCJQY7lfiv1LylIqLpzFl9kz96r4FgLcKL+SueGh' // Your existing secret
+                accessKeyId: 'AKIA5FK6RJPRHX72KY6Y', // Your existing key
+                secretAccessKey: process.env.CHIME_AWS_SECRET_ACCESS_KEY || '3hzF6sQAAH7gqJtld2WcAc8rI2CXXHPPS4zW55J9' // Your existing secret
             }
         });
 
@@ -16471,7 +16471,8 @@ app.get('/api/admin/applications/excel/:jobId', authMiddleware, async (req, res)
     }
 });
 
+
+
 server.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-
