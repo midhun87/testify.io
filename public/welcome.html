@@ -70,7 +70,6 @@
     <nav id="navbar" class="bg-white/70 backdrop-blur-xl fixed top-0 left-0 right-0 z-50 transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16 md:h-20">
-                
                 <div class="flex items-center">
                     <a href="index.html" class="flex-shrink-0 flex items-center space-x-3">
                         <img class="h-9 w-9 rounded-full object-cover" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
@@ -80,17 +79,12 @@
                 
                 <div class="flex items-center space-x-8">
                     <div class="hidden md:flex items-center space-x-8">
+                        <a href="#features" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">Features</a>
                         <a href="about" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">About Us</a>
-                        <a href="features" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">Features</a>
-                        <a href="verify-certificate" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">Verify Certificate</a>
                         <a href="contact" class="text-slate-600 hover:text-violet-600 transition-colors duration-300 text-sm font-semibold">Contact</a>
                     </div>
 
                     <div class="hidden lg:flex items-center space-x-2 border-l border-slate-200 pl-6">
-                        <!-- Job Portal Button in Nav -->
-                        <a href="/jobportal/student-regsiter.html" class="px-4 py-2 text-sm font-bold text-white bg-violet-600 rounded-full hover:bg-violet-700 transition-all duration-300 shadow-md">
-                            Job Portal
-                        </a>
                         <a href="/login" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-violet-700 transition-all duration-300">Sign in</a>
                         <a href="/signup" class="px-4 py-2 text-sm font-semibold text-violet-700 border border-violet-200 rounded-full hover:bg-violet-50 transition-all duration-300">
                             Sign up
@@ -110,25 +104,20 @@
 
         <div class="md:hidden hidden" id="mobile-menu">
             <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-slate-200 bg-white">
-                <div class="flex flex-col space-y-2 px-3 py-2 mb-2 border-b border-slate-100">
-                    <a href="/jobportal/student-regsiter.html" class="text-center px-3 py-3 text-sm font-bold text-white bg-violet-600 rounded-md">Register for Job Portal</a>
-                    <div class="flex space-x-2">
-                        <a href="/login" class="flex-1 text-center px-3 py-2 text-sm font-medium text-slate-700 bg-slate-50 rounded-md">Sign in</a>
-                        <a href="/signup" class="flex-1 text-center px-3 py-2 text-sm font-medium text-violet-700 bg-violet-50 rounded-md">Sign up</a>
-                    </div>
-                </div>
+                <a href="/login" class="block px-3 py-2 text-sm font-medium text-slate-700 bg-slate-50 rounded-md">Sign in</a>
+                <a href="/signup" class="block px-3 py-2 text-sm font-medium text-violet-700 bg-violet-50 rounded-md">Sign up</a>
+                <a href="#features" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Features</a>
                 <a href="about.html" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">About Us</a>
-                <a href="features" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Features</a>
-                <a href="verify-certificate" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Verify Certificate</a>
                 <a href="contact" class="mobile-nav-link text-gray-600 hover:bg-slate-100 hover:text-violet-700 block px-3 py-2 rounded-md text-base font-medium">Contact</a>
             </div>
         </div>
     </nav>
 
     <main>
+        <!-- Hero Section -->
         <section class="relative overflow-hidden pt-32 pb-32">
             <div class="absolute inset-0">
-                <img class="h-full w-full object-cover" src="https://images.unsplash.com/photo-1521737852567-6949f3f9f2b5?q=80&w=2070&auto=format&fit=crop" alt="Collaborative team working in a modern office">
+                <img class="h-full w-full object-cover" src="https://images.unsplash.com/photo-1521737852567-6949f3f9f2b5?q=80&w=2070&auto=format&fit=crop" alt="Background">
                 <div class="absolute inset-0 gradient-bg-custom mix-blend-multiply"></div>
             </div>
             <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
@@ -142,212 +131,154 @@
                 </p>
                 
                 <div class="mt-10 flex flex-col items-center gap-5 fade-in-up" style="transition-delay: 300ms;">
-                    <!-- Redesigned Hero Buttons for Job Portal Focus -->
-                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-3xl">
-                        <a href="/student/quiz-join.html" class="w-full sm:flex-1 flex items-center justify-center px-10 py-4 text-lg font-bold rounded-full shadow-xl text-violet-900 bg-white hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 ring-4 ring-white/30">
-                            Join Quiz Now
-                        </a>
-                        <a href="/jobportal/student-regsiter.html" class="w-full sm:flex-1 flex items-center justify-center px-10 py-4 text-lg font-bold rounded-full shadow-xl text-white bg-violet-600 hover:bg-violet-700 transition-all duration-300 transform hover:scale-105">
-                            Register for Job Portal
-                        </a>
-                    </div>
-                    
-                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full">
-                        <a href="/signup.html" class="w-full sm:w-auto flex items-center justify-center px-6 py-3 border border-transparent text-base font-bold rounded-full shadow-md text-white bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-300">
-                            Get Started for Free
-                        </a>
-                        <a href="features.html" class="w-full sm:w-auto flex items-center justify-center px-6 py-3 border border-transparent text-base font-bold rounded-full shadow-md text-white bg-transparent border-white/40 hover:bg-white/10 transition-all duration-300">
-                            Learn More
-                        </a>
-                    </div>
+                    <a href="/student/quiz-join.html" class="w-full sm:w-auto flex items-center justify-center px-10 py-4 text-lg font-bold rounded-full shadow-xl text-violet-900 bg-white hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 ring-4 ring-white/30">
+                        Join Quiz Now
+                    </a>
                 </div>
-
             </div>
         </section>
 
-        <!-- Features Section -->
+        <!-- Product Features Section -->
         <section id="features" class="py-24 sm:py-32">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="text-center">
-                    <h2 class="text-base font-semibold text-violet-600 tracking-wider uppercase">Our Products</h2>
-                    <p class="mt-2 text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Integrated AI Ecosystem</p>
-                    <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">A complete suite designed to automate recruitment, integrity, and actionable insights.</p>
-                </div>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-base font-semibold text-violet-600 tracking-wider uppercase">Our Products</h2>
+                <p class="mt-2 text-3xl font-extrabold text-gray-900 sm:text-4xl">Integrated AI Ecosystem</p>
                 
                 <div class="mt-20 grid gap-10 md:grid-cols-2 lg:grid-cols-4">
-                    
-                    <div class="p-8 bg-white rounded-3xl shadow-xl transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl text-center fade-in-up">
-                        <div class="flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white mx-auto shadow-lg">
-                            <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                    <!-- HireWithUs -->
+                    <div class="p-8 bg-white rounded-3xl shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up">
+                        <div class="h-16 w-16 bg-violet-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-6">
+                            <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                         </div>
-                        <h3 class="mt-6 text-xl font-bold text-gray-900">HireWithUs</h3>
-                        <p class="mt-4 text-base text-gray-600">End-to-End Hiring Platform. Features college-centric portals, AI-driven resume screening, automated shortlisting, and interview management.</p>
+                        <h3 class="text-xl font-bold">HireWithUs</h3>
+                        <p class="mt-4 text-gray-600">End-to-End Hiring Platform with AI-driven resume screening.</p>
                     </div>
-
-                    <div class="p-8 bg-white rounded-3xl shadow-xl transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl text-center fade-in-up" style="transition-delay: 150ms;">
-                        <div class="flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white mx-auto shadow-lg">
-                            <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <!-- Testify -->
+                    <div class="p-8 bg-white rounded-3xl shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 150ms;">
+                        <div class="h-16 w-16 bg-violet-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-6">
+                            <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                         </div>
-                        <h3 class="mt-6 text-xl font-bold text-gray-900">Testify - Secure Test</h3>
-                        <p class="mt-4 text-base text-gray-600">A desktop lockdown client for high-integrity online testing. AI proctoring detects abnormal behavior, prevents tab switching, and captures evidence.</p>
-                        <span class="inline-block mt-4 px-3 py-1 bg-violet-100 text-violet-700 text-xs font-bold rounded-full">Windows & macOS</span>
+                        <h3 class="text-xl font-bold">Testify - Secure Test</h3>
+                        <p class="mt-4 text-gray-600">AI proctoring and lockdown client for high-integrity testing.</p>
                     </div>
-                    
-                    <div class="p-8 bg-white rounded-3xl shadow-xl transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl text-center fade-in-up" style="transition-delay: 300ms;">
-                        <div class="flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white mx-auto shadow-lg">
-                            <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
+                    <!-- LAC -->
+                    <div class="p-8 bg-white rounded-3xl shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 300ms;">
+                        <div class="h-16 w-16 bg-violet-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-6">
+                            <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
                         </div>
-                        <h3 class="mt-6 text-xl font-bold text-gray-900">Testify - LAC</h3>
-                        <p class="mt-4 text-base text-gray-600">Learn • Assess • Code. An integrated platform for coding education featuring live classes, structured assignments, and instant skill certification.</p>
+                        <h3 class="text-xl font-bold">Testify - LAC</h3>
+                        <p class="mt-4 text-gray-600">Learn • Assess • Code platform with instant certification.</p>
                     </div>
-                    
-                    <div class="p-8 bg-white rounded-3xl shadow-xl transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl text-center fade-in-up" style="transition-delay: 450ms;">
-                         <div class="flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white mx-auto shadow-lg">
-                            <svg class="h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <!-- QuizCom -->
+                    <div class="p-8 bg-white rounded-3xl shadow-xl hover:-translate-y-2 transition-all duration-300 fade-in-up" style="transition-delay: 450ms;">
+                         <div class="h-16 w-16 bg-violet-600 rounded-2xl flex items-center justify-center text-white mx-auto mb-6">
+                            <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         </div>
-                        <h3 class="mt-6 text-xl font-bold text-gray-900">QuizCom</h3>
-                        <p class="mt-4 text-base text-gray-600">Live interactive quiz platform. Engage classrooms and employees with real-time leaderboards, gamified assessments, and themed progression.</p>
-                    </div>
-
-                </div>
-            </div>
-        </section>
-
-        <!-- Xeta Mock Interviews Section -->
-        <section class="py-24 sm:py-32 bg-slate-50">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="text-center mb-16">
-                     <h2 class="text-base font-semibold text-violet-600 tracking-wider uppercase">Career Readiness</h2>
-                     <p class="mt-2 text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Xeta Mock Interviews</p>
-                     <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">Simulate the real hiring experience. Students undergo AI screening, assessments, and interviews with industry experts.</p>
-                </div>
-                <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                    <div class="p-8 bg-white rounded-3xl shadow-lg fade-in-up hover:shadow-xl transition-all duration-300">
-                        <div class="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center mb-4">
-                            <svg class="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                        </div>
-                        <h4 class="text-xl font-bold text-slate-900 mb-2">Structured Process</h4>
-                        <p class="text-slate-600">Mirrors actual corporate hiring drives: Apply &rarr; AI Screen &rarr; Test &rarr; Interview, providing a realistic experience.</p>
-                    </div>
-                     <div class="p-8 bg-white rounded-3xl shadow-lg fade-in-up hover:shadow-xl transition-all duration-300" style="transition-delay: 100ms;">
-                        <div class="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center mb-4">
-                            <svg class="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.653-.125-1.274-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.653.125-1.274.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                        </div>
-                        <h4 class="text-xl font-bold text-slate-900 mb-2">Industry Experts</h4>
-                        <p class="text-slate-600">Interviews conducted by professionals from top MNCs, ensuring candidates receive valid, real-world exposure.</p>
-                    </div>
-                     <div class="p-8 bg-white rounded-3xl shadow-lg fade-in-up hover:shadow-xl transition-all duration-300" style="transition-delay: 200ms;">
-                        <div class="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center mb-4">
-                            <svg class="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        </div>
-                        <h4 class="text-xl font-bold text-slate-900 mb-2">Detailed Reports</h4>
-                        <p class="text-slate-600">Post-interview analytics covering technical skills, aptitude, and communication, with actionable improvement suggestions.</p>
+                        <h3 class="text-xl font-bold">QuizCom</h3>
+                        <p class="mt-4 text-gray-600">Gamified live assessment and real-time leaderboards.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Impact Section -->
-        <section class="py-24 sm:py-32 bg-white">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                 <div class="text-center">
-                    <h2 class="text-base font-semibold text-violet-600 tracking-wider uppercase">Our Impact</h2>
-                    <p class="mt-2 text-3xl font-extrabold text-gray-900 tracking-tight sm:text-4xl">Trusted by Leading Institutions</p>
-                </div>
-                <div class="mt-16 grid gap-8 md:grid-cols-3 text-center">
-                    <div class="p-8 bg-slate-50 rounded-3xl shadow-lg fade-in-up"><h3 id="institutions-count" class="text-5xl font-bold text-violet-600">...</h3><p class="mt-2 text-lg font-medium text-gray-700">Institutions Empowered</p></div>
-                    <div class="p-8 bg-slate-50 rounded-3xl shadow-lg fade-in-up" style="transition-delay: 150ms;"><h3 id="exams-count" class="text-5xl font-bold text-violet-600">...</h3><p class="mt-2 text-lg font-medium text-gray-700">Exams Proctored</p></div>
-                    <div class="p-8 bg-slate-50 rounded-3xl shadow-lg fade-in-up" style="transition-delay: 300ms;"><h3 id="uptime-count" class="text-5xl font-bold text-violet-600">...</h3><p class="mt-2 text-lg font-medium text-gray-700">Platform Uptime</p></div>
+        <!-- Stats Section -->
+        <section class="py-24 bg-slate-50">
+            <div class="max-w-7xl mx-auto px-4 text-center">
+                <h2 class="text-base font-semibold text-violet-600 uppercase">Our Impact</h2>
+                <div class="mt-16 grid gap-8 md:grid-cols-3">
+                    <div class="p-8 bg-white rounded-3xl shadow-lg fade-in-up">
+                        <h3 id="institutions-count" class="text-5xl font-bold text-violet-600">500+</h3>
+                        <p class="mt-2 text-gray-700">Institutions Empowered</p>
+                    </div>
+                    <div class="p-8 bg-white rounded-3xl shadow-lg fade-in-up" style="transition-delay: 150ms;">
+                        <h3 id="exams-count" class="text-5xl font-bold text-violet-600">2M+</h3>
+                        <p class="mt-2 text-gray-700">Exams Proctored</p>
+                    </div>
+                    <div class="p-8 bg-white rounded-3xl shadow-lg fade-in-up" style="transition-delay: 300ms;">
+                        <h3 id="uptime-count" class="text-5xl font-bold text-violet-600">99.9%</h3>
+                        <p class="mt-2 text-gray-700">Platform Uptime</p>
+                    </div>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- Footer -->
-    <footer id="contact" class="bg-slate-900 text-slate-300">
-        <div class="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-                <div class="col-span-2 md:col-span-1">
-                     <a href="#" class="flex items-center space-x-3">
-                        <img class="h-10 w-10 rounded-full object-cover" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Xeta Solutions Logo">
-                        <span class="text-2xl font-bold text-white">TESTIFY</span>
-                    </a>
-                    <p class="text-slate-400 text-base mt-4">Empowering Learning, Assessment & Careers with AI.</p>
-                </div>
-                <div>
-                    <h3 class="text-sm font-semibold text-white tracking-wider uppercase">Products</h3>
-                    <ul class="mt-4 space-y-2">
-                          <li><a href="features.html" class="text-base text-slate-400 hover:text-white">HireWithUs</a></li>
-                          <li><a href="#" class="text-base text-slate-400 hover:text-white">Testify</a></li>
-                          <li><a href="T&C.html" class="text-base text-slate-400 hover:text-white">QuizCom</a></li>
-                    </ul>
-                </div>
-                 <div>
-                    <h3 class="text-sm font-semibold text-white tracking-wider uppercase">Company</h3>
-                    <ul class="mt-4 space-y-2">
-                        <li><a href="about.html" class="text-base text-slate-400 hover:text-white">About Us</a></li>
-                        <li><a href="careers.html" class="text-base text-slate-400 hover:text-white">Careers</a></li>
-                        <li><a href="contact.html" class="text-base text-slate-400 hover:text-white">Contact</a></li>
-                    </ul>
-                </div>
-                 <div>
-                    <h3 class="text-sm font-semibold text-white tracking-wider uppercase">Contact</h3>
-                    <ul class="mt-4 space-y-2">
-                        <li><a href="mailto:info@xetasolutions.in" class="text-base text-slate-400 hover:text-white">info@xetasolutions.in</a></li>
-                        <li><a href="mailto:support@xetasolutions.in" class="text-base text-slate-400 hover:text-white">support@xetasolutions.in</a></li>
-                    </ul>
-                </div>
+    <footer class="bg-slate-900 text-slate-300 py-16">
+        <div class="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div class="col-span-2 md:col-span-1">
+                <span class="text-2xl font-bold text-white">TESTIFY</span>
+                <p class="mt-4 text-slate-400">Empowering Learning & Careers with AI.</p>
             </div>
-            <div class="mt-12 border-t border-slate-800 pt-8 flex flex-col sm:flex-row justify-between items-center">
-                <p class="text-base text-slate-400">&copy; 2025 TESTIFY. All rights reserved.</p>
-                <a href="https://www.xetasolutions.in" class="hover:text-white">A product by Xeta Solutions</a>
+            <div>
+                <h3 class="text-white font-semibold uppercase text-xs">Products</h3>
+                <ul class="mt-4 space-y-2">
+                    <li><a href="#" class="hover:text-white">HireWithUs</a></li>
+                    <li><a href="#" class="hover:text-white">Testify</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-white font-semibold uppercase text-xs">Company</h3>
+                <ul class="mt-4 space-y-2">
+                    <li><a href="#" class="hover:text-white">About Us</a></li>
+                    <li><a href="#" class="hover:text-white">Contact</a></li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="text-white font-semibold uppercase text-xs">Legal</h3>
+                <ul class="mt-4 space-y-2">
+                    <li><a href="#" class="hover:text-white">Privacy</a></li>
+                    <li><a href="#" class="hover:text-white">Terms</a></li>
+                </ul>
             </div>
         </div>
     </footer>
 
-    <!-- Pop-up Modal -->
-    <div id="popup-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 transition-opacity duration-300 ease-in-out opacity-0 pointer-events-none">
-        <div id="popup-content" class="relative w-full max-w-lg p-4 rounded-3xl shadow-2xl bg-white transition-all duration-300 transform scale-95">
-            <button id="close-popup" class="absolute -top-3 -right-3 text-slate-600 bg-white/80 backdrop-blur-sm rounded-full h-9 w-9 flex items-center justify-center text-xl font-bold transition-all duration-200 transform hover:rotate-90 hover:bg-white hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-white">
+    <!-- POPUP MODAL FOR GOOGLE FORM -->
+    <div id="popup-modal" class="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-70 transition-opacity duration-300 ease-in-out opacity-0 pointer-events-none">
+        <div id="popup-content" class="relative w-full max-w-lg p-6 rounded-3xl shadow-2xl bg-white transition-all duration-300 transform scale-95 mx-4">
+            
+            <!-- Close Button -->
+            <button id="close-popup" class="absolute -top-3 -right-3 text-slate-600 bg-white shadow-md rounded-full h-10 w-10 flex items-center justify-center text-2xl font-bold transition-all duration-200 transform hover:rotate-90 hover:text-red-500 focus:outline-none">
                 &times;
             </button>
-            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757066742/Gemini_Generated_Image_njiwz6njiwz6njiw_1_zziakv.png" alt="Promotional Flyer for Free Tests" class="rounded-2xl shadow-lg">
-           <p class="mt-4 p-3 bg-violet-50 text-violet-800 rounded-xl font-semibold text-center text-sm sm:text-base">
-                <strong>Code, Compile, Conquer:</strong> Your Interview Journey Starts Here.
-           </p>
-           <div class="mt-6 flex justify-center">
-                <a href="/jobportal/student-regsiter.html" class="px-8 py-3 bg-violet-600 text-white font-bold rounded-full hover:bg-violet-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
-                    Register Now
-                </a>
-           </div>
+            
+            <div class="text-center">
+                <div class="mb-4 overflow-hidden rounded-2xl shadow-sm">
+                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757066742/Gemini_Generated_Image_njiwz6njiwz6njiw_1_zziakv.png" alt="Flyer" class="w-full h-auto">
+                </div>
+                
+                <h3 class="text-2xl font-extrabold text-slate-900 mb-2">Ready to Excel?</h3>
+                <p class="text-slate-600 mb-6 px-2">
+                    Take the first step towards your dream career. Fill out our quick form to get personalized guidance and resources.
+                </p>
+                
+                <div class="space-y-3">
+                    <a href="https://forms.gle/mRc54xX8KbV5SmXG8" target="_blank" class="w-full inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white bg-violet-600 rounded-2xl hover:bg-violet-700 transition-all duration-300 shadow-lg hover:shadow-violet-200 transform hover:-translate-y-1">
+                        Fill Form Now
+                        <svg class="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </a>
+                    <button id="close-modal-secondary" class="text-sm font-semibold text-slate-400 hover:text-slate-600 transition-colors">
+                        Maybe later
+                    </button>
+                </div>
+                
+                <p class="mt-4 p-3 bg-violet-50 text-violet-800 rounded-xl font-semibold text-xs sm:text-sm">
+                    <strong>Code, Compile, Conquer:</strong> Your Interview Journey Starts Here.
+                </p>
+            </div>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // --- Mobile Menu Logic ---
+            // Mobile Menu
             const mobileMenuButton = document.getElementById('mobile-menu-button');
             const mobileMenu = document.getElementById('mobile-menu');
-            const menuOpenIcon = document.getElementById('menu-open-icon');
-            const menuCloseIcon = document.getElementById('menu-close-icon');
-            const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
-
-            const toggleMenu = () => {
+            mobileMenuButton.addEventListener('click', () => {
                 mobileMenu.classList.toggle('hidden');
-                menuOpenIcon.classList.toggle('block');
-                menuOpenIcon.classList.toggle('hidden');
-                menuCloseIcon.classList.toggle('hidden');
-                menuCloseIcon.classList.toggle('block');
-            };
+            });
 
-            mobileMenuButton.addEventListener('click', toggleMenu);
-            mobileNavLinks.forEach(link => link.addEventListener('click', () => {
-                if (!mobileMenu.classList.contains('hidden')) {
-                    toggleMenu();
-                }
-            }));
-            
-            // --- Navbar style change on scroll ---
+            // Navbar Scroll
             const navbar = document.getElementById('navbar');
             window.onscroll = () => {
                 if (window.scrollY > 20) {
@@ -356,128 +287,45 @@
                     navbar.classList.remove("shadow-md", "bg-white/95");
                 }
             };
-            
-            // --- Animate elements on scroll ---
+
+            // Animate on scroll
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('visible');
-                        // Check if the intersecting element is the counter trigger
-                        if (entry.target.id === 'institutions-count') {
-                            // Fetch data and then animate
-                            fetchImpactStats().then(stats => {
-                                animateCounters(stats);
-                            });
-                            // Unobserve to prevent re-triggering
-                            observer.unobserve(entry.target);
-                        }
-                    }
+                    if (entry.isIntersecting) entry.target.classList.add('visible');
                 });
             }, { threshold: 0.1 });
-
             document.querySelectorAll('.fade-in-up').forEach(el => observer.observe(el));
-            const institutionsCounter = document.getElementById('institutions-count');
-            if (institutionsCounter) {
-                observer.observe(institutionsCounter);
-            }
-            
-            // --- Fetch Impact Stats from Backend ---
-            function fetchImpactStats() {
-                const API_URL = '/api/impact-stats'; 
-                
-                 return fetch(API_URL)
-                      .then(response => {
-                           if (!response.ok) {
-                                throw new Error('Network response was not ok');
-                           }
-                           return response.json();
-                        })
-                        .then(data => {
-                            return {
-                                institutions: parseInt(String(data.institutions).replace(/[^0-9]/g, ''), 10) || 0,
-                                exams: parseInt(String(data.exams).replace(/[^0-9]/g, ''), 10) || 0,
-                                uptime: parseFloat(data.uptime) || 0
-                            };
-                        })
-                        .catch(error => {
-                            console.error('Error fetching impact stats:', error);
-                            // Fallback to default values
-                            return {
-                                institutions: 500,
-                                exams: 2000000,
-                                uptime: 99.9
-                            };
-                        });
-            }
 
-            // --- Animate Impact Stats ---
-            function animateCounters(stats) {
-                const counters = [
-                    { id: 'institutions-count', end: stats.institutions, suffix: '+' },
-                    { id: 'exams-count', end: stats.exams, suffix: '+', locale: true },
-                    { id: 'uptime-count', end: stats.uptime, suffix: '%', decimals: 1 }
-                ];
-
-                counters.forEach(counter => {
-                    const el = document.getElementById(counter.id);
-                    if(!el) return;
-                    
-                    const duration = 2000;
-                    const frameRate = 1000 / 60;
-                    const totalFrames = Math.round(duration / frameRate);
-                    let frame = 0;
-                    
-                    const interval = setInterval(() => {
-                        frame++;
-                        const progress = frame / totalFrames;
-                        const current = counter.end * progress;
-
-                        let value = counter.decimals 
-                            ? current.toFixed(counter.decimals)
-                            : Math.round(current);
-                        
-                        if (counter.locale) {
-                            value = Math.round(current).toLocaleString('en-US');
-                        }
-                        
-                        el.textContent = value + counter.suffix;
-
-                        if (frame === totalFrames) {
-                            clearInterval(interval);
-                        }
-                    }, frameRate);
-                });
-            }
-
-            // --- Pop-up Modal Logic ---
+            // POPUP LOGIC
             const popupModal = document.getElementById('popup-modal');
             const popupContent = document.getElementById('popup-content');
-            const closeButton = document.getElementById('close-popup');
+            const closeButtons = [document.getElementById('close-popup'), document.getElementById('close-modal-secondary')];
             
             const showModal = () => {
                 popupModal.classList.remove('pointer-events-none', 'opacity-0');
                 popupContent.classList.remove('scale-95');
+                popupContent.classList.add('scale-100');
             };
             
             const hideModal = () => {
                 popupModal.classList.add('opacity-0');
+                popupContent.classList.remove('scale-100');
                 popupContent.classList.add('scale-95');
                 setTimeout(() => popupModal.classList.add('pointer-events-none'), 300);
             };
 
-            // Show modal after a delay
-            if (!sessionStorage.getItem('modalShown')) {
+            // Trigger popup after 2.5 seconds
+            if (!sessionStorage.getItem('formPopupShown')) {
                 setTimeout(() => {
                     showModal();
-                    sessionStorage.setItem('modalShown', 'true');
+                    sessionStorage.setItem('formPopupShown', 'true');
                 }, 2500);
             }
 
-            closeButton.addEventListener('click', hideModal);
-            popupModal.addEventListener('click', (event) => {
-                if (event.target === popupModal) {
-                    hideModal();
-                }
+            closeButtons.forEach(btn => btn?.addEventListener('click', hideModal));
+            
+            popupModal.addEventListener('click', (e) => {
+                if (e.target === popupModal) hideModal();
             });
         });
     </script>
