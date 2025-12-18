@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apply for Senior Product Manager - HireWithUs</title>
+    <title>Apply for Job - HireWithUs</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,1682 +11,1007 @@
     <!-- Google Font: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@0.395.0/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     
-    <!-- jsPDF Libraries for Download -->
+    <!-- jsPDF Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf-autotable.umd.min.js"></script>
     
+    <!-- Toastify for better notifications -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
-    
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        /* Base styles */
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8f9fa; /* Lighter neutral background */
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* --- Custom Form Element Styling --- */
+        /* Animation for sections */
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Modern Label */
-        .form-label {
-            @apply block text-sm font-semibold text-gray-800 mb-1.5;
-        }
+        /* File Upload Dashed Border Animation */
+        .dropzone-active { border-color: #2563eb; background-color: #eff6ff; }
         
-        /* Modern Input */
-        .form-input,
-        .form-select,
-        .form-textarea {
-            @apply block w-full rounded-xl border-gray-300 bg-white shadow-sm transition-all duration-200 ease-in-out;
-            @apply placeholder:text-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20;
-            @apply text-base; /* Better mobile readability */
-        }
-        
-        .form-textarea {
-            @apply min-h-[120px];
-        }
-
-        /* Validation states */
-        .form-input.invalid, .form-select.invalid, .form-textarea.invalid {
-            @apply border-red-500 ring-1 ring-red-500 focus:border-red-500 focus:ring-red-500/30;
-        }
-        .form-input.valid, .form-select.valid, .form-textarea.valid {
-            @apply border-green-500 ring-1 ring-green-500 focus:border-green-500 focus:ring-green-500/30;
-        }
-        
-        /* --- Modern File Uploader --- */
-        .file-dropzone {
-            @apply relative flex flex-col items-center justify-center w-full p-6 border-2 border-dashed border-gray-300 rounded-2xl cursor-pointer;
-            @apply bg-white hover:bg-gray-50 transition-colors duration-200;
-        }
-        .file-dropzone.drag-over {
-            @apply border-blue-500 bg-blue-50;
-        }
-        
-        .file-name-display {
-            @apply inline-flex items-center gap-2.5 bg-blue-50 text-blue-800 rounded-lg px-4 py-2.5 text-sm font-medium mt-3;
-            @apply border border-blue-100;
-        }
-        .file-name-remove {
-            @apply w-5 h-5 rounded-full bg-blue-200 text-blue-800 flex items-center justify-center cursor-pointer;
-            @apply hover:bg-blue-300 transition-all;
-        }
-        
-        /* Modern Dynamic Block */
-        .dynamic-block {
-            @apply p-6 bg-white rounded-xl shadow-sm border border-gray-200 relative transition-all duration-300 ease-in-out;
-            animation: slide-in 0.3s ease-out;
-        }
-        @keyframes slide-in {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* --- Sidebar Navigation --- */
-        .sidebar-step {
-            @apply flex items-center gap-4 p-3 rounded-lg transition-colors duration-200;
-        }
-        .sidebar-step .step-icon {
-            @apply w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center;
-            @apply bg-gray-100 text-gray-500 border border-gray-200;
-            @apply transition-all duration-300 ease-in-out;
-        }
-        .sidebar-step .step-text .title {
-            @apply text-sm font-medium text-gray-700;
-        }
-        .sidebar-step .step-text .status {
-            @apply text-xs text-gray-500;
-        }
-
-        /* Active Step */
-        .sidebar-step.active {
-            @apply bg-blue-50;
-        }
-        .sidebar-step.active .step-icon {
-            @apply bg-blue-600 text-white border-blue-600;
-            transform: scale(1.05);
-        }
-        .sidebar-step.active .step-text .title {
-            @apply text-blue-700 font-semibold;
-        }
-        .sidebar-step.active .step-text .status {
-            @apply text-blue-600;
-        }
-        
-        /* Completed Step */
-        .sidebar-step.completed {
-            @apply bg-green-50/50;
-        }
-        .sidebar-step.completed .step-icon {
-            @apply bg-green-600 text-white border-green-600;
-        }
-        .sidebar-step.completed .step-text .title {
-            @apply text-green-800 font-medium;
-        }
-        .sidebar-step.completed .step-text .status {
-            @apply text-green-700;
-        }
-        
-        /* Custom spinner */
-        .button-spinner {
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top-color: #fff;
-            @apply w-5 h-5 rounded-full animate-spin;
-        }
-        
-        /* Modal animation */
-         #confirmation-modal .modal-content {
-             @apply relative z-10 w-full max-w-md p-8 bg-white rounded-2xl shadow-xl;
-             @apply transform transition-all duration-300 ease-in-out;
-             transform: scale(0.95);
-             opacity: 0;
-         }
-         #confirmation-modal.show .modal-content {
-             transform: scale(1);
-             opacity: 1;
-         }
- 
-        /* Remove marker from details/summary */
-        details summary::-webkit-details-marker { display: none; }
-        details summary { list-style: none; }
-        
-        /* Custom shadow for sticky mobile nav */
-        .shadow-top-lg {
-            box-shadow: 0 -10px 15px -3px rgb(0 0 0 / 0.1), 0 -4px 6px -4px rgb(0 0 0 / 0.1);
-        }
+        /* Floating Navbar on Mobile */
+        .mobile-nav-shadow { box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1); }
     </style>
 </head>
-<body class="bg-gray-50 font-sans antialiased">
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
 
-    <!-- 1. Global Header -->
-    <header class="fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-200 shadow-sm h-16 flex items-center justify-between px-4 md:px-8">
-        <div class="flex items-center gap-3">
-            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="HireWithUs Logo" class="h-8 w-8">
-            <span class="text-lg font-bold text-gray-900 hidden sm:block">HireWithUs</span>
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="Logo" class="h-8 w-8">
+                    <span class="font-bold text-xl tracking-tight text-slate-900 hidden sm:block">HireWithUs</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="hidden md:flex flex-col items-end">
+                        <span id="job-title-header" class="text-sm font-semibold text-slate-900">Loading Job...</span>
+                        <span id="job-deadline-header" class="text-xs text-slate-500">Loading Deadline...</span>
+                    </div>
+                    <a href="student-job-board.html" class="p-2 rounded-full hover:bg-slate-100 transition text-slate-500">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </a>
+                </div>
+            </div>
         </div>
-        <div class="flex items-center gap-2 text-sm text-gray-600">
-            <i data-lucide="building" class="w-4 h-4"></i>
-            <span class="font-medium" id="job-title-header-main">Loading Job...</span>
-        </div>
-        <div class="flex items-center gap-3">
-            <button type="button" class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-blue-500">
-                <i data-lucide="save" class="w-4 h-4"></i>
-                <span class="hidden sm:inline">Save Progress</span>
-            </button>
-            <button type="button" class="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500">
-                <i data-lucide="help-circle" class="w-4 h-4"></i>
-                <span class="hidden sm:inline">Help</span>
-            </button>
-        </div>
-    </header>
+    </nav>
 
-    <!-- 2. Main Container -->
-    <div class="flex pt-16">
+    <!-- Main Content Layout -->
+    <div class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex gap-8">
+        
+        <!-- Sidebar Stepper (Desktop) -->
+        <aside class="hidden lg:block w-72 flex-shrink-0">
+            <div class="sticky top-24 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <h2 class="text-lg font-bold text-slate-900 mb-6">Application Progress</h2>
+                <div class="space-y-0 relative">
+                    <!-- Vertical Line -->
+                    <div class="absolute left-[19px] top-4 bottom-4 w-0.5 bg-slate-200 -z-10"></div>
 
-        <!-- 3. Left Sidebar (Progress) -->
-        <aside class="fixed top-16 left-0 z-20 w-80 h-[calc(100vh-64px)] bg-white border-r border-gray-200 hidden lg:flex flex-col justify-between p-6">
-            <div class="space-y-4">
-                <div class="mb-6">
-                    <h2 id="job-title-header-sidebar" class="text-xl font-bold text-gray-900">Apply for Job</h2>
-                    <div id="job-details-header" class="flex items-center gap-2 text-sm text-yellow-800 font-medium mt-2">
-                        <i data-lucide="clock" class="w-4 h-4"></i>
-                        <span>Loading deadline...</span>
+                    <!-- Steps -->
+                    <div class="step-item relative flex items-start gap-4 pb-8 last:pb-0 group cursor-pointer" onclick="goToStep(1)">
+                        <div id="step-icon-1" class="w-10 h-10 rounded-full flex items-center justify-center bg-brand-600 text-white shadow-md ring-4 ring-white transition-all">
+                            <i data-lucide="user" class="w-5 h-5"></i>
+                        </div>
+                        <div class="pt-1">
+                            <p id="step-title-1" class="font-semibold text-brand-700">Personal Info</p>
+                            <p class="text-xs text-slate-500">Basic details & photo</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item relative flex items-start gap-4 pb-8 last:pb-0 group cursor-pointer" onclick="goToStep(2)">
+                        <div id="step-icon-2" class="w-10 h-10 rounded-full flex items-center justify-center bg-white border-2 border-slate-300 text-slate-400 shadow-sm ring-4 ring-white transition-all">
+                            <i data-lucide="briefcase" class="w-5 h-5"></i>
+                        </div>
+                        <div class="pt-1">
+                            <p id="step-title-2" class="font-medium text-slate-500">Experience</p>
+                            <p class="text-xs text-slate-500">Education & Work</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item relative flex items-start gap-4 pb-8 last:pb-0 group cursor-pointer" onclick="goToStep(3)">
+                        <div id="step-icon-3" class="w-10 h-10 rounded-full flex items-center justify-center bg-white border-2 border-slate-300 text-slate-400 shadow-sm ring-4 ring-white transition-all">
+                            <i data-lucide="file-text" class="w-5 h-5"></i>
+                        </div>
+                        <div class="pt-1">
+                            <p id="step-title-3" class="font-medium text-slate-500">Documents</p>
+                            <p class="text-xs text-slate-500">Resume & Links</p>
+                        </div>
+                    </div>
+
+                    <div class="step-item relative flex items-start gap-4 group cursor-pointer" onclick="goToStep(4)">
+                        <div id="step-icon-4" class="w-10 h-10 rounded-full flex items-center justify-center bg-white border-2 border-slate-300 text-slate-400 shadow-sm ring-4 ring-white transition-all">
+                            <i data-lucide="check-circle" class="w-5 h-5"></i>
+                        </div>
+                        <div class="pt-1">
+                            <p id="step-title-4" class="font-medium text-slate-500">Review</p>
+                            <p class="text-xs text-slate-500">Final check</p>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Vertical Step Navigation -->
-                <nav id="sidebar-steps" class="space-y-2">
-                    <div id="sidebar-step-1" class="sidebar-step">
-                        <span class="step-icon"><i data-lucide="user" class="w-5 h-5"></i></span>
-                        <div class="step-text">
-                            <span class="title">Personal Info</span>
-                            <span class="status">Pending</span>
-                        </div>
-                    </div>
-                    <div id="sidebar-step-2" class="sidebar-step">
-                        <span class="step-icon"><i data-lucide="briefcase" class="w-5 h-5"></i></span>
-                        <div class="step-text">
-                            <span class="title">Experience</span>
-                            <span class="status">Pending</span>
-                        </div>
-                    </div>
-                    <div id="sidebar-step-3" class="sidebar-step">
-                        <span class="step-icon"><i data-lucide="paperclip" class="w-5 h-5"></i></span>
-                        <div class="step-text">
-                            <span class="title">Documents</span>
-                            <span class="status">Pending</span>
-                        </div>
-                    </div>
-                    <div id="sidebar-step-4" class="sidebar-step">
-                        <span class="step-icon"><i data-lucide="check-circle" class="w-5 h-5"></i></span>
-                        <div class="step-text">
-                            <span class="title">Review & Submit</span>
-                            <span class="status">Pending</span>
-                        </div>
-                    </div>
-                </nav>
-            </div>
-
-            <!-- Auto-save indicator -->
-            <div id="autosave-indicator" class="flex items-center gap-2 text-sm text-gray-500">
-                <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i>
-                <span>All changes saved.</span>
             </div>
         </aside>
 
-        <!-- 4. Right Workspace (Form) -->
-        <main class="w-full lg:pl-80 min-h-[calc(100vh-64px)] bg-gray-50/50 p-4 md:p-10 lg:p-12">
+        <!-- Form Area -->
+        <main class="flex-1 w-full max-w-4xl mx-auto pb-24 lg:pb-0">
             
-            <!-- 4a. Mobile-only Header (Job title, progress) -->
+            <!-- Mobile Header & Progress -->
             <div class="lg:hidden mb-6">
-                <h1 id="job-title-header-mobile" class="text-2xl font-bold text-gray-900">Apply for Job</h1>
-                <div id="job-details-header-mobile" class="flex items-center gap-2 text-sm text-yellow-800 font-medium mt-2">
-                    <i data-lucide="clock" class="w-4 h-4"></i>
-                    <span>Loading deadline...</span>
+                <div class="flex justify-between items-center mb-4">
+                    <h1 class="text-xl font-bold text-slate-900">Application</h1>
+                    <span class="text-xs font-medium px-2 py-1 bg-brand-100 text-brand-700 rounded-md" id="mobile-step-counter">Step 1/4</span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-2">
+                    <div id="mobile-progress-bar" class="bg-brand-600 h-2 rounded-full transition-all duration-300" style="width: 25%"></div>
                 </div>
             </div>
 
-            <!-- 4b. Mobile-only Step Nav (The original one) -->
-            <div id="mobile-step-nav-container" class="lg:hidden mb-6 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-                <div class="flex items-center justify-between">
-                    <div id="step-nav-1" class="progress-step active flex items-center gap-2 text-sm font-medium text-blue-600">
-                        <span class="step-circle w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all bg-blue-600 text-white">1</span>
-                        <span class="hidden sm:inline">Personal Info</span>
-                    </div>
-                    <div class="progress-divider flex-grow h-0.5 bg-gray-200 mx-2"></div>
-                    <div id="step-nav-2" class="progress-step flex items-center gap-2 text-sm font-medium text-gray-500">
-                        <span class="step-circle w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all bg-gray-200 text-gray-600">2</span>
-                        <span class="hidden sm:inline">Experience</span>
-                    </div>
-                    <div class="progress-divider flex-grow h-0.5 bg-gray-200 mx-2"></div>
-                    <div id="step-nav-3" class="progress-step flex items-center gap-2 text-sm font-medium text-gray-500">
-                        <span class="step-circle w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all bg-gray-200 text-gray-600">3</span>
-                        <span class="hidden sm:inline">Documents</span>
-                    </div>
-                    <div class="progress-divider flex-grow h-0.5 bg-gray-200 mx-2"></div>
-                    <div id="step-nav-4" class="progress-step flex items-center gap-2 text-sm font-medium text-gray-500">
-                        <span class="step-circle w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all bg-gray-200 text-gray-600">4</span>
-                        <span class="hidden sm:inline">Review</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 4c. Main Progress Bar (Desktop) -->
-            <div class="hidden lg:block mb-8">
-                <div class="flex justify-between items-center mb-2">
-                    <span id="progress-text" class="text-sm font-semibold text-blue-700">Step 1 of 4: Personal Info</span>
-                    <span id="progress-percent" class="text-sm font-semibold text-blue-700">25%</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                    <div id="main-progress-bar" class="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-500 ease-out" style="width: 25%"></div>
-                </div>
+            <!-- Loading Spinner -->
+            <div id="loading-state" class="flex flex-col items-center justify-center py-20">
+                <div class="w-12 h-12 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin mb-4"></div>
+                <p class="text-slate-500 font-medium">Loading application details...</p>
             </div>
 
-            <!-- Loading State Indicator -->
-            <div id="loading-state" class="flex flex-col items-center justify-center p-16 bg-white rounded-2xl shadow-lg">
-                <svg class="animate-spin h-12 w-12 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                <p class="mt-4 text-gray-600 font-medium text-lg">Loading Application Form...</p>
-                <!-- Message Area for Loading Errors -->
-                <div id="loading-message" class="message-box error mt-4 p-4 rounded-lg font-medium text-sm items-center gap-3 hidden bg-red-100 border border-red-200 text-red-800 w-full max-w-lg">
-                    <i data-lucide="alert-triangle" class="w-5 h-5 flex-shrink-0"></i>
-                    <span class="message-text"></span>
-                </div>
-            </div>
-
-            <!-- 4d. Application Form (Initially Hidden) -->
-            <!-- The unified navigation footer is *inside* the form tag -->
-            <form id="application-form" class="hidden pb-24 lg:pb-0" enctype="multipart/form-data">
-            
-                <!-- Message Area for Submission Feedback -->
-                <div id="submit-message" class="message-box mb-6 p-4 rounded-xl font-medium text-sm items-center gap-3 hidden">
-                    <i class="message-icon w-5 h-5"></i>
-                    <span class="message-text"></span>
-                </div>
-            
-                <!-- Step 1: Personal Information -->
-                <div id="step-panel-1" class="step-panel bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
-                    <h2 class="flex items-center gap-3 text-2xl font-bold text-gray-900 mb-8">
-                        <i data-lucide="user" class="w-7 h-7 text-blue-600"></i>
-                        Personal Information
-                    </h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
-                        <div>
-                            <label for="firstName" class="form-label">First Name <span class="text-red-600 ml-0.5">*</span></label>
-                            <input id="firstName" name="firstName" type="text" required class="form-input" placeholder="e.g., Jane">
+            <!-- Form -->
+            <form id="application-form" class="hidden fade-in" enctype="multipart/form-data">
+                
+                <!-- STEP 1: Personal Info -->
+                <section id="step-panel-1" class="step-panel">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                            <h2 class="text-lg font-bold text-slate-800">Personal Information</h2>
+                            <i data-lucide="user" class="text-slate-400 w-5 h-5"></i>
                         </div>
-                        <div>
-                            <label for="lastName" class="form-label">Last Name <span class="text-red-600 ml-0.5">*</span></label>
-                            <input id="lastName" name="lastName" type="text" required class="form-input" placeholder="e.g., Doe">
-                        </div>
-                        <div>
-                            <label for="email" class="form-label">Email Address <span class="text-red-600 ml-0.5">*</span></label>
-                            <input id="email" name="email" type="email" required class="form-input bg-gray-100 cursor-not-allowed" placeholder="Your Email" readonly>
-                        </div>
-                        <div>
-                            <label for="phone" class="form-label">Phone Number <span class="text-red-600 ml-0.5">*</span></label>
-                            <input id="phone" name="phone" type="tel" required class="form-input" placeholder="e.g., +91 9876543210">
-                        </div>
-                        <div>
-                            <label for="college" class="form-label">College <span class="text-red-600 ml-0.5">*</span></label>
-                            <input id="college" name="college" type="text" required class="form-input bg-gray-100 cursor-not-allowed" placeholder="Your College" readonly>
-                        </div>
-                        <div>
-                            <label for="department" class="form-label">Department <span class="text-red-600 ml-0.5">*</span></label>
-                            <input id="department" name="department" type="text" required class="form-input" placeholder="e.g., Computer Science">
-                        </div>
-                        <div class="md:col-span-2">
-                            <label for="rollNumber" class="form-label">Roll Number / ID <span class="text-red-600 ml-0.5">*</span></label>
-                            <input id="rollNumber" name="rollNumber" type="text" required class="form-input" placeholder="Your University ID Number">
-                        </div>
-                        
-                        <!-- Address Section -->
-                        <div class="md:col-span-2 pt-6 mt-4 border-t border-gray-200">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-5">Permanent Address</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
-                                <div class="md:col-span-2">
-                                    <label for="street" class="form-label">Street Address <span class="text-red-600 ml-0.5">*</span></label>
-                                    <input id="street" name="street" type="text" required class="form-input" placeholder="1234 Main St">
+                        <div class="p-6 sm:p-8 space-y-6">
+                            
+                            <!-- Name Row -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-semibold text-slate-700">First Name <span class="text-red-500">*</span></label>
+                                    <input type="text" name="firstName" id="firstName" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none" placeholder="e.g. John">
                                 </div>
-                                <div>
-                                    <label for="city" class="form-label">City <span class="text-red-600 ml-0.5">*</span></label>
-                                    <input id="city" name="city" type="text" required class="form-input" placeholder="e.g., Mumbai">
-                                </div>
-                                <div>
-                                    <label for="state" class="form-label">State / Province <span class="text-red-600 ml-0.5">*</span></label>
-                                    <input id="state" name="state" type="text" required class="form-input" placeholder="e.g., Maharashtra">
-                                </div>
-                                <div>
-                                    <label for="zip" class="form-label">ZIP / Postal Code <span class="text-red-600 ml-0.5">*</span></label>
-                                    <input id="zip" name="zip" type="text" required class="form-input" placeholder="e.g., 400001">
-                                </div>
-                                <div>
-                                    <label for="country" class="form-label">Country <span class="text-red-600 ml-0.5">*</span></label>
-                                    <input id="country" name="country" type="text" required class="form-input" placeholder="e.g., India">
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-semibold text-slate-700">Last Name <span class="text-red-500">*</span></label>
+                                    <input type="text" name="lastName" id="lastName" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none" placeholder="e.g. Doe">
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Passport Photo -->
-                        <div class="md:col-span-2 pt-6 mt-4 border-t border-gray-200">
-                            <label class="form-label">Passport Photo <span class="text-red-600 ml-0.5">*</span></label>
-                            <div class="flex flex-col sm:flex-row items-start sm:items-start gap-5 mt-2">
-                                <img id="passportPhotoPreview" src="https://placehold.co/128x128/e0f2fe/0ea5e9?text=Photo" alt="Photo Preview" class="h-32 w-32 rounded-xl object-cover bg-gray-100 border border-gray-200 shadow-sm flex-shrink-0">
-                                <div class="flex-grow w-full">
-                                    <label for="passportPhoto" id="passportPhotoDropZone" class="file-dropzone">
-                                        <i data-lucide="image-up" class="file-dropzone-icon w-10 h-10 text-gray-400 mb-3"></i>
-                                        <p class="file-dropzone-text text-sm text-gray-600"><strong class="text-blue-600 font-semibold">Click to upload</strong> or drag and drop</p>
-                                        <p class="hint-text text-xs text-gray-500 mt-1.5">JPG, PNG, or GIF (Max 5MB)</p>
-                                        <input type="file" id="passportPhoto" name="passportPhoto" accept="image/jpeg, image/png, image/gif" required class="hidden">
-                                    </label>
-                                    <div id="passportPhotoName" class="file-name-display hidden" title="">
-                                        <i data-lucide="image" class="w-5 h-5 text-blue-600"></i>
-                                        <span class="file-name-text"></span>
-                                        <span class="file-name-remove" data-input="passportPhoto" data-preview="passportPhotoPreview" data-placeholder="https://placehold.co/128x128/e0f2fe/0ea5e9?text=Photo"><i data-lucide="x" class="w-3 h-3"></i></span>
+                            <!-- Contact Row -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-semibold text-slate-700">Email Address</label>
+                                    <div class="relative">
+                                        <i data-lucide="mail" class="absolute left-3 top-3 w-5 h-5 text-slate-400"></i>
+                                        <input type="email" name="email" id="email" readonly class="w-full pl-10 pr-4 py-2.5 bg-slate-100 rounded-lg border border-slate-300 text-slate-500 cursor-not-allowed outline-none">
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-semibold text-slate-700">Phone Number <span class="text-red-500">*</span></label>
+                                    <div class="relative">
+                                        <i data-lucide="phone" class="absolute left-3 top-3 w-5 h-5 text-slate-400"></i>
+                                        <input type="tel" name="phone" id="phone" required class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none" placeholder="+91 98765 43210">
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Step 2: Education & Experience -->
-                <div id="step-panel-2" class="step-panel hidden space-y-8">
-                    <!-- Education Card -->
-                    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
-                        <h2 class="flex items-center gap-3 text-2xl font-bold text-gray-900 mb-2">
-                            <i data-lucide="graduation-cap" class="w-7 h-7 text-blue-600"></i>
-                            Education
-                        </h2>
-                        <p class="text-sm text-gray-500 mb-6">Please add at least one educational qualification.<span class="text-red-600 ml-0.5">*</span></p>
-                        <div id="education-container" class="space-y-5">
-                            <!-- Dynamic education blocks will be added here -->
-                        </div>
-                        <button type="button" id="add-education-btn" class="add-button mt-6 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            <i data-lucide="plus" class="w-4 h-4"></i> Add Education
-                        </button>
-                    </div>
-                    
-                    <!-- Work Experience Card -->
-                    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
-                        <details class="group" open>
-                            <summary class="flex items-center justify-between gap-3 text-2xl font-bold text-gray-900 cursor-pointer list-none">
-                                <div class="flex items-center gap-3">
-                                    <i data-lucide="briefcase" class="w-7 h-7 text-blue-600"></i>
-                                    Work Experience
-                                </div>
-                                <i data-lucide="chevron-down" class="w-6 h-6 text-gray-500 transition-transform duration-200 group-open:rotate-180"></i>
-                            </summary>
-                            <p class="text-sm text-gray-500 mb-6 mt-2">Include internships or relevant work (Optional).</p>
-                            
-                            <div class="mt-6 space-y-5" id="experience-container">
-                                <!-- Dynamic experience blocks will be added here -->
-                            </div>
-                            <button type="button" id="add-experience-btn" class="add-button inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-6">
-                                <i data-lucide="plus" class="w-4 h-4"></i> Add Experience
-                            </button>
-                        </details>
-                    </div>
-                    
-                    <!-- Certifications Card -->
-                    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
-                        <details class="group">
-                            <summary class="flex items-center justify-between gap-3 text-2xl font-bold text-gray-900 cursor-pointer list-none">
-                                <div class="flex items-center gap-3">
-                                    <i data-lucide="award" class="w-7 h-7 text-blue-600"></i>
-                                    Global Certifications
-                                </div>
-                                <i data-lucide="chevron-down" class="w-6 h-6 text-gray-500 transition-transform duration-200 group-open:rotate-180"></i>
-                            </summary>
-                            <p class="text-sm text-gray-500 mb-6 mt-2">List any relevant professional certifications (Optional).</p>
-                            
-                            <div class="mt-6 space-y-5" id="certification-container">
-                                <!-- Dynamic certification blocks will be added here -->
-                            </div>
-                            <button type="button" id="add-certification-btn" class="add-button inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mt-6">
-                                <i data-lucide="plus" class="w-4 h-4"></i> Add Certification
-                            </button>
-                        </details>
-                    </div>
-                </div>
 
-                <!-- Step 3: Documents & Links -->
-                <div id="step-panel-3" class="step-panel hidden space-y-8">
-                    <!-- Extracurricular Card -->
-                    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
-                        <details class="group">
-                            <summary class="flex items-center justify-between gap-3 text-2xl font-bold text-gray-900 cursor-pointer list-none">
-                                <div class="flex items-center gap-3">
-                                    <i data-lucide="users" class="w-7 h-7 text-blue-600"></i>
-                                    Extracurricular Activities
+                            <!-- Academic Row -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-semibold text-slate-700">College</label>
+                                    <input type="text" name="college" id="college" readonly class="w-full px-4 py-2.5 bg-slate-100 rounded-lg border border-slate-300 text-slate-500 cursor-not-allowed outline-none">
                                 </div>
-                                <i data-lucide="chevron-down" class="w-6 h-6 text-gray-500 transition-transform duration-200 group-open:rotate-180"></i>
-                            </summary>
-                            <p class="text-sm text-gray-500 mb-6 mt-2">Briefly mention significant activities (Optional).</p>
-                            
-                            <div class="mt-6">
-                                <label for="extracurricular" class="form-label sr-only">Extracurricular Activities</label>
-                                <textarea id="extracurricular" name="extracurricular" rows="5" class="form-textarea" placeholder="e.g., President of Coding Club (2023-24)..."></textarea>
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-semibold text-slate-700">Department <span class="text-red-500">*</span></label>
+                                    <input type="text" name="department" id="department" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none" placeholder="e.g. Computer Science">
+                                </div>
                             </div>
-                        </details>
+                            
+                            <div class="space-y-2">
+                                <label class="block text-sm font-semibold text-slate-700">Roll Number / Student ID <span class="text-red-500">*</span></label>
+                                <input type="text" name="rollNumber" id="rollNumber" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none">
+                            </div>
+
+                            <!-- Address -->
+                            <div class="pt-4 border-t border-slate-100">
+                                <h3 class="text-sm font-bold text-slate-900 mb-4">Address Details</h3>
+                                <div class="space-y-4">
+                                    <div class="space-y-2">
+                                        <label class="block text-sm font-medium text-slate-700">Street Address <span class="text-red-500">*</span></label>
+                                        <input type="text" name="street" id="street" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-slate-700">City <span class="text-red-500">*</span></label>
+                                            <input type="text" name="city" id="city" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-slate-700">State <span class="text-red-500">*</span></label>
+                                            <input type="text" name="state" id="state" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-slate-700">ZIP <span class="text-red-500">*</span></label>
+                                            <input type="text" name="zip" id="zip" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none">
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-slate-700">Country <span class="text-red-500">*</span></label>
+                                            <input type="text" name="country" id="country" required class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition outline-none">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Passport Photo -->
+                            <div class="pt-4 border-t border-slate-100">
+                                <label class="block text-sm font-bold text-slate-900 mb-2">Passport Photo <span class="text-red-500">*</span></label>
+                                <div class="flex items-center gap-6">
+                                    <div class="w-24 h-24 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0">
+                                        <img id="passportPreview" src="https://placehold.co/100x100/e2e8f0/94a3b8?text=Photo" class="w-full h-full object-cover">
+                                    </div>
+                                    <div class="flex-1">
+                                        <label for="passportPhoto" class="flex flex-col items-center justify-center w-full h-24 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-brand-50 hover:border-brand-300 transition-all group">
+                                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                                <i data-lucide="upload-cloud" class="w-6 h-6 text-slate-400 group-hover:text-brand-500 mb-1"></i>
+                                                <p class="text-xs text-slate-500"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                                            </div>
+                                            <input id="passportPhoto" name="passportPhoto" type="file" accept="image/*" class="hidden" required />
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
-                
-                    <!-- Documents & Links Card -->
-                    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
-                        <h2 class="flex items-center gap-3 text-2xl font-bold text-gray-900 mb-8">
-                            <i data-lucide="paperclip" class="w-7 h-7 text-blue-600"></i>
-                            Documents & Links
-                        </h2>
-                        <div class="space-y-8">
-                            <!-- Resume -->
-                            <div>
-                                <label class="form-label">Resume/CV (PDF) <span class="text-red-600 ml-0.5">*</span></label>
-                                <label for="resume" id="resumeDropZone" class="file-dropzone mt-2">
-                                    <i data-lucide="upload-cloud" class="file-dropzone-icon w-10 h-10 text-gray-400 mb-3"></i>
-                                    <p class="file-dropzone-text text-sm text-gray-600"><strong class="text-blue-600 font-semibold">Click to upload</strong> or drag and drop</p>
-                                    <p class="hint-text text-xs text-gray-500 mt-1.5">PDF format only (Max 5MB)</p>
-                                    <input type="file" id="resume" name="resume" accept=".pdf" required class="hidden">
-                                </label>
-                                <div id="resumeName" class="file-name-display hidden" title="">
-                                    <i data-lucide="file-text" class="w-5 h-5 text-blue-600"></i>
-                                    <span class="file-name-text"></span>
-                                    <span class="file-name-remove" data-input="resume"><i data-lucide="x" class="w-3 h-3"></i></span>
+                </section>
+
+                <!-- STEP 2: Education & Experience -->
+                <section id="step-panel-2" class="step-panel hidden">
+                    <div class="space-y-6">
+                        
+                        <!-- Education Card -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                                <div>
+                                    <h2 class="text-lg font-bold text-slate-800">Education</h2>
+                                    <p class="text-xs text-slate-500">Add your academic qualifications</p>
                                 </div>
+                                <i data-lucide="graduation-cap" class="text-slate-400 w-5 h-5"></i>
                             </div>
+                            <div class="p-6">
+                                <div id="education-container" class="space-y-4">
+                                    <!-- Dynamic Blocks will go here -->
+                                </div>
+                                <button type="button" onclick="addEducationBlock()" class="mt-4 flex items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700 transition">
+                                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Education
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Work Experience Card -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center cursor-pointer" onclick="toggleDetails('exp-content', 'exp-chevron')">
+                                <div>
+                                    <h2 class="text-lg font-bold text-slate-800">Work Experience</h2>
+                                    <p class="text-xs text-slate-500">Internships or full-time jobs (Optional)</p>
+                                </div>
+                                <i id="exp-chevron" data-lucide="chevron-down" class="text-slate-400 w-5 h-5 transition-transform"></i>
+                            </div>
+                            <div id="exp-content" class="p-6">
+                                <div id="experience-container" class="space-y-4"></div>
+                                <button type="button" onclick="addExperienceBlock()" class="mt-4 flex items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700 transition">
+                                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Experience
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Certifications Card -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center cursor-pointer" onclick="toggleDetails('cert-content', 'cert-chevron')">
+                                <div>
+                                    <h2 class="text-lg font-bold text-slate-800">Certifications</h2>
+                                    <p class="text-xs text-slate-500">Relevant certificates (Optional)</p>
+                                </div>
+                                <i id="cert-chevron" data-lucide="chevron-down" class="text-slate-400 w-5 h-5 transition-transform rotate-180"></i>
+                            </div>
+                            <div id="cert-content" class="p-6 hidden">
+                                <div id="certification-container" class="space-y-4"></div>
+                                <button type="button" onclick="addCertificationBlock()" class="mt-4 flex items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700 transition">
+                                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Certification
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- STEP 3: Documents -->
+                <section id="step-panel-3" class="step-panel hidden">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                            <h2 class="text-lg font-bold text-slate-800">Documents & Links</h2>
+                            <i data-lucide="folder-open" class="text-slate-400 w-5 h-5"></i>
+                        </div>
+                        <div class="p-6 sm:p-8 space-y-8">
                             
+                            <!-- Resume Upload -->
+                            <div>
+                                <label class="block text-sm font-bold text-slate-900 mb-2">Resume (PDF) <span class="text-red-500">*</span></label>
+                                <label for="resume" class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-brand-50 hover:border-brand-400 transition-all group" id="resumeDrop">
+                                    <div class="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
+                                        <i data-lucide="file-text" class="w-8 h-8 text-slate-400 group-hover:text-brand-500 mb-2 transition"></i>
+                                        <p class="text-sm text-slate-600"><span class="font-semibold text-brand-600">Click to upload</span> or drag and drop</p>
+                                        <p class="text-xs text-slate-400 mt-1" id="resumeFileName">PDF only (Max 5MB)</p>
+                                    </div>
+                                    <input id="resume" name="resume" type="file" accept="application/pdf" class="hidden" required />
+                                </label>
+                            </div>
+
                             <!-- Govt ID -->
-                            <div>
-                                <label class="form-label">Government ID (Optional)</label>
-                                <select id="govtIdType" name="govtIdType" class="form-select mb-3 max-w-sm">
-                                    <option value="">Select ID Type</option>
-                                    <option value="Aadhar">Aadhar Card</option>
-                                    <option value="PAN">PAN Card</option>
-                                    <option value="Passport">Passport</option>
-                                    <option value="DrivingLicense">Driving License</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                                <label for="govtId" id="govtIdDropZone" class="file-dropzone">
-                                    <i data-lucide="upload-cloud" class="file-dropzone-icon w-10 h-10 text-gray-400 mb-3"></i>
-                                    <p class="file-dropzone-text text-sm text-gray-600"><strong class="text-blue-600 font-semibold">Click to upload</strong> or drag and drop</p>
-                                    <p class="hint-text text-xs text-gray-500 mt-1.5">PDF or Image (Max 5MB)</p>
-                                    <input type="file" id="govtId" name="govtId" accept="image/*,.pdf" class="hidden">
-                                </label>
-                                <div id="govtIdName" class="file-name-display hidden" title="">
-                                    <i data-lucide="file-check" class="w-5 h-5 text-blue-600"></i>
-                                    <span class="file-name-text"></span>
-                                    <span class="file-name-remove" data-input="govtId"><i data-lucide="x" class="w-3 h-3"></i></span>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                <div class="sm:col-span-1">
+                                    <label class="block text-sm font-semibold text-slate-700 mb-2">ID Type</label>
+                                    <select name="govtIdType" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none">
+                                        <option value="">Select ID</option>
+                                        <option value="Aadhar">Aadhar Card</option>
+                                        <option value="PAN">PAN Card</option>
+                                        <option value="Passport">Passport</option>
+                                    </select>
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <label class="block text-sm font-semibold text-slate-700 mb-2">Upload ID Document</label>
+                                    <label for="govtId" class="flex items-center justify-center w-full h-[46px] border border-slate-300 rounded-lg cursor-pointer bg-white hover:bg-slate-50 transition px-4 relative overflow-hidden">
+                                        <span id="govtIdFileName" class="text-sm text-slate-500 truncate">Choose File...</span>
+                                        <input id="govtId" name="govtId" type="file" accept="image/*,.pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                                    </label>
                                 </div>
                             </div>
-                            
-                            <!-- Links -->
-                            <div class="space-y-6 pt-6 border-t border-gray-200">
-                                <div>
-                                    <label for="linkedinUrl" class="form-label">LinkedIn Profile URL (Optional)</label>
+
+                            <hr class="border-slate-100">
+
+                            <!-- Social Links -->
+                            <div class="space-y-4">
+                                <h3 class="text-sm font-bold text-slate-900">Professional Links</h3>
+                                <div class="grid grid-cols-1 gap-4">
                                     <div class="relative">
-                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                            <i data-lucide="linkedin" class="w-5 h-5 text-gray-400"></i>
-                                        </div>
-                                        <input type="url" id="linkedinUrl" name="linkedinUrl" class="form-input pl-12" placeholder="httpss://linkedin.com/in/yourprofile">
+                                        <i data-lucide="linkedin" class="absolute left-3 top-3 w-5 h-5 text-slate-400"></i>
+                                        <input type="url" name="linkedinUrl" class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none" placeholder="LinkedIn Profile URL">
+                                    </div>
+                                    <div class="relative">
+                                        <i data-lucide="github" class="absolute left-3 top-3 w-5 h-5 text-slate-400"></i>
+                                        <input type="url" name="githubUrl" class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none" placeholder="GitHub Profile URL">
+                                    </div>
+                                    <div class="relative">
+                                        <i data-lucide="globe" class="absolute left-3 top-3 w-5 h-5 text-slate-400"></i>
+                                        <input type="url" name="portfolioUrl" class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none" placeholder="Portfolio / Personal Website">
                                     </div>
                                 </div>
-                                <div>
-                                    <label for="githubUrl" class="form-label">GitHub Profile URL (Optional)</label>
-                                    <div class="relative">
-                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                            <i data-lucide="github" class="w-5 h-5 text-gray-400"></i>
-                                        </div>
-                                        <input type="url" id="githubUrl" name="githubUrl" class="form-input pl-12" placeholder="httpss://github.com/yourusername">
-                                    </div>
-                                </div>
-                                <div>
-                                    <label for="portfolioUrl" class="form-label">Portfolio URL (Optional)</label>
-                                    <div class="relative">
-                                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                            <i data-lucide="link" class="w-5 h-5 text-gray-400"></i>
-                                        </div>
-                                        <input type="url" id="portfolioUrl" name="portfolioUrl" class="form-input pl-12" placeholder="httpss://yourportfolio.com">
-                                    </div>
-                                </div>
+                            </div>
+
+                            <!-- Extra Curricular -->
+                            <div class="space-y-2">
+                                <label class="block text-sm font-bold text-slate-900">Extracurricular Activities (Optional)</label>
+                                <textarea name="extracurricular" rows="3" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none" placeholder="Briefly describe any clubs, sports, or volunteering..."></textarea>
+                            </div>
+
+                        </div>
+                    </div>
+                </section>
+
+                <!-- STEP 4: Review -->
+                <section id="step-panel-4" class="step-panel hidden">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="p-6 border-b border-slate-100 bg-brand-50 flex items-center gap-3">
+                            <i data-lucide="check-circle-2" class="text-brand-600 w-6 h-6"></i>
+                            <div>
+                                <h2 class="text-lg font-bold text-brand-900">Review Application</h2>
+                                <p class="text-xs text-brand-600">Please verify all details before submitting.</p>
+                            </div>
+                        </div>
+                        <div class="p-6 sm:p-8" id="review-content">
+                            <!-- Populated by JS -->
+                            <div class="flex justify-center py-8">
+                                <div class="w-8 h-8 border-2 border-brand-200 border-t-brand-600 rounded-full animate-spin"></div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <!-- Step 4: Review & Submit -->
-                <div id="step-panel-4" class="step-panel hidden bg-white p-6 md:p-8 rounded-2xl shadow-lg border border-gray-200">
-                    <h2 class="flex items-center gap-3 text-2xl font-bold text-gray-900 mb-8">
-                        <i data-lucide="check-circle" class="w-7 h-7 text-blue-600"></i>
-                        Review Your Application
-                    </h2>
-                    
-                    <div id="preview-content" class="space-y-8">
-                        <!-- Preview content will be injected here by JavaScript -->
-                        <p class="text-center text-gray-500">Generating preview...</p>
-                    </div>
-                </div>
-                
-                <!-- 
-                ============================================================
-                NEW: Unified Sticky Navigation
-                This single navigation block replaces all the old .step-navigation divs
-                The 'showStep' function now controls which buttons are visible.
-                ============================================================
-                -->
-                <div class="fixed bottom-0 left-0 lg:left-80 right-0 z-10 bg-white/90 backdrop-blur-sm p-4 border-t border-gray-200 shadow-top-lg">
-                   <div class="max-w-3xl mx-auto flex justify-between items-center">
-                        <!-- Previous / Edit Button -->
-                        <button type="button" id="global-prev-btn" class="btn btn-secondary hidden inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-blue-500">
-                            <i data-lucide="arrow-left" class="w-4 h-4"></i> Previous
-                        </button>
-                        <button type="button" id="global-edit-btn" class="btn btn-secondary hidden inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-blue-500">
-                            <i data-lucide="edit-2" class="w-4 h-4"></i> Back to Edit
+                <!-- Sticky Bottom Navigation -->
+                <div class="fixed bottom-0 left-0 right-0 lg:sticky lg:bottom-4 bg-white border-t border-slate-200 lg:border lg:rounded-xl lg:shadow-lg p-4 z-40 mobile-nav-shadow lg:mx-auto lg:w-full lg:max-w-4xl transition-all duration-300">
+                    <div class="flex justify-between items-center max-w-7xl mx-auto">
+                        <button type="button" id="prev-btn" class="hidden px-5 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition">
+                            <span class="flex items-center gap-2"><i data-lucide="arrow-left" class="w-4 h-4"></i> Back</span>
                         </button>
                         
-                        <!-- Spacer for "Previous" only state -->
-                        <div id="global-nav-spacer" class="hidden"></div>
-                        
-                        <!-- Next / Review / Submit Buttons -->
+                        <div class="flex-1"></div> <!-- Spacer -->
+
                         <div class="flex gap-3">
-                            <button type="button" id="global-download-btn" class="btn btn-secondary hidden inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-blue-500">
-                                <i data-lucide="download" class="w-4 h-4"></i> <span class="hidden sm:inline">Download</span>
-                            </button>
-                        
-                            <button type="button" id="global-next-btn" class="btn btn-primary hidden inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500">
+                            <button type="button" id="next-btn" class="px-6 py-2.5 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 shadow-md shadow-brand-500/20 transition flex items-center gap-2">
                                 Next Step <i data-lucide="arrow-right" class="w-4 h-4"></i>
                             </button>
-                            <button type="button" id="global-review-btn" class="btn btn-primary hidden inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 text-white bg-blue-600 hover:bg-blue-700 focus:ring-blue-500">
-                                Review Application <i data-lucide="eye" class="w-4 h-4"></i>
-                            </button>
-                            
-                            <button type="submit" id="submit-btn" 
-                                    class="btn btn-success hidden w-full sm:w-auto 
-                                    disabled:opacity-60 disabled:cursor-not-allowed
-                                    inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 text-white bg-green-600 hover:bg-green-700 focus:ring-green-500">
-                                <span class="button-text">Submit Application</span>
-                                <span class="button-spinner hidden"></span>
+                            <button type="submit" id="submit-btn" class="hidden px-6 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 shadow-md shadow-green-500/20 transition flex items-center gap-2">
+                                Submit Application <i data-lucide="send" class="w-4 h-4"></i>
                             </button>
                         </div>
-                   </div>
+                    </div>
                 </div>
-                
+
             </form>
         </main>
+    </div>
 
-    </div> <!-- End Main Container -->
-    
-    <!-- Confirmation Modal (Hidden by default) -->
-    <div id="confirmation-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ease-in-out">
-        <div class="modal-overlay absolute inset-0 bg-black bg-opacity-60"></div>
-        <div class="modal-content text-center">
-            <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i data-lucide="check" class="w-10 h-10"></i>
+    <!-- Success Modal -->
+    <div id="success-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity opacity-0">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 transform scale-95 transition-transform duration-300 text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="check" class="w-8 h-8 text-green-600"></i>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900 mb-2">Application Submitted!</h3>
-            <p class="text-gray-600 mb-6">Your application has been sent successfully. We will get back to you soon.</p>
-            <button id="modal-close-btn" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                Track My Applications
-            </button>
+            <h3 class="text-2xl font-bold text-slate-900 mb-2">Application Sent!</h3>
+            <p class="text-slate-600 mb-6">Your application has been successfully submitted. We will review it and get back to you shortly.</p>
+            <div class="flex gap-3 justify-center">
+                <button id="download-pdf-btn" class="px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 font-medium text-sm">
+                    Download PDF
+                </button>
+                <a href="student-my-applications.html" class="px-4 py-2 bg-brand-600 rounded-lg text-white hover:bg-brand-700 font-medium text-sm">
+                    Go to Dashboard
+                </a>
+            </div>
         </div>
     </div>
 
-
     <script>
-        // --- Globals for jsPDF ---
-        window.jsPDF = window.jspdf.jsPDF;
-        window.autoTable = window.jspdf.autoTable;
-
-        // --- Utility Functions for Dynamic Sections ---
-        let educationCounter = 0;
-        let experienceCounter = 0;
-        let certificationCounter = 0;
-        
-        // --- REDESIGNED Base classes for dynamic form elements ---
-        const formInputClasses = "form-input block w-full rounded-xl border-gray-300 bg-white shadow-sm transition-all duration-200 ease-in-out placeholder:text-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20";
-        const formSelectClasses = "form-select block w-full rounded-xl border-gray-300 bg-white shadow-sm transition-all duration-200 ease-in-out placeholder:text-gray-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20";
-        const formTextareaClasses = "form-textarea block w-full rounded-xl border-gray-300 bg-white shadow-sm transition-all duration-200 ease-in-out placeholder:text-gray-400 min-h-[100px]";
-        const formLabelClasses = "form-label block text-sm font-semibold text-gray-800 mb-1.5";
-        const requiredSpan = `<span class="text-red-600 ml-0.5">*</span>`;
-        
-        // --- REDESIGNED File uploader classes ---
-        const fileDropZoneClasses = "file-dropzone mt-1 !p-4 flex flex-col items-center justify-center w-full p-6 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-white hover:bg-gray-50 transition-colors duration-200";
-        const fileDropZoneIconClasses = "file-dropzone-icon !w-8 !h-8 !mb-2 w-10 h-10 text-gray-400 mb-3";
-        const fileDropZoneTextClasses = "file-dropzone-text !text-xs text-sm text-gray-600";
-        const fileNameDisplayClasses = "file-name-display hidden items-center gap-2.5 bg-blue-50 text-blue-800 rounded-lg px-4 py-2.5 text-sm font-medium mt-3 border border-blue-100";
-        const fileNameRemoveClasses = "file-name-remove w-5 h-5 rounded-full bg-blue-200 text-blue-800 flex items-center justify-center cursor-pointer hover:bg-blue-300 transition-all";
-        const hintTextClasses = "hint-text text-xs text-gray-500 mt-1.5";
-
-
-        // Function to create and add an education block
-        function addEducationBlock(data = {}) {
-            educationCounter++;
-            const container = document.getElementById('education-container');
-            const div = document.createElement('div');
-            div.className = 'dynamic-block p-5'; // Use new .dynamic-block style
-            div.dataset.index = educationCounter;
-            div.innerHTML = `
-                <button type="button" class="remove-btn absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 text-gray-600 hover:bg-red-100 hover:text-red-600 transition-all" onclick="removeBlock(this)" aria-label="Remove education entry">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-5">
-                    <div>
-                        <label class="${formLabelClasses}">Type ${requiredSpan}</label>
-                        <select name="education_${educationCounter}_type" required class="${formSelectClasses}">
-                            <option value="">Select Type</option>
-                            <option value="High School">High School</option>
-                            <option value="Diploma">Diploma</option>
-                            <option value="Bachelor's">Bachelor's</option>
-                            <option value="Master's">Master's</option>
-                            <option value="PhD">PhD</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="${formLabelClasses}">Institute Name ${requiredSpan}</label>
-                        <input type="text" name="education_${educationCounter}_institute" required class="${formInputClasses}" placeholder="e.g., University Name">
-                    </div>
-                    <div>
-                        <label class="${formLabelClasses}">Stream/Major ${requiredSpan}</label>
-                        <input type="text" name="education_${educationCounter}_stream" required class="${formInputClasses}" placeholder="e.g., B.Tech CSE">
-                    </div>
-                    <div>
-                        <label class="${formLabelClasses}">Score/GPA ${requiredSpan}</label>
-                        <input type="text" name="education_${educationCounter}_score" required class="${formInputClasses}" placeholder="e.g., 8.5 CGPA or 85%">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="${formLabelClasses}">Certificate/Marksheet (Optional)</label>
-                        <label for="education_certificate_${educationCounter}" class="${fileDropZoneClasses}">
-                            <i data-lucide="upload-cloud" class="${fileDropZoneIconClasses}"></i>
-                            <p class="${fileDropZoneTextClasses}"><strong class="text-blue-600 font-semibold">Click to upload</strong> or drag and drop</p>
-                            <input type="file" id="education_certificate_${educationCounter}" name="education_certificate_${educationCounter}" accept="image/*,.pdf" class="hidden">
-                        </label>
-                        <div id="education_certificate_name_${educationCounter}" class="${fileNameDisplayClasses}" title="">
-                            <i data-lucide="file-text" class="w-5 h-5 text-blue-600"></i>
-                            <span class="file-name-text"></span>
-                            <span class="${fileNameRemoveClasses}" data-input="education_certificate_${educationCounter}"><i data-lucide="x" class="w-3 h-3"></i></span>
-                        </div>
-                        <p class="${hintTextClasses}">PDF or Image. Max 5MB.</p>
-                    </div>
-                </div>
-            `;
-            container.appendChild(div);
-            lucide.createIcons();
-            addFileDisplayListener(`education_certificate_${educationCounter}`);
-            setupFormValidation(div);
-        }
-
-        // Function to create and add an experience block
-        function addExperienceBlock(data = {}) {
-            experienceCounter++;
-            const container = document.getElementById('experience-container');
-            const div = document.createElement('div');
-            div.className = 'dynamic-block p-5';
-            div.dataset.index = experienceCounter;
-            div.innerHTML = `
-                <button type="button" class="remove-btn absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 text-gray-600 hover:bg-red-100 hover:text-red-600 transition-all" onclick="removeBlock(this)" aria-label="Remove experience entry">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-5">
-                    <div>
-                        <label class="${formLabelClasses}">Job Title ${requiredSpan}</label>
-                        <input type="text" name="experience_${experienceCounter}_title" required class="${formInputClasses}" placeholder="e.g., Software Engineer Intern">
-                    </div>
-                    <div>
-                        <label class="${formLabelClasses}">Company Name ${requiredSpan}</label>
-                        <input type="text" name="experience_${experienceCounter}_company" required class="${formInputClasses}" placeholder="e.g., Tech Corp">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="${formLabelClasses}">Description (Optional)</label>
-                        <textarea name="experience_${experienceCounter}_description" rows="3" class="${formTextareaClasses}" placeholder="Describe your responsibilities..."></textarea>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="${formLabelClasses}">Experience/Relieving Letter (Optional)</label>
-                        <label for="experience_certificate_${experienceCounter}" class="${fileDropZoneClasses}">
-                            <i data-lucide="upload-cloud" class="${fileDropZoneIconClasses}"></i>
-                            <p class="${fileDropZoneTextClasses}"><strong class="text-blue-600 font-semibold">Click to upload</strong> or drag and drop</p>
-                            <input type="file" id="experience_certificate_${experienceCounter}" name="experience_certificate_${experienceCounter}" accept="image/*,.pdf" class="hidden">
-                        </label>
-                        <div id="experience_certificate_name_${experienceCounter}" class="${fileNameDisplayClasses}" title="">
-                            <i data-lucide="file-text" class="w-5 h-5 text-blue-600"></i>
-                            <span class="file-name-text"></span>
-                            <span class="${fileNameRemoveClasses}" data-input="experience_certificate_${experienceCounter}"><i data-lucide="x" class="w-3 h-3"></i></span>
-                        </div>
-                         <p class="${hintTextClasses}">PDF or Image. Max 5MB.</p>
-                    </div>
-                </div>
-            `;
-            container.appendChild(div);
-            lucide.createIcons();
-            addFileDisplayListener(`experience_certificate_${experienceCounter}`);
-            setupFormValidation(div);
-        }
-
-        // Function to create and add a certification block
-        function addCertificationBlock(data = {}) {
-            certificationCounter++;
-            const container = document.getElementById('certification-container');
-            const div = document.createElement('div');
-            div.className = 'dynamic-block p-5';
-            div.dataset.index = certificationCounter;
-            div.innerHTML = `
-                <button type="button" class="remove-btn absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full bg-gray-200 text-gray-600 hover:bg-red-100 hover:text-red-600 transition-all" onclick="removeBlock(this)" aria-label="Remove certification entry">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-5 gap-y-5">
-                    <div>
-                        <label class="${formLabelClasses}">Certification Name ${requiredSpan}</label>
-                        <input type="text" name="certification_${certificationCounter}_name" required class="${formInputClasses}" placeholder="e.g., AWS Certified Cloud Practitioner">
-                    </div>
-                    <div>
-                        <label class="${formLabelClasses}">Issuing Provider ${requiredSpan}</label>
-                        <input type="text" name="certification_${certificationCounter}_provider" required class="${formInputClasses}" placeholder="e.g., Amazon Web Services">
-                    </div>
-                    <div>
-                        <label class="${formLabelClasses}">Credential ID (Optional)</label>
-                        <input type="text" name="certification_${certificationCounter}_id" class="${formInputClasses}" placeholder="e.g., ABC-123-XYZ">
-                    </div>
-                    <div>
-                        <label class="${formLabelClasses}">Date Issued (Optional)</label>
-                        <input type="date" name="certification_${certificationCounter}_date" class="${formInputClasses}">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="${formLabelClasses}">Certificate File (Optional)</label>
-                        <label for="certification_file_${certificationCounter}" class="${fileDropZoneClasses}">
-                            <i data-lucide="upload-cloud" class="${fileDropZoneIconClasses}"></i>
-                            <p class="${fileDropZoneTextClasses}"><strong class="text-blue-600 font-semibold">Click to upload</strong> or drag and drop</p>
-                            <input type="file" id="certification_file_${certificationCounter}" name="certification_file_${certificationCounter}" accept="image/*,.pdf" class="hidden">
-                        </label>
-                        <div id="certification_file_name_${certificationCounter}" class="${fileNameDisplayClasses}" title="">
-                            <i data-lucide="file-text" class="w-5 h-5 text-blue-600"></i>
-                            <span class="file-name-text"></span>
-                            <span class="${fileNameRemoveClasses}" data-input="certification_file_${certificationCounter}"><i data-lucide="x" class="w-3 h-3"></i></span>
-                        </div>
-                         <p class="${hintTextClasses}">PDF or Image. Max 5MB.</p>
-                    </div>
-                </div>
-            `;
-            container.appendChild(div);
-            lucide.createIcons();
-            addFileDisplayListener(`certification_file_${certificationCounter}`);
-            setupFormValidation(div);
-        }
-
-        // Generic function to remove any dynamic block
-        function removeBlock(button) {
-            const block = button.closest('.dynamic-block');
-            block.style.opacity = 0;
-            block.style.transform = 'translateY(-10px)';
-            setTimeout(() => {
-                block.remove();
-            }, 300);
-        }
-
-        // Function to update the file name display when a file is selected
-        function addFileDisplayListener(inputId) {
-            const input = document.getElementById(inputId);
-            if (!input) return;
-            
-            let nameSpanId;
-            if (inputId.includes('education_certificate_')) {
-                nameSpanId = `education_certificate_name_${inputId.match(/\d+$/)[0]}`;
-            } else if (inputId.includes('experience_certificate_')) {
-                nameSpanId = `experience_certificate_name_${inputId.match(/\d+$/)[0]}`;
-            } else if (inputId.includes('certification_file_')) {
-                nameSpanId = `certification_file_name_${inputId.match(/\d+$/)[0]}`;
-            } else {
-                nameSpanId = inputId + 'Name'; // For passportPhoto, resume, govtId
-            }
-            
-            const nameSpan = document.getElementById(nameSpanId);
-            if (!nameSpan) return;
-
-            const textSpan = nameSpan.querySelector('.file-name-text');
-            
-            input.addEventListener('change', (e) => {
-                handleFileChange(input, nameSpan, textSpan, e.target.files);
-            });
-        }
-        
-        // Handle file change (from input or drop)
-        function handleFileChange(input, nameSpan, textSpan, files) {
-            if (files.length > 0) {
-                const fileName = files[0].name;
-                textSpan.textContent = fileName.length > 30 ? `${fileName.substring(0, 27)}...` : fileName;
-                nameSpan.title = fileName;
-                nameSpan.classList.remove('hidden');
-                nameSpan.classList.add('inline-flex');
-                
-                // Handle image preview for passport photo
-                if (input.id === 'passportPhoto' && files[0].type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    const preview = document.getElementById('passportPhotoPreview');
-                    reader.onload = (event) => { preview.src = event.target.result; }
-                    reader.readAsDataURL(files[0]);
-                }
-            } else {
-                nameSpan.classList.add('hidden');
-                nameSpan.classList.remove('inline-flex');
-                textSpan.textContent = '';
-                nameSpan.title = '';
-            }
-        }
-        
-        // Function to display messages
-        function showMessage(divElement, msg, type = 'info') {
-             const textSpan = divElement.querySelector('.message-text') || divElement;
-             const iconElement = divElement.querySelector('i'); // Lucide icon
-
-             textSpan.textContent = msg;
-             divElement.classList.remove('error', 'success', 'info', 'show', 'flex', 'hidden', 'bg-red-100', 'border', 'border-red-200', 'text-red-800', 'bg-green-100', 'border-green-200', 'text-green-800', 'bg-blue-100', 'border-blue-200', 'text-blue-800');
-             if (iconElement) iconElement.removeAttribute('data-lucide');
-
-             if (!msg) {
-                 divElement.classList.add('hidden');
-             } else {
-                 divElement.classList.add('show', 'flex', type);
-                  if (iconElement) {
-                      let iconName = 'info';
-                      if (type === 'error') {
-                        iconName = 'alert-triangle';
-                        divElement.classList.add('bg-red-100', 'border', 'border-red-200', 'text-red-800');
-                      } else if (type === 'success') {
-                        iconName = 'check-circle';
-                        divElement.classList.add('bg-green-100', 'border', 'border-green-200', 'text-green-800');
-                      } else {
-                        iconName = 'info';
-                        divElement.classList.add('bg-blue-100', 'border', 'border-blue-200', 'text-blue-800');
-                      }
-                      iconElement.setAttribute('data-lucide', iconName);
-                      lucide.createIcons({
-                        nodes: [iconElement]
-                      });
-                  }
-             }
-        }
-        
-        // --- Drag and Drop File Upload ---
-        function setupDragAndDrop(dropZoneId, inputId) {
-            const dropZone = document.getElementById(dropZoneId);
-            const fileInput = document.getElementById(inputId);
-            const nameSpan = document.getElementById(inputId + 'Name');
-            const textSpan = nameSpan ? nameSpan.querySelector('.file-name-text') : null;
-
-            if (!dropZone || !fileInput) return;
-
-            ['dragover', 'dragenter'].forEach(eventName => {
-                dropZone.addEventListener(eventName, e => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    dropZone.classList.add('drag-over');
-                });
-            });
-
-            ['dragleave', 'dragend'].forEach(eventName => {
-                dropZone.addEventListener(eventName, e => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    dropZone.classList.remove('drag-over');
-                });
-            });
-
-            dropZone.addEventListener('drop', e => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropZone.classList.remove('drag-over');
-                
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    fileInput.files = files;
-                    if(nameSpan && textSpan) {
-                         handleFileChange(fileInput, nameSpan, textSpan, files);
-                    }
-                    validateInput(fileInput);
-                }
-            });
-        }
-        
-        // --- Inline Form Validation ---
-        function validateInput(el) {
-            if (el.checkValidity()) {
-                el.classList.remove('invalid');
-                el.classList.add('valid');
-                return true;
-            } else {
-                el.classList.remove('valid');
-                el.classList.add('invalid');
-                return false;
-            }
-        }
-        
-        function validateStep(stepNumber, submitMessageDiv) {
-            const panel = document.getElementById(`step-panel-${stepNumber}`);
-            if (!panel) return false;
-            
-            // Find all required inputs *only* within the current step panel
-            const inputs = panel.querySelectorAll('input[required], select[required], textarea[required]');
-            let isStepValid = true;
-            
-            inputs.forEach(input => {
-                const isValid = validateInput(input);
-                if (!isValid) {
-                    isStepValid = false;
-                }
-            });
-
-            // Special check for Step 2: Ensure at least one education block exists
-            if (stepNumber === 2) {
-                if (panel.querySelectorAll('#education-container .dynamic-block').length === 0) {
-                    showMessage(submitMessageDiv, 'Please add at least one education entry.', 'error');
-                    submitMessageDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    isStepValid = false;
-                }
-            }
-            
-            if (!isStepValid) {
-                // Only show this message if the specific education error wasn't already shown
-                if (submitMessageDiv.textContent.trim() === '') {
-                    showMessage(submitMessageDiv, 'Please fill out all required fields marked with *', 'error');
-                }
-                 const firstInvalid = panel.querySelector('.invalid');
-                 if (firstInvalid) {
-                    firstInvalid.focus();
-                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                 }
-            } else {
-                 showMessage(submitMessageDiv, '', 'info'); // Clear error
-            }
-
-            return isStepValid;
-        }
-
-        function setupFormValidation(container) {
-            const inputs = container.querySelectorAll('input[required], select[required], textarea[required]');
-            inputs.forEach(input => {
-                input.addEventListener('blur', () => { validateInput(input); });
-                input.addEventListener('input', () => {
-                    // Clear validation state on input
-                    input.classList.remove('invalid', 'valid');
-                });
-            });
-        }
-        
-        // --- Stepper Logic ---
+        // --- State Management ---
         let currentStep = 1;
         const totalSteps = 4;
-        const stepIcons = {
-            1: 'user',
-            2: 'briefcase',
-            3: 'paperclip',
-            4: 'check-circle'
-        };
-        const stepNames = {
-            1: 'Personal Info',
-            2: 'Experience',
-            3: 'Documents',
-            4: 'Review & Submit'
-        };
-
-        function showStep(stepNumber) {
-            if (stepNumber < 1 || stepNumber > totalSteps) return;
-
-            // 1. Hide all panels, show the current one
-            document.querySelectorAll('.step-panel').forEach(panel => {
-                panel.classList.add('hidden');
-            });
-            document.getElementById(`step-panel-${stepNumber}`).classList.remove('hidden');
-
-            // 2. Update Mobile Stepper (Original logic)
-            for (let i = 1; i <= totalSteps; i++) {
-                const stepNav = document.getElementById(`step-nav-${i}`);
-                const circle = stepNav.querySelector('.step-circle');
-                stepNav.classList.remove('active', 'completed', 'text-blue-600', 'text-gray-500');
-                circle.classList.remove('bg-blue-600', 'text-white', 'bg-green-500', 'bg-gray-200', 'text-gray-600');
-
-                if (i < stepNumber) {
-                    stepNav.classList.add('completed', 'text-gray-500');
-                    circle.classList.add('bg-green-500', 'text-white');
-                    circle.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i>`;
-                } else if (i === stepNumber) {
-                    stepNav.classList.add('active', 'text-blue-600');
-                    circle.classList.add('bg-blue-600', 'text-white');
-                    circle.textContent = i;
-                } else {
-                    stepNav.classList.add('text-gray-500');
-                    circle.classList.add('bg-gray-200', 'text-gray-600');
-                    circle.textContent = i;
-                }
+        let jobDetails = {};
+        
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            lucide.createIcons();
+            
+            // Check Auth
+            const userString = localStorage.getItem('studentUser');
+            const token = localStorage.getItem('studentToken');
+            
+            if (!userString || !token) {
+                window.location.href = 'student-login.html';
+                return;
             }
             
-            // 3. Update Desktop Sidebar Stepper (New Logic)
-            for (let i = 1; i <= totalSteps; i++) {
-                const step = document.getElementById(`sidebar-step-${i}`);
-                const icon = step.querySelector('.step-icon');
-                const status = step.querySelector('.step-text .status');
-                step.classList.remove('active', 'completed');
+            const user = JSON.parse(userString);
+            const urlParams = new URLSearchParams(window.location.search);
+            const jobId = urlParams.get('jobId');
+
+            if (!jobId) {
+                showToast("Job ID is missing.", "error");
+                return;
+            }
+
+            // Fetch Job Data
+            try {
+                const res = await fetch(`/api/public/jobs/${jobId}`);
+                if (!res.ok) throw new Error("Failed to fetch job");
+                jobDetails = await res.json();
                 
-                if (i < stepNumber) {
-                    step.classList.add('completed');
-                    icon.innerHTML = `<i data-lucide="check" class="w-5 h-5"></i>`;
-                    status.textContent = 'Completed';
-                } else if (i === stepNumber) {
-                    step.classList.add('active');
-                    icon.innerHTML = `<i data-lucide="${stepIcons[i]}" class="w-5 h-5"></i>`;
-                    status.textContent = 'In Progress...';
+                document.getElementById('job-title-header').textContent = jobDetails.title;
+                const deadline = new Date(jobDetails.applicationDeadline).toLocaleDateString();
+                document.getElementById('job-deadline-header').textContent = `Deadline: ${deadline}`;
+                document.title = `Apply: ${jobDetails.title}`;
+
+                // Pre-fill form
+                prefillForm(user);
+                
+                // Show form
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('application-form').classList.remove('hidden');
+                
+                // Init dynamic blocks
+                addEducationBlock(); 
+
+            } catch (err) {
+                console.error(err);
+                showToast("Error loading job details. Please try again.", "error");
+                document.getElementById('loading-state').innerHTML = `<p class="text-red-500">Error loading job.</p>`;
+            }
+
+            // Event Listeners
+            document.getElementById('next-btn').addEventListener('click', nextStep);
+            document.getElementById('prev-btn').addEventListener('click', prevStep);
+            document.getElementById('application-form').addEventListener('submit', handleSubmit);
+            
+            // File input listeners for visuals
+            setupFileInput('passportPhoto', 'passportPreview');
+            setupFileInput('resume', null, 'resumeFileName');
+            setupFileInput('govtId', null, 'govtIdFileName');
+            
+            // PDF Download listener
+            document.getElementById('download-pdf-btn').addEventListener('click', downloadPDF);
+        });
+
+        // --- Navigation Logic ---
+        function updateUI() {
+            // Hide all panels
+            document.querySelectorAll('.step-panel').forEach(el => el.classList.add('hidden'));
+            // Show current
+            document.getElementById(`step-panel-${currentStep}`).classList.remove('hidden');
+            document.getElementById(`step-panel-${currentStep}`).classList.add('fade-in');
+            
+            // Update Sidebar
+            for (let i = 1; i <= totalSteps; i++) {
+                const icon = document.getElementById(`step-icon-${i}`);
+                const title = document.getElementById(`step-title-${i}`);
+                
+                if (i < currentStep) {
+                    // Completed
+                    icon.className = "w-10 h-10 rounded-full flex items-center justify-center bg-green-500 text-white shadow-sm transition-all";
+                    icon.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i>';
+                    title.className = "font-medium text-green-600";
+                } else if (i === currentStep) {
+                    // Active
+                    icon.className = "w-10 h-10 rounded-full flex items-center justify-center bg-brand-600 text-white shadow-md ring-4 ring-brand-100 transition-all";
+                    resetIcon(i, icon);
+                    title.className = "font-bold text-brand-700";
                 } else {
-                    icon.innerHTML = `<i data-lucide="${stepIcons[i]}" class="w-5 h-5"></i>`;
-                    status.textContent = 'Pending';
+                    // Pending
+                    icon.className = "w-10 h-10 rounded-full flex items-center justify-center bg-white border-2 border-slate-300 text-slate-400 shadow-sm transition-all";
+                    resetIcon(i, icon);
+                    title.className = "font-medium text-slate-500";
                 }
             }
             
-            // 4. Update Main Progress Bar (New Logic)
-            const progressPercent = (stepNumber / totalSteps) * 100;
-            const bar = document.getElementById('main-progress-bar');
-            const progressText = document.getElementById('progress-text');
-            const progressPercentText = document.getElementById('progress-percent');
-            
-            if (bar) bar.style.width = `${progressPercent}%`;
-            if (progressText) progressText.textContent = `Step ${stepNumber} of ${totalSteps}: ${stepNames[stepNumber]}`;
-            if (progressPercentText) progressPercentText.textContent = `${progressPercent}%`;
+            // Update Mobile Progress
+            document.getElementById('mobile-step-counter').textContent = `Step ${currentStep}/${totalSteps}`;
+            document.getElementById('mobile-progress-bar').style.width = `${(currentStep/totalSteps)*100}%`;
 
-            // 5. Update Unified Navigation Buttons (New Logic)
-            const prevBtn = document.getElementById('global-prev-btn');
-            const editBtn = document.getElementById('global-edit-btn');
-            const nextBtn = document.getElementById('global-next-btn');
-            const reviewBtn = document.getElementById('global-review-btn');
-            const downloadBtn = document.getElementById('global-download-btn');
+            // Update Buttons
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
             const submitBtn = document.getElementById('submit-btn');
-            const spacer = document.getElementById('global-nav-spacer');
-            
-            // Hide all
-            [prevBtn, editBtn, nextBtn, reviewBtn, downloadBtn, submitBtn, spacer].forEach(b => b.classList.add('hidden'));
 
-            if (stepNumber === 1) {
-                spacer.classList.remove('hidden'); // Show spacer to push next button to the right
-                nextBtn.classList.remove('hidden');
-            } else if (stepNumber === 2) {
-                prevBtn.classList.remove('hidden');
-                nextBtn.classList.remove('hidden');
-            } else if (stepNumber === 3) {
-                prevBtn.classList.remove('hidden');
-                reviewBtn.classList.remove('hidden');
-            } else if (stepNumber === 4) {
-                editBtn.classList.remove('hidden');
-                downloadBtn.classList.remove('hidden');
+            if (currentStep === 1) prevBtn.classList.add('hidden');
+            else prevBtn.classList.remove('hidden');
+
+            if (currentStep === totalSteps) {
+                nextBtn.classList.add('hidden');
                 submitBtn.classList.remove('hidden');
+                generatePreview();
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
             }
-
-            lucide.createIcons(); // Re-render all icons
             
-            currentStep = stepNumber;
-            window.scrollTo(0, 0); // Scroll to top on step change
+            lucide.createIcons();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function nextStep() {
+            if (validateStep(currentStep)) {
+                currentStep++;
+                updateUI();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateUI();
+            }
         }
         
-        // --- Preview Logic ---
-        function populatePreview() {
-            const previewContainer = document.getElementById('preview-content');
-            const formData = new FormData(document.getElementById('application-form'));
-            
-            const val = (id) => formData.get(id) || '<span class="text-gray-400">N/A</span>';
-            const fileVal = (id) => {
-                const fileInput = document.getElementById(id);
-                return (fileInput.files.length > 0) ? fileInput.files[0].name : '<span class="text-gray-400">N/A</span>';
+        function goToStep(step) {
+            // Only allow jumping to previous steps or the next immediate step if current is valid
+            if (step < currentStep) {
+                currentStep = step;
+                updateUI();
             }
+        }
+
+        function validateStep(step) {
+            const panel = document.getElementById(`step-panel-${step}`);
+            const inputs = panel.querySelectorAll('input[required], select[required], textarea[required]');
+            let isValid = true;
             
-            const renderKV = (label, value) => `
-                <div class="preview-item text-sm">
-                    <dt class="font-semibold text-gray-500 uppercase tracking-wide text-xs">${label}</dt>
-                    <dd class="text-gray-900 text-base mt-0.5">${value}</dd>
-                </div>`;
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    isValid = false;
+                    input.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                    input.addEventListener('input', () => {
+                        input.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+                    }, { once: true });
+                }
+            });
+
+            if (!isValid) {
+                showToast("Please fill in all required fields.", "error");
+            }
+            return isValid;
+        }
+
+        // --- Helper Functions ---
+        function resetIcon(step, el) {
+            const icons = ['user', 'briefcase', 'file-text', 'check-circle'];
+            el.innerHTML = `<i data-lucide="${icons[step-1]}" class="w-5 h-5"></i>`;
+        }
+
+        function prefillForm(user) {
+            document.getElementById('email').value = user.email || '';
+            document.getElementById('college').value = user.college || '';
+            if (user.fullName) {
+                const parts = user.fullName.split(' ');
+                document.getElementById('firstName').value = parts[0] || '';
+                document.getElementById('lastName').value = parts.slice(1).join(' ') || '';
+            }
+            if(user.mobile) document.getElementById('phone').value = user.mobile;
+            if(user.department) document.getElementById('department').value = user.department;
+            if(user.rollNumber) document.getElementById('rollNumber').value = user.rollNumber;
             
-            // New: Card-based preview sections
-            const renderSection = (title, icon, content) => `
-                <div class="preview-section border border-gray-200 rounded-xl overflow-hidden">
-                    <h3 class="flex items-center gap-3 text-lg font-semibold text-gray-800 bg-gray-50 p-4 border-b border-gray-200">
-                        <i data-lucide="${icon}" class="w-5 h-5 text-blue-600"></i>
-                        ${title}
-                    </h3>
-                    <div class="preview-content p-5">
-                        ${content}
+            // Address prefill if available in user object structure
+            if(user.address) {
+                document.getElementById('street').value = user.address.street || '';
+                document.getElementById('city').value = user.address.city || '';
+                document.getElementById('state').value = user.address.state || '';
+                document.getElementById('zip').value = user.address.zip || '';
+                document.getElementById('country').value = user.address.country || '';
+            }
+        }
+
+        function setupFileInput(id, imgPreviewId, textId) {
+            const input = document.getElementById(id);
+            input.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (imgPreviewId) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => document.getElementById(imgPreviewId).src = e.target.result;
+                        reader.readAsDataURL(file);
+                    }
+                    if (textId) {
+                        document.getElementById(textId).textContent = file.name;
+                        document.getElementById(textId).classList.add('text-brand-600', 'font-semibold');
+                    }
+                }
+            });
+        }
+
+        function toggleDetails(contentId, chevronId) {
+            const content = document.getElementById(contentId);
+            const icon = document.getElementById(chevronId);
+            content.classList.toggle('hidden');
+            icon.classList.toggle('rotate-180');
+        }
+
+        function showToast(msg, type) {
+            Toastify({
+                text: msg,
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                style: {
+                    background: type === "error" ? "#ef4444" : "#10b981",
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                }
+            }).showToast();
+        }
+
+        // --- Dynamic Form Blocks ---
+        let eduCount = 0;
+        function addEducationBlock() {
+            eduCount++;
+            const div = document.createElement('div');
+            div.className = "p-4 border border-slate-200 rounded-xl bg-slate-50 relative fade-in";
+            div.dataset.id = eduCount;
+            div.innerHTML = `
+                ${eduCount > 1 ? `<button type="button" onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-700">Qualification</label>
+                        <select name="edu_type_${eduCount}" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-brand-500 outline-none">
+                            <option value="Bachelor's">Bachelor's Degree</option>
+                            <option value="Master's">Master's Degree</option>
+                            <option value="High School">High School</option>
+                        </select>
                     </div>
-                </div>`;
-
-            let personalInfo = `
-                <dl class="preview-grid grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-                    ${renderKV('Full Name', `${val('firstName')} ${val('lastName')}`)}
-                    ${renderKV('Email', val('email'))}
-                    ${renderKV('Phone', val('phone'))}
-                    ${renderKV('College', val('college'))}
-                    ${renderKV('Department', val(new FormData(document.getElementById('application-form')).get('department')))}
-                    ${renderKV('Roll Number', val('rollNumber'))}
-                    ${renderKV('Passport Photo', fileVal('passportPhoto'))}
-                </dl>`;
-            
-            let addressInfo = `
-                <dl class="preview-grid grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-                    ${renderKV('Street', val('street'))}
-                    ${renderKV('City', val('city'))}
-                    ${renderKV('State', val('state'))}
-                    ${renderKV('ZIP Code', val('zip'))}
-                    ${renderKV('Country', val('country'))}
-                </dl>`;
-
-            let eduContent = '';
-            const eduBlocks = document.querySelectorAll('#education-container .dynamic-block');
-            if (eduBlocks.length > 0) {
-                eduContent = `<table class="preview-table w-full text-left text-sm">
-                    <thead class="bg-gray-50"><tr>
-                        <th class="p-2 font-medium text-gray-600">Type</th>
-                        <th class="p-2 font-medium text-gray-600">Institute</th>
-                        <th class="p-2 font-medium text-gray-600">Stream</th>
-                        <th class="p-2 font-medium text-gray-600">Score</th>
-                    </tr></thead><tbody>`;
-                eduBlocks.forEach(block => {
-                    const i = block.dataset.index;
-                    eduContent += `<tr class="border-b border-gray-100">
-                        <td class="p-2">${val(`education_${i}_type`)}</td>
-                        <td class="p-2">${val(`education_${i}_institute`)}</td>
-                        <td class="p-2">${val(`education_${i}_stream`)}</td>
-                        <td class="p-2">${val(`education_${i}_score`)}</td>
-                    </tr>`;
-                });
-                eduContent += `</tbody></table>`;
-            } else {
-                eduContent = `<p class="text-gray-500 text-sm">No education provided.</p>`;
-            }
-            
-            let expContent = '';
-            const expBlocks = document.querySelectorAll('#experience-container .dynamic-block');
-            if (expBlocks.length > 0) {
-                expContent = `<table class="preview-table w-full text-left text-sm">
-                    <thead class="bg-gray-50"><tr>
-                        <th class="p-2 font-medium text-gray-600">Title</th>
-                        <th class="p-2 font-medium text-gray-600">Company</th>
-                        <th class="p-2 font-medium text-gray-600">Description</th>
-                    </tr></thead><tbody>`;
-                expBlocks.forEach(block => {
-                    const i = block.dataset.index;
-                    expContent += `<tr class="border-b border-gray-100">
-                        <td class="p-2">${val(`experience_${i}_title`)}</td>
-                        <td class="p-2">${val(`experience_${i}_company`)}</td>
-                        <td class="p-2">${val(`experience_${i}_description`)}</td>
-                    </tr>`;
-                });
-                expContent += `</tbody></table>`;
-            } else {
-                expContent = `<p class="text-gray-500 text-sm">No experience provided.</p>`;
-            }
-
-            let certContent = '';
-            const certBlocks = document.querySelectorAll('#certification-container .dynamic-block');
-            if (certBlocks.length > 0) {
-                certContent = `<table class="preview-table w-full text-left text-sm">
-                    <thead class="bg-gray-50"><tr>
-                        <th class="p-2 font-medium text-gray-600">Name</th>
-                        <th class="p-2 font-medium text-gray-600">Provider</th>
-                        <th class="p-2 font-medium text-gray-600">ID</th>
-                        <th class="p-2 font-medium text-gray-600">Date</th>
-                    </tr></thead><tbody>`;
-                certBlocks.forEach(block => {
-                    const i = block.dataset.index;
-                    certContent += `<tr class="border-b border-gray-100">
-                        <td class="p-2">${val(`certification_${i}_name`)}</td>
-                        <td class="p-2">${val(`certification_${i}_provider`)}</td>
-                        <td class="p-2">${val(`certification_${i}_id`)}</td>
-                        <td class="p-2">${val(`certification_${i}_date`)}</td>
-                    </tr>`;
-                });
-                certContent += `</tbody></table>`;
-            } else {
-                certContent = `<p class="text-gray-500 text-sm">No certifications provided.</p>`;
-            }
-            
-            let docsContent = `
-                <dl class="preview-grid grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-                    ${renderKV('Resume/CV', fileVal('resume'))}
-                    ${renderKV('Government ID', `${val('govtIdType') ? val('govtIdType') + ' - ' : ''} ${fileVal('govtId')}`)}
-                    ${renderKV('LinkedIn', val('linkedinUrl'))}
-                    ${renderKV('GitHub', val('githubUrl'))}
-                    ${renderKV('Portfolio', val('portfolioUrl'))}
-                    ${renderKV('Extracurricular', val('extracurricular'))}
-                </dl>`;
-
-            previewContainer.innerHTML = `
-                ${renderSection('Personal Information', 'user', personalInfo)}
-                ${renderSection('Address', 'map-pin', addressInfo)}
-                ${renderSection('Education', 'graduation-cap', eduContent)}
-                ${renderSection('Work Experience', 'briefcase', expContent)}
-                ${renderSection('Certifications', 'award', certContent)}
-                ${renderSection('Documents & Links', 'paperclip', docsContent)}
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-700">Institute</label>
+                        <input type="text" name="edu_inst_${eduCount}" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-brand-500 outline-none" placeholder="University Name">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-700">Stream/Major</label>
+                        <input type="text" name="edu_stream_${eduCount}" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-brand-500 outline-none" placeholder="e.g. CSE">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-700">Score/CGPA</label>
+                        <input type="text" name="edu_score_${eduCount}" required class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-brand-500 outline-none" placeholder="e.g. 8.5">
+                    </div>
+                    <div class="md:col-span-2">
+                         <label class="flex items-center gap-2 cursor-pointer w-fit">
+                            <span class="bg-white border border-slate-300 text-slate-600 px-3 py-1.5 rounded-md text-xs font-medium hover:bg-slate-50 transition">Upload Marksheet</span>
+                            <span class="text-xs text-slate-400 file-name-display">No file chosen</span>
+                            <input type="file" name="education_certificate_${eduCount}" class="hidden" onchange="this.previousElementSibling.textContent = this.files[0].name">
+                        </label>
+                    </div>
+                </div>
             `;
-            
+            document.getElementById('education-container').appendChild(div);
             lucide.createIcons();
         }
 
-        // --- Download PDF Logic ---
-        async function downloadPDF() {
-            const { jsPDF } = window.jsPDF;
-            const doc = new jsPDF();
-            const formData = new FormData(document.getElementById('application-form'));
-            const val = (id) => formData.get(id) || 'N/A';
-            const jobTitle = document.getElementById('job-title-header-main').textContent.trim();
-
-            doc.setFontSize(18);
-            doc.text(`Application for: ${jobTitle}`, 14, 22);
-            
-            doc.setFontSize(14);
-            doc.text('Personal Information', 14, 32);
-            doc.autoTable({
-                startY: 36,
-                theme: 'grid',
-                body: [
-                    ['Full Name', `${val('firstName')} ${val('lastName')}`],
-                    ['Email', val('email')],
-                    ['Phone', val('phone')],
-                    ['College', val('college')],
-                    ['Department', val('department')],
-                    ['Roll Number', val('rollNumber')],
-                ],
-                styles: { fontSize: 10 },
-            });
-
-            let lastY = doc.lastAutoTable.finalY + 10;
-            
-            doc.setFontSize(14);
-            doc.text('Address', 14, lastY);
-            doc.autoTable({
-                startY: lastY + 4,
-                theme: 'grid',
-                body: [
-                    ['Street', val('street')],
-                    ['City', val('city')],
-                    ['State', val('state')],
-                    ['ZIP Code', val('zip')],
-                    ['Country', val('country')],
-                ],
-                styles: { fontSize: 10 },
-            });
-            lastY = doc.lastAutoTable.finalY + 10;
-            
-            doc.setFontSize(14);
-            doc.text('Education', 14, lastY);
-            const eduData = Array.from(document.querySelectorAll('#education-container .dynamic-block')).map(block => {
-                const i = block.dataset.index;
-                return [val(`education_${i}_type`), val(`education_${i}_institute`), val(`education_${i}_stream`), val(`education_${i}_score`)]
-            });
-            doc.autoTable({
-                startY: lastY + 4,
-                theme: 'grid',
-                head: [['Type', 'Institute', 'Stream/Major', 'Score/GPA']],
-                body: eduData,
-                styles: { fontSize: 10 },
-            });
-            lastY = doc.lastAutoTable.finalY + 10;
-
-            const expBlocks = document.querySelectorAll('#experience-container .dynamic-block');
-            if (expBlocks.length > 0) {
-                doc.setFontSize(14);
-                doc.text('Work Experience', 14, lastY);
-                const expData = Array.from(expBlocks).map(block => {
-                    const i = block.dataset.index;
-                    return [val(`experience_${i}_title`), val(`experience_${i}_company`), val(`experience_${i}_description`)]
-                });
-                doc.autoTable({
-                    startY: lastY + 4,
-                    theme: 'grid',
-                    head: [['Title', 'Company', 'Description']],
-                    body: expData,
-                    styles: { fontSize: 10 },
-                });
-                lastY = doc.lastAutoTable.finalY + 10;
-            }
-
-            doc.setFontSize(14);
-            doc.text('Links & Other', 14, lastY);
-             doc.autoTable({
-                startY: lastY + 4,
-                theme: 'grid',
-                body: [
-                    ['LinkedIn', val('linkedinUrl')],
-                    ['GitHub', val('githubUrl')],
-                    ['Portfolio', val('portfolioUrl')],
-                    ['Extracurricular', val('extracurricular')],
-                ],
-                styles: { fontSize: 10 },
-            });
-            
-            doc.save(`Application - ${val('firstName')} ${val('lastName')} - ${jobTitle}.pdf`);
+        let expCount = 0;
+        function addExperienceBlock() {
+            expCount++;
+            const div = document.createElement('div');
+            div.className = "p-4 border border-slate-200 rounded-xl bg-slate-50 relative fade-in";
+            div.dataset.id = expCount;
+            div.innerHTML = `
+                <button type="button" onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-xs font-semibold text-slate-700">Job Title</label>
+                            <input type="text" name="exp_title_${expCount}" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-brand-500 outline-none">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-xs font-semibold text-slate-700">Company</label>
+                            <input type="text" name="exp_comp_${expCount}" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-brand-500 outline-none">
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-700">Description</label>
+                        <textarea name="exp_desc_${expCount}" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-brand-500 outline-none"></textarea>
+                    </div>
+                    <div>
+                         <label class="flex items-center gap-2 cursor-pointer w-fit">
+                            <span class="bg-white border border-slate-300 text-slate-600 px-3 py-1.5 rounded-md text-xs font-medium hover:bg-slate-50 transition">Upload Letter</span>
+                            <span class="text-xs text-slate-400 file-name-display">No file chosen</span>
+                            <input type="file" name="experience_certificate_${expCount}" class="hidden" onchange="this.previousElementSibling.textContent = this.files[0].name">
+                        </label>
+                    </div>
+                </div>
+            `;
+            document.getElementById('experience-container').appendChild(div);
+            lucide.createIcons();
         }
 
-        // --- Main Page Logic ---
-        document.addEventListener('DOMContentLoaded', async () => {
-            const applicationForm = document.getElementById('application-form');
-            const loadingStateDiv = document.getElementById('loading-state');
-            const loadingMessageDiv = document.getElementById('loading-message');
-            const submitMessageDiv = document.getElementById('submit-message');
+        let certCount = 0;
+        function addCertificationBlock() {
+            certCount++;
+            const div = document.createElement('div');
+            div.className = "p-4 border border-slate-200 rounded-xl bg-slate-50 relative fade-in";
+            div.dataset.id = certCount;
+            div.innerHTML = `
+                <button type="button" onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-slate-400 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-700">Certification Name</label>
+                        <input type="text" name="cert_name_${certCount}" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-brand-500 outline-none">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-semibold text-slate-700">Provider</label>
+                        <input type="text" name="cert_prov_${certCount}" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-brand-500 outline-none">
+                    </div>
+                    <div class="md:col-span-2">
+                         <label class="flex items-center gap-2 cursor-pointer w-fit">
+                            <span class="bg-white border border-slate-300 text-slate-600 px-3 py-1.5 rounded-md text-xs font-medium hover:bg-slate-50 transition">Upload Certificate</span>
+                            <span class="text-xs text-slate-400 file-name-display">No file chosen</span>
+                            <input type="file" name="certification_file_${certCount}" class="hidden" onchange="this.previousElementSibling.textContent = this.files[0].name">
+                        </label>
+                    </div>
+                </div>
+            `;
+            document.getElementById('certification-container').appendChild(div);
+            lucide.createIcons();
+        }
+
+        // --- Preview Logic ---
+        function generatePreview() {
+            const formData = new FormData(document.getElementById('application-form'));
+            const getVal = (name) => formData.get(name) || '<span class="text-slate-400 italic">Not provided</span>';
+            const getFile = (name) => {
+                const f = document.querySelector(`input[name="${name}"]`)?.files[0];
+                return f ? `<span class="text-green-600 font-medium flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> ${f.name}</span>` : '<span class="text-red-400 italic">Missing</span>';
+            };
+
+            let html = `
+                <div class="space-y-6">
+                    <!-- Personal -->
+                    <div class="pb-4 border-b border-slate-100">
+                        <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Applicant Details</h3>
+                        <div class="grid grid-cols-2 gap-y-2 text-sm">
+                            <p><span class="text-slate-500">Name:</span> <span class="font-medium ml-1">${getVal('firstName')} ${getVal('lastName')}</span></p>
+                            <p><span class="text-slate-500">Email:</span> <span class="font-medium ml-1">${getVal('email')}</span></p>
+                            <p><span class="text-slate-500">Phone:</span> <span class="font-medium ml-1">${getVal('phone')}</span></p>
+                            <p><span class="text-slate-500">Roll No:</span> <span class="font-medium ml-1">${getVal('rollNumber')}</span></p>
+                            <p class="col-span-2 mt-1"><span class="text-slate-500">Address:</span> <span class="font-medium ml-1">${getVal('street')}, ${getVal('city')}, ${getVal('state')} - ${getVal('zip')}</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Qualifications Summary -->
+                    <div class="pb-4 border-b border-slate-100">
+                        <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Education Summary</h3>
+                        <div class="space-y-2">
+            `;
+            
+            // Loop education blocks
+            const eduBlocks = document.querySelectorAll('#education-container > div');
+            if(eduBlocks.length === 0) html += `<p class="text-sm text-slate-400 italic">No education added.</p>`;
+            eduBlocks.forEach(block => {
+                const id = block.dataset.id;
+                html += `
+                    <div class="text-sm bg-slate-50 p-3 rounded border border-slate-100">
+                        <p class="font-semibold text-slate-800">${getVal(`edu_type_${id}`)} in ${getVal(`edu_stream_${id}`)}</p>
+                        <p class="text-slate-500">${getVal(`edu_inst_${id}`)} • Score: ${getVal(`edu_score_${id}`)}</p>
+                    </div>
+                `;
+            });
+
+            html += `
+                        </div>
+                    </div>
+
+                    <!-- Documents Check -->
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">Document Check</h3>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div class="bg-slate-50 p-3 rounded flex justify-between items-center">
+                                <span>Passport Photo</span>
+                                ${getFile('passportPhoto')}
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded flex justify-between items-center">
+                                <span>Resume</span>
+                                ${getFile('resume')}
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded flex justify-between items-center">
+                                <span>Govt ID</span>
+                                ${getFile('govtId')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('review-content').innerHTML = html;
+            lucide.createIcons();
+        }
+
+        // --- Submission Logic ---
+        async function handleSubmit(e) {
+            e.preventDefault();
             const submitBtn = document.getElementById('submit-btn');
-            const btnText = submitBtn.querySelector('.button-text');
-            const btnSpinner = submitBtn.querySelector('.button-spinner');
             
-            // All header elements
-            const jobTitleHeaderMain = document.getElementById('job-title-header-main');
-            const jobTitleHeaderSidebar = document.getElementById('job-title-header-sidebar');
-            const jobTitleHeaderMobile = document.getElementById('job-title-header-mobile');
-            const jobDetailsHeader = document.getElementById('job-details-header');
-            const jobDetailsHeaderMobile = document.getElementById('job-details-header-mobile');
+            if(!confirm("Are you sure you want to submit? This cannot be undone.")) return;
 
-            const emailInput = document.getElementById('email');
-            const collegeInput = document.getElementById('college');
-            const confirmationModal = document.getElementById('confirmation-modal');
-            const modalCloseBtn = document.getElementById('modal-close-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Submitting...`;
 
-            lucide.createIcons(); // Initial icon render
-
-            let jobId = null;
-
-            const urlParams = new URLSearchParams(window.location.search);
-            jobId = urlParams.get('jobId');
-
-            if (!jobId) {
-                showMessage(loadingMessageDiv, 'Error: Job ID not found in URL.', 'error');
-                loadingStateDiv.style.display = 'none';
-                return;
-            }
-
-            const token = localStorage.getItem('studentToken');
-            const userString = localStorage.getItem('studentUser');
-
-            if (!token || !userString) {
-                showMessage(loadingMessageDiv, 'You must be logged in to apply. Redirecting...', 'error');
-                loadingStateDiv.style.display = 'none';
-                // Optionally redirect: window.location.href = 'student-login.html';
-                return;
-            }
-
-            let user;
             try {
-                user = JSON.parse(userString);
-                emailInput.value = user.email || '';
-                collegeInput.value = user.college || '';
-                if (user.fullName) {
-                    const nameParts = user.fullName.split(' ');
-                    document.getElementById('firstName').value = nameParts[0] || '';
-                    document.getElementById('lastName').value = nameParts.slice(1).join(' ') || '';
-                }
-                // Pre-fill new fields
-                document.getElementById('department').value = user.department || '';
-                document.getElementById('rollNumber').value = user.rollNumber || '';
-                document.getElementById('phone').value = user.mobile || user.phone || '';
-                // Pre-fill address
-                if (user.address) {
-                    document.getElementById('street').value = user.address.street || '';
-                    document.getElementById('city').value = user.address.city || '';
-                    document.getElementById('state').value = user.address.state || '';
-                    document.getElementById('zip').value = user.address.zip || '';
-                    document.getElementById('country').value = user.address.country || '';
-                }
-
-            } catch (e) {
-                showMessage(loadingMessageDiv, 'Could not load your profile data. Please log in again.', 'error');
-                loadingStateDiv.style.display = 'none';
-                return;
-            }
-
-            // Fetch Job details and check eligibility
-            try {
-                const jobRes = await fetch(`/api/public/jobs/${jobId}`);
-                const jobResult = await jobRes.json();
-
-                if (!jobRes.ok) {
-                    throw new Error(jobResult.message || `Failed to load job (Status: ${jobRes.status})`);
-                }
-
-                const job = jobResult;
-                const jobTitle = job.title || 'Job';
-                const applyTitle = `Apply for ${jobTitle}`;
+                const formData = new FormData(e.target);
                 
-                // Update all title elements
-                document.title = `${applyTitle} - HireWithUs`;
-                jobTitleHeaderMain.textContent = jobTitle;
-                jobTitleHeaderSidebar.textContent = applyTitle;
-                jobTitleHeaderMobile.textContent = applyTitle;
-                
-                const deadlineText = `Deadline: ${new Date(job.applicationDeadline).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}`;
-                jobDetailsHeader.querySelector('span').textContent = deadlineText;
-                jobDetailsHeaderMobile.querySelector('span').textContent = deadlineText;
-                jobDetailsHeader.classList.remove('hidden');
-                jobDetailsHeaderMobile.classList.remove('hidden');
-
-                 // Check College Eligibility
-                 if (!user.college || !job.eligibleColleges || !Array.isArray(job.eligibleColleges) || !job.eligibleColleges.includes(user.college)) {
-                    throw new Error(`Your college ('${user.college || 'N/A'}') is not listed as eligible for this job opening.`);
-                 }
-
-                addEducationBlock(); // Add one education block by default
-
-                showMessage(loadingMessageDiv, '', 'info');
-                loadingStateDiv.style.display = 'none';
-                applicationForm.classList.remove('hidden');
-                showStep(1); 
-
-            } catch (error)
-            {
-                console.error("Error fetching job details or checking eligibility:", error);
-                showMessage(loadingMessageDiv, `Error: ${error.message}`, 'error');
-                loadingStateDiv.style.display = 'none';
-                 submitBtn.disabled = true;
-                 btnText.textContent = 'Application Unavailable';
-                 submitBtn.classList.add('!bg-gray-400', 'cursor-not-allowed');
-                 // Also hide all nav buttons
-                 document.getElementById('global-prev-btn').classList.add('hidden');
-                 document.getElementById('global-next-btn').classList.add('hidden');
-            }
-
-            // --- Setup Event Listeners ---
-            document.getElementById('add-education-btn').addEventListener('click', () => addEducationBlock());
-            document.getElementById('add-experience-btn').addEventListener('click', () => addExperienceBlock());
-            document.getElementById('add-certification-btn').addEventListener('click', () => addCertificationBlock()); 
-
-            // Listeners for static file inputs
-            addFileDisplayListener('passportPhoto');
-            addFileDisplayListener('resume');
-            addFileDisplayListener('govtId');
-            
-            // Setup drag & drop for static inputs
-            setupDragAndDrop('passportPhotoDropZone', 'passportPhoto');
-            setupDragAndDrop('resumeDropZone', 'resume');
-            setupDragAndDrop('govtIdDropZone', 'govtId');
-            
-            // Global listener for file remove buttons
-            document.body.addEventListener('click', function(e) {
-                const button = e.target.closest('.file-name-remove');
-                if (button) {
-                    const inputId = button.dataset.input;
-                    const input = document.getElementById(inputId);
-                    if (!input) return;
-                    
-                    const nameSpan = input.closest('div, label').querySelector(`[id$="${inputId}Name"]`); // More robust selector
-                    const textSpan = nameSpan.querySelector('.file-name-text');
-                    
-                    input.value = ''; // Clear the file input
-                    nameSpan.classList.add('hidden');
-                    nameSpan.classList.remove('inline-flex');
-                    textSpan.textContent = '';
-                    nameSpan.title = '';
-                    
-                    // Reset passport photo preview
-                    if (button.dataset.preview) {
-                        document.getElementById(button.dataset.preview).src = button.dataset.placeholder;
-                    }
-                    validateInput(input); // Re-validate (it will fail if required)
-                }
-            });
-            
-            // Setup validation for all inputs present on load
-            setupFormValidation(applicationForm);
-            
-            // --- NEW Unified Stepper Navigation ---
-            document.getElementById('global-next-btn').addEventListener('click', () => {
-                if (currentStep === 1 && validateStep(1, submitMessageDiv)) {
-                    showStep(2);
-                } else if (currentStep === 2 && validateStep(2, submitMessageDiv)) {
-                    showStep(3);
-                }
-            });
-            
-            document.getElementById('global-prev-btn').addEventListener('click', () => {
-                if (currentStep === 2) showStep(1);
-                else if (currentStep === 3) showStep(2);
-            });
-            
-            document.getElementById('global-review-btn').addEventListener('click', () => {
-                 if (validateStep(3, submitMessageDiv)) {
-                    populatePreview();
-                    showStep(4);
-                 }
-            });
-            
-            document.getElementById('global-edit-btn').addEventListener('click', () => showStep(3));
-            document.getElementById('global-download-btn').addEventListener('click', downloadPDF);
-
-            // Form Submission
-            applicationForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                // Final validation check
-                if (!validateStep(1, submitMessageDiv) || !validateStep(2, submitMessageDiv) || !validateStep(3, submitMessageDiv)) {
-                    showMessage(submitMessageDiv, 'Some required fields are missing. Please go back and check.', 'error');
-                    // Find the first invalid step and go to it
-                    for (let i = 1; i <= 3; i++) {
-                        if (!validateStep(i, submitMessageDiv)) {
-                            showStep(i);
-                            break;
-                        }
-                    }
-                    return;
-                }
-
-                showMessage(submitMessageDiv, '', 'info'); // Clear any old errors
-                submitBtn.disabled = true;
-                btnText.textContent = 'Submitting...';
-                btnSpinner.classList.remove('hidden');
-
-                const formData = new FormData(applicationForm);
-
-                // --- Add address object ---
-                const address = {
+                // Process JSON structures manually as per API requirement
+                const addressObj = {
                     street: formData.get('street'),
                     city: formData.get('city'),
                     state: formData.get('state'),
                     zip: formData.get('zip'),
                     country: formData.get('country')
                 };
-                formData.set('address', JSON.stringify(address));
-                // Remove individual address fields
-                formData.delete('street');
-                formData.delete('city');
-                formData.delete('state');
-                formData.delete('zip');
-                formData.delete('country');
+                formData.set('address', JSON.stringify(addressObj));
+                ['street','city','state','zip','country'].forEach(k => formData.delete(k));
 
-
-                // Process dynamic education blocks
-                const educationData = Array.from(document.querySelectorAll('#education-container .dynamic-block')).map(block => {
-                    const i = block.dataset.index;
-                    const data = {
-                        type: formData.get(`education_${i}_type`),
-                        institute: formData.get(`education_${i}_institute`),
-                        stream: formData.get(`education_${i}_stream`),
-                        score: formData.get(`education_${i}_score`),
-                    };
-                    // Clean up form data
-                    formData.delete(`education_${i}_type`);
-                    formData.delete(`education_${i}_institute`);
-                    formData.delete(`education_${i}_stream`);
-                    formData.delete(`education_${i}_score`);
-                    return data;
-                });
-                formData.set('education', JSON.stringify(educationData));
-
-                // Process dynamic experience blocks
-                const experienceData = Array.from(document.querySelectorAll('#experience-container .dynamic-block')).map(block => {
-                    const i = block.dataset.index;
-                    const data = {
-                        title: formData.get(`experience_${i}_title`),
-                        company: formData.get(`experience_${i}_company`),
-                        description: formData.get(`experience_${i}_description`),
-                    };
-                    formData.delete(`experience_${i}_title`);
-                    formData.delete(`experience_${i}_company`);
-                    formData.delete(`experience_${i}_description`);
-                    return data;
-                });
-                formData.set('experiences', JSON.stringify(experienceData));
-
-                // Process dynamic certification blocks
-                 const certificationData = Array.from(document.querySelectorAll('#certification-container .dynamic-block')).map(block => {
-                     const i = block.dataset.index;
-                     const data = {
-                         name: formData.get(`certification_${i}_name`),
-                         provider: formData.get(`certification_${i}_provider`),
-                         credentialId: formData.get(`certification_${i}_id`),
-                         dateIssued: formData.get(`certification_${i}_date`),
-                     };
-                     formData.delete(`certification_${i}_name`);
-                     formData.delete(`certification_${i}_provider`);
-                     formData.delete(`certification_${i}_id`);
-                     formData.delete(`certification_${i}_date`);
-                     return data;
-                 });
-                 formData.set('certifications', JSON.stringify(certificationData));
-
-                // Set user details from read-only fields
-                formData.set('email', emailInput.value);
-                formData.set('college', collegeInput.value);
-
-                try {
-                    const response = await fetch(`/api/student/apply/${jobId}`, {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${token}` },
-                        body: formData
+                // Process Education Array
+                const educationArr = [];
+                document.querySelectorAll('#education-container > div').forEach(div => {
+                    const id = div.dataset.id;
+                    educationArr.push({
+                        type: formData.get(`edu_type_${id}`),
+                        institute: formData.get(`edu_inst_${id}`),
+                        stream: formData.get(`edu_stream_${id}`),
+                        score: formData.get(`edu_score_${id}`)
                     });
+                    // File logic is handled by 'upload.any()' on backend, keys match input names
+                    formData.delete(`edu_type_${id}`);
+                    formData.delete(`edu_inst_${id}`);
+                    formData.delete(`edu_stream_${id}`);
+                    formData.delete(`edu_score_${id}`);
+                });
+                formData.set('education', JSON.stringify(educationArr));
 
-                    const result = await response.json();
-
-                    if (!response.ok) {
-                        if (response.status === 400 && result.message.includes('already applied')) {
-                             throw new Error('You have already applied for this job.');
-                        } else if (response.status === 403 && result.message.includes('deadline')) {
-                             throw new Error('The application deadline has passed.');
-                         } else {
-                            throw new Error(result.message || 'Application submission failed.');
-                         }
-                    }
-
-                    // Show success modal
-                    confirmationModal.classList.remove('hidden');
-                    confirmationModal.classList.add('show', 'flex'); // Make sure it's flex for centering
-                    lucide.createIcons({
-                        nodes: confirmationModal.querySelectorAll('[data-lucide]')
+                // Process Experience Array
+                const expArr = [];
+                document.querySelectorAll('#experience-container > div').forEach(div => {
+                    const id = div.dataset.id;
+                    expArr.push({
+                        title: formData.get(`exp_title_${id}`),
+                        company: formData.get(`exp_comp_${id}`),
+                        description: formData.get(`exp_desc_${id}`)
                     });
+                    formData.delete(`exp_title_${id}`);
+                    formData.delete(`exp_comp_${id}`);
+                    formData.delete(`exp_desc_${id}`);
+                });
+                formData.set('experiences', JSON.stringify(expArr));
 
-                } catch (error) {
-                    console.error("Submission Error:", error);
-                    showMessage(submitMessageDiv, `Error: ${error.message}`, 'error');
-                     submitMessageDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    // Re-enable button on failure
-                    submitBtn.disabled = false;
-                    btnText.textContent = 'Submit Application';
-                    btnSpinner.classList.add('hidden');
-                }
+                // Process Certifications Array
+                const certArr = [];
+                document.querySelectorAll('#certification-container > div').forEach(div => {
+                    const id = div.dataset.id;
+                    certArr.push({
+                        name: formData.get(`cert_name_${id}`),
+                        provider: formData.get(`cert_prov_${id}`)
+                    });
+                    formData.delete(`cert_name_${id}`);
+                    formData.delete(`cert_prov_${id}`);
+                });
+                formData.set('certifications', JSON.stringify(certArr));
+
+                // API Call
+                const urlParams = new URLSearchParams(window.location.search);
+                const jobId = urlParams.get('jobId');
+                const token = localStorage.getItem('studentToken');
+
+                const response = await fetch(`/api/student/apply/${jobId}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) throw new Error(result.message || "Submission failed");
+
+                // Success
+                const modal = document.getElementById('success-modal');
+                modal.classList.remove('hidden');
+                // Trigger reflow for transition
+                void modal.offsetWidth; 
+                modal.classList.remove('opacity-0');
+                
+            } catch (error) {
+                console.error(error);
+                showToast(error.message, "error");
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `Submit Application <i data-lucide="send" class="w-4 h-4"></i>`;
+                lucide.createIcons();
+            }
+        }
+
+        async function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const formData = new FormData(document.getElementById('application-form'));
+            
+            doc.setFontSize(18);
+            doc.text("Job Application", 14, 20);
+            doc.setFontSize(12);
+            doc.text(`Applicant: ${formData.get('firstName')} ${formData.get('lastName')}`, 14, 30);
+            doc.text(`Email: ${formData.get('email')}`, 14, 36);
+            doc.text(`Applied On: ${new Date().toLocaleDateString()}`, 14, 42);
+            
+            doc.autoTable({
+                startY: 50,
+                head: [['Field', 'Value']],
+                body: [
+                    ['Phone', formData.get('phone')],
+                    ['College', formData.get('college')],
+                    ['Department', formData.get('department')],
+                    ['Roll No', formData.get('rollNumber')],
+                    ['Address', `${formData.get('city')}, ${formData.get('country')}`]
+                ]
             });
             
-            modalCloseBtn.addEventListener('click', () => {
-                window.location.href = 'student-my-applications.html';
-            });
-        });
+            doc.save("Application_Summary.pdf");
+        }
     </script>
 </body>
 </html>
