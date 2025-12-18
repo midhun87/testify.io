@@ -2,13 +2,13 @@ function initializePage() {
     const user = JSON.parse(localStorage.getItem("user"));
     const token = localStorage.getItem("token");
 
-    // Access control
+    // ---------------- ACCESS CONTROL ----------------
     if (!token || !user || (user.role !== "Hiring Moderator" && user.role !== "Admin")) {
-        window.location.href = "hiring-moderator-login.html";
+        window.location.href = "/hiring/moderator-login";
         return;
     }
 
-    // ✅ Ensure FontAwesome is loaded
+    // ✅ Ensure FontAwesome is loaded once
     if (!document.querySelector('link[href*="font-awesome"]')) {
         const faLink = document.createElement("link");
         faLink.rel = "stylesheet";
@@ -43,51 +43,54 @@ function initializePage() {
         });
         document.getElementById("logout-button").addEventListener("click", () => {
             localStorage.clear();
-            window.location.href = "hiring-moderator-login.html";
+            window.location.href = "/hiring/moderator-login";
         });
     }
 
     // ---------------- SIDEBAR NAVIGATION ----------------
     const sidebarNav = document.getElementById("sidebar-nav");
     if (sidebarNav) {
-        // --- MODIFIED LINKS ---
+
+        // ✅ Updated Sidebar Links (now match Express routes)
         const links = [
-            { href: "hiring-dashboard.html", icon: "fa-home", text: "Dashboard" },
-            { href: "hiring-create-job.html", icon: "fa-plus-circle", text: "Create Job" },
-            { href: "hiring-jobs.html", icon: "fa-briefcase", text: "Manage Jobs" },
-            { href: "hiring-create-test.html", icon: "fa-file-alt", text: "Create Aptitude Test" },
-            { href: "hiring-create-problem.html", icon: "fa-code", text: "Manage Coding Problems" },
-            { href: "hiring-create-coding-test.html", icon: "fa-file-code", text: "Create Coding Test" },
-            // --- NEW LINK ---
-            { href: "hiring-create-combined-test.html", icon: "fa-object-group", text: "Create Combined Test" },
-            // --- UNIFIED ASSIGN LINK ---
-            { href: "hiring-assign-test.html", icon: "fa-paper-plane", text: "Assign Test" },
-            // --- REMOVED OLD ASSIGN LINKS ---
-            // { href: "hiring-assign-coding-test.html", icon: "fa-laptop-code", text: "Assign Coding Test" },
-            { href: "hiring-test-reports.html", icon: "fa-chart-bar", text: "Test Reports" },
-            { href: "hiring-manage-tests.html", icon: "fa-tasks", text: "Manage Tests" },
-            { href: "hiring-manage-colleges.html", icon: "fa-school", text: "Manage Colleges" },
-            { href: "hiring-manage-interviewers.html", icon: "fa-users-cog", text: "Manage Interviewers" },
-            { href: "hiring-schedule-interview.html", icon: "fa-calendar-alt", text: "Schedule Interview" },
-            { href: "hiring-interview-reports.html", icon: "fa-file-signature", text: "Interview Reports" },
+            { href: "/hiring/dashboard", icon: "fa-home", text: "Dashboard" },
+            { href: "/hiring/hiring-proctor-dashboard.html", icon: "fa-home", text: "Proctor - Dashboard" },
+            { href: "/hiring/create-job", icon: "fa-plus-circle", text: "Create Job" },
+            { href: "/hiring/jobs", icon: "fa-briefcase", text: "Manage Jobs" },
+            { href: "/hiring/create-test", icon: "fa-file-alt", text: "Create Aptitude Test" },
+            { href: "/hiring/create-problem", icon: "fa-code", text: "Manage Coding Problems" },
+            { href: "/hiring/create-coding-test", icon: "fa-file-code", text: "Create Coding Test" },
+            { href: "/hiring/assign-test", icon: "fa-paper-plane", text: "Assign Test" },
+            { href: "/hiring/sta", icon: "fa-laptop-code", text: "Assign Coding Test" },
+            { href: "/hiring/coding-test-results", icon: "fa-chart-line", text: "Coding Test Results" },
+            { href: "/hiring/test-reports", icon: "fa-chart-bar", text: "Test Reports" },
+            { href: "/hiring/report-details", icon: "fa-file-invoice", text: "Report Details" },
+            { href: "/hiring/manage-tests", icon: "fa-tasks", text: "Manage Tests" },
+            { href: "/hiring/manage-colleges", icon: "fa-school", text: "Manage Colleges" },
+            { href: "/hiring/manage-interviewers", icon: "fa-users-cog", text: "Manage Interviewers" },
+            { href: "/hiring/schedule-interview", icon: "fa-calendar-alt", text: "Schedule Interview" },
+            { href: "/hiring/interview-reports", icon: "fa-file-signature", text: "Interview Reports" },
+            { href: "/hiring/test-history", icon: "fa-history", text: "Test History" },
+            { href: "/hiring/view-applicants", icon: "fa-user-check", text: "View Applicants" },
         ];
-        // --- END OF MODIFICATIONS ---
 
-        // ✅ Determine current page automatically
-        const currentPath = window.location.pathname.split("/").pop();
-        let activeFile = currentPath ? currentPath.toLowerCase() : "";
+        // ✅ Detect current page by route
+        const currentPath = window.location.pathname.toLowerCase();
 
+        // ✅ Role-based sidebar control
         let finalLinks = links;
         if (user.role === "Admin") {
             finalLinks = [
-                { href: "hiring-manage-interviewers.html", icon: "fa-users-cog", text: "Manage Interviewers" },
+                { href: "/hiring/manage-interviewers", icon: "fa-users-cog", text: "Manage Interviewers" },
+                { href: "/hiring/manage-colleges", icon: "fa-school", text: "Manage Colleges" },
             ];
-            if (activeFile !== "hiring-manage-interviewers.html") {
-                window.location.href = "hiring-manage-interviewers.html";
+            if (!finalLinks.some(link => link.href === currentPath)) {
+                window.location.href = "/hiring/manage-interviewers";
                 return;
             }
         }
 
+        // ✅ Render sidebar
         sidebarNav.innerHTML = `
             <div class="flex flex-col h-full bg-gradient-to-b from-[#363359] to-[#363359] text-gray-200 shadow-xl">
                 <div class="text-center py-5 border-b border-indigo-900 bg-opacity-90">
@@ -98,7 +101,7 @@ function initializePage() {
                     ${finalLinks.map(link => `
                         <a href="${link.href}"
                            class="group flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
-                               ${link.href === activeFile
+                               ${link.href === currentPath
                                    ? 'bg-indigo-500 text-white shadow-inner'
                                    : 'hover:bg-indigo-600 hover:text-white'}">
                             <i class="fas ${link.icon} text-base w-5 text-center"></i>
@@ -111,7 +114,7 @@ function initializePage() {
                 </div>
             </div>`;
 
-        // ✅ Restore sidebar scroll position
+        // ✅ Restore sidebar scroll
         const sidebar = document.getElementById("sidebar-scrollable");
         const savedScroll = localStorage.getItem("sidebar-scroll");
         if (savedScroll) sidebar.scrollTop = savedScroll;
@@ -120,9 +123,9 @@ function initializePage() {
             localStorage.setItem("sidebar-scroll", sidebar.scrollTop);
         });
 
-        // ✅ Auto-scroll to active link (especially for bottom ones)
+        // ✅ Auto-scroll to active link
         const activeLink = Array.from(sidebar.querySelectorAll("a"))
-            .find(a => a.href.includes(activeFile));
+            .find(a => a.href.endsWith(currentPath));
         if (activeLink) {
             activeLink.scrollIntoView({ behavior: "smooth", block: "center" });
         }
