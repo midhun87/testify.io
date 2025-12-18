@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- 
+      ===============================================
+      FIXED: Content Security Policy
+      - Added https://cdn.socket.io to connect-src
+      - Added Kinesis Video Streams endpoints
+      ===============================================
+    -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.socket.io https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self' http://localhost:3000 ws://localhost:3000 wss://*.kinesisvideo.ap-south-1.amazonaws.com https://*.kinesisvideo.ap-south-1.amazonaws.com https://cdn.socket.io; worker-src 'self' blob:; media-src 'self' blob:; img-src 'self' data: https://res.cloudinary.com https://placehold.co;">
+
+    <title>Proctor Dashboard - HIRE WITH US</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .student-tile { transition: all 0.3s ease; }
+        
+        /* Red pulsing alert border */
+        .alert-active {
+            box-shadow: 0 0 0 4px #ef4444; /* red-500 */
+            animation: pulse-red 1.5s infinite;
+        }
+        @keyframes pulse-red {
+          0%, 100% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.4); }
+          50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 1); }
+        }
+
+        /* Gray pulsing connecting border */
+        .connecting {
+             box-shadow: 0 0 0 4px #6b7280; /* gray-500 */
+             animation: pulse-gray 2s infinite;
+        }
+        @keyframes pulse-gray {
+          0%, 100% { box-shadow: 0 0 0 4px rgba(107, 114, 128, 0.4); }
+          50% { box-shadow: 0 0 0 8px rgba(107, 114, 128, 0.8); }
+        }
+
+        /* Green connected border */
+        .connected {
+            box-shadow: 0 0 0 4px #10b981; /* green-500 */
+        }
+
+        /* Black disconnected border */
+        .disconnected {
+            box-shadow: 0 0 0 4px #1f2937; /* gray-800 */
+        }
+
+        /* Ensure videos fill their container */
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background-color: #000;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+<div class="flex h-screen bg-gray-100">
+
+    <!-- Sidebar -->
+    <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
+        <div class="flex items-center justify-center h-20 border-b border-gray-700">
+            <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="Logo">
+            <span class="ml-3 text-2xl font-bold">HIRE WITH US</span>
+        </div>
+        <nav class="flex-grow p-4 overflow-y-auto">
+            <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Test Sessions</h3>
+            <!-- Test list will be populated here -->
+            <div id="test-list" class="space-y-2">
+                 <!-- Example (will be replaced by JS) -->
+                <button class="w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white" data-testid="hire_apt_123">
+                    Aptitude Test Q4
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex flex-col flex-1 overflow-hidden">
+        <header class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
+            <div>
+                <h1 id="dashboard-title" class="text-2xl font-bold">Proctoring Dashboard</h1>
+                <p id="dashboard-subtitle" class="text-sm text-gray-500">Select a test session to begin monitoring.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                 <span class="relative flex h-3 w-3">
+                    <span id="socket-status-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 opacity-75"></span>
+                    <span id="socket-status-dot" class="relative inline-flex rounded-full h-3 w-3 bg-gray-500"></span>
+                 </span>
+                 <span id="socket-status-text" class="text-sm font-medium text-gray-500">Disconnected</span>
+            </div>
+        </header>
+
+        <main class="flex-1 p-6 overflow-y-auto">
+            <div id="grid-placeholder" class="text-center text-gray-500 py-20">
+                <svg class="mx-auto h-12 w-12" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v.007a.375.375 0 0 1-.375.375h-3.5a.375.375 0 0 1-.375-.375v-.007a.375.375 0 0 1 .375-.375h3.5a.375.375 0 0 1 .375.375Zm-3.75 0h.008v.015h-.008v-.015Zm0 0v-.007a.375.375 0 0 0-.375-.375h-3.5a.375.375 0 0 0-.375.375v.007c0 .207.168.375.375.375h3.5a.375.375 0 0 0 .375-.375Zm-.375 0h.008v.015h-.008v-.015Zm0 0v-.007a.375.375 0 0 0-.375-.375h-3.5a.375.375 0 0 0-.375.375v.007c0 .207.168.375.375.375h3.5a.375.375 0 0 0 .375-.375Zm-.375 0h.008v.015h-.008v-.015Z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 3.75V16.5m0 0v4.875m0-4.875a.375.375 0 0 1 .375.375v4.5a.375.375 0 0 1-.375.375h-10.5a.375.375 0 0 1-.375-.375v-4.5a.375.375 0 0 1 .375-.375m10.5 0h.008v.015h-.008V16.5Zm-10.5 0h.008v.015h-.008V16.5Z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75v10.5a2.25 2.25 0 0 0 2.25 2.25h10.5a2.25 2.25 0 0 0 2.25-2.25V6.75m-15 0a2.25 2.25 0 0 1 2.25-2.25h10.5a2.25 2.25 0 0 1 2.25 2.25m-15 0H3" />
+                </svg>
+                <h3 class="mt-2 text-sm font-medium">Please select a test session to monitor.</h3>
+            </div>
+
+            <div id="proctor-grid" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Student tiles will be inserted here by JavaScript -->
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Chat Modal -->
+<div id="chat-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+    <!-- Overlay -->
+    <div id="chat-modal-overlay" class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"></div>
+    
+    <!-- Modal Container -->
+    <div class="relative bg-white w-full max-w-lg rounded-xl shadow-2xl flex flex-col overflow-hidden">
+        <div class="p-4 border-b flex justify-between items-center">
+            <h3 id="chat-modal-title" class="text-lg font-semibold text-gray-900">Chat</h3>
+            <button id="chat-modal-close" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times fa-lg"></i>
+            </button>
+        </div>
+        <div id="chat-history" class="p-4 h-64 overflow-y-auto bg-gray-50 space-y-3">
+             <!-- Chat messages appear here -->
+        </div>
+        <form id="chat-form" class="p-4 border-t flex gap-3 bg-white">
+            <input id="chat-input" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Type a message..." autocomplete="off">
+            <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700">
+                Send
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- JS Dependencies -->
+<!-- Socket.io client -->
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<!-- 
+  *** UPDATED SDK VERSION TO 2.4.4 (Same as Student Page) ***
+  This fixes the "ReferenceError: KVSWebRTC is not defined" error.
+-->
+<script src="https://unpkg.com/amazon-kinesis-video-streams-webrtc@2.4.4/dist/kvs-webrtc.min.js"></script>
+
+
+<!-- MAIN PROCTORING DASHBOARD SCRIPT -->
+<script>
+(async function(){
+    // --- Global State ---
+    const token = localStorage.getItem('token'); // Assumes token is stored from login
+    const BACKEND_URL = 'http://localhost:3000';
+    let socket = null;
+    let currentTestId = null;
+    let viewers = new Map(); // Stores { socketId: KvsViewer }
+
+    // --- DOM Elements ---
+    const grid = document.getElementById('proctor-grid');
+    const placeholder = document.getElementById('grid-placeholder');
+    const dashboardTitle = document.getElementById('dashboard-title');
+    const dashboardSubtitle = document.getElementById('dashboard-subtitle');
+    const testListContainer = document.getElementById('test-list');
+    
+    // Socket Status
+    const socketStatusDot = document.getElementById('socket-status-dot');
+    const socketStatusPing = document.getElementById('socket-status-ping');
+    const socketStatusText = document.getElementById('socket-status-text');
+
+    // Chat Modal
+    const chatModal = document.getElementById('chat-modal');
+    const chatOverlay = document.getElementById('chat-modal-overlay');
+    const chatCloseBtn = document.getElementById('chat-modal-close');
+    const chatTitle = document.getElementById('chat-modal-title');
+    const chatHistory = document.getElementById('chat-history');
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+    let activeChatSocketId = null; // Which student we are chatting with
+    
+
+    // --- KVS Viewer Class ---
+    // This class manages the connection for a *single* student
+    class KvsViewer {
+        constructor(studentInfo, domElements) {
+            this.studentInfo = studentInfo;
+            this.dom = domElements; // { tile, video, status, name }
+            
+            // FIX: Verify KVSWebRTC exists
+            if (typeof KVSWebRTC === 'undefined') {
+                console.error("CRITICAL: KVSWebRTC SDK not loaded.");
+                this.dom.status.textContent = "Error: KVS SDK Missing";
+                return;
+            }
+
+            this.role = KVSWebRTC.Role.VIEWER; 
+            this.signalingClient = null;
+            this.peerConnection = null;
+
+            this.dom.status.textContent = 'Initializing...';
+            this.dom.tile.classList.add('connecting');
+        }
+
+        async start() {
+            try {
+                // 1. Get Viewer Credentials from our backend
+                const creds = await this.fetchViewerCredentials();
+                
+                // 2. Create Signaling Client
+                // FIX: Use KVSWebRTC global directly
+                this.signalingClient = new KVSWebRTC.SignalingClient({
+                    channelARN: this.studentInfo.channelARN,
+                    channelEndpoint: creds.wssEndpoint,
+                    role: this.role,
+                    region: 'ap-south-1',
+                    clientId: `MODERATOR_${Date.now()}_${Math.random()}`, // Must be unique per viewer
+                    credentials: {
+                        accessKeyId: 'AKIAT4YSUMZD52BNBCAB', 
+                        secretAccessKey: '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'
+                    }
+                });
+
+                // 3. Create Peer Connection
+                this.peerConnection = new RTCPeerConnection({
+                    iceServers: creds.iceServers // Use TURN servers from backend
+                });
+
+                // 4. Listen for remote tracks (the student's video/audio)
+                this.peerConnection.ontrack = (event) => {
+                    console.log(`[KVS Viewer ${this.studentInfo.socketId}] Received remote track!`);
+                    if (this.dom.video.srcObject) {
+                        this.dom.video.srcObject.addTrack(event.track);
+                        return;
+                    }
+                    this.dom.video.srcObject = new MediaStream([event.track]);
+                    this.dom.video.play().catch(e => console.warn("Video play failed:", e));
+                };
+
+                // 5. Setup signaling client event listeners
+                this.signalingClient.on('open', async () => {
+                    console.log(`[KVS Viewer ${this.studentInfo.socketId}] Signaling open. Creating SDP Offer...`);
+                    this.dom.status.textContent = 'Connecting...';
+                    await this.peerConnection.setLocalDescription(
+                        await this.peerConnection.createOffer({
+                            offerToReceiveAudio: true, // We want to receive audio
+                            offerToReceiveVideo: true  // We want to receive video
+                        })
+                    );
+                    this.signalingClient.sendSdpOffer(this.peerConnection.localDescription);
+                });
+
+                this.signalingClient.on('sdpAnswer', async (answer) => {
+                    console.log(`[KVS Viewer ${this.studentInfo.socketId}] Received SDP Answer.`);
+                    await this.peerConnection.setRemoteDescription(answer);
+                });
+
+                this.signalingClient.on('iceCandidate', (candidate) => {
+                    this.peerConnection.addIceCandidate(candidate);
+                });
+
+                this.signalingClient.on('close', () => { 
+                    console.log(`[KVS Viewer ${this.studentInfo.socketId}] Signaling closed.`);
+                    this.setConnectionState('disconnected');
+                });
+                this.signalingClient.on('error', (e) => {
+                    console.error(`[KVS Viewer ${this.studentInfo.socketId}] Signaling error:`, e);
+                    this.setConnectionState('disconnected');
+                });
+                
+                // 6. Setup Peer Connection event listeners
+                this.peerConnection.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        this.signalingClient.sendIceCandidate(event.candidate);
+                    }
+                };
+                
+                this.peerConnection.onconnectionstatechange = () => {
+                    const state = this.peerConnection.connectionState;
+                    console.log(`[KVS Viewer ${this.studentInfo.socketId}] PC State: ${state}`);
+                    if (state === 'connected') {
+                        this.setConnectionState('connected');
+                    } else if (['disconnected', 'failed', 'closed'].includes(state)) {
+                        this.setConnectionState('disconnected');
+                    }
+                };
+
+                // 7. Connect!
+                this.signalingClient.open();
+
+            } catch (e) {
+                console.error(`[KVS Viewer ${this.studentInfo.socketId}] Failed to start:`, e);
+                this.dom.status.textContent = `Error: ${e.message}`;
+                this.setConnectionState('disconnected');
+            }
+        }
+
+        async fetchViewerCredentials() {
+            const response = await fetch(`${BACKEND_URL}/api/proctoring/viewer-credentials`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                body: JSON.stringify({
+                    channelARN: this.studentInfo.channelARN
+                })
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Failed to get viewer credentials');
+            }
+            return response.json();
+        }
+        
+        setConnectionState(state) {
+            this.dom.tile.classList.remove('connecting', 'connected', 'disconnected');
+            if (state === 'connected') {
+                this.dom.tile.classList.add('connected');
+                this.dom.status.textContent = 'Live';
+            } else if (state === 'disconnected') {
+                this.dom.tile.classList.add('disconnected');
+                this.dom.status.textContent = 'Disconnected';
+            } else {
+                this.dom.tile.classList.add('connecting');
+                this.dom.status.textContent = 'Connecting...';
+            }
+        }
+        
+        stop() {
+            console.log(`[KVS Viewer ${this.studentInfo.socketId}] Stopping...`);
+            if (this.signalingClient) {
+                this.signalingClient.close();
+            }
+            if (this.peerConnection) {
+                this.peerConnection.close();
+            }
+        }
+    }
+
+
+    // --- Main Functions ---
+
+    function init() {
+        if (!token) {
+            dashboardTitle.textContent = "Access Denied";
+            dashboardSubtitle.textContent = "No login token found. Please log in.";
+            return;
+        }
+
+        // Fetch tests this moderator can view
+        fetchModeratorTests();
+
+        // Setup chat modal listeners
+        chatOverlay.addEventListener('click', closeChat);
+        chatCloseBtn.addEventListener('click', closeChat);
+        chatForm.addEventListener('submit', sendChatMessage);
+    }
+    
+    async function fetchModeratorTests() {
+        try {
+            // This endpoint should return all tests (aptitude + coding) the mod created
+            const [aptTests, codTests] = await Promise.all([
+                 fetch(`${BACKEND_URL}/api/hiring/tests?type=aptitude`, { headers: { 'x-auth-token': token } }).then(res => res.json()),
+                 fetch(`${BACKEND_URL}/api/hiring/tests?type=coding`, { headers: { 'x-auth-token': token } }).then(res => res.json())
+            ]);
+            
+            const allTests = [...aptTests, ...codTests];
+            allTests.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            if (allTests.length === 0) {
+                 testListContainer.innerHTML = '<p class="px-3 py-2 text-sm text-gray-400">No tests found.</p>';
+                 return;
+            }
+            
+            testListContainer.innerHTML = allTests.map(test => {
+                const testId = test.aptitudeTestId || test.codingTestId;
+                return `
+                    <button class="w-full text-left px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-gray-700 hover:text-white" data-testid="${testId}" data-title="${test.title}">
+                        ${test.title} <span class="text-xs text-gray-400">(${test.testType || 'aptitude'})</span>
+                    </button>
+                `;
+            }).join('');
+            
+            testListContainer.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const testId = btn.dataset.testid;
+                    const testTitle = btn.dataset.title;
+                    startMonitoring(testId, testTitle);
+                    // Highlight selected test
+                    testListContainer.querySelectorAll('button').forEach(b => b.classList.remove('bg-gray-900', 'text-white'));
+                    btn.classList.add('bg-gray-900', 'text-white');
+                });
+            });
+            
+        } catch (e) {
+            console.error("Failed to fetch tests:", e);
+            testListContainer.innerHTML = '<p class="px-3 py-2 text-sm text-red-400">Failed to load tests.</p>';
+        }
+    }
+
+    function startMonitoring(testId, testTitle) {
+        console.log(`[MAIN] Starting to monitor test: ${testId} (${testTitle})`);
+        
+        // Disconnect from previous test room, if any
+        if (socket && socket.connected) {
+            socket.disconnect();
+        }
+        
+        // Clear the grid and stop all viewers
+        grid.innerHTML = '';
+        viewers.forEach(viewer => viewer.stop());
+        viewers.clear();
+        
+        currentTestId = testId;
+        dashboardTitle.textContent = testTitle;
+        placeholder.classList.add('hidden');
+        
+        // Connect to new socket.io room
+        socket = io(BACKEND_URL, { auth: { token } });
+        setupSocketListeners();
+        
+        // Join the specific test room
+        socket.emit('moderator-join-test', { testId: currentTestId });
+    }
+
+    function setupSocketListeners() {
+        socket.on('connect', () => {
+            console.log(`[SOCKET] Connected with ID: ${socket.id}`);
+            updateSocketStatus('connected');
+        });
+
+        socket.on('disconnect', () => {
+            console.warn('[SOCKET] Disconnected.');
+            updateSocketStatus('disconnected');
+        });
+
+        socket.on('existing-students', (students) => {
+            console.log(`[SOCKET] Received ${students.length} existing students.`);
+            if (students.length === 0) {
+                placeholder.classList.remove('hidden');
+                placeholder.querySelector('h3').textContent = 'Waiting for students to join...';
+            } else {
+                placeholder.classList.add('hidden');
+            }
+            students.forEach(student => createStudentViewer(student));
+        });
+
+        socket.on('new-student-joined', (studentInfo) => {
+            console.log(`[SOCKET] New student joined: ${studentInfo.candidateDetails.fullName}`);
+            placeholder.classList.add('hidden');
+            createStudentViewer(studentInfo);
+        });
+
+        socket.on('student-left', (data) => {
+            console.log(`[SOCKET] Student left: ${data.studentInfo.candidateDetails.fullName}`);
+            removeStudentViewer(data.studentSocketId);
+        });
+
+        socket.on('proctoring-alert', (data) => {
+            console.warn(`[SOCKET] Alert from ${data.studentSocketId}: ${data.alert}`);
+            const tile = document.getElementById(`tile-${data.studentSocketId}`);
+            if (tile) {
+                tile.classList.add('alert-active');
+                // Add alert message
+                const alertBox = tile.querySelector('.alert-box');
+                if (alertBox) {
+                    const alertMsg = document.createElement('div');
+                    alertMsg.className = 'text-xs text-red-600 font-medium';
+                    alertMsg.textContent = `🚨 ${data.alert} (${new Date().toLocaleTimeString()})`;
+                    alertBox.prepend(alertMsg);
+                }
+            }
+        });
+        
+        socket.on('proctoring-chat', (data) => {
+            // We receive this from the backend, which got it from the student
+            // The `data` object should contain { senderName, message, studentSocketId }
+            if (data.studentSocketId === activeChatSocketId) {
+                addChatMessage(data.senderName, data.message, false);
+            }
+        });
+    }
+
+    function createStudentViewer(studentInfo) {
+        if (viewers.has(studentInfo.socketId)) {
+            console.warn(`Viewer for ${studentInfo.socketId} already exists.`);
+            return;
+        }
+        
+        console.log(`[MAIN] Creating viewer for ${studentInfo.candidateDetails.fullName} (${studentInfo.socketId})`);
+        
+        const tile = document.createElement('div');
+        tile.id = `tile-${studentInfo.socketId}`;
+        tile.className = 'student-tile bg-white rounded-lg shadow-md overflow-hidden border-4 border-transparent';
+        
+        tile.innerHTML = `
+            <div class="video-container w-full h-64 bg-black relative">
+                <video class="w-full h-full object-cover" autoplay playsinline muted></video>
+                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/50 rounded-full">
+                    <span class="text-xs font-medium text-white" id="status-${studentInfo.socketId}"></span>
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="font-semibold text-gray-800" id="name-${studentInfo.socketId}">${studentInfo.candidateDetails.fullName}</p>
+                        <p class="text-xs text-gray-500">${studentInfo.candidateDetails.email}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="chat-btn px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-100 rounded-md hover:bg-indigo-200" data-socketid="${studentInfo.socketId}" data-name="${studentInfo.candidateDetails.fullName}">
+                            <i class="fas fa-comment"></i>
+                        </button>
+                        <button class="suspend-btn px-3 py-1.5 text-sm font-medium text-red-600 bg-red-100 rounded-md hover:bg-red-200" data-socketid="${studentInfo.socketId}">
+                            <i class="fas fa-ban"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="alert-box mt-3 space-y-1">
+                    <!-- Alerts will be injected here -->
+                </div>
+            </div>
+        `;
+        
+        grid.appendChild(tile);
+        
+        const domElements = {
+            tile: tile,
+            video: tile.querySelector('video'),
+            status: tile.querySelector(`#status-${studentInfo.socketId}`),
+            name: tile.querySelector(`#name-${studentInfo.socketId}`)
+        };
+
+        // Add event listeners for buttons
+        tile.querySelector('.chat-btn').addEventListener('click', (e) => {
+            const btn = e.currentTarget;
+            openChat(btn.dataset.socketid, btn.dataset.name);
+        });
+        
+        tile.querySelector('.suspend-btn').addEventListener('click', (e) => {
+            const socketId = e.currentTarget.dataset.socketid;
+            if (confirm(`Are you sure you want to suspend the test for this student?`)) {
+                socket.emit('proctoring-command', { targetSocketId: socketId, command: 'SUSPEND_EXAM' });
+            }
+        });
+        
+        tile.addEventListener('click', () => {
+             tile.classList.remove('alert-active');
+        });
+
+        const viewer = new KvsViewer(studentInfo, domElements);
+        viewers.set(studentInfo.socketId, viewer);
+        viewer.start();
+    }
+
+    function removeStudentViewer(socketId) {
+        const viewer = viewers.get(socketId);
+        if (viewer) {
+            viewer.stop();
+            viewer.dom.tile.remove();
+            viewers.delete(socketId);
+        }
+        if (grid.children.length === 0) {
+            placeholder.classList.remove('hidden');
+            placeholder.querySelector('h3').textContent = 'All students have left.';
+        }
+    }
+    
+    function updateSocketStatus(status) {
+        if (status === 'connected') {
+            socketStatusDot.classList.remove('bg-gray-500', 'bg-red-500');
+            socketStatusDot.classList.add('bg-green-500');
+            socketStatusPing.classList.remove('bg-gray-400', 'bg-red-400');
+            socketStatusPing.classList.add('bg-green-400', 'animate-ping');
+            socketStatusText.textContent = 'Connected';
+            socketStatusText.classList.remove('text-gray-500', 'text-red-500');
+            socketStatusText.classList.add('text-green-600');
+        } else {
+            socketStatusDot.classList.remove('bg-green-500');
+            socketStatusDot.classList.add('bg-red-500');
+            socketStatusPing.classList.remove('bg-green-400', 'animate-ping');
+            socketStatusPing.classList.add('bg-red-400');
+            socketStatusText.textContent = 'Disconnected';
+            socketStatusText.classList.remove('text-green-600');
+            socketStatusText.classList.add('text-red-500');
+        }
+    }
+    
+    // --- Chat Modal Functions ---
+    function openChat(socketId, name) {
+        activeChatSocketId = socketId;
+        chatTitle.textContent = `Chat with ${name}`;
+        chatHistory.innerHTML = ''; // Clear previous chat
+        chatInput.value = '';
+        chatModal.classList.remove('hidden');
+    }
+    
+    function closeChat() {
+        activeChatSocketId = null;
+        chatModal.classList.add('hidden');
+    }
+    
+    function sendChatMessage(e) {
+        e.preventDefault();
+        const message = chatInput.value;
+        if (!message || !activeChatSocketId || !socket) return;
+        
+        socket.emit('proctoring-chat', {
+            targetSocketId: activeChatSocketId,
+            message: message,
+            isFromModerator: true
+        });
+        
+        addChatMessage('Moderator', message, true);
+        chatInput.value = '';
+    }
+    
+    function addChatMessage(senderName, message, isSelf) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `w-full flex ${isSelf ? 'justify-end' : 'justify-start'}`;
+        msgDiv.innerHTML = `
+            <div class="max-w-[75%] p-3 rounded-lg ${isSelf ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-800'}">
+                <span class="block text-xs font-bold mb-1">${senderName}</span>
+                <p class="text-sm">${message}</p>
+            </div>
+        `;
+        chatHistory.appendChild(msgDiv);
+        chatHistory.scrollTop = chatHistory.scrollHeight; // Auto-scroll
+    }
+
+    // --- Start ---
+    init();
+
+})();
+</script>
+
+</body>
+</html>

@@ -203,6 +203,10 @@
                             <button id="export-pdf-btn" class="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 font-semibold rounded-lg hover:bg-red-200 text-sm border border-red-200">
                                 <i class="fas fa-file-pdf"></i> Export PDF
                             </button>
+                            <!-- NEW: Copy Emails Button -->
+                            <button id="copy-emails-btn" class="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 font-semibold rounded-lg hover:bg-purple-200 text-sm border border-purple-200 transition-all duration-200">
+                                <i class="fas fa-copy"></i> Copy Emails
+                            </button>
                             <button id="update-status-btn" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 disabled:bg-gray-400 text-sm" disabled>
                                 <i class="fas fa-pencil-alt mr-2"></i> Update Status
                             </button>
@@ -338,6 +342,7 @@
             const scoreFilterInput = document.getElementById('score-filter');
             const exportExcelBtn = document.getElementById('export-excel-btn');
             const exportPdfBtn = document.getElementById('export-pdf-btn');
+            const copyEmailsBtn = document.getElementById('copy-emails-btn'); // NEW
 
             // --- Stat Card Elements ---
             const statTotal = document.getElementById('stat-total');
@@ -355,6 +360,18 @@
                 messageArea.innerHTML = `<p class="text-red-500 font-semibold">Could not load applicants: Job ID is missing from the URL. Please go back and try again.</p>`;
                 return;
             }
+
+            // --- HELPER TO HANDLE BOTH STRING AND OBJECT URLS ---
+            const resolveUrl = (data) => {
+                if (!data) return null;
+                // If it's already a string, return it
+                if (typeof data === 'string') return data;
+                // If it's an object (e.g. from backend uploadToS3), try to get secure_url or url
+                if (typeof data === 'object') {
+                    return data.secure_url || data.url || null;
+                }
+                return null;
+            };
 
             // --- Main Data Fetch Function ---
             const fetchApplicants = async () => {
@@ -395,7 +412,8 @@
                     `<th class="px-4 py-3"><input type="checkbox" id="select-all-checkbox" class="h-4 w-4 text-indigo-600 border-gray-300 rounded"></th>`,
                     `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applicant</th>`,
                     `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>`,
-                    `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CGPA</th>`
+                    `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CGPA</th>`,
+                    `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resume</th>` // Added Resume Header
                 ];
                 
                 // Dynamic Test Headers
@@ -434,6 +452,10 @@
                     const primaryEdu = getPrimaryEducation(app.education);
                     const cgpa = primaryEdu ? (parseFloat(primaryEdu.score) || 'N/A') : 'N/A';
                     
+                    // SAFELY RESOLVE URLS
+                    const photoUrl = resolveUrl(app.passportPhotoUrl) || 'https://placehold.co/40x40/EFEFEF/CCCCCC?text=NA';
+                    const resumeLink = resolveUrl(app.resumeUrl);
+
                     // --- NEW: Dynamic Score Cells ---
                     const scoreCells = currentTestHeaders.map(testTitle => {
                         const score = app.scores[testTitle] || 'N/A';
@@ -446,7 +468,7 @@
                             <td class="px-4 py-3 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0 h-10 w-10">
-                                        <img class="h-10 w-10 rounded-full object-cover" src="${app.passportPhotoUrl || 'https://placehold.co/40x40/EFEFEF/CCCCCC?text=NA'}" alt="">
+                                        <img class="h-10 w-10 rounded-full object-cover" src="${photoUrl}" alt="">
                                     </div>
                                     <div class="ml-3">
                                         <div class="text-sm font-medium text-gray-900">${name}</div>
@@ -461,6 +483,10 @@
                             </td>
                             <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">${cgpa}</td>
                             
+                            <td class="px-4 py-3 whitespace-nowrap text-sm">
+                                ${resumeLink ? `<a href="${resumeLink}" target="_blank" class="text-indigo-600 hover:text-indigo-900" title="View Resume"><i class="fas fa-file-pdf fa-lg"></i></a>` : '<span class="text-gray-400">-</span>'}
+                            </td>
+
                             <!-- DYNAMIC SCORE CELLS INJECTED HERE -->
                             ${scoreCells}
                             
@@ -496,13 +522,16 @@
                 const formatBlock = (items, type) => {
                     if (!items || items.length === 0) return '<div class="item"><span class="item-value">N/A</span></div>';
                     return items.map(item => {
+                        // Resolve potential object URL in cert
+                        const certUrl = resolveUrl(item.certificateUrl);
+                        
                         if (type === 'education') {
                             return `<div class="block-item">
                                 <div class="item"><span class="item-label">Type</span><span class="item-value">${item.type}</span></div>
                                 <div class="item"><span class="item-label">Institute</span><span class="item-value">${item.institute}</span></div>
                                 <div class="item"><span class="item-label">Stream</span><span class="item-value">${item.stream}</span></div>
                                 <div class="item"><span class="item-label">Score/GPA</span><span class="item-value">${item.score}</span></div>
-                                ${item.certificateUrl ? `<div class="item"><span class="item-label">Certificate</span><span class="item-value"><a href="${item.certificateUrl}" target="_blank" class="text-indigo-600 hover:underline">View File</a></span></div>` : ''}
+                                ${certUrl ? `<div class="item"><span class="item-label">Certificate</span><span class="item-value"><a href="${certUrl}" target="_blank" class="text-indigo-600 hover:underline">View File</a></span></div>` : ''}
                             </div>`;
                         }
                         if (type === 'experience') {
@@ -510,7 +539,7 @@
                                 <div class="item"><span class="item-label">Title</span><span class="item-value">${item.title}</span></div>
                                 <div class="item"><span class="item-label">Company</span><span class="item-value">${item.company}</span></div>
                                 <div class="item"><span class="item-label">Description</span><span class="item-value">${item.description || 'N/A'}</span></div>
-                                ${item.certificateUrl ? `<div class="item"><span class="item-label">Certificate</span><span class="item-value"><a href="${item.certificateUrl}" target="_blank" class="text-indigo-600 hover:underline">View File</a></span></div>` : ''}
+                                ${certUrl ? `<div class="item"><span class="item-label">Certificate</span><span class="item-value"><a href="${certUrl}" target="_blank" class="text-indigo-600 hover:underline">View File</a></span></div>` : ''}
                             </div>`;
                         }
                          if (type === 'certification') {
@@ -519,7 +548,7 @@
                                 <div class="item"><span class="item-label">Provider</span><span class="item-value">${item.provider}</span></div>
                                 <div class="item"><span class="item-label">Date</span><span class="item-value">${item.dateIssued || 'N/A'}</span></div>
                                 <div class="item"><span class="item-label">ID</span><span class="item-value">${item.credentialId || 'N/A'}</span></div>
-                                ${item.certificateUrl ? `<div class="item"><span class="item-label">Certificate</span><span class="item-value"><a href="${item.certificateUrl}" target="_blank" class="text-indigo-600 hover:underline">View File</a></span></div>` : ''}
+                                ${certUrl ? `<div class="item"><span class="item-label">Certificate</span><span class="item-value"><a href="${certUrl}" target="_blank" class="text-indigo-600 hover:underline">View File</a></span></div>` : ''}
                             </div>`;
                         }
                         return '';
@@ -542,11 +571,16 @@
                     scoresHtml += '<div class="grid grid-cols-1"><div class="item"><span class="item-value">No tests were assigned for this job.</span></div></div>';
                 }
 
+                // Resolve URLs for modal
+                const photoUrl = resolveUrl(app.passportPhotoUrl) || 'https://placehold.co/160x160/EFEFEF/CCCCCC?text=NA';
+                const resumeUrl = resolveUrl(app.resumeUrl);
+                const govtIdUrl = app.govtId ? resolveUrl(app.govtId.url) : null;
+
                 modalContent.innerHTML = `
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <!-- Left Column: Photo & Contact -->
                         <div class="md:col-span-1 text-center">
-                            <img src="${app.passportPhotoUrl || 'https://placehold.co/160x160/EFEFEF/CCCCCC?text=NA'}" alt="Passport Photo" class="w-40 h-40 object-cover rounded-full shadow-md mx-auto border-4 border-white">
+                            <img src="${photoUrl}" alt="Passport Photo" class="w-40 h-40 object-cover rounded-full shadow-md mx-auto border-4 border-white" crossorigin="anonymous">
                             <h3 class="mt-4 text-lg font-semibold text-gray-800">${app.firstName} ${app.lastName}</h3>
                             <p class="text-sm text-gray-500">${app.rollNumber}</p>
                             <div class="mt-4 space-y-2 text-sm text-left">
@@ -558,8 +592,8 @@
                             <div class="mt-4 pt-4 border-t border-gray-200">
                                 <h4 class="font-semibold text-gray-700 text-left mb-2">Documents</h4>
                                 <div class="flex flex-col items-start space-y-2">
-                                    <a href="${app.resumeUrl}" target="_blank" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium hover:bg-blue-200 w-full text-left"><i class="fas fa-file-pdf fa-fw mr-2"></i>View Resume</a>
-                                    ${app.govtId && app.govtId.url ? `<a href="${app.govtId.url}" target="_blank" class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium hover:bg-green-200 w-full text-left"><i class="fas fa-id-card fa-fw mr-2"></i>View ID (${app.govtId.type || 'N/A'})</a>` : ''}
+                                    <a href="${resumeUrl}" target="_blank" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium hover:bg-blue-200 w-full text-left"><i class="fas fa-file-pdf fa-fw mr-2"></i>View Resume</a>
+                                    ${govtIdUrl ? `<a href="${govtIdUrl}" target="_blank" class="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium hover:bg-green-200 w-full text-left"><i class="fas fa-id-card fa-fw mr-2"></i>View ID (${app.govtId.type || 'N/A'})</a>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -657,11 +691,13 @@
                 if (!url) return null;
                 try {
                     // Direct fetch (assuming S3 bucket has correct CORS policy)
-                    const response = await fetch(url); 
+                    // Added cache: 'no-cache' to ensure we get fresh data/headers
+                    const response = await fetch(url, { cache: 'no-cache' }); 
                     
                     if (!response.ok) {
                         console.warn(`Failed to fetch image: ${url}. Status: ${response.status}`);
-                        return 'https://placehold.co/100x100/EFEFEF/CCCCCC?text=Image+Failed';
+                        // Use a PNG placeholder instead of SVG for better jsPDF compatibility
+                        return 'https://placehold.co/100x100.png?text=Image+Error';
                     }
                     const blob = await response.blob();
                     return new Promise((resolve, reject) => {
@@ -675,7 +711,7 @@
                     });
                 } catch (error) {
                     console.error('Error converting image to data URL:', error, url);
-                    return 'https://placehold.co/100x100/EFEFEF/CCCCCC?text=Image+Error';
+                    return 'https://placehold.co/100x100.png?text=Image+Error';
                 }
             };
 
@@ -840,6 +876,42 @@
                 }
             };
             
+            // --- Copy Emails Button Logic ---
+            copyEmailsBtn.addEventListener('click', () => {
+                if (!currentFilteredApplicants || currentFilteredApplicants.length === 0) {
+                    alert('No applicants available to copy emails from.');
+                    return;
+                }
+                
+                // Get all valid email addresses from the currently displayed list
+                const emails = currentFilteredApplicants
+                    .map(app => app.email)
+                    .filter(email => email)
+                    .join(', ');
+                
+                if (!emails) {
+                    alert('No valid email addresses found.');
+                    return;
+                }
+
+                // Copy to clipboard
+                navigator.clipboard.writeText(emails).then(() => {
+                    // Change button appearance temporarily to indicate success
+                    const originalHTML = copyEmailsBtn.innerHTML;
+                    const originalClasses = copyEmailsBtn.className;
+                    
+                    copyEmailsBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    copyEmailsBtn.className = "inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 font-semibold rounded-lg text-sm border border-green-200 transition-all duration-200";
+                    
+                    setTimeout(() => {
+                        copyEmailsBtn.innerHTML = originalHTML;
+                        copyEmailsBtn.className = originalClasses;
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy emails: ', err);
+                    alert('Failed to copy emails to clipboard. Please try again.');
+                });
+            });
 
             // --- Download/Export Listeners ---
             exportExcelBtn.addEventListener('click', () => {
@@ -877,7 +949,7 @@
                         Address_State: app.address?.state || 'N/A',
                         Address_ZIP: app.address?.zip || 'N/A',
                         Address_Country: app.address?.country || 'N/A',
-                        Resume: app.resumeUrl,
+                        Resume: resolveUrl(app.resumeUrl), // Use resolveUrl
                         LinkedIn: app.links?.linkedin
                     };
                     return row;
@@ -979,7 +1051,8 @@
                 doc.text(`Application for ${pageTitle.textContent.replace('Applicants for ', '')}`, 105, y, { align: 'center' });
                 
                 // --- Add Passport Photo ---
-                const photoData = await imageToDataUrl(app.passportPhotoUrl);
+                const photoUrl = resolveUrl(app.passportPhotoUrl);
+                const photoData = await imageToDataUrl(photoUrl);
                 if (photoData) {
                     // Attempt to add image, handle potential errors
                     try {
@@ -1070,7 +1143,7 @@
                         `   Institute: ${edu.institute}`,
                         `   Score/GPA: ${edu.score}`
                     ]);
-                    if(edu.certificateUrl) addFileLink(`   Edu. Cert #${i+1}`, edu.certificateUrl);
+                    if(edu.certificateUrl) addFileLink(`   Edu. Cert #${i+1}`, resolveUrl(edu.certificateUrl));
                 });
 
                 addSection("Work Experience");
@@ -1081,7 +1154,7 @@
                         `[${i+1}] ${e.title} at ${e.company}`,
                         `   Description: ${doc.splitTextToSize(e.description || 'N/A', 140).join('\n   ')}`
                     ]);
-                    if(e.certificateUrl) addFileLink(`   Exp. Letter #${i+1}`, e.certificateUrl);
+                    if(e.certificateUrl) addFileLink(`   Exp. Letter #${i+1}`, resolveUrl(e.certificateUrl));
                 });
 
                 addSection("Certifications");
@@ -1092,15 +1165,15 @@
                         `[${i+1}] ${c.name} from ${c.provider}`,
                         `   Date: ${c.dateIssued || 'N/A'} | ID: ${c.credentialId || 'N/A'}`
                     ]);
-                    if(c.certificateUrl) addFileLink(`   Cert. File #${i+1}`, c.certificateUrl);
+                    if(c.certificateUrl) addFileLink(`   Cert. File #${i+1}`, resolveUrl(c.certificateUrl));
                 });
                 
                 addSection("Links & Uploaded Documents");
                 addKVPair("LinkedIn", app.links?.linkedin);
                 addKVPair("GitHub", app.links?.github);
                 addKVPair("Portfolio", app.links?.portfolio);
-                addFileLink("Resume/CV", app.resumeUrl);
-                addFileLink(`Govt. ID (${app.govtId?.type || 'N/A'})`, app.govtId?.url);
+                addFileLink("Resume/CV", resolveUrl(app.resumeUrl));
+                addFileLink(`Govt. ID (${app.govtId?.type || 'N/A'})`, resolveUrl(app.govtId?.url));
 
                 addSection("Extracurriculars");
                 doc.setFontSize(10);

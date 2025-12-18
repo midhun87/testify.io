@@ -80,7 +80,7 @@
                     if (data.user && data.user.role === 'Hiring Moderator') {
                         localStorage.setItem('token', data.token);
                         localStorage.setItem('user', JSON.stringify(data.user));
-                        window.location.href = 'hiring-dashboard.html';
+                        window.location.href = 'dashboard';
                     } else {
                          errorMessage.textContent = 'Access Denied. Only Hiring Moderators can log in here.';
                     }
