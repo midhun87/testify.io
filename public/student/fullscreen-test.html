@@ -124,7 +124,7 @@
         <footer class="bg-white mt-12 py-4 border-t border-gray-200">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-center items-center">
                 <p class="text-sm text-gray-500 mr-2">Powered by</p>
-                <img src="https://res.cloudinary.com/djdwpjm7x/image/upload/v1771001520/Xeta_Header_wfw12w.png" alt="EduDevelopers Logo" class="h-11">
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1758718248/EduDevelopers_logo_m1h9db.png" alt="EduDevelopers Logo" class="h-11">
             </div>
         </footer>
     </div>
@@ -468,7 +468,20 @@
                         currentTest = JSON.parse(JSON.stringify(cognizantCloudTest));
                         currentTest.questions = shuffleArray(currentTest.questions).slice(0, 20);
                     } else {
-                        currentTest = availableTests.find(t => t.testId === testId);
+                        // FRONTEND SHUFFLING LOGIC FOR DYNAMIC TESTS
+                        const originalTest = availableTests.find(t => t.testId === testId);
+                        if (originalTest) {
+                            // Deep clone to ensure we do not modify the test list in the background
+                            currentTest = JSON.parse(JSON.stringify(originalTest));
+                            
+                            // Map the original indices so we can accurately un-shuffle the answers later for backend validation
+                            currentTest.questions.forEach((q, index) => {
+                                q.originalIndex = index;
+                            });
+                            
+                            // Shuffle the questions array so it appears jumbled for the student
+                            currentTest.questions = shuffleArray(currentTest.questions);
+                        }
                     }
 
                     if (currentTest) {
@@ -699,9 +712,21 @@
                 saveAnswer();
                 clearInterval(timerInterval);
 
+                // REORDER ANSWERS LOGIC: Un-shuffle the answers back to the original database order.
+                // This ensures the backend grading script perfectly aligns with the student's submission
+                // without requiring any backend modifications!
+                let finalAnswers = studentAnswers;
+                if (currentTest.testId !== 'cognizant-cloud-fundamentals-static') {
+                    finalAnswers = new Array(currentTest.questions.length).fill(null);
+                    currentTest.questions.forEach((q, shuffledIdx) => {
+                        // Place the answer back into the index the backend expects
+                        finalAnswers[q.originalIndex] = studentAnswers[shuffledIdx];
+                    });
+                }
+
                 const payload = {
                     testId: currentTest.testId,
-                    answers: studentAnswers,
+                    answers: finalAnswers, // Sending the un-shuffled answers
                     timeTaken: timeTaken,
                     violationReason,
                     // Send the full test object for static tests
