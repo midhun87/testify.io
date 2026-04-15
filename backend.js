@@ -7202,12 +7202,12 @@ app.post('/api/careers/apply/:jobId',
                         <body>
                             <div class="container">
                                 <div class="header">
-                                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg" alt="Xeta Solutions Logo">
+                                    <img src="https://res.cloudinary.com/djdwpjm7x/image/upload/v1771001520/Xeta_Header_wfw12w.png" alt="Xeta Tech Solutions Logo">
                                 </div>
                                 <div class="content">
                                     <h1>Thank You For Applying!</h1>
                                     <p>Hello <strong>${firstName}</strong>,</p>
-                                    <p>We have successfully received your application for the position of <strong>${job.title}</strong> at <strong>Xeta Solutions</strong>.</p>
+                                    <p>We have successfully received your application for the position of <strong>${job.title}</strong> at <strong>Xeta Tech Solutions</strong>.</p>
                                     
                                     <div class="info-box">
                                         <p>Your Application ID is: <strong>${applicationId}</strong></p>
@@ -7216,13 +7216,13 @@ app.post('/api/careers/apply/:jobId',
                                     <p>Our hiring team will review your application and will be in touch if your qualifications match our needs. You can check the status of all your applications at any time by visiting the "My Applications" page.</p>
                                     
                                     <div class="button-container">
-                                        <a href="https:/testify-lac.com/my-applications" class="button">Check Application Status</a>
+                                        <a href="https:/testify.xetasolutions.in/my-applications" class="button">Check Application Status</a>
                                     </div>
                                     
-                                    <p style="margin-top: 24px; margin-bottom: 0;">Best regards,<br>Talent Acquisition Team<br><strong>Xeta Solutions</strong></p>
+                                    <p style="margin-top: 24px; margin-bottom: 0;">Best regards,<br>Talent Acquisition Team<br><strong>Xeta Tech Solutions</strong></p>
                                 </div>
                                 <div class="footer">
-                                    &copy; ${new Date().getFullYear()} Xeta Solutions. All rights reserved.
+                                    &copy; ${new Date().getFullYear()} Xeta Tech Solutions. All rights reserved.
                                 </div>
                             </div>
                         </body>
@@ -7439,7 +7439,7 @@ app.patch('/api/admin/applications/status', authMiddleware, async (req, res) => 
 
           <p style="font-size:15px; color:#475569; line-height:1.7;">
               We're reaching out to update you regarding your application for the 
-              <strong>${jobTitle}</strong> position at <strong>Xeta Solutions</strong>.
+              <strong>${jobTitle}</strong> position at <strong>Xeta Tech Solutions</strong>.
           </p>
 
           <!-- Status Highlight Box -->
@@ -7508,7 +7508,7 @@ app.patch('/api/admin/applications/status', authMiddleware, async (req, res) => 
                       <strong>Note:</strong> For all rounds such as Communication, Aptitude & Reasoning, Basic Coding, 
                       Advanced Coding, and Interview —  
                       tests will be conducted through our official portal 
-                      <strong>Testify (A Product of Xeta Solutions)</strong>.  
+                      <strong>Testify (A Product of Xeta Tech Solutions)</strong>.  
                       You will be notified <strong>2 days before the scheduled test.</strong>
                   </p>
               </div>
@@ -7539,7 +7539,7 @@ app.patch('/api/admin/applications/status', authMiddleware, async (req, res) => 
           <p style="font-size:14px; color:#6b7280; line-height:1.6; margin:0;">
               Best regards,<br>
               <strong style="color:#1e293b;">Talent Acquisition Team,</strong><br>
-              <strong style="color:#1e293b;">Xeta Solutions</strong>
+              <strong style="color:#1e293b;">Xeta Tech Solutions</strong>
           </p>
 
       </div>
@@ -7547,7 +7547,7 @@ app.patch('/api/admin/applications/status', authMiddleware, async (req, res) => 
 
   <!-- Footer Note -->
   <p style="text-align:center; font-size:12px; color:#94a3b8; margin-top:18px;">
-      © ${new Date().getFullYear()} Xeta Solutions. All rights reserved.
+      © ${new Date().getFullYear()} Xeta Tech Solutions. All rights reserved.
   </p>
 </div>
 
@@ -7645,12 +7645,12 @@ app.post('/api/careers/send-view-otp', async (req, res) => {
         console.log(`Generated application view OTP for ${email}: ${otp}`);
 
         const mailOptions = {
-            from: '"Xeta Solutions" <support@testify-lac.com>',
+            from: '"Xeta Tech Solutions" <support@testify-lac.com>',
             to: email,
             subject: 'Your Application Status Verification Code',
             html: `
                 <div style="font-family: 'Poppins', Arial, sans-serif; text-align: center; color: #333; padding: 20px; border: 1px solid #eee; border-radius: 8px; max-width: 400px; margin: auto;">
-                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg" alt="Xeta Solutions Logo" style="height: 40px; margin-bottom: 20px;">
+                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg" alt="Xeta Tech Solutions Logo" style="height: 40px; margin-bottom: 20px;">
                     <h2 style="color: #1e293b;">Application Status</h2>
                     <p style="font-size: 16px; color: #334155;">Your verification code is:</p>
                     <p style="font-size: 28px; font-weight: bold; letter-spacing: 3px; color: #4F46E5; background-color: #f8fafc; padding: 10px 15px; border-radius: 6px;">${otp}</p>
@@ -14406,11 +14406,11 @@ app.post('/api/hiring/schedule-interview', hiringModeratorAuth, async (req, res)
       </p>
       <div class="flex justify-center items-center gap-3 mt-3">
         <span class="text-xs text-gray-500">
-          A product of <a href="https://www.xetasolutions.in" class="underline text-blue-600 hover:text-blue-800">Xeta Solutions</a>
+          A product of <a href="https://www.xetasolutions.in" class="underline text-blue-600 hover:text-blue-800">Xeta Tech Solutions</a>
         </span>
         <img
           src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg"
-          alt="Xeta Solutions Logo"
+          alt="Xeta Tech Solutions Logo"
           class="h-6 w-auto rounded-md border border-gray-300 shadow-sm"
         />
       </div>
@@ -14544,7 +14544,7 @@ app.post('/api/hiring/schedule-interview', hiringModeratorAuth, async (req, res)
       
       <div class="flex justify-center items-center gap-3 mt-4">
         <span class="text-xs">A product of</span>
-        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg" alt="Xeta Solutions Logo" class="h-6 w-auto" style="height: 24px;">
+        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_bt6bgn.jpg" alt="Xeta Tech Solutions Logo" class="h-6 w-auto" style="height: 24px;">
       </div>
 
       <p class="mt-2 text-xs">
@@ -16049,14 +16049,14 @@ app.post('/api/public/request-mock-token', async (req, res) => {
       <p style="margin-top: 25px; font-size: 15px; color: #111827;">
         Best regards,<br>
         <strong>The Testify Team</strong><br>
-        <span style="font-size: 13px; color: #6B7280;">A Xeta Solutions Initiative</span>
+        <span style="font-size: 13px; color: #6B7280;">A Xeta Tech Solutions Initiative</span>
       </p>
     </div>
 
     <!-- Footer -->
     <div style="background-color: #f3f4f6; text-align: center; padding: 16px; font-size: 13px; color: #6B7280;">
       © 2025 Testify • All rights reserved.<br>
-      This is a Beta communication from <strong>Xeta Solutions</strong>.
+      This is a Beta communication from <strong>Xeta Tech Solutions</strong>.
     </div>
   </div>
 </div>
