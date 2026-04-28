@@ -3,163 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Your Test - Testify</title>
+    <title>Select Your Test - TESTIFY</title>
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .card-hover-effect {
-            transition: all 0.3s ease-in-out;
-        }
-        .card-hover-effect:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        .sidebar-link:hover {
-            background-color: #4338CA;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .sidebar-link { transition: all 0.2s ease-in-out; }
+        .sidebar-link:hover { background-color: rgba(255, 255, 255, 0.1); transform: translateX(4px); }
         .sidebar-link.active {
-            background-color: #4F46E5;
-            font-weight: 600;
+            background-color: #4F46E5; color: #ffffff; font-weight: 600;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+        }
+        .glass-card {
+            background: #ffffff; border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
         }
         /* Hide body content until authentication is complete */
-        .content-hidden {
-            display: none;
-        }
+        .content-hidden { display: none; }
+        
+        #mobile-sidebar { transition: transform 0.3s ease-in-out; }
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="text-slate-800 antialiased overflow-hidden">
 
-    <div class="flex h-screen bg-gray-100">
-        <!-- Sidebar -->
-        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
-            <div class="flex items-center justify-center h-20 border-b border-gray-700">
-                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
-                <span class="ml-3 text-2xl font-bold">TESTIFY</span>
-            </div>
-            <div class="flex flex-col flex-grow p-4">
-    <a href="/student/dashboard" class="sidebar-link  flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-        <span class="ml-3">Dashboard</span>
-    </a>
-    <a href="/student/join-meeting" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-        </svg>
-        <span class="ml-3">Join Meeting</span>
-    </a>
-    <a href="/student/Test" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-        <span class="ml-3">Take Test</span>
-    </a>
-    <a href="/student/test-history" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <span class="ml-3">Test History</span>
-    </a>
-    <a href="/student/my-certificates" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        <span class="ml-3">My Certificates</span>
-    </a>
-    <a href="/student/my-courses" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
-        <span class="ml-3">My Courses</span>
-    </a>
-    <a href="/student/profile" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"/></svg>
-        <span class="ml-3">My Profile</span>
-    </a>
-    <a href="/student/compiler" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200">
-        <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
-        <span>Code Space</span>
-    </a>
-    <a href="/student/sql-compiler" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200 mt-2">
-        <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9.75h7.5v7.5h-7.5v-7.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 3.375h17.25v17.25h-17.25v-17.25z" /></svg>
-        <span>SQL CodeLab</span>
-    </a>
-</div>
-</div>
+    <div class="flex h-screen bg-slate-50 overflow-hidden">
+        
+        <!-- Mobile Sidebar Overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden md:hidden transition-opacity"></div>
 
-        <!-- Main content -->
-        <div id="mainContent" class="flex flex-col flex-1 overflow-y-auto content-hidden">
-             <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
-                <h1 class="text-2xl font-bold text-gray-800">Select Test Type</h1>
+        <!-- Sidebar (Desktop & Mobile) -->
+        <aside id="mobile-sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-slate-300 transform -translate-x-full md:relative md:translate-x-0 flex flex-col transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none">
+            <div class="flex items-center justify-between md:justify-center h-20 border-b border-slate-700/50 px-6 md:px-0 flex-shrink-0">
                 <div class="flex items-center">
-                    <div class="relative">
-                        <button id="user-menu-button" class="flex items-center space-x-2">
-                            <span id="user-name" class="font-semibold text-gray-700">Student</span>
-                            <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                        </button>
-                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                            <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
-                        </div>
-                    </div>
+                    <img class="h-10 w-10 object-contain" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                    <span class="ml-3 text-2xl font-bold tracking-tight text-white">TESTIFY</span>
+                </div>
+                <button id="close-sidebar-btn" class="md:hidden text-slate-400 hover:text-white focus:outline-none">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="flex flex-col flex-grow p-4 overflow-y-auto space-y-1 custom-scrollbar">
+                <a href="/student/dashboard" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Dashboard
+                </a>
+                <a href="/student/join-meeting" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>
+                    Join Meeting
+                </a>
+                <a href="/student/Test" class="sidebar-link active flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    Take Test
+                </a>
+                <a href="/student/test-history" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Test History
+                </a>
+                <a href="/student/my-certificates" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    My Certificates
+                </a>
+                <a href="/student/my-courses" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path></svg>
+                    My Courses
+                </a>
+                <div class="pt-4 mt-4 border-t border-slate-700/50">
+                    <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Workspace</p>
+                    <a href="/student/compiler" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                        <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z"></path></svg>
+                        Code Space
+                    </a>
+                    <a href="/student/sql-compiler" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium mt-1">
+                        <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 9.75h7.5v7.5h-7.5v-7.5zM3.375 3.375h17.25v17.25h-17.25v-17.25z"></path></svg>
+                        SQL CodeLab
+                    </a>
                 </div>
             </div>
             
-            <div class="p-6 md:p-8">
-                <header class="text-center mb-10">
-                    <div class="flex justify-center items-center gap-4 mb-4">
-                        <img src="https://res.cloudinary.com/djdwpjm7x/image/upload/v1771001520/Xeta_Header_wfw12w.png" alt="Xeta Tech Logo" class="h-12">
-                         <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo" class="h-16">
+            <div class="p-4 mt-auto border-t border-slate-700/50 flex-shrink-0">
+                 <a href="/student/profile" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"></path></svg>
+                    My Profile
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <div id="mainContent" class="flex flex-col flex-1 overflow-y-auto w-full custom-scrollbar content-hidden">
+            
+            <!-- Header -->
+            <header class="flex items-center justify-between h-20 bg-white border-b border-slate-200 px-4 sm:px-8 sticky top-0 z-30 flex-shrink-0">
+                <div class="flex items-center">
+                    <button id="open-sidebar-btn" class="mr-4 md:hidden text-slate-500 hover:text-slate-800 focus:outline-none bg-slate-100 p-2 rounded-lg">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+                    <h1 class="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Test Environment</h1>
+                </div>
+                
+                <div class="flex items-center">
+                    <div class="relative">
+                        <button id="user-menu-button" class="flex items-center space-x-2 sm:space-x-3 focus:outline-none hover:bg-slate-50 py-1.5 px-2 sm:px-3 rounded-full transition-colors border border-transparent hover:border-slate-200">
+                            <span id="user-name" class="font-semibold text-slate-700 text-sm hidden sm:block">Student</span>
+                            <svg class="h-4 w-4 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                        </button>
+                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg py-2 z-50 border border-slate-100">
+                            <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-red-600 hover:bg-slate-50 font-medium">Logout</a>
+                        </div>
                     </div>
-                    <h1 id="welcomeMessage" class="text-3xl md:text-4xl font-bold text-gray-800">Welcome to Testify</h1>
-                    <p class="text-gray-600 mt-2 text-lg">Please select the type of test to take.</p>
+                </div>
+            </header>
+            
+            <div class="p-6 md:p-10 flex-grow flex flex-col justify-center items-center max-w-5xl mx-auto w-full">
+                <header class="text-center mb-10 w-full">
+                    <div class="flex justify-center items-center gap-6 mb-6">
+                        <img src="https://res.cloudinary.com/djdwpjm7x/image/upload/v1771001520/Xeta_Header_wfw12w.png" alt="Xeta Tech Logo" class="h-10 sm:h-12 object-contain grayscale opacity-80">
+                         <div class="h-8 w-px bg-slate-300"></div>
+                         <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo" class="h-12 sm:h-16 object-contain">
+                    </div>
+                    <h1 id="welcomeMessage" class="text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tight">Welcome to Testify</h1>
+                    <p class="text-slate-500 font-medium mt-3 text-lg">Please select the type of test you wish to start.</p>
                 </header>
         
-                <main class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <main class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 w-full">
                     <!-- AI Proctored Test Card -->
-                    <a href="/student/take-test.html" class="card-hover-effect bg-white rounded-xl shadow-md overflow-hidden block border border-gray-200">
-                        <div class="p-8">
-                            <div class="flex items-center gap-4">
-                                <div class="bg-indigo-100 p-3 rounded-full">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-600 feather feather-shield"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    <a href="/student/take-test.html" class="glass-card hover:border-indigo-300 rounded-2xl overflow-hidden block group">
+                        <div class="p-8 sm:p-10 flex flex-col h-full">
+                            <div class="flex items-center gap-4 mb-5">
+                                <div class="bg-indigo-50 p-4 rounded-2xl text-indigo-600 transition-transform group-hover:scale-110">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                                 </div>
-                                <h2 class="text-2xl font-bold text-gray-900">Proctored Test</h2>
+                                <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Proctored Test</h2>
                             </div>
-                            <p class="mt-4 text-gray-600">
-                                This is a secure test environment monitored by our AI to ensure integrity. It requires camera access and strict adherence to guidelines.
+                            <p class="text-slate-600 leading-relaxed mb-8 flex-grow">
+                                A secure, AI-monitored test environment. This mode requires webcam/microphone access and enforces strict behavioral guidelines to maintain academic integrity.
                             </p>
-                            <div class="mt-6">
-                                <span class="inline-block bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-lg">
-                                    Take Secure Test &rarr;
+                            <div class="mt-auto">
+                                <span class="inline-flex items-center justify-center w-full bg-indigo-600 text-white font-bold px-6 py-3.5 rounded-xl shadow-md group-hover:bg-indigo-700 transition-colors">
+                                    Take Secure Test <svg class="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                                 </span>
                             </div>
                         </div>
                     </a>
         
-                    <!-- Normal Test (Full Screen Mode) Card -->
-                    <a href="/student/fullscreen-test.html" class="card-hover-effect bg-white rounded-xl shadow-md overflow-hidden block border border-gray-200">
-                         <div class="p-8">
-                            <div class="flex items-center gap-4">
-                                 <div class="bg-teal-100 p-3 rounded-full">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-teal-600 feather feather-maximize"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                    <!-- Normal Test Card -->
+                    <a href="/student/fullscreen-test.html" class="glass-card hover:border-teal-300 rounded-2xl overflow-hidden block group">
+                         <div class="p-8 sm:p-10 flex flex-col h-full">
+                            <div class="flex items-center gap-4 mb-5">
+                                 <div class="bg-teal-50 p-4 rounded-2xl text-teal-600 transition-transform group-hover:scale-110">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
                                 </div>
-                                <h2 class="text-2xl font-bold text-gray-900">Normal Test</h2>
+                                <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Normal Test</h2>
                             </div>
-                            <p class="mt-4 text-gray-600">
-                                This test will be conducted in full-screen mode to minimize distractions. Please ensure you are in a quiet environment before you begin.
+                            <p class="text-slate-600 leading-relaxed mb-8 flex-grow">
+                                A standard test conducted in full-screen mode to minimize distractions. No webcam required, but exiting the test window is prohibited.
                             </p>
-                             <div class="mt-6">
-                                <span class="inline-block bg-teal-500 text-white text-sm font-semibold px-4 py-2 rounded-lg">
-                                    Start Full Screen Test &rarr;
+                             <div class="mt-auto">
+                                <span class="inline-flex items-center justify-center w-full bg-teal-600 text-white font-bold px-6 py-3.5 rounded-xl shadow-md group-hover:bg-teal-700 transition-colors">
+                                    Start Standard Test <svg class="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                                 </span>
                             </div>
                         </div>
                     </a>
                 </main>
-                
-                <footer class="text-center mt-12">
-                    <p class="text-sm text-gray-500">&copy; 2025 Testify - A Product of Xeta Tech Solutions. All rights reserved.</p>
-                </footer>
             </div>
+            
+            <footer class="bg-white border-t border-slate-200 p-5 mt-auto flex-shrink-0">
+                <div class="text-center text-sm font-medium text-slate-500">
+                    &copy; 2025 TESTIFY. All Rights Reserved.
+                </div>
+            </footer>
         </div>
     </div>
 
     <script>
+        // --- Mobile Sidebar Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const openBtn = document.getElementById('open-sidebar-btn');
+            const closeBtn = document.getElementById('close-sidebar-btn');
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+
+            function toggleSidebar() {
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            }
+
+            if(openBtn) openBtn.addEventListener('click', toggleSidebar);
+            if(closeBtn) closeBtn.addEventListener('click', toggleSidebar);
+            if(overlay) overlay.addEventListener('click', toggleSidebar);
+        });
+
+        // --- Core Application Logic (Untouched Auth API) ---
         window.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('token');
             const mainContent = document.getElementById('mainContent');
@@ -193,7 +238,7 @@
                 const userData = await response.json();
                 
                 if (welcomeMessage && userData.fullName) {
-                    welcomeMessage.textContent = `Welcome, ${userData.fullName}`;
+                    welcomeMessage.textContent = `Welcome, ${userData.fullName.split(' ')[0]}`;
                 }
                 if (userName && userData.fullName) {
                     userName.textContent = userData.fullName;
@@ -227,7 +272,5 @@
             });
         });
     </script>
-
 </body>
 </html>
-

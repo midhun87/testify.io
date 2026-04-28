@@ -7,97 +7,163 @@
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .sidebar-link:hover { background-color: #4338CA; }
-        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .sidebar-link { transition: all 0.2s ease-in-out; }
+        .sidebar-link:hover { background-color: rgba(255, 255, 255, 0.1); transform: translateX(4px); }
+        .sidebar-link.active {
+            background-color: #4F46E5; color: #ffffff; font-weight: 600;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+        }
+        .glass-card {
+            background: #ffffff; border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        #mobile-sidebar { transition: transform 0.3s ease-in-out; }
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="text-slate-800 antialiased overflow-hidden">
 
-    <div class="flex h-screen bg-gray-100">
-        <!-- Sidebar -->
-        <div class="hidden md:flex flex-col w-64 bg-gray-800 text-white">
-            <div class="flex items-center justify-center h-20 border-b border-gray-700">
-                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
-                <span class="ml-3 text-2xl font-bold">TESTIFY</span>
+    <div class="flex h-screen bg-slate-50 overflow-hidden">
+        
+        <!-- Mobile Sidebar Overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden md:hidden transition-opacity"></div>
+
+        <!-- Sidebar (Desktop & Mobile) -->
+        <aside id="mobile-sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-slate-300 transform -translate-x-full md:relative md:translate-x-0 flex flex-col transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none">
+            <div class="flex items-center justify-between md:justify-center h-20 border-b border-slate-700/50 px-6 md:px-0 flex-shrink-0">
+                <div class="flex items-center">
+                    <img class="h-10 w-10 object-contain" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                    <span class="ml-3 text-2xl font-bold tracking-tight text-white">TESTIFY</span>
+                </div>
+                <button id="close-sidebar-btn" class="md:hidden text-slate-400 hover:text-white focus:outline-none">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
             </div>
-            <div class="flex flex-col flex-grow p-4">
-    <a href="/student/dashboard" class="sidebar-link  flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-        <span class="ml-3">Dashboard</span>
-    </a>
-    <a href="/student/join-meeting" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-        </svg>
-        <span class="ml-3">Join Meeting</span>
-    </a>
-    <a href="/student/Test" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-        <span class="ml-3">Take Test</span>
-    </a>
-    <a href="/student/test-history" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <span class="ml-3">Test History</span>
-    </a>
-    <a href="/student/my-certificates" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        <span class="ml-3">My Certificates</span>
-    </a>
-    <a href="/student/my-courses" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
-        <span class="ml-3">My Courses</span>
-    </a>
-    <a href="/student/profile" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"/></svg>
-        <span class="ml-3">My Profile</span>
-    </a>
-    <a href="/student/compiler" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200">
-        <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
-        <span>Code Space</span>
-    </a>
-    <a href="/student/sql-compiler" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200 mt-2">
-        <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9.75h7.5v7.5h-7.5v-7.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 3.375h17.25v17.25h-17.25v-17.25z" /></svg>
-        <span>SQL CodeLab</span>
-    </a>
-</div>
-        </div>
+            
+            <div class="flex flex-col flex-grow p-4 overflow-y-auto space-y-1 custom-scrollbar">
+                <a href="/student/dashboard" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Dashboard
+                </a>
+                <a href="/student/join-meeting" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>
+                    Join Meeting
+                </a>
+                <a href="/student/Test" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    Take Test
+                </a>
+                <a href="/student/test-history" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Test History
+                </a>
+                <a href="/student/my-certificates" class="sidebar-link active flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    My Certificates
+                </a>
+                <a href="/student/my-courses" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path></svg>
+                    My Courses
+                </a>
+                <div class="pt-4 mt-4 border-t border-slate-700/50">
+                    <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Workspace</p>
+                    <a href="/student/compiler" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                        <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z"></path></svg>
+                        Code Space
+                    </a>
+                    <a href="/student/sql-compiler" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium mt-1">
+                        <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 9.75h7.5v7.5h-7.5v-7.5zM3.375 3.375h17.25v17.25h-17.25v-17.25z"></path></svg>
+                        SQL CodeLab
+                    </a>
+                </div>
+            </div>
+            
+            <div class="p-4 mt-auto border-t border-slate-700/50 flex-shrink-0">
+                 <a href="/student/profile" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"></path></svg>
+                    My Profile
+                </a>
+            </div>
+        </aside>
 
         <!-- Main content -->
-        <div class="flex flex-col flex-1 overflow-y-auto">
-            <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-6">
-                <h1 class="text-2xl font-bold text-gray-800">My Certificates</h1>
-                <div class="relative">
-                    <button id="user-menu-button" class="flex items-center space-x-2">
-                        <span id="user-name" class="font-semibold text-gray-700">Student Name</span>
-                        <svg class="h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+        <div class="flex flex-col flex-1 overflow-y-auto w-full custom-scrollbar">
+            
+            <!-- Header -->
+            <header class="flex items-center justify-between h-20 bg-white border-b border-slate-200 px-4 sm:px-8 sticky top-0 z-30 flex-shrink-0">
+                <div class="flex items-center">
+                    <button id="open-sidebar-btn" class="mr-4 md:hidden text-slate-500 hover:text-slate-800 focus:outline-none bg-slate-100 p-2 rounded-lg">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
-                    <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
-                        <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                    <h1 class="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">My Certificates</h1>
+                </div>
+                
+                <div class="flex items-center">
+                    <div class="relative">
+                        <button id="user-menu-button" class="flex items-center space-x-2 sm:space-x-3 focus:outline-none hover:bg-slate-50 py-1.5 px-2 sm:px-3 rounded-full transition-colors border border-transparent hover:border-slate-200">
+                            <span id="user-name" class="font-semibold text-slate-700 text-sm hidden sm:block">Student</span>
+                            <svg class="h-4 w-4 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                        </button>
+                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg py-2 z-50 border border-slate-100">
+                            <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-red-600 hover:bg-slate-50 font-medium">Logout</a>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </header>
 
-            <div class="p-6">
-                <div class="bg-white p-6 rounded-xl shadow-md">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4">Your Achievements</h2>
+            <main class="p-4 sm:p-8 max-w-6xl mx-auto w-full flex-grow">
+                <div class="glass-card p-6 sm:p-8 rounded-2xl mb-6">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-amber-100 p-2.5 rounded-xl mr-4 text-amber-600 shadow-sm border border-amber-200">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <h2 class="text-xl font-bold text-slate-800 tracking-tight">Your Achievements</h2>
+                    </div>
+                    
                     <div id="certificates-list" class="space-y-4">
                         <!-- Certificates will be loaded here -->
+                        <div class="text-center py-10">
+                            <div class="inline-block animate-spin w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full mb-4"></div>
+                            <p class="text-slate-500 font-medium">Loading certificates...</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <footer class="bg-white border-t border-gray-200 p-4 mt-auto">
-    <div class="text-center text-sm text-gray-500">
-        &copy; 2025 TESTIFY. All Rights Reserved.
-    </div>
+            </main>
+            
+            <footer class="bg-white border-t border-slate-200 p-5 mt-auto flex-shrink-0">
+                <div class="text-center text-sm font-medium text-slate-500">
+                    &copy; 2025 TESTIFY. All Rights Reserved.
+                </div>
+            </footer>
         </div>
     </div>
 
     <script>
+        // --- Mobile Sidebar Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const openBtn = document.getElementById('open-sidebar-btn');
+            const closeBtn = document.getElementById('close-sidebar-btn');
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+
+            function toggleSidebar() {
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            }
+
+            if(openBtn) openBtn.addEventListener('click', toggleSidebar);
+            if(closeBtn) closeBtn.addEventListener('click', toggleSidebar);
+            if(overlay) overlay.addEventListener('click', toggleSidebar);
+        });
+
+        // --- Core Logic (Untouched API interaction) ---
         document.addEventListener('DOMContentLoaded', async () => {
-            // --- AUTH & UI ---
             const user = JSON.parse(localStorage.getItem('user'));
             const token = localStorage.getItem('token');
             if (!token || !user || user.role !== 'Student') {
@@ -128,30 +194,39 @@
 
                     certificatesList.innerHTML = '';
                     if (certificates.length === 0) {
-                        certificatesList.innerHTML = '<p class="text-gray-500">You have not earned any certificates yet.</p>';
+                        certificatesList.innerHTML = '<div class="text-center p-10 border border-dashed border-slate-300 rounded-xl bg-slate-50"><p class="text-slate-500 font-medium">You have not earned any certificates yet. Complete tests to unlock achievements.</p></div>';
                         return;
                     }
 
                     certificates.forEach(cert => {
                         const certElement = document.createElement('div');
-                        certElement.className = 'flex items-center justify-between bg-gray-50 p-4 rounded-lg border border-gray-200';
-                        const issuedDate = new Date(cert.issuedAt).toLocaleDateString();
+                        certElement.className = 'flex flex-col sm:flex-row sm:items-center justify-between bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow gap-4';
+                        const issuedDate = new Date(cert.issuedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
                         
                         const title = cert.courseTitle || cert.testTitle;
                         const type = cert.certificateType === 'Course' ? 'Course' : 'Test';
+                        const badgeColor = type === 'Course' ? 'bg-sky-100 text-sky-800' : 'bg-indigo-100 text-indigo-800';
 
                         certElement.innerHTML = `
-                            <div>
-                                <p class="font-semibold text-gray-800">${title}</p>
-                                 <p class="text-sm text-gray-600">Type: ${type} | Issued on: ${issuedDate}</p>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <h3 class="font-extrabold text-slate-800 text-lg leading-tight">${title}</h3>
+                                    <span class="px-2.5 py-0.5 text-xs font-bold uppercase rounded-full ${badgeColor} border border-white/50 shadow-sm">${type}</span>
+                                </div>
+                                <p class="text-sm font-medium text-slate-500 flex items-center">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    Issued on: ${issuedDate}
+                                </p>
                             </div>
-                            <a href="/student/view-certificate.html?id=${cert.certificateId}" class="font-medium text-indigo-600 hover:text-indigo-800">View</a>
+                            <a href="/student/view-certificate.html?id=${cert.certificateId}" class="inline-flex justify-center items-center px-6 py-2.5 bg-white border border-slate-300 text-indigo-600 text-sm font-bold rounded-xl shadow-sm hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-700 transition-colors w-full sm:w-auto">
+                                View Certificate
+                            </a>
                         `;
                         certificatesList.appendChild(certElement);
                     });
                 } catch (error) {
                     console.error('Error fetching certificates:', error);
-                    certificatesList.innerHTML = '<p class="text-red-500">Could not load your certificates.</p>';
+                    certificatesList.innerHTML = '<div class="p-4 bg-red-50 text-red-600 rounded-xl border border-red-100 font-medium">Could not load your certificates.</div>';
                 }
             }
             await fetchCertificates();
@@ -159,4 +234,3 @@
     </script>
 </body>
 </html>
-

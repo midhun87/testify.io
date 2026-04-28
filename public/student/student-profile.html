@@ -3,147 +3,216 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile</title>
+    <title>My Profile - TESTIFY</title>
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Cropper.js CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .sidebar {
-            width: 250px;
-            transition: width 0.3s;
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .sidebar-link { transition: all 0.2s ease-in-out; }
+        .sidebar-link:hover { background-color: rgba(255, 255, 255, 0.1); transform: translateX(4px); }
+        .sidebar-link.active {
+            background-color: #4F46E5; color: #ffffff; font-weight: 600;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
         }
-        .sidebar-link:hover { background-color: #374151; }
-        .sidebar-link.active { background-color: #4F46E5; }
+        .glass-card {
+            background: #ffffff; border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        #mobile-sidebar { transition: transform 0.3s ease-in-out; }
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        
         /* Ensure the cropper's image is not distorted and is contained */
-        #image-to-crop-container {
-            width: 100%;
-            height: 300px; /* Fixed height for the crop area */
-            background-color: #f3f4f6;
-        }
-        #image-to-crop {
-            display: block;
-            max-width: 100%;
-            max-height: 300px;
-        }
+        #image-to-crop-container { width: 100%; height: 300px; background-color: #f3f4f6; border-radius: 0.5rem; overflow: hidden; }
+        #image-to-crop { display: block; max-width: 100%; max-height: 300px; }
     </style>
 </head>
-<body class="bg-gray-100 flex">
+<body class="text-slate-800 antialiased overflow-hidden">
 
-    <!-- Sidebar -->
-    <aside class="sidebar bg-gray-800 text-white min-h-screen p-4">
-        <div class="text-2xl font-bold mb-10">TESTIFY</div>
-       <div class="flex flex-col flex-grow p-4">
-    <a href="/student/dashboard" class="sidebar-link  flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-        <span class="ml-3">Dashboard</span>
-    </a>
-    <a href="/student/join-meeting" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-        </svg>
-        <span class="ml-3">Join Meeting</span>
-    </a>
-    <a href="/student/Test" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-        <span class="ml-3">Take Test</span>
-    </a>
-    <a href="/student/test-history" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <span class="ml-3">Test History</span>
-    </a>
-    <a href="/student/my-certificates" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        <span class="ml-3">My Certificates</span>
-    </a>
-    <a href="/student/my-courses" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
-        <span class="ml-3">My Courses</span>
-    </a>
-    <a href="/student/profile" class="sidebar-link active flex items-center px-4 py-3 mt-2 rounded-lg">
-    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"/></svg>
-        <span class="ml-3">My Profile</span>
-    </a>
-    <a href="/student/compiler" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200">
-        <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
-        <span>Code Space</span>
-    </a>
-    <a href="/student/sql-compiler" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200 mt-2">
-        <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9.75h7.5v7.5h-7.5v-7.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 3.375h17.25v17.25h-17.25v-17.25z" /></svg>
-        <span>SQL CodeLab</span>
-    </a>
-</div>
-</aside>
+    <div class="flex h-screen bg-slate-50 overflow-hidden">
+        
+        <!-- Mobile Sidebar Overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden md:hidden transition-opacity"></div>
 
-
-    <!-- Main Content -->
-    <div class="flex-1 flex flex-col">
-        <header class="bg-white shadow-md p-4 flex justify-between items-center">
-            <h1 class="text-2xl font-semibold text-gray-800">My Profile</h1>
-            <div id="user-info" class="flex items-center">
-                <!-- User name will be loaded here -->
+        <!-- Sidebar (Desktop & Mobile) -->
+        <aside id="mobile-sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-slate-300 transform -translate-x-full md:relative md:translate-x-0 flex flex-col transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none">
+            <div class="flex items-center justify-between md:justify-center h-20 border-b border-slate-700/50 px-6 md:px-0 flex-shrink-0">
+                <div class="flex items-center">
+                    <img class="h-10 w-10 object-contain" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                    <span class="ml-3 text-2xl font-bold tracking-tight text-white">TESTIFY</span>
+                </div>
+                <button id="close-sidebar-btn" class="md:hidden text-slate-400 hover:text-white focus:outline-none">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
             </div>
-        </header>
+            
+            <div class="flex flex-col flex-grow p-4 overflow-y-auto space-y-1 custom-scrollbar">
+                <a href="/student/dashboard" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Dashboard
+                </a>
+                <a href="/student/join-meeting" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>
+                    Join Meeting
+                </a>
+                <a href="/student/Test" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    Take Test
+                </a>
+                <a href="/student/test-history" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Test History
+                </a>
+                <a href="/student/my-certificates" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    My Certificates
+                </a>
+                <a href="/student/my-courses" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path></svg>
+                    My Courses
+                </a>
+                <div class="pt-4 mt-4 border-t border-slate-700/50">
+                    <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Workspace</p>
+                    <a href="/student/compiler" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                        <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z"></path></svg>
+                        Code Space
+                    </a>
+                    <a href="/student/sql-compiler" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium mt-1">
+                        <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 9.75h7.5v7.5h-7.5v-7.5zM3.375 3.375h17.25v17.25h-17.25v-17.25z"></path></svg>
+                        SQL CodeLab
+                    </a>
+                </div>
+            </div>
+            
+            <div class="p-4 mt-auto border-t border-slate-700/50 flex-shrink-0">
+                 <a href="/student/profile" class="sidebar-link active flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"></path></svg>
+                    My Profile
+                </a>
+            </div>
+        </aside>
 
-        <main class="flex-1 p-6">
-            <div class="bg-white shadow rounded-lg p-6">
-                <div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6 mb-6">
-                    <img id="profile-image" src="https://placehold.co/150x150/EFEFEF/333333?text=..." alt="Profile Picture" class="w-36 h-36 rounded-full object-cover border-4 border-gray-200">
-                    <div class="text-center md:text-left">
-                        <h2 id="profile-name" class="text-2xl font-bold">Loading...</h2>
-                        <p id="profile-email" class="text-gray-600">...</p>
-                        <p id="profile-college" class="text-gray-600">...</p>
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto w-full custom-scrollbar">
+            
+            <!-- Header -->
+            <header class="flex items-center justify-between h-20 bg-white border-b border-slate-200 px-4 sm:px-8 sticky top-0 z-30 flex-shrink-0">
+                <div class="flex items-center">
+                    <button id="open-sidebar-btn" class="mr-4 md:hidden text-slate-500 hover:text-slate-800 focus:outline-none bg-slate-100 p-2 rounded-lg">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Account Settings</h1>
+                        <p class="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">Manage your profile and preferences.</p>
                     </div>
                 </div>
+                
+                <div class="flex items-center">
+                     <span id="user-info" class="font-semibold text-slate-700 text-sm hidden sm:block mr-2"></span>
+                </div>
+            </header>
 
-                <form id="profile-form">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-200 pt-6">
-                        <div>
-                            <label for="mobile" class="block text-sm font-medium text-gray-700">Mobile Number</label>
-                            <input type="text" id="mobile" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+            <main class="p-4 sm:p-8 max-w-5xl mx-auto w-full flex-grow">
+                <div class="glass-card p-6 sm:p-10 rounded-2xl mb-6">
+                    
+                    <!-- Profile Header Block -->
+                    <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 mb-8 pb-8 border-b border-slate-200">
+                        <div class="relative group">
+                            <img id="profile-image" src="https://placehold.co/150x150/EFEFEF/333333?text=..." alt="Profile Picture" class="w-32 h-32 sm:w-40 sm:h-40 rounded-full object-cover border-4 border-white shadow-lg z-10 relative bg-white">
+                            <div class="absolute inset-0 rounded-full border-2 border-indigo-100 scale-110 -z-0"></div>
+                            <button onclick="document.getElementById('image-input').click()" class="absolute bottom-0 right-0 sm:bottom-2 sm:right-2 bg-indigo-600 text-white p-2.5 rounded-full shadow-md hover:bg-indigo-700 transition-colors z-20" title="Change Picture">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            </button>
                         </div>
-                        <div>
-                            <label for="department" class="block text-sm font-medium text-gray-700">Department</label>
-                            <input type="text" id="department" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-                        <div>
-                            <label for="rollNumber" class="block text-sm font-medium text-gray-700">Roll Number</label>
-                            <input type="text" id="rollNumber" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <div class="text-center md:text-left flex-1">
+                            <h2 id="profile-name" class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight mb-1">Loading...</h2>
+                            <p id="profile-email" class="text-slate-500 font-medium flex items-center justify-center md:justify-start mb-1">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                ...
+                            </p>
+                            <p id="profile-college" class="text-slate-500 font-medium flex items-center justify-center md:justify-start">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                ...
+                            </p>
                         </div>
                     </div>
-                    <div class="mt-6 text-right">
-                        <button type="submit" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Save Changes</button>
+
+                    <!-- Profile Form -->
+                    <form id="profile-form">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div>
+                                <label for="mobile" class="block text-sm font-bold text-slate-700 mb-1.5 tracking-wide">Mobile Number</label>
+                                <input type="text" id="mobile" class="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-all text-slate-800 outline-none" placeholder="Enter mobile number">
+                            </div>
+                            <div>
+                                <label for="department" class="block text-sm font-bold text-slate-700 mb-1.5 tracking-wide">Department</label>
+                                <input type="text" id="department" class="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-all text-slate-800 outline-none" placeholder="e.g. Computer Science">
+                            </div>
+                            <div>
+                                <label for="rollNumber" class="block text-sm font-bold text-slate-700 mb-1.5 tracking-wide">Roll Number</label>
+                                <input type="text" id="rollNumber" class="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-all text-slate-800 outline-none" placeholder="Enter roll number">
+                            </div>
+                        </div>
+                        <div class="flex justify-end pt-4 border-t border-slate-100">
+                            <button type="submit" class="px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 hover:-translate-y-0.5 transition-all focus:ring-4 focus:ring-indigo-100 w-full sm:w-auto">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="bg-amber-50 border border-amber-200 p-5 rounded-xl flex gap-4 text-amber-800 items-start">
+                    <svg class="w-6 h-6 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <div>
+                        <p class="font-bold text-sm">Profile Picture Requirements</p>
+                        <p class="text-sm mt-1">Please upload a clear, recent photograph of your face. <b>Your identity for proctored tests will be strictly verified against this image.</b> To prevent fraud, the profile picture can only be set once.</p>
                     </div>
-                </form>
-            </div>
-            <p class="mt-4 text-sm text-gray-600"><strong>Note:</strong> Please upload a recent photograph. Your test identity will be verified based on this image. The profile picture can only be set once.</p>
-        </main>
+                </div>
+            </main>
+            
+            <footer class="bg-white border-t border-slate-200 p-5 mt-auto flex-shrink-0">
+                <div class="text-center text-sm font-medium text-slate-500">
+                    &copy; 2025 TESTIFY. All Rights Reserved.
+                </div>
+            </footer>
+        </div>
     </div>
 
-    <!-- Image Upload & Crop Modal (for Student) -->
-    <div id="image-crop-modal" class="fixed z-50 inset-0 overflow-y-auto hidden">
-        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-                <div class="absolute inset-0 bg-gray-800 opacity-75"></div>
-            </div>
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+    <!-- Image Upload & Crop Modal -->
+    <div id="image-crop-modal" class="fixed z-[100] inset-0 overflow-y-auto hidden">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <div class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm transition-opacity" aria-hidden="true"></div>
+            
+            <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-lg w-full border border-slate-100">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Upload Your Profile Picture</h3>
-                    <p class="text-sm text-gray-500">Adjust the image and click "Save" to upload. This can only be done once.</p>
-                    <div class="mt-4">
-                         <div id="image-to-crop-container">
-                            <img id="image-to-crop" src="">
-                         </div>
-                         <input type="file" id="image-input" accept="image/*" class="hidden">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10 mb-4 sm:mb-0">
+                            <svg class="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-extrabold text-slate-800">Upload Profile Picture</h3>
+                            <p class="text-sm text-slate-500 mt-1">Adjust the image so your face is clearly visible. This cannot be easily changed later.</p>
+                            <div class="mt-5 w-full">
+                                 <div id="image-to-crop-container">
+                                    <img id="image-to-crop" src="">
+                                 </div>
+                                 <input type="file" id="image-input" accept="image/*" class="hidden">
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button" id="save-cropped-image" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 sm:ml-3 sm:w-auto sm:text-sm">Save</button>
-                    <button type="button" id="change-image-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">Choose a different image</button>
+                <div class="bg-slate-50 px-4 py-4 sm:px-6 flex flex-col sm:flex-row-reverse gap-3">
+                    <button type="button" id="save-cropped-image" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-5 py-2.5 bg-indigo-600 text-base font-bold text-white hover:bg-indigo-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                        Confirm & Upload
+                    </button>
+                    <button type="button" id="change-image-btn" class="w-full inline-flex justify-center rounded-xl border border-slate-300 shadow-sm px-5 py-2.5 bg-white text-base font-bold text-slate-700 hover:bg-slate-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm transition-colors">
+                        Select Different Image
+                    </button>
                 </div>
             </div>
         </div>
@@ -152,6 +221,24 @@
     <!-- Cropper.js JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script>
+        // --- Mobile Sidebar Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const openBtn = document.getElementById('open-sidebar-btn');
+            const closeBtn = document.getElementById('close-sidebar-btn');
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+
+            function toggleSidebar() {
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            }
+
+            if(openBtn) openBtn.addEventListener('click', toggleSidebar);
+            if(closeBtn) closeBtn.addEventListener('click', toggleSidebar);
+            if(overlay) overlay.addEventListener('click', toggleSidebar);
+        });
+
+        // --- Profile Core Logic (Untouched API interactions) ---
         document.addEventListener('DOMContentLoaded', function() {
             const token = localStorage.getItem('token');
             const user = JSON.parse(localStorage.getItem('user'));
@@ -162,48 +249,37 @@
             }
 
             // Populate header
-            document.getElementById('user-info').innerHTML = `
-                <span class="mr-4">${user.fullName}</span>
-                
-            `;
+            document.getElementById('user-info').innerHTML = `<span class="mr-4">${user.fullName}</span>`;
 
             const imageCropModal = document.getElementById('image-crop-modal');
             const imageToCrop = document.getElementById('image-to-crop');
             const imageInput = document.getElementById('image-input');
             let cropper;
 
-            // Function to populate profile data on the page
             function populateProfile(profile) {
                 document.getElementById('profile-name').textContent = profile.fullName;
-                document.getElementById('profile-email').textContent = profile.email;
-                document.getElementById('profile-college').textContent = profile.college;
+                document.getElementById('profile-email').innerHTML = `<svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg> ${profile.email}`;
+                document.getElementById('profile-college').innerHTML = `<svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg> ${profile.college}`;
                 document.getElementById('mobile').value = profile.mobile || '';
                 document.getElementById('department').value = profile.department || '';
                 document.getElementById('rollNumber').value = profile.rollNumber || '';
                 if (profile.profileImageUrl) {
                     document.getElementById('profile-image').src = profile.profileImageUrl;
-                } else {
-                    document.getElementById('profile-image').src = 'https://placehold.co/150x150/EFEFEF/333333?text=Upload';
                 }
             }
 
-            // Fetch full profile data on page load
             fetch('/api/student/profile', {
                 headers: { 'x-auth-token': token }
             })
             .then(res => res.json())
             .then(profile => {
                 populateProfile(profile);
-
-                // If the profile image URL is missing, show the upload modal automatically.
                 if (!profile.profileImageUrl) {
                     imageCropModal.classList.remove('hidden');
-                    // Trigger the hidden file input so the user can select a file immediately.
                     imageInput.click();
                 }
             });
 
-            // Handle profile form submission
             document.getElementById('profile-form').addEventListener('submit', function(e) {
                 e.preventDefault();
                 const updatedData = {
@@ -214,26 +290,21 @@
 
                 fetch('/api/student/profile', {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-auth-token': token
-                    },
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                     body: JSON.stringify(updatedData)
                 })
                 .then(res => res.json())
                 .then(data => alert(data.message));
             });
 
-            // Event listener for when a user selects a file
             imageInput.addEventListener('change', (e) => {
                 const files = e.target.files;
                 if (files && files.length > 0) {
+                    imageCropModal.classList.remove('hidden'); // Ensure modal shows if manually triggered
                     const reader = new FileReader();
                     reader.onload = () => {
                         imageToCrop.src = reader.result;
-                        if (cropper) {
-                            cropper.destroy();
-                        }
+                        if (cropper) cropper.destroy();
                         cropper = new Cropper(imageToCrop, {
                             aspectRatio: 1,
                             viewMode: 1,
@@ -277,7 +348,6 @@
                         alert('Profile image uploaded successfully!');
                         document.getElementById('profile-image').src = data.imageUrl;
                         
-                        // Also update user data in localStorage
                         const localUser = JSON.parse(localStorage.getItem('user'));
                         if(localUser) {
                             localUser.profileImageUrl = data.imageUrl;
@@ -285,16 +355,14 @@
                         }
 
                         imageCropModal.classList.add('hidden');
-                        if (cropper) {
-                            cropper.destroy();
-                        }
+                        if (cropper) cropper.destroy();
                     })
                     .catch(err => {
                         alert(`Error: ${err.message}`);
                     })
                     .finally(() => {
                         saveButton.disabled = false;
-                        saveButton.textContent = 'Save';
+                        saveButton.textContent = 'Confirm & Upload';
                     });
                 }, 'image/jpeg');
             });

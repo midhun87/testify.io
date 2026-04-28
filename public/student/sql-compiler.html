@@ -7,129 +7,265 @@
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757066128/Gemini_Generated_Image_9bakrh9bakrh9bak_wuhqq7.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material-darker.min.css">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .sidebar-link:hover { background-color: #4338CA; }
-        .sidebar-link.active { background-color: #4F46E5; color: white; font-weight: 600; }
-        .CodeMirror { height: 35vh; border-radius: 0.5rem; font-size: 14px; }
-        .problem-list-item.selected { background-color: #4F46E5; color: white; }
-        .submitted-badge { background-color: #dcfce7; color: #166534; font-size: 0.7rem; font-weight: 600; padding: 2px 6px; border-radius: 9999px; margin-left: 8px; }
-        .pending-badge { background-color: #fef3c7; color: #92400e; font-size: 0.7rem; font-weight: 600; padding: 2px 6px; border-radius: 9999px; margin-left: 8px; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc;
+        }
+        
+        /* Main App Sidebar Styles */
+        .sidebar-link { transition: all 0.2s ease-in-out; }
+        .sidebar-link:hover { background-color: rgba(255, 255, 255, 0.1); transform: translateX(4px); }
+        .sidebar-link.active {
+            background-color: #4F46E5; color: #ffffff; font-weight: 600;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+        }
+        #mobile-sidebar { transition: transform 0.3s ease-in-out; }
+
+        /* Inner Problem Sidebar Styles (Responsive) */
+        #problems-sidebar-container.open .sidebar-overlay { opacity: 1; pointer-events: auto; }
+        #problems-sidebar-container.open #problems-sidebar { transform: translateX(0); }
+        #problems-sidebar { transform: translateX(-100%); transition: transform 0.3s ease-in-out; }
+        
+        @media (min-width: 1024px) { 
+             #problems-sidebar { transform: translateX(0); transition: margin-left 0.3s ease-in-out; }
+             #problems-sidebar-container.closed #problems-sidebar { margin-left: -20rem; }
+        }
+
+        /* Glass Card */
+        .glass-card {
+            background: #ffffff; border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        /* CodeMirror Customization */
+        .editor-wrapper { height: 35vh; min-height: 250px; border-radius: 0.75rem; overflow: hidden; border: 1px solid #cbd5e1; box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);}
+        .CodeMirror { height: 100%; font-size: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+        .CodeMirror-gutters { border-right: 1px solid #374151; background-color: #1f2937; }
+
+        /* Problem List Items */
+        .problem-list-item { transition: background-color 0.2s, color 0.2s; }
+        .problem-list-item.selected { background-color: #4F46E5; color: white; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2); border-color: transparent;}
+        .problem-list-item:not(.selected):hover { background-color: #f1f5f9; }
+        
+        .submitted-badge { background-color: #d1fae5; color: #065f46; font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px; margin-left: auto; border: 1px solid #a7f3d0; text-transform: uppercase; letter-spacing: 0.05em;}
+        .pending-badge { background-color: #fef3c7; color: #92400e; font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 9999px; margin-left: auto; border: 1px solid #fde68a; text-transform: uppercase; letter-spacing: 0.05em;}
+
+        .accordion-header { transition: background-color 0.2s; }
+        .accordion-header:hover { background-color: #f1f5f9; }
+        .accordion-header .chevron-icon { transition: transform 0.3s ease-out; }
+        .accordion-header.open .chevron-icon { transform: rotate(180deg); }
         .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
-        .prose h3 { font-size: 1.125rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; padding-bottom: 0.25rem; border-bottom: 1px solid #e5e7eb; }
-        .prose pre { background-color: #f3f4f6; padding: 1rem; border-radius: 0.5rem; white-space: pre-wrap; word-wrap: break-word; font-family: monospace; }
-        .prose ul, .prose ol { margin-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+
+        /* Prose & Details Styling */
+        .prose h3 { font-size: 1.125rem; font-weight: 800; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #1e293b; tracking-tight; }
+        .prose pre { background-color: #f8fafc; padding: 1.25rem; border-radius: 0.75rem; white-space: pre-wrap; word-wrap: break-word; font-family: ui-monospace, SFMono-Regular, monospace; border: 1px solid #e2e8f0; color: #334155; font-size: 0.875rem;}
+        .prose ul, .prose ol { margin-left: 1.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; color: #475569;}
         .prose ul { list-style-type: disc; }
         .prose ol { list-style-type: decimal; }
         .prose li { margin-bottom: 0.25rem; }
-        .result-table th, .result-table td { border: 1px solid #e5e7eb; padding: 8px; text-align: left; }
-        .result-table th { background-color: #f9fafb; }
+        
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+        /* Modal Animations */
+        .modal-enter { opacity: 0; }
+        .modal-enter-active { opacity: 1; transition: opacity 200ms ease-out; }
+        .modal-content-enter { transform: scale(0.95); opacity: 0; }
+        .modal-content-enter-active { transform: scale(1); opacity: 1; transition: all 200ms ease-out; }
     </style>
 </head>
-<body class="bg-gray-100">
-    <div class="flex h-screen bg-gray-200 font-sans">
-        <!-- Main Sidebar -->
-        <aside class="w-64 bg-gray-800 text-gray-300 hidden lg:flex flex-col">
-            <div class="flex items-center justify-center h-20 border-b border-gray-700">
-                <img class="h-10 w-10" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
-                <span class="ml-3 text-2xl font-bold text-white">TESTIFY</span>
-            </div>
-            <div class="flex flex-col flex-grow p-4">
-    <a href="/student/dashboard" class="sidebar-link  flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-        <span class="ml-3">Dashboard</span>
-    </a>
-    <a href="/student/join-meeting" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-        </svg>
-        <span class="ml-3">Join Meeting</span>
-    </a>
-    <a href="/student/Test" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-        <span class="ml-3">Take Test</span>
-    </a>
-    <a href="/student/test-history" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <span class="ml-3">Test History</span>
-    </a>
-    <a href="/student/my-certificates" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        <span class="ml-3">My Certificates</span>
-    </a>
-    <a href="/student/my-courses" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
-        <span class="ml-3">My Courses</span>
-    </a>
-    <a href="/student/profile" class="sidebar-link flex items-center px-4 py-3 mt-2 rounded-lg">
-    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"/></svg>
-        <span class="ml-3">My Profile</span>
-    </a>
-    <a href="/student/compiler" class="sidebar-link flex items-center py-2.5 px-4 rounded transition duration-200">
-        <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z" /></svg>
-        <span>Code Space</span>
-    </a>
-    <a href="/student/sql-compiler" class="sidebar-link active flex items-center py-2.5 px-4 rounded transition duration-200 mt-2">
-        <svg class="h-6 w-6 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9.75h7.5v7.5h-7.5v-7.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 3.375h17.25v17.25h-17.25v-17.25z" /></svg>
-        <span>SQL CodeLab</span>
-    </a>
-</div>
-</aside>
+<body class="text-slate-800 antialiased overflow-hidden">
 
+    <div class="flex h-screen bg-slate-50 overflow-hidden">
+        
+        <!-- Mobile App Sidebar Overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden md:hidden transition-opacity"></div>
+
+        <!-- App Sidebar (Desktop & Mobile) -->
+        <aside id="mobile-sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-slate-300 transform -translate-x-full md:relative md:translate-x-0 flex flex-col transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none">
+            <div class="flex items-center justify-between md:justify-center h-20 border-b border-slate-700/50 px-6 md:px-0 flex-shrink-0">
+                <div class="flex items-center">
+                    <img class="h-10 w-10 object-contain" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1757066128/Gemini_Generated_Image_9bakrh9bakrh9bak_wuhqq7.png" alt="TESTIFY Logo">
+                    <span class="ml-3 text-2xl font-bold tracking-tight text-white">TESTIFY</span>
+                </div>
+                <button id="close-sidebar-btn" class="md:hidden text-slate-400 hover:text-white focus:outline-none">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="flex flex-col flex-grow p-4 overflow-y-auto space-y-1 custom-scrollbar">
+                <a href="/student/dashboard" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Dashboard
+                </a>
+                <a href="/student/join-meeting" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>
+                    Join Meeting
+                </a>
+                <a href="/student/Test" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    Take Test
+                </a>
+                <a href="/student/test-history" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Test History
+                </a>
+                <a href="/student/my-certificates" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    My Certificates
+                </a>
+                <a href="/student/my-courses" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path></svg>
+                    My Courses
+                </a>
+                <div class="pt-4 mt-4 border-t border-slate-700/50">
+                    <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Workspace</p>
+                    <a href="/student/compiler" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                        <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z"></path></svg>
+                        Code Space
+                    </a>
+                    <a href="/student/sql-compiler" class="sidebar-link active flex items-center px-4 py-3 rounded-xl text-sm font-medium mt-1">
+                        <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 9.75h7.5v7.5h-7.5v-7.5zM3.375 3.375h17.25v17.25h-17.25v-17.25z"></path></svg>
+                        SQL CodeLab
+                    </a>
+                </div>
+            </div>
+            
+            <div class="p-4 mt-auto border-t border-slate-700/50 flex-shrink-0">
+                 <a href="/student/profile" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"></path></svg>
+                    My Profile
+                </a>
+            </div>
+        </aside>
 
         <!-- Main Content Wrapper -->
-        <div class="flex-1 flex flex-col overflow-hidden">
+        <div class="flex-1 flex flex-col overflow-hidden w-full">
+            
             <!-- Header -->
-            <header class="bg-white shadow-md p-4 flex justify-between items-center z-20">
-                <h1 class="text-xl font-semibold text-gray-800">Testify SQL CodeLab</h1>
-                <div class="flex items-center space-x-2 bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-full">
-                    <span class="font-semibold text-sm">Score:</span>
-                    <span id="user-score" class="font-bold text-sm">0</span>
+            <header class="flex items-center justify-between h-20 bg-white border-b border-slate-200 px-4 sm:px-8 sticky top-0 z-30 flex-shrink-0">
+                <div class="flex items-center">
+                    <!-- App Mobile Hamburger -->
+                    <button id="open-sidebar-btn" class="mr-4 md:hidden text-slate-500 hover:text-slate-800 focus:outline-none bg-slate-100 p-2 rounded-lg">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+                    <!-- Problems Toggle (Desktop & Mobile) -->
+                    <button id="menu-toggle" class="mr-4 p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus:outline-none transition-colors hidden lg:block">
+                        <svg class="h-5 w-5" id="menu-open-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                        <svg class="h-5 w-5 hidden" id="menu-close-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                    <button id="menu-toggle-mobile" class="mr-3 lg:hidden p-2 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 hover:bg-indigo-100 focus:outline-none transition-colors">
+                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    </button>
+                    <h1 class="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight hidden sm:block">SQL CodeLab</h1>
+                </div>
+                
+                <div class="flex items-center space-x-4 sm:space-x-6">
+                    <!-- Score Badge -->
+                    <div class="flex items-center space-x-2 bg-amber-50 border border-amber-200 text-amber-700 px-3 sm:px-4 py-1.5 rounded-full shadow-sm">
+                        <svg class="h-4 w-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                        <span class="font-bold text-sm hidden sm:inline">Score:</span>
+                        <span id="user-score" class="font-extrabold text-sm">0</span>
+                    </div>
+
+                    <div class="relative">
+                        <button id="user-menu-button" class="flex items-center space-x-2 sm:space-x-3 focus:outline-none hover:bg-slate-50 py-1.5 px-2 sm:px-3 rounded-full transition-colors border border-transparent hover:border-slate-200">
+                            <span id="user-name" class="font-semibold text-slate-700 text-sm hidden sm:block">Student</span>
+                            <svg class="h-4 w-4 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                        </button>
+                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg py-2 z-50 border border-slate-100">
+                            <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-red-600 hover:bg-slate-50 font-medium flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg> Logout</a>
+                        </div>
+                    </div>
                 </div>
             </header>
 
-            <!-- Compiler Content -->
-            <div class="flex-1 flex overflow-hidden p-4 lg:p-6 lg:gap-x-4">
-                <!-- Problems Sidebar -->
-                <aside id="problems-sidebar" class="w-72 bg-white p-4 shadow-lg rounded-lg flex flex-col">
-                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">SQL Problem Sections</h2>
-                    <div id="problem-list" class="overflow-y-auto flex-grow pr-2">
-                        <!-- Problems will be dynamically inserted here -->
-                    </div>
-                </aside>
+            <!-- Compiler Content Area -->
+            <div class="flex-1 flex overflow-hidden p-4 lg:p-6 lg:gap-x-6 relative">
+                
+                <!-- Problems Sidebar Container -->
+                <div id="problems-sidebar-container" class="lg:flex-shrink-0 z-30">
+                     <!-- Mobile Problem Overlay -->
+                    <div class="sidebar-overlay fixed inset-0 bg-slate-900/40 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 lg:hidden"></div>
+                    
+                    <aside id="problems-sidebar" class="w-72 sm:w-80 bg-white p-5 shadow-2xl lg:shadow-none lg:border lg:border-slate-200 rounded-2xl flex flex-col flex-shrink-0 absolute lg:relative top-0 left-0 h-full z-40">
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-4">
+                            <h2 class="text-lg font-bold text-slate-800 tracking-tight">SQL Problems</h2>
+                            <button id="close-problems-mobile" class="lg:hidden text-slate-400 hover:text-slate-600 bg-slate-50 p-1.5 rounded-lg focus:outline-none"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                        </div>
+                        <div id="problem-list" class="overflow-y-auto flex-grow pr-2 custom-scrollbar">
+                            <!-- Problems will be dynamically inserted here -->
+                            <div class="flex items-center justify-center h-full text-slate-400">
+                                <div class="inline-block animate-spin w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full mr-2"></div> Loading...
+                            </div>
+                        </div>
+                    </aside>
+                </div>
 
                 <!-- Main Content Area -->
-                <main class="flex-1 overflow-y-auto">
-                    <div id="compiler-view" class="bg-white rounded-lg shadow-md hidden flex flex-col h-full p-6">
-                        <div id="problem-view" class="flex-1">
-                            <h2 id="problem-title" class="text-3xl font-bold text-gray-800"></h2>
-                            <div id="problem-meta-container" class="flex items-center space-x-4 mt-2 text-sm"></div>
-                            <div id="problem-details-container" class="mt-4 text-gray-700 leading-relaxed prose max-w-none"></div>
-                        </div>
+                <main class="flex-1 overflow-y-auto custom-scrollbar transition-all duration-300 h-full">
+                    
+                    <div id="compiler-view" class="glass-card rounded-2xl hidden flex-col overflow-hidden h-full">
+                        <div class="p-5 sm:p-8 overflow-y-auto custom-scrollbar flex-1 flex flex-col">
+                            
+                            <!-- Problem Header -->
+                            <div class="mb-6 pb-6 border-b border-slate-100 flex-shrink-0">
+                                <h2 id="problem-title" class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight mb-3"></h2>
+                                <div id="problem-meta-container" class="flex flex-wrap items-center gap-3 text-sm"></div>
+                            </div>
+                            
+                            <!-- Problem Description & Schema -->
+                            <div id="problem-details-container" class="text-slate-700 leading-relaxed prose max-w-none mb-8 flex-shrink-0"></div>
                         
-                        <div id="editor-view" class="mt-6">
-                            <div class="flex justify-between items-center mb-2">
-                                <h3 class="text-xl font-semibold text-gray-800">Your Query</h3>
-                                <div>
-                                    <button id="run-button" class="px-6 py-2 bg-gray-600 text-white font-semibold rounded-lg shadow-md hover:bg-gray-700 transition">Run Query</button>
-                                    <button id="submit-button" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition">Submit</button>
+                            <!-- Editor Header & Buttons -->
+                            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-3 flex-shrink-0">
+                                <h3 class="text-xl font-bold text-slate-800 tracking-tight flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                                    Your Query
+                                </h3>
+                                <div class="flex gap-3 w-full sm:w-auto">
+                                    <button id="run-button" class="flex-1 sm:flex-none px-6 py-2.5 bg-slate-800 text-white font-bold rounded-xl shadow-md hover:bg-slate-900 transition-colors flex items-center justify-center disabled:opacity-70">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
+                                        Run Query
+                                    </button>
+                                    <button id="submit-button" class="flex-1 sm:flex-none px-6 py-2.5 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 hover:shadow-lg transition-all flex items-center justify-center disabled:opacity-70">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        Submit
+                                    </button>
                                 </div>
                             </div>
-                            <textarea id="code-editor"></textarea>
-                        </div>
+                            
+                            <!-- Editor Window -->
+                            <div class="editor-wrapper flex-shrink-0 mb-8">
+                                <textarea id="code-editor"></textarea>
+                            </div>
 
-                        <div id="results-view" class="mt-6">
-                             <h3 class="text-xl font-semibold text-gray-800">Result</h3>
-                             <div id="result-output" class="mt-2 p-4 border rounded-lg bg-gray-50 overflow-auto">
-                                Select a problem and run your query to see results.
-                             </div>
+                            <!-- Results View -->
+                            <div id="results-view" class="flex-shrink-0">
+                                 <h3 class="text-xl font-bold text-slate-800 tracking-tight flex items-center mb-3">
+                                    <svg class="w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                                    Execution Result
+                                 </h3>
+                                 <div id="result-output" class="p-5 border border-slate-200 rounded-xl bg-slate-50 overflow-x-auto custom-scrollbar font-medium text-slate-600 text-sm">
+                                    Select a problem and run your query to see results.
+                                 </div>
+                            </div>
                         </div>
                     </div>
-                     <div id="welcome-view" class="flex items-center justify-center bg-white p-6 rounded-lg shadow-md h-full">
-                        <p class="text-gray-500 text-lg text-center">Select a problem from the sidebar to begin.</p>
+                    
+                    <!-- Welcome View -->
+                    <div id="welcome-view" class="flex flex-col items-center justify-center glass-card p-10 rounded-2xl h-full text-center border-dashed border-2 border-slate-300">
+                        <div class="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
+                            <svg class="w-10 h-10 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-800 mb-2">Welcome to SQL CodeLab</h2>
+                        <p class="text-slate-500 text-lg max-w-md">Select a database problem from the side menu to begin querying.<br><br>Click the menu icon to view assignments.</p>
                     </div>
                 </main>
             </div>
@@ -137,25 +273,50 @@
     </div>
     
     <!-- Celebration Modal -->
-    <div id="celebration-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl p-8 max-w-sm text-center">
-            <div class="text-9xl animate-bounce">🎉</div>
-            <h2 class="text-2xl font-bold text-gray-800 mt-4">Congratulations!</h2>
-            <p class="text-gray-600 mt-2">Your query produced the correct result!</p>
-            <button id="close-modal-button" class="mt-6 px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg">Continue</button>
+    <div id="celebration-modal" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-[100] modal-enter p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 sm:p-10 max-w-sm w-full text-center modal-content-enter border border-slate-100">
+            <div class="text-8xl sm:text-9xl animate-bounce mb-6">🎉</div>
+            <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">Query Accepted!</h2>
+            <p class="text-emerald-600 font-bold mt-2 bg-emerald-50 py-2 rounded-lg">Your result perfectly matched the expected output.</p>
+            <button id="close-modal-button" class="mt-8 w-full px-6 py-3.5 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 focus:outline-none transition-all">Continue Coding</button>
         </div>
     </div>
 
+    <!-- CodeMirror Core & SQL Mode -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/sql/sql.min.js"></script>
     
     <script>
+        // --- Main App Mobile Sidebar Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const openAppBtn = document.getElementById('open-sidebar-btn');
+            const closeAppBtn = document.getElementById('close-sidebar-btn');
+            const appSidebar = document.getElementById('mobile-sidebar');
+            const appOverlay = document.getElementById('sidebar-overlay');
+
+            function toggleAppSidebar() {
+                appSidebar.classList.toggle('-translate-x-full');
+                appOverlay.classList.toggle('hidden');
+            }
+
+            if(openAppBtn) openAppBtn.addEventListener('click', toggleAppSidebar);
+            if(closeAppBtn) closeAppBtn.addEventListener('click', toggleAppSidebar);
+            if(appOverlay) appOverlay.addEventListener('click', toggleAppSidebar);
+        });
+
+        // --- SQL Compiler Logic ---
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('token');
-            if (!token) {
+            const user = JSON.parse(localStorage.getItem('user'));
+            
+            if (!token || !user) {
                 window.location.href = '/login';
                 return;
             }
+
+            document.getElementById('user-name').textContent = user.fullName || 'Student';
+            document.getElementById('logout-button').onclick = () => { localStorage.clear(); window.location.href = '/login'; };
+            document.getElementById('user-menu-button').onclick = () => document.getElementById('user-menu').classList.toggle('hidden');
 
             let currentProblem = null;
             let problems = [];
@@ -168,7 +329,31 @@
             });
             
             const problemListDiv = document.getElementById('problem-list');
+            const sidebarContainer = document.getElementById('problems-sidebar-container');
+            const menuToggle = document.getElementById('menu-toggle');
+            const menuToggleMobile = document.getElementById('menu-toggle-mobile');
+            const closeProblemsMobile = document.getElementById('close-problems-mobile');
 
+            // Problems Sidebar Toggle Logic
+            const toggleProblemsSidebar = (forceOpen) => {
+                const isOpen = typeof forceOpen === 'boolean' ? forceOpen : !sidebarContainer.classList.contains('open');
+                sidebarContainer.classList.toggle('open', isOpen);
+                sidebarContainer.classList.toggle('closed', !isOpen && window.innerWidth >= 1024);
+                
+                const openIcon = document.getElementById('menu-open-icon');
+                const closeIcon = document.getElementById('menu-close-icon');
+                if(openIcon && closeIcon) {
+                    openIcon.classList.toggle('hidden', isOpen);
+                    closeIcon.classList.toggle('hidden', !isOpen);
+                }
+            };
+            
+            if(menuToggle) menuToggle.onclick = () => toggleProblemsSidebar();
+            if(menuToggleMobile) menuToggleMobile.onclick = () => toggleProblemsSidebar(true);
+            if(closeProblemsMobile) closeProblemsMobile.onclick = () => toggleProblemsSidebar(false);
+            document.querySelector('#problems-sidebar-container .sidebar-overlay').onclick = () => toggleProblemsSidebar(false);
+
+            // API Functions
             const fetchUserScore = async () => {
                 try {
                     const res = await fetch('/api/sql/my-score', { headers: { 'x-auth-token': token }});
@@ -191,13 +376,16 @@
                     return acc;
                 }, {});
 
+                let firstHeader = null;
+
                 for (const sectionName in groupedBySection) {
                     const accordion = document.createElement('div');
+                    accordion.className = 'mb-2';
                     const header = document.createElement('div');
-                    header.className = 'accordion-header flex justify-between items-center p-3 rounded-md font-semibold text-gray-700 cursor-pointer';
-                    header.innerHTML = `<span>${sectionName}</span><svg class="w-5 h-5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>`;
+                    header.className = 'accordion-header flex justify-between items-center p-3.5 rounded-xl font-bold text-slate-700 border border-slate-100 bg-slate-50 cursor-pointer';
+                    header.innerHTML = `<span>${sectionName}</span><svg class="chevron-icon w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>`;
                     const content = document.createElement('div');
-                    content.className = 'accordion-content pl-4';
+                    content.className = 'accordion-content px-2';
                     
                     const sectionProblems = groupedBySection[sectionName];
 
@@ -205,20 +393,26 @@
                     sectionProblems.sort((a, b) => {
                         const aIsSubmitted = submittedProblemIds.has(a.problemId);
                         const bIsSubmitted = submittedProblemIds.has(b.problemId);
-                        return aIsSubmitted - bIsSubmitted; // This will sort false (0) before true (1)
+                        return aIsSubmitted - bIsSubmitted;
                     });
 
                     sectionProblems.forEach(p => {
                         const item = document.createElement('div');
                         const isSubmitted = submittedProblemIds.has(p.problemId);
-                        item.className = `problem-list-item p-3 rounded-md cursor-pointer ${isSubmitted ? 'text-gray-500' : ''}`;
+                        item.className = `problem-list-item p-3 mt-2 flex items-center justify-between rounded-xl border border-transparent font-medium cursor-pointer ${isSubmitted ? 'bg-slate-50 border-slate-200 text-slate-500' : 'bg-white hover:border-slate-300 text-slate-700'}`;
                         item.dataset.problemId = p.problemId;
-                        item.innerHTML = `<span>${p.title}</span>${isSubmitted ? '<span class="submitted-badge">Solved</span>' : '<span class="pending-badge">Pending</span>'}`;
+                        item.innerHTML = `<span class="text-sm truncate mr-2">${p.title}</span>${isSubmitted ? '<span class="submitted-badge">Solved</span>' : '<span class="pending-badge">Pending</span>'}`;
                         content.appendChild(item);
                     });
                     
                     accordion.append(header, content);
                     problemListDiv.appendChild(accordion);
+                    if(!firstHeader) firstHeader = header;
+                }
+                
+                // Open first accordion by default
+                if(firstHeader) {
+                    setTimeout(() => firstHeader.click(), 50);
                 }
             };
 
@@ -234,9 +428,17 @@
 
                 document.getElementById('problem-title').textContent = currentProblem.title;
                 const scoreMap = { 'Easy': 10, 'Medium': 20, 'Hard': 30 };
+                const difficulty = currentProblem.difficulty || 'Easy';
+                const diffColors = { 'Easy': 'bg-emerald-100 text-emerald-800 border-emerald-200', 'Medium': 'bg-amber-100 text-amber-800 border-amber-200', 'Hard': 'bg-red-100 text-red-800 border-red-200' };
+
                 document.getElementById('problem-meta-container').innerHTML = `
-                    <span class="font-semibold">${currentProblem.difficulty}</span>
-                    <span class="font-semibold text-yellow-600">${scoreMap[currentProblem.difficulty] || 25} Points</span>
+                    <div class="flex items-center px-3.5 py-1.5 rounded-full shadow-sm text-xs font-bold uppercase tracking-wider border ${diffColors[difficulty] || 'bg-slate-100 text-slate-800 border-slate-200'}">
+                        ${difficulty}
+                    </div>
+                    <div class="flex items-center text-amber-600 bg-amber-50 px-3.5 py-1.5 rounded-full border border-amber-100 shadow-sm text-xs font-bold uppercase tracking-wider">
+                        <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                        ${scoreMap[difficulty] || 25} Points
+                    </div>
                 `;
                 
                 let schemaHTML = '';
@@ -247,10 +449,9 @@
                 const problemDetailsContainer = document.getElementById('problem-details-container');
                 problemDetailsContainer.innerHTML = `
                     <h3>Problem Statement</h3>
-                    <div>${currentProblem.description}</div>
+                    <div>${currentProblem.description.replace(/\n/g, '<br>')}</div>
                     ${schemaHTML}
-                    <h3>Constraints</h3>
-                    <p>${currentProblem.constraints || 'None'}</p>
+                    ${currentProblem.constraints ? `<h3>Constraints</h3><p>${currentProblem.constraints}</p>` : ''}
                 `;
                 
                 try {
@@ -264,7 +465,11 @@
                 } catch(e) {
                     editor.setValue(`-- Write your SQL query here\nSELECT * FROM table_name;`);
                 }
+                
                 document.getElementById('result-output').innerHTML = 'Run a query to see results.';
+                
+                // Auto close mobile sidebar when a problem is selected
+                if (window.innerWidth < 1024) toggleProblemsSidebar(false);
                 setTimeout(() => editor.refresh(), 1);
             };
 
@@ -273,34 +478,40 @@
                  outputDiv.innerHTML = '';
                  
                  if (resultData.error) {
-                     outputDiv.innerHTML = `<pre class="text-red-500">${resultData.error}</pre>`;
+                     outputDiv.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-600 p-4 rounded-xl font-mono text-sm shadow-sm whitespace-pre-wrap">${resultData.error}</div>`;
                      return;
                  }
                  
                  const { columns, values } = resultData;
 
                  if (!values || values.length === 0) {
-                     outputDiv.innerHTML = `<p class="text-gray-500">Query executed successfully, but returned no data.</p>`;
+                     outputDiv.innerHTML = `<div class="bg-slate-100 border border-slate-200 text-slate-500 p-4 rounded-xl font-semibold text-sm shadow-sm text-center">Query executed successfully, but returned 0 rows.</div>`;
                      return;
                  }
 
                  const table = document.createElement('table');
-                 table.className = 'w-full text-sm result-table';
+                 table.className = 'w-full text-sm text-left border-collapse';
+                 
                  const thead = document.createElement('thead');
+                 thead.className = 'bg-indigo-50 text-indigo-900 uppercase text-xs tracking-wider';
                  const tbody = document.createElement('tbody');
+                 tbody.className = 'divide-y divide-slate-200 bg-white';
                  
                  const headerRow = document.createElement('tr');
                  columns.forEach(col => {
                      const th = document.createElement('th');
+                     th.className = 'px-4 py-3 font-bold border-b border-indigo-100';
                      th.textContent = col;
                      headerRow.appendChild(th);
                  });
                  thead.appendChild(headerRow);
 
-                 values.forEach(rowObject => {
+                 values.forEach((rowObject, index) => {
                      const tr = document.createElement('tr');
+                     tr.className = index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50';
                      columns.forEach(colName => {
                          const td = document.createElement('td');
+                         td.className = 'px-4 py-3 text-slate-700 whitespace-nowrap';
                          td.textContent = rowObject[colName];
                          tr.appendChild(td);
                      });
@@ -315,8 +526,9 @@
                 if (!currentProblem) return;
                 
                 const runButton = document.getElementById('run-button');
+                const originalContent = runButton.innerHTML;
                 runButton.disabled = true;
-                runButton.textContent = 'Running...';
+                runButton.innerHTML = `<svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Running...`;
                 
                 try {
                     const res = await fetch('/api/sql/run', {
@@ -331,7 +543,7 @@
                     const resultData = await res.json();
                     
                     if (!res.ok) {
-                       renderResult({ error: resultData.error || 'An unknown error occurred.' });
+                       renderResult({ error: resultData.error || 'An unknown server error occurred.' });
                     } else {
                        renderResult(resultData);
                     }
@@ -339,7 +551,7 @@
                     renderResult({ error: "Failed to connect to the server." });
                 } finally {
                     runButton.disabled = false;
-                    runButton.textContent = 'Run Query';
+                    runButton.innerHTML = originalContent;
                 }
             };
 
@@ -347,8 +559,9 @@
                 if (!currentProblem) return;
                 
                 const submitButton = document.getElementById('submit-button');
+                const originalContent = submitButton.innerHTML;
                 submitButton.disabled = true;
-                submitButton.textContent = 'Submitting...';
+                submitButton.innerHTML = `<svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Evaluating...`;
 
                 try {
                     const res = await fetch('/api/sql/save-score', {
@@ -361,27 +574,49 @@
                     });
                     
                     const responseData = await res.json();
-                    renderResult(responseData.result);
+                    
+                    if (responseData.result && !responseData.result.error) {
+                        renderResult(responseData.result);
+                    } else if (responseData.result && responseData.result.error) {
+                        renderResult({ error: responseData.result.error });
+                    }
 
                     if (responseData.isCorrect) {
-                        document.getElementById('celebration-modal').classList.replace('hidden', 'flex');
+                        const modal = document.getElementById('celebration-modal');
+                        modal.classList.remove('hidden');
+                        setTimeout(() => {
+                            modal.classList.add('modal-enter-active');
+                            modal.querySelector('.modal-content-enter').classList.add('modal-content-enter-active');
+                        }, 10);
+
                         await fetchUserScore();
                         submittedProblemIds.add(currentProblem.problemId);
                         displayProblems();
                     } else {
-                        alert("Incorrect. Your query result does not match the expected output.");
+                        // Create a temporary alert logic inside the output area
+                        const outputDiv = document.getElementById('result-output');
+                        const errorAlert = document.createElement('div');
+                        errorAlert.className = 'mb-4 bg-red-50 border border-red-200 text-red-600 p-4 rounded-xl font-semibold shadow-sm flex items-center';
+                        errorAlert.innerHTML = `<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg> Incorrect! Your query result does not match the expected output.`;
+                        outputDiv.prepend(errorAlert);
                     }
                 } catch(e) {
-                    alert("Failed to submit solution.");
+                    alert("Failed to submit solution. Network or server error.");
                 } finally {
                     submitButton.disabled = false;
-                    submitButton.textContent = 'Submit';
+                    submitButton.innerHTML = originalContent;
                 }
             };
             
             document.getElementById('run-button').onclick = handleRun;
             document.getElementById('submit-button').onclick = handleSubmit;
-            document.getElementById('close-modal-button').onclick = () => document.getElementById('celebration-modal').classList.replace('flex', 'hidden');
+            
+            document.getElementById('close-modal-button').onclick = () => {
+                const modal = document.getElementById('celebration-modal');
+                modal.classList.remove('modal-enter-active');
+                modal.querySelector('.modal-content-enter').classList.remove('modal-content-enter-active');
+                setTimeout(() => modal.classList.add('hidden'), 200);
+            };
 
             problemListDiv.addEventListener('click', e => {
                 const problemItem = e.target.closest('.problem-list-item');
@@ -392,8 +627,18 @@
                 } else if (accordionHeader) {
                     const content = accordionHeader.nextElementSibling;
                     const isOpen = content.style.maxHeight;
+                    
+                    document.querySelectorAll('.accordion-header.open').forEach(openHeader => {
+                        if (openHeader !== accordionHeader) {
+                            openHeader.classList.remove('open');
+                            openHeader.nextElementSibling.style.maxHeight = null;
+                            openHeader.querySelector('.chevron-icon').style.transform = '';
+                        }
+                    });
+
+                    accordionHeader.classList.toggle('open');
                     content.style.maxHeight = isOpen ? null : content.scrollHeight + "px";
-                    accordionHeader.querySelector('svg').style.transform = isOpen ? '' : 'rotate(180deg)';
+                    accordionHeader.querySelector('.chevron-icon').style.transform = isOpen ? '' : 'rotate(180deg)';
                 }
             });
 
@@ -406,6 +651,7 @@
                     displayProblems();
                 } catch (e) {
                     console.error("Failed to fetch SQL problems", e);
+                    problemListDiv.innerHTML = '<div class="p-4 text-red-500 bg-red-50 rounded-xl font-medium m-4">Failed to load problems.</div>';
                 }
             };
             initializeApp();

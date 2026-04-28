@@ -3,182 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Course Viewer - TESTIFY</title>
+    <title>Course Viewer - TESTIFY Enterprise</title>
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: #f8fafc;
         }
-        /* Sidebar slide-in/out transition */
+        
+        /* Sidebar transition */
         .sidebar { 
-            transition: transform 0.3s ease-in-out; 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
             transform: translateX(0);
         }
         .sidebar.collapsed {
             transform: translateX(-100%);
         }
+        
+        /* Sidebar items */
+        .sidebar-item { transition: all 0.2s ease; }
+        .sidebar-item:hover { background-color: #f1f5f9; }
         .sidebar-item.active { 
-            background-color: #e0e7ff; 
+            background-color: #eef2ff; 
             color: #4338ca; 
-            font-weight: 600;
+            box-shadow: inset 3px 0 0 #4f46e5;
         }
-        /* Status icon styling for completed/pending lessons */
-        .sidebar-item .status-icon {
-            transition: color 0.3s;
+        
+        .sidebar-item .status-icon { transition: color 0.3s; }
+        .sidebar-item.completed .status-icon { color: #10b981; }
+        .sidebar-item:not(.completed) .status-icon { color: #cbd5e1; }
+        
+        /* Enterprise Card wrapper for content */
+        .enterprise-card {
+            background: #ffffff; 
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            border-radius: 0.75rem;
         }
-        .sidebar-item.completed .status-icon { 
-            color: #16a34a; 
-        }
-        .sidebar-item:not(.completed) .status-icon { 
-            color: #d1d5db; 
-        }
-        /* Styling for video embeds */
+
+        /* Video Embeds */
         .content-view iframe {
             width: 100%;
             aspect-ratio: 16 / 9;
-            border-radius: 0.75rem;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            border-radius: 0.5rem;
+            border: 1px solid #e2e8f0;
+            background-color: #0f172a;
         }
+        
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+        /* Corporate Typography */
+        .prose { color: #334155; line-height: 1.6; font-size: 1rem; }
+        .prose h1, .prose h2, .prose h3 { color: #0f172a; font-weight: 700; margin-top: 1.5em; margin-bottom: 0.75em; line-height: 1.3; letter-spacing: -0.01em;}
+        .prose p { margin-bottom: 1.25em; }
+        .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1.25em; }
+        .prose ol { list-style-type: decimal; padding-left: 1.5em; margin-bottom: 1.25em; }
+        .prose li { margin-bottom: 0.5em; }
+        .prose strong { font-weight: 600; color: #0f172a; }
+        .prose blockquote { border-left: 4px solid #cbd5e1; padding-left: 1em; color: #475569; font-style: normal; margin-left: 0; background: #f8fafc; padding: 1rem; border-radius: 0 0.5rem 0.5rem 0;}
+        
         /* Custom Modal Styles */
         .modal-backdrop {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            position: fixed; inset: 0;
+            background-color: rgba(15, 23, 42, 0.7); backdrop-filter: blur(2px);
             display: flex; justify-content: center; align-items: center;
             z-index: 100; opacity: 0; visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
         }
         .modal-backdrop.visible {
             opacity: 1; visibility: visible;
         }
         .modal-content {
             background-color: white; padding: 2rem; border-radius: 0.75rem;
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            transform: scale(0.95); transition: transform 0.3s ease;
-            text-align: center; max-width: 400px; width: 90%;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04);
+            transform: scale(0.95); transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            text-align: center; max-width: 400px; width: 90%; border: 1px solid #e2e8f0;
         }
         .modal-backdrop.visible .modal-content {
             transform: scale(1);
         }
-        /* Floating Action Button styles */
+        
+        /* Floating Action Button */
         #floating-complete-btn {
-            transition: opacity 0.3s, transform 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
     </style>
 </head>
-<body class="overflow-hidden">
-    <div id="app-container" class="flex h-screen">
+<body class="overflow-hidden antialiased text-slate-800 bg-slate-50">
+    <div id="app-container" class="flex h-screen w-full">
         <!-- Sidebar Backdrop (for mobile) -->
-        <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden"></div>
+        <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 hidden lg:hidden transition-opacity"></div>
 
         <!-- Collapsible Sidebar -->
-        <aside id="sidebar" class="sidebar w-80 bg-white border-r flex-shrink-0 flex flex-col absolute h-full z-30 lg:relative lg:z-auto">
-            <div class="h-16 flex items-center justify-between px-4 border-b flex-shrink-0">
-                <a href="./my-courses.html" class="flex items-center text-sm font-semibold text-indigo-700 hover:text-indigo-900">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                    Back to Courses
+        <aside id="sidebar" class="sidebar w-80 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col absolute h-full z-40 lg:relative lg:z-auto shadow-2xl lg:shadow-none">
+            <!-- Sidebar Header -->
+            <div class="h-16 flex items-center justify-between px-5 border-b border-slate-200 flex-shrink-0 bg-slate-50/50">
+                <a href="/student/my-courses.html" class="flex items-center text-sm font-semibold text-slate-600 hover:text-indigo-700 transition-colors group">
+                    <svg class="w-4 h-4 mr-2 text-slate-400 group-hover:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Back to Curriculum
                 </a>
+                <button id="close-sidebar-mobile" class="p-2 rounded-md text-slate-400 hover:bg-slate-200 hover:text-slate-800 transition-colors focus:outline-none lg:hidden">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
             </div>
+            
             <!-- Search Bar -->
-            <div class="p-4 border-b">
-                <div class="relative">
+            <div class="p-4 border-b border-slate-200">
+                <div class="relative group">
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <svg class="w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </span>
-                    <input type="text" id="search-lessons" placeholder="Search lessons..." class="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="text" id="search-lessons" placeholder="Search modules..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-md text-sm font-medium focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-all text-slate-800 outline-none placeholder-slate-400">
                 </div>
             </div>
-            <div id="modules-sidebar" class="flex-1 overflow-y-auto p-4 space-y-6">
+            
+            <!-- Modules List -->
+            <div id="modules-sidebar" class="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
                 <!-- Sidebar content will be injected here -->
-                 <div class="text-center p-8 text-gray-500">Loading lessons...</div>
+                 <div class="flex flex-col items-center justify-center h-full text-slate-400 text-sm font-medium">
+                     <div class="inline-block animate-spin w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full mb-3"></div>
+                     Loading modules...
+                 </div>
             </div>
         </aside>
 
         <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col">
+        <div class="flex-1 flex flex-col min-w-0">
             <!-- Top Header Bar -->
-            <header class="h-16 bg-white border-b flex items-center justify-between px-4 sm:px-6 flex-shrink-0">
-                <div class="flex items-center">
-                    <button id="toggle-sidebar-btn" class="p-2 mr-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 lg:hidden">
-                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 flex-shrink-0 z-10 sticky top-0 shadow-sm">
+                <div class="flex items-center min-w-0 flex-1">
+                    <button id="toggle-sidebar-btn" class="p-2 mr-3 rounded-md bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors focus:outline-none lg:hidden flex-shrink-0 border border-slate-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
-                    <div>
-                        <h1 id="course-title" class="text-lg font-bold text-gray-800 truncate">Loading Course...</h1>
-                        <p id="current-lesson-title" class="text-sm text-gray-500 truncate"></p>
+                    <div class="min-w-0 pr-4 flex items-center">
+                        <div class="hidden sm:flex items-center text-sm text-slate-500 font-medium mr-2">
+                            <span id="course-title-breadcrumb" class="truncate max-w-[200px]">Course</span>
+                            <svg class="w-4 h-4 mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </div>
+                        <h1 id="current-lesson-title" class="text-base sm:text-lg font-bold text-slate-800 truncate tracking-tight">Loading...</h1>
                     </div>
                 </div>
-                <div class="w-full max-w-xs ml-4">
+                
+                <div class="w-32 sm:w-48 ml-auto flex-shrink-0">
                     <div class="group relative">
-                        <div class="flex items-center justify-between mb-1">
-                            <span class="text-sm font-medium text-gray-700">Course Progress</span>
-                            <span id="progress-percent" class="text-sm font-medium text-indigo-600">0%</span>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:block">Completion</span>
+                            <span id="progress-percent" class="text-xs font-bold text-indigo-700">0%</span>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2.5">
-                            <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        <div class="w-full bg-slate-200 rounded-full h-1.5">
+                            <div id="progress-bar" class="bg-indigo-600 h-1.5 rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
                         </div>
                          <!-- Tooltip -->
-                        <div id="progress-tooltip" class="absolute bottom-full mb-2 w-max bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none left-1/2 -translate-x-1/2">
-                            0 of 0 lessons completed
-                            <svg class="absolute text-gray-800 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,0 127.5,127.5 255,0"/></svg>
+                        <div id="progress-tooltip" class="absolute bottom-full mb-2 w-max bg-slate-800 text-white font-medium text-xs rounded-md py-1 px-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none right-0 shadow-sm border border-slate-700">
+                            0 of 0 modules completed
                         </div>
                     </div>
                 </div>
             </header>
 
             <!-- Content Viewer -->
-            <main id="main-content" class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 lg:p-12">
-                 <div class="max-w-4xl mx-auto">
-                    <button id="resume-course-btn" class="mb-6 w-full text-left p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow flex items-center justify-between">
-                        <div>
-                            <h2 class="font-bold text-lg text-indigo-700">Resume Course</h2>
-                            <p class="text-sm text-gray-500">Jump back to where you left off.</p>
+            <main id="main-content" class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 custom-scrollbar bg-slate-50">
+                 <div class="max-w-4xl mx-auto w-full">
+                    
+                    <!-- Resume Banner -->
+                    <button id="resume-course-btn" class="mb-6 w-full text-left p-4 bg-white border border-indigo-200 rounded-xl shadow-sm hover:border-indigo-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all flex items-center justify-between group">
+                        <div class="flex items-center">
+                            <div class="bg-indigo-50 p-2.5 rounded-lg mr-4 text-indigo-700 border border-indigo-100">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path></svg>
+                            </div>
+                            <div>
+                                <h2 class="font-bold text-base text-slate-900">Resume Previous Session</h2>
+                                <p class="text-xs font-medium text-slate-500 mt-0.5">Return to your last active module.</p>
+                            </div>
                         </div>
-                        <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                        <span class="text-sm font-semibold text-indigo-600 flex items-center group-hover:text-indigo-800">
+                            Resume <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </span>
                     </button>
+
+                    <!-- Main Dynamic Content Container -->
                     <div id="content-view">
-                        <!-- Main content will be displayed here -->
+                        <!-- Content injected here -->
                     </div>
                 </div>
             </main>
         </div>
     </div>
     
-    <!-- Floating Action Button -->
-    <button id="floating-complete-btn" class="fixed bottom-6 right-6 bg-indigo-600 text-white rounded-full p-4 shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 z-40 opacity-0 transform translate-y-4 pointer-events-none">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    <!-- Floating Action Button (Shows on scroll) -->
+    <button id="floating-complete-btn" title="Mark Module Complete" class="fixed bottom-6 right-6 bg-indigo-600 text-white rounded-full p-3.5 shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 z-40 opacity-0 transform translate-y-6 pointer-events-none border border-indigo-800/20">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
     </button>
     
-    <!-- Custom Modal -->
+    <!-- Enterprise Completion Modal -->
     <div id="custom-modal" class="modal-backdrop">
-        <div class="modal-content">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-                <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <div class="modal-content relative">
+            <div class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-emerald-50 border border-emerald-100 mb-5 text-emerald-600">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
             </div>
-            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-2" id="modal-title">Congratulations!</h3>
-            <p class="text-sm text-gray-500 mb-6" id="modal-message">You have completed the course. The final test is now available in your dashboard.</p>
-            <button id="modal-close-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">
-                Got it!
+            
+            <h3 class="text-xl font-bold text-slate-900 mb-2" id="modal-title">Course Completed</h3>
+            <p class="text-sm text-slate-600 mb-6 leading-relaxed" id="modal-message">You have successfully completed all required modules. Any associated assessments are now unlocked.</p>
+            
+            <button id="modal-close-btn" class="w-full inline-flex justify-center items-center rounded-lg px-4 py-2.5 bg-slate-900 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 transition-colors">
+                Acknowledge & Return
             </button>
         </div>
     </div>
-
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('token');
             if (!token) { 
-                document.getElementById('app-container').innerHTML = '<p class="p-8 text-center text-red-500">Authentication token not found. Please <a href="/login" class="underline">log in</a>.</p>';
+                document.getElementById('app-container').innerHTML = '<div class="flex items-center justify-center w-full h-full bg-slate-50"><div class="enterprise-card p-8 text-center max-w-sm"><p class="text-base font-bold text-red-600 mb-2">Authentication Required</p><p class="text-sm text-slate-500 mb-4">Your session has expired or is invalid.</p><a href="/login" class="inline-flex justify-center w-full px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">Log In</a></div></div>';
                 return; 
             }
 
             const urlParams = new URLSearchParams(window.location.search);
             const courseId = urlParams.get('id');
             if (!courseId) { 
-                document.getElementById('app-container').innerHTML = '<p class="p-8 text-center text-red-500">No course ID specified in the URL.</p>'; 
+                document.getElementById('app-container').innerHTML = '<div class="flex items-center justify-center w-full h-full bg-slate-50"><div class="enterprise-card p-8 text-center max-w-sm"><p class="text-base font-bold text-slate-900 mb-2">Resource Not Found</p><p class="text-sm text-slate-500 mb-5">The requested course module could not be located.</p><a href="/student/my-courses" class="inline-flex justify-center w-full px-4 py-2 border border-slate-300 shadow-sm text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50">Return to Dashboard</a></div></div>'; 
                 return; 
             }
 
@@ -186,9 +236,10 @@
             const sidebar = document.getElementById('sidebar');
             const sidebarBackdrop = document.getElementById('sidebar-backdrop');
             const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
+            const closeSidebarMobileBtn = document.getElementById('close-sidebar-mobile');
             const searchInput = document.getElementById('search-lessons');
             const resumeBtn = document.getElementById('resume-course-btn');
-            const courseTitleEl = document.getElementById('course-title');
+            const courseTitleBreadcrumb = document.getElementById('course-title-breadcrumb');
             const currentLessonTitleEl = document.getElementById('current-lesson-title');
             const progressBar = document.getElementById('progress-bar');
             const progressPercent = document.getElementById('progress-percent');
@@ -225,7 +276,7 @@
                 const percentage = Math.round((completedSubModules.size / allSubModules.length) * 100);
                 progressBar.style.width = `${percentage}%`;
                 progressPercent.textContent = `${percentage}%`;
-                progressTooltip.innerHTML = `${completedSubModules.size} of ${allSubModules.length} lessons completed <svg class="absolute text-gray-800 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,0 127.5,127.5 255,0"/></svg>`;
+                progressTooltip.textContent = `${completedSubModules.size} of ${allSubModules.length} modules completed`;
             };
 
             const renderSidebar = (searchTerm = '') => {
@@ -233,37 +284,48 @@
                 modulesSidebar.innerHTML = '';
                 const lowerCaseSearch = searchTerm.toLowerCase();
 
-                courseData.modules.forEach(module => {
+                courseData.modules.forEach((module, index) => {
                     const filteredSubModules = module.subModules.filter(sub => sub.title.toLowerCase().includes(lowerCaseSearch));
                     if (filteredSubModules.length === 0) return;
 
                     const moduleEl = document.createElement('div');
+                    moduleEl.className = 'mb-3';
+
                     const subModulesHtml = filteredSubModules.map(sub => {
                         const isCompleted = completedSubModules.has(sub.subModuleId);
                         return `
-                            <a href="#" class="sidebar-item flex items-center p-3 rounded-lg transition-colors hover:bg-gray-100 ${isCompleted ? 'completed' : ''}" data-submodule-id="${sub.subModuleId}">
-                                <div class="status-icon mr-3 flex-shrink-0">
-                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <a href="#" class="sidebar-item flex items-start p-2.5 rounded-lg transition-all hover:bg-slate-50 mb-0.5 ${isCompleted ? 'completed' : ''}" data-submodule-id="${sub.subModuleId}">
+                                <div class="status-icon mt-0.5 mr-2.5 flex-shrink-0">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                                     </svg>
                                 </div>
-                                <span class="text-sm ${isCompleted ? 'text-gray-500 line-through' : 'text-gray-700'}">${sub.title}</span>
+                                <span class="text-sm font-medium leading-snug ${isCompleted ? 'text-slate-400' : 'text-slate-700'}">${sub.title}</span>
                             </a>`;
                     }).join('');
                     
-                    moduleEl.innerHTML = `<h3 class="px-3 font-bold text-gray-500 uppercase text-xs tracking-wider mb-2">${module.title}</h3><div class="space-y-1">${subModulesHtml}</div>`;
+                    // Corporate Accordion Style Header
+                    moduleEl.innerHTML = `
+                        <button class="w-full flex items-center justify-between px-2 py-2 text-slate-800 text-sm font-bold tracking-tight rounded-md hover:bg-slate-100 transition-colors focus:outline-none text-left">
+                            <span>${module.title}</span>
+                        </button>
+                        <div class="mt-1 space-y-0.5 pl-1 border-l-2 border-slate-100 ml-3">
+                            ${subModulesHtml}
+                        </div>
+                    `;
                     modulesSidebar.appendChild(moduleEl);
                 });
-                 // Re-highlight the active item after re-rendering
-                 if (currentSubModuleId) {
+                
+                // Re-highlight the active item after re-rendering
+                if (currentSubModuleId) {
                     const activeItem = modulesSidebar.querySelector(`[data-submodule-id="${currentSubModuleId}"]`);
                     if (activeItem) activeItem.classList.add('active');
-                 }
+                }
             };
 
             const renderContent = (subModuleId) => {
                 currentSubModuleId = subModuleId;
-                lastViewedSubModuleId = subModuleId; // Update last viewed
+                lastViewedSubModuleId = subModuleId;
                 localStorage.setItem(`lastViewed_${courseId}`, subModuleId);
 
                 const subModule = allSubModules.find(s => s.subModuleId === subModuleId);
@@ -271,21 +333,20 @@
 
                 document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
                 const activeItem = document.querySelector(`[data-submodule-id="${subModuleId}"]`);
-                if (activeItem) {
-                    activeItem.classList.add('active');
-                }
+                if (activeItem) activeItem.classList.add('active');
+                
                 currentLessonTitleEl.textContent = subModule.title;
 
-                let contentHtml = '<div class="space-y-8">';
+                let contentHtml = '<div class="space-y-6">';
                 if (subModule.videoUrl) {
                     let videoSrc = subModule.videoUrl.includes('embed') ? subModule.videoUrl : subModule.videoUrl.replace("watch?v=", "embed/");
                     contentHtml += `<div class="content-view"><iframe src="${videoSrc}" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe></div>`;
                 }
                 if (subModule.imageUrl) {
-                    contentHtml += `<img src="${subModule.imageUrl}" class="rounded-lg shadow-lg mx-auto max-h-[70vh] w-full object-contain">`;
+                    contentHtml += `<img src="${subModule.imageUrl}" class="rounded-lg shadow-sm mx-auto max-h-[50vh] w-full object-contain border border-slate-200 bg-white p-2">`;
                 }
                 if (subModule.textContent) {
-                    contentHtml += `<div class="prose lg:prose-lg max-w-full">${subModule.textContent.replace(/\n/g, '<br>')}</div>`;
+                    contentHtml += `<div class="prose max-w-none">${subModule.textContent.replace(/\n/g, '<br>')}</div>`;
                 }
                 contentHtml += '</div>';
 
@@ -295,16 +356,22 @@
                 const isLast = currentIndex === allSubModules.length - 1;
 
                 contentView.innerHTML = `
-                    <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-8">${subModule.title}</h2>
-                    ${contentHtml}
-                    <footer class="mt-12 pt-8 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <button id="prev-btn" class="w-full sm:w-auto px-6 py-2 font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed" ${isFirst ? 'disabled' : ''}>Previous Lesson</button>
-                        <button id="next-btn" class="w-full sm:w-auto px-8 py-3 ${isCompleted ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white font-bold rounded-lg shadow-md transition-transform transform hover:scale-105">
-                            ${isCompleted ? (isLast ? '✓ Course Complete' : '✓ Completed: Next') : (isLast ? 'Finish Course' : 'Complete & Continue')}
-                        </button>
-                    </footer>
+                    <div class="enterprise-card p-6 sm:p-10 mb-6">
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-6 tracking-tight">${subModule.title}</h2>
+                        ${contentHtml}
+                        
+                        <footer class="mt-10 pt-6 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <button id="prev-btn" class="w-full sm:w-auto px-5 py-2.5 font-semibold text-sm text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" ${isFirst ? 'disabled' : ''}>
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                                Previous Module
+                            </button>
+                            <button id="next-btn" class="w-full sm:w-auto px-6 py-2.5 ${isCompleted ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white font-semibold text-sm rounded-lg shadow-sm transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                ${isCompleted ? (isLast ? 'Course Complete <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' : 'Next Module <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>') : (isLast ? 'Submit & Finish <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' : 'Mark Complete & Continue <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>')}
+                            </button>
+                        </footer>
+                    </div>
                 `;
-                 mainContent.scrollTop = 0; // Scroll to top of content on navigation
+                mainContent.scrollTop = 0; // Scroll to top
             };
 
             const navigate = (direction) => {
@@ -320,6 +387,12 @@
                     navigate('next');
                     return;
                 }
+                
+                const nextBtn = document.getElementById('next-btn');
+                const floatingNextBtn = document.getElementById('floating-complete-btn');
+                if(nextBtn) nextBtn.disabled = true;
+                if(floatingNextBtn) floatingNextBtn.disabled = true;
+
                 try {
                     const response = await fetch('/api/student/courses/progress', {
                         method: 'POST',
@@ -327,21 +400,25 @@
                         body: JSON.stringify({ courseId, subModuleId: currentSubModuleId })
                     });
 
-                    if (!response.ok) throw new Error('Server responded with an error.');
+                    if (!response.ok) throw new Error('Server synchronization failed.');
                     
                     completedSubModules.add(currentSubModuleId);
                     updateProgressUI();
-                    renderSidebar(searchInput.value); // Re-render with search term
+                    renderSidebar(searchInput.value); 
+                    
                     const isLast = allSubModules.findIndex(s => s.subModuleId === currentSubModuleId) === allSubModules.length - 1;
                     if (isLast) {
                         renderContent(currentSubModuleId);
-                        showModal("Congratulations!", "You have completed the course. The final test is now available in your dashboard.");
+                        showModal("Course Completed", "You have successfully completed all required modules. Any associated assessments are now unlocked in your dashboard.");
                     } else {
                         navigate('next');
                     }
                 } catch (error) {
-                    console.error("Failed to mark as complete:", error);
-                    showModal('Error', 'Could not update your progress. Please try again.');
+                    console.error("Progress Error:", error);
+                    showModal('System Notification', 'Could not save your progress securely. Please check your network connection and try again.');
+                } finally {
+                    if(nextBtn) nextBtn.disabled = false;
+                    if(floatingNextBtn) floatingNextBtn.disabled = false;
                 }
             };
 
@@ -350,7 +427,9 @@
                 sidebar.classList.toggle('collapsed');
                 sidebarBackdrop.classList.toggle('hidden');
             };
+            
             toggleSidebarBtn.addEventListener('click', toggleMenu);
+            closeSidebarMobileBtn.addEventListener('click', toggleMenu);
             sidebarBackdrop.addEventListener('click', toggleMenu);
             
             searchInput.addEventListener('input', (e) => renderSidebar(e.target.value));
@@ -359,31 +438,42 @@
                 if (lastViewedSubModuleId) {
                     renderContent(lastViewedSubModuleId);
                     const lastItem = document.querySelector(`[data-submodule-id="${lastViewedSubModuleId}"]`);
-                    if(lastItem) lastItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    if(lastItem) {
+                        lastItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
                 }
             });
 
             modulesSidebar.addEventListener('click', e => {
+                const buttonHeader = e.target.closest('button');
+                if(buttonHeader) {
+                    // Visual feedback for accordion click if needed, though Tailwind handles hover
+                    return;
+                }
+
                 e.preventDefault();
                 const item = e.target.closest('.sidebar-item');
                 if (item) {
                      renderContent(item.dataset.submoduleId);
-                     if (window.innerWidth < 1024) toggleMenu(); // Close sidebar on mobile after selection
+                     if (window.innerWidth < 1024) toggleMenu(); // Close sidebar on mobile
                 }
             });
 
             contentView.addEventListener('click', e => {
-                if (e.target.id === 'prev-btn') navigate('prev');
-                if (e.target.id === 'next-btn') markAsCompleteAndProceed();
+                const prevBtnClicked = e.target.closest('#prev-btn');
+                const nextBtnClicked = e.target.closest('#next-btn');
+                
+                if (prevBtnClicked) navigate('prev');
+                if (nextBtnClicked) markAsCompleteAndProceed();
             });
 
             floatingBtn.addEventListener('click', markAsCompleteAndProceed);
 
             mainContent.addEventListener('scroll', () => {
-                if (mainContent.scrollTop > 200) {
-                    floatingBtn.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+                if (mainContent.scrollTop > 300) {
+                    floatingBtn.classList.remove('opacity-0', 'translate-y-6', 'pointer-events-none');
                 } else {
-                    floatingBtn.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+                    floatingBtn.classList.add('opacity-0', 'translate-y-6', 'pointer-events-none');
                 }
             });
 
@@ -394,8 +484,7 @@
                 });
                 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Could not load course data.');
+                    throw new Error('Course metadata could not be retrieved.');
                 }
                 
                 const { course, progress } = await response.json();
@@ -404,7 +493,8 @@
                 allSubModules = course.modules.flatMap(m => m.subModules);
                 completedSubModules = new Set(progress.completedSubModules);
 
-                courseTitleEl.textContent = course.title;
+                courseTitleBreadcrumb.textContent = course.title;
+                document.title = `${course.title} - Learning Module`;
                 updateProgressUI();
                 renderSidebar();
 
@@ -421,13 +511,13 @@
                 if (initialSubModule) {
                     renderContent(initialSubModule.subModuleId);
                 } else {
-                    contentView.innerHTML = '<p class="text-center text-gray-500">This course has no content yet.</p>';
+                    contentView.innerHTML = '<div class="enterprise-card p-10 text-center"><p class="text-slate-600 font-medium">This curriculum has no assigned modules yet.</p></div>';
                     resumeBtn.style.display = 'none';
                 }
 
             } catch (error) {
-                console.error("Failed to load course:", error);
-                document.getElementById('app-container').innerHTML = `<p class="p-8 text-center text-red-500">${error.message}</p>`;
+                console.error("Initialization Error:", error);
+                document.getElementById('app-container').innerHTML = `<div class="flex items-center justify-center w-full h-full bg-slate-50"><div class="enterprise-card p-8 text-center max-w-sm"><p class="text-base font-bold text-slate-900 mb-2">System Error</p><p class="text-sm text-slate-600 font-medium mb-6">${error.message}</p><a href="/student/my-courses" class="inline-flex justify-center w-full px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-slate-800 hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 transition-colors">Return to Dashboard</a></div></div>`;
             }
         });
     </script>
