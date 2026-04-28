@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Full Screen Test - TESTIFY</title>
+    <title>Standard Assessment - TESTIFY Enterprise</title>
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,7 +18,7 @@
         }
 
         /* Sidebar transition */
-        #mobile-sidebar { transition: transform 0.3s ease-in-out; }
+        #mobile-sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .sidebar-link { transition: all 0.2s ease-in-out; }
         .sidebar-link:hover { background-color: rgba(255, 255, 255, 0.1); transform: translateX(4px); }
         .sidebar-link.active {
@@ -26,15 +26,15 @@
             box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
         }
 
-        /* Glass Card */
+        /* Enterprise Card */
         .glass-card {
-            background: #ffffff; border: 1px solid rgba(226, 232, 240, 0.8);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            background: #ffffff; border: 1px solid #e2e8f0;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
             transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         }
         .glass-card:hover {
             transform: translateY(-4px); border-color: #c7d2fe;
-            box-shadow: 0 12px 20px -3px rgba(79, 70, 229, 0.1), 0 4px 6px -2px rgba(79, 70, 229, 0.05);
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.1), 0 4px 6px -2px rgba(79, 70, 229, 0.05);
         }
 
         /* Custom Scrollbar */
@@ -51,50 +51,59 @@
         
         /* Palette Buttons */
         .palette-btn {
-            font-weight: 600; border: 2px solid transparent;
+            font-weight: 600; border: 1px solid #e2e8f0; color: #475569;
             transition: all 0.2s ease;
         }
-        .palette-btn:hover { background-color: #e2e8f0; }
+        .palette-btn:hover { background-color: #f1f5f9; border-color: #cbd5e1; }
         .palette-btn.active {
-            background-color: #eef2ff; color: #4F46E5; border-color: #4F46E5;
-            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+            background-color: #eef2ff; color: #4338ca; border-color: #6366f1;
+            box-shadow: inset 0 0 0 1px #6366f1;
         }
         .palette-btn.answered {
-            background-color: #10B981; color: white; border-color: #059669;
+            background-color: #10b981; color: white; border-color: #059669;
         }
         .palette-btn.marked {
             background-color: #f59e0b; color: white; border-color: #d97706;
         }
         .palette-btn.answered.marked {
-            background-color: #8b5cf6; color: white; border-color: #7c3aed;
+            background-color: #6366f1; color: white; border-color: #4f46e5;
         }
 
         /* Custom Radio & Option Box */
-        .option-box { transition: all 0.2s ease; border: 2px solid transparent; }
-        .custom-radio:checked + .option-box {
-            border-color: #6366f1; background-color: #eef2ff;
-            box-shadow: 0 0 0 3px #e0e7ff;
+        .option-label {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
         }
-        .custom-radio:checked + .option-box .indicator {
-            background-color: #4f46e5; border-color: #4f46e5;
+        .option-label:has(input:checked) {
+            background-color: #f5f8ff;
+            border-color: #6366f1;
+            box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.1);
         }
 
         /* Modals */
         .modal-overlay {
             position: fixed; inset: 0; background-color: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 10000;
+            backdrop-filter: blur(3px); display: flex; justify-content: center; align-items: center; z-index: 10000;
+            opacity: 0; visibility: hidden; transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+        .modal-overlay.visible {
+            opacity: 1; visibility: visible;
         }
         .modal-container {
-            background-color: white; padding: 2rem; border-radius: 1.5rem;
+            background-color: white; padding: 2.5rem; border-radius: 1.25rem;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             max-width: 90%; width: 500px; border: 1px solid #f1f5f9;
+            transform: scale(0.95); transition: transform 0.2s ease;
+        }
+        .modal-overlay.visible .modal-container {
+            transform: scale(1);
         }
     </style>
 </head>
 <body class="text-slate-800 antialiased overflow-hidden">
 
     <!-- Main Dashboard Area -->
-    <div id="main-content" class="flex h-screen bg-slate-50 overflow-hidden">
+    <div id="main-content" class="flex h-screen bg-slate-50 overflow-hidden w-full">
         
         <!-- Mobile Sidebar Overlay -->
         <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden md:hidden transition-opacity"></div>
@@ -159,13 +168,13 @@
         <!-- Main Workspace -->
         <div class="flex flex-col flex-1 overflow-y-auto w-full custom-scrollbar">
             <!-- Header -->
-            <header class="flex items-center justify-between h-20 bg-white border-b border-slate-200 px-4 sm:px-8 sticky top-0 z-30 flex-shrink-0">
+            <header class="flex items-center justify-between h-20 bg-white border-b border-slate-200 px-4 sm:px-8 sticky top-0 z-30 flex-shrink-0 shadow-sm">
                 <div class="flex items-center">
                     <button id="open-sidebar-btn" class="mr-4 md:hidden text-slate-500 hover:text-slate-800 focus:outline-none bg-slate-100 p-2 rounded-lg">
                         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                     </button>
                     <div>
-                        <h1 class="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Available Tests</h1>
+                        <h1 class="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Available Assessments</h1>
                         <p class="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">Standard full-screen assessments.</p>
                     </div>
                 </div>
@@ -177,7 +186,7 @@
                             <svg class="h-4 w-4 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                         </button>
                         <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg py-2 z-50 border border-slate-100">
-                            <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-red-600 hover:bg-slate-50 font-medium">Logout</a>
+                            <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-red-600 hover:bg-slate-50 font-medium flex items-center"><svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg> Logout</a>
                         </div>
                     </div>
                 </div>
@@ -207,12 +216,12 @@
             <div class="flex items-center">
                 <img class="h-8 w-8 sm:h-10 sm:w-10 object-contain" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify Logo">
                 <div class="ml-3 sm:ml-4">
-                    <h1 class="text-sm sm:text-lg font-bold text-slate-800 leading-tight">Focus Mode Active</h1>
+                    <h1 class="text-sm sm:text-lg font-bold text-slate-800 leading-tight tracking-tight">Focus Assessment Active</h1>
                     <p id="test-title" class="text-xs sm:text-sm text-indigo-600 font-semibold truncate max-w-[150px] sm:max-w-xs"></p>
                 </div>
             </div>
-            <button id="submit-test-btn" class="px-4 py-2 sm:px-6 sm:py-2.5 bg-red-600 text-white text-sm sm:text-base font-bold rounded-xl shadow-md hover:bg-red-700 hover:-translate-y-0.5 transition-all focus:ring-4 focus:ring-red-100">
-                Finish Test
+            <button id="submit-test-btn" class="px-5 py-2 sm:px-6 sm:py-2.5 bg-red-600 text-white text-sm sm:text-base font-bold rounded-xl shadow-md hover:bg-red-700 hover:-translate-y-0.5 transition-all focus:ring-4 focus:ring-red-100 focus:outline-none">
+                Submit Test
             </button>
         </header>
 
@@ -237,10 +246,10 @@
                         <h3 class="font-bold text-slate-800 mb-3 text-sm uppercase tracking-wide">Question Map</h3>
                         <div id="question-palette" class="grid grid-cols-5 gap-2 overflow-y-auto custom-scrollbar pr-1 pb-1"></div>
                         
-                        <div class="mt-4 pt-4 border-t border-slate-100 text-xs font-medium space-y-2 text-slate-600 hidden sm:block">
-                            <div class="flex items-center"><span class="h-3 w-3 rounded-full bg-slate-100 border border-indigo-600 mr-2"></span> Current</div>
-                            <div class="flex items-center"><span class="h-3 w-3 rounded-full bg-emerald-500 mr-2"></span> Answered</div>
-                            <div class="flex items-center"><span class="h-3 w-3 rounded-full bg-amber-500 mr-2"></span> Marked Review</div>
+                        <div class="mt-4 pt-4 border-t border-slate-100 text-xs font-semibold space-y-2.5 text-slate-600 hidden sm:block">
+                            <div class="flex items-center"><span class="h-3.5 w-3.5 rounded-full bg-indigo-50 border-2 border-indigo-600 mr-2.5"></span> Current</div>
+                            <div class="flex items-center"><span class="h-3.5 w-3.5 rounded-full bg-emerald-500 mr-2.5"></span> Answered</div>
+                            <div class="flex items-center"><span class="h-3.5 w-3.5 rounded-full bg-amber-500 mr-2.5"></span> Marked for Review</div>
                         </div>
                     </div>
                 </div>
@@ -250,7 +259,7 @@
             <div class="flex-1 flex flex-col bg-white overflow-hidden relative order-last lg:order-first h-full lg:h-[calc(100vh-5rem)]">
                 
                 <!-- Scrollable Content -->
-                <div class="flex-grow overflow-y-auto custom-scrollbar p-5 sm:p-8 lg:p-12 pb-32 lg:pb-12">
+                <div class="flex-grow overflow-y-auto custom-scrollbar p-5 sm:p-8 lg:p-12 pb-32 lg:pb-24">
                     <div id="question-content" class="max-w-4xl mx-auto"></div>
                 </div>
 
@@ -258,22 +267,22 @@
                 <div class="bg-white border-t border-slate-200 p-4 sm:p-6 lg:p-8 flex justify-between items-center z-20 flex-shrink-0 lg:static fixed bottom-0 w-full lg:w-auto shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] lg:shadow-none">
                     <div class="max-w-4xl mx-auto w-full flex justify-between items-center gap-2 sm:gap-4">
                         
-                        <button id="prev-btn" class="px-4 py-2.5 sm:px-6 sm:py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors flex items-center disabled:opacity-40 disabled:cursor-not-allowed">
+                        <button id="prev-btn" class="px-4 py-2.5 sm:px-6 sm:py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors flex items-center disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none">
                             <svg class="w-5 h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                             <span class="hidden sm:inline">Previous</span><span class="sm:hidden">Prev</span>
                         </button>
                         
                         <div class="flex gap-2 sm:gap-4 flex-1 justify-center">
-                            <button id="clear-response-btn" class="px-3 py-2 sm:px-5 sm:py-2.5 bg-slate-100 text-slate-600 font-semibold text-sm rounded-xl hover:bg-slate-200 transition-colors shadow-sm hidden sm:block">
+                            <button id="clear-response-btn" class="px-3 py-2 sm:px-5 sm:py-2.5 bg-slate-100 text-slate-600 font-semibold text-sm rounded-xl hover:bg-slate-200 transition-colors shadow-sm hidden sm:block focus:outline-none">
                                 Clear
                             </button>
-                            <button id="mark-review-btn" class="px-3 py-2 sm:px-5 sm:py-2.5 bg-amber-100 text-amber-700 border border-amber-200 font-semibold text-sm rounded-xl hover:bg-amber-200 transition-colors shadow-sm flex items-center">
+                            <button id="mark-review-btn" class="px-3 py-2 sm:px-5 sm:py-2.5 bg-amber-50 text-amber-700 border border-amber-200 font-semibold text-sm rounded-xl hover:bg-amber-100 transition-colors shadow-sm flex items-center focus:outline-none">
                                 <svg class="w-4 h-4 sm:mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
                                 <span class="hidden sm:inline">Review</span>
                             </button>
                         </div>
 
-                        <button id="next-btn" class="px-4 py-2.5 sm:px-6 sm:py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-md hover:shadow-lg transition-all flex items-center disabled:opacity-40 disabled:cursor-not-allowed">
+                        <button id="next-btn" class="px-4 py-2.5 sm:px-6 sm:py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-md hover:shadow-lg transition-all flex items-center disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none">
                             <span class="hidden sm:inline">Next</span><span class="sm:hidden">Next</span>
                             <svg class="w-5 h-5 ml-1 sm:ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                         </button>
@@ -286,58 +295,59 @@
     <!-- Modals -->
     <div id="test-loader-overlay" class="hidden fixed inset-0 bg-slate-900/90 z-[10001] flex flex-col items-center justify-center text-white backdrop-blur-md transition-opacity">
         <div class="inline-block border-4 border-slate-700 border-t-indigo-500 rounded-full w-14 h-14 animate-spin shadow-lg mb-6"></div>
-        <p class="text-2xl font-bold tracking-tight">Initiating Secure Test...</p>
+        <p class="text-2xl font-bold tracking-tight">Initiating Secure Environment...</p>
         <p class="text-slate-400 mt-2 font-medium">Please do not refresh the page.</p>
     </div>
 
     <div id="pre-test-modal" class="modal-overlay hidden">
         <div class="modal-container">
-             <div class="flex items-center justify-center flex-col border-b border-slate-100 pb-5 mb-5">
-                <div class="bg-indigo-50 p-3.5 rounded-full text-indigo-600 mb-3">
+             <div class="flex items-center justify-center flex-col border-b border-slate-200 pb-5 mb-5">
+                <div class="bg-indigo-50 p-3.5 rounded-full text-indigo-600 mb-3 border border-indigo-100">
                     <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.286z" /></svg>
                 </div>
-                <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">System Check</h2>
-                <p class="text-slate-500 mt-1.5 text-center text-sm">Please confirm the following to ensure a stable testing experience.</p>
+                <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">System & Policy Check</h2>
+                <p class="text-slate-500 mt-1.5 text-center text-sm font-medium">Please review and confirm the testing policies.</p>
             </div>
             
-            <div class="bg-amber-50 p-4 rounded-xl border border-amber-100 mb-6">
-                 <h3 class="font-bold text-amber-800 text-sm mb-2 uppercase tracking-wide">Test Rules</h3>
-                 <ul class="list-disc list-inside space-y-1 text-sm text-amber-700 font-medium">
-                    <li>This test <strong class="font-extrabold">MUST</strong> be taken in full-screen mode.</li>
-                    <li><strong class="font-extrabold">Do NOT</strong> exit full-screen or switch tabs.</li>
-                    <li>Any violation will trigger an <strong class="font-extrabold">automatic submission</strong>.</li>
+            <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 mb-6">
+                 <h3 class="font-bold text-amber-800 text-xs mb-2 uppercase tracking-wider flex items-center">
+                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                     Strict Guidelines
+                 </h3>
+                 <ul class="list-disc list-inside space-y-1.5 text-sm text-amber-700 font-medium ml-1">
+                    <li>This assessment <strong class="font-extrabold text-amber-900">MUST</strong> be taken in full-screen mode.</li>
+                    <li><strong class="font-extrabold text-amber-900">Do NOT</strong> exit full-screen, minimize, or switch tabs.</li>
+                    <li>Any environment violation will trigger an <strong class="font-extrabold text-amber-900">automatic submission</strong>.</li>
                 </ul>
             </div>
             
-            <div>
-                <div class="space-y-3">
-                    <label class="flex items-start cursor-pointer group bg-slate-50 p-3 rounded-lg border border-slate-200 hover:bg-white transition-colors">
-                        <input type="checkbox" class="mt-0.5 h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 pre-test-checkbox transition-all">
-                        <span class="ml-3 text-slate-700 font-medium text-sm group-hover:text-slate-900">I have closed all other browser tabs and windows.</span>
-                    </label>
-                    <label class="flex items-start cursor-pointer group bg-slate-50 p-3 rounded-lg border border-slate-200 hover:bg-white transition-colors">
-                        <input type="checkbox" class="mt-0.5 h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 pre-test-checkbox transition-all">
-                        <span class="ml-3 text-slate-700 font-medium text-sm group-hover:text-slate-900">I have muted notifications and closed chat applications.</span>
-                    </label>
-                </div>
+            <div class="space-y-3">
+                <label class="flex items-start cursor-pointer group bg-slate-50 p-3.5 rounded-xl border border-slate-200 hover:bg-white transition-colors">
+                    <input type="checkbox" class="mt-0.5 h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 pre-test-checkbox transition-all cursor-pointer">
+                    <span class="ml-3 text-slate-700 font-medium text-sm group-hover:text-slate-900 leading-snug">I confirm I have closed all other browser tabs and background applications.</span>
+                </label>
+                <label class="flex items-start cursor-pointer group bg-slate-50 p-3.5 rounded-xl border border-slate-200 hover:bg-white transition-colors">
+                    <input type="checkbox" class="mt-0.5 h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 pre-test-checkbox transition-all cursor-pointer">
+                    <span class="ml-3 text-slate-700 font-medium text-sm group-hover:text-slate-900 leading-snug">I understand that exiting fullscreen mode will terminate my test session immediately.</span>
+                </label>
             </div>
             
             <div class="mt-8 flex justify-end space-x-3">
-                <button id="pre-test-cancel-btn" class="px-5 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors w-full sm:w-auto">Cancel</button>
-                <button id="pre-test-confirm-btn" class="px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto" disabled>Start Test</button>
+                <button id="pre-test-cancel-btn" class="px-5 py-2.5 bg-white text-slate-700 border border-slate-300 font-bold rounded-xl hover:bg-slate-50 transition-colors w-full sm:w-auto focus:outline-none">Cancel</button>
+                <button id="pre-test-confirm-btn" class="px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto focus:outline-none" disabled>Launch Assessment</button>
             </div>
         </div>
     </div>
     
     <div id="confirm-modal" class="modal-overlay hidden">
         <div class="modal-container text-center">
-            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-5">
-                <svg class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-50 border border-red-100 mb-5 text-red-600 shadow-inner">
+                <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
             </div>
-            <p id="modal-message" class="text-slate-800 text-lg font-bold leading-relaxed mb-8"></p>
+            <p id="modal-message" class="text-slate-800 text-lg font-bold leading-relaxed mb-8 px-4"></p>
             <div class="flex justify-center space-x-3 w-full">
-                <button id="modal-cancel-btn" class="px-5 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors flex-1">Cancel</button>
-                <button id="modal-confirm-btn" class="px-5 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-md flex-1">Confirm</button>
+                <button id="modal-cancel-btn" class="px-5 py-3 bg-white border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-50 transition-colors flex-1 focus:outline-none">Cancel</button>
+                <button id="modal-confirm-btn" class="px-5 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors shadow-md flex-1 focus:outline-none">Confirm</button>
             </div>
         </div>
     </div>
@@ -369,10 +379,39 @@
                 return;
             }
 
+            // Populate username from local storage
+            const user = JSON.parse(localStorage.getItem('user'));
+            if(user && user.fullName) {
+                const userNameEls = document.querySelectorAll('#user-name');
+                userNameEls.forEach(el => el.textContent = user.fullName);
+            }
+
+            // User Dropdown Logic
+            const userMenuButton = document.getElementById('user-menu-button');
+            const userMenu = document.getElementById('user-menu');
+            if(userMenuButton && userMenu) {
+                userMenuButton.addEventListener('click', () => userMenu.classList.toggle('hidden'));
+                document.addEventListener('click', (e) => {
+                    if (!userMenuButton.contains(e.target) && !userMenu.contains(e.target)) {
+                        userMenu.classList.add('hidden');
+                    }
+                });
+            }
+
+            // Logout Logic
+            const logoutButton = document.getElementById('logout-button');
+            if(logoutButton) {
+                logoutButton.addEventListener('click', () => {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/login';
+                });
+            }
+
             // --- STATIC COGNIZANT TEST DATA ---
             const cognizantCloudTest = {
                 testId: 'cognizant-cloud-fundamentals-static',
-                title: 'Cognizant Cloud Fundamentals Quiz',
+                title: 'Cognizant Cloud Fundamentals Assessment',
                 duration: 25,
                 totalMarks: 20,
                 passingPercentage: 70,
@@ -414,6 +453,9 @@
             const testLoaderOverlay = document.getElementById('test-loader-overlay');
             const markReviewBtn = document.getElementById('mark-review-btn');
             const clearResponseBtn = document.getElementById('clear-response-btn');
+            const submitTestBtn = document.getElementById('submit-test-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
 
             let availableTests = [];
             let currentTest = null;
@@ -438,6 +480,9 @@
                     modalMessage.textContent = message;
                     confirmModal.classList.remove('hidden');
                     
+                    // Trigger animation
+                    setTimeout(() => confirmModal.classList.add('visible'), 10);
+                    
                     if(type === 'alert') {
                         modalCancelBtn.classList.add('hidden');
                         modalConfirmBtn.textContent = 'Acknowledge';
@@ -447,12 +492,14 @@
                     }
 
                     const confirmHandler = () => {
-                        confirmModal.classList.add('hidden');
+                        confirmModal.classList.remove('visible');
+                        setTimeout(() => confirmModal.classList.add('hidden'), 200);
                         resolve(true);
                         cleanup();
                     };
                     const cancelHandler = () => {
-                        confirmModal.classList.add('hidden');
+                        confirmModal.classList.remove('visible');
+                        setTimeout(() => confirmModal.classList.add('hidden'), 200);
                         resolve(false);
                         cleanup();
                     };
@@ -470,17 +517,23 @@
                     preTestConfirmBtn.disabled = true;
                     preTestCheckboxes.forEach(cb => cb.checked = false);
                     preTestModal.classList.remove('hidden');
+                    
+                    setTimeout(() => preTestModal.classList.add('visible'), 10);
+
                     const checkHandler = () => {
                         preTestConfirmBtn.disabled = !Array.from(preTestCheckboxes).every(cb => cb.checked);
                     };
                     preTestCheckboxes.forEach(cb => cb.addEventListener('change', checkHandler));
+                    
                     const confirmHandler = () => {
-                        preTestModal.classList.add('hidden');
+                        preTestModal.classList.remove('visible');
+                        setTimeout(() => preTestModal.classList.add('hidden'), 200);
                         cleanup();
                         resolve(true);
                     };
                     const cancelHandler = () => {
-                        preTestModal.classList.add('hidden');
+                        preTestModal.classList.remove('visible');
+                        setTimeout(() => preTestModal.classList.add('hidden'), 200);
                         cleanup();
                         resolve(false);
                     };
@@ -503,51 +556,56 @@
                     const dynamicTests = await response.json();
                     availableTests = dynamicTests.filter(t => t.testType === 'fullscreen');
 
+                    // Add static test for demonstration/fallback
                     availableTests.unshift(cognizantCloudTest);
 
                     testListDiv.innerHTML = '';
                     if (availableTests.length === 0) {
-                        testListDiv.innerHTML = '<div class="col-span-full text-center p-12 bg-white rounded-2xl border border-slate-200 shadow-sm"><p class="text-slate-500 font-medium">No new full screen tests assigned to you.</p></div>';
+                        testListDiv.innerHTML = '<div class="col-span-full text-center p-12 bg-white rounded-2xl border border-slate-200 shadow-sm"><p class="text-slate-500 font-medium">No new standard assessments assigned to you.</p></div>';
                         return;
                     }
 
                     for (const test of availableTests) {
                         const testElement = document.createElement('div');
-                        testElement.className = 'glass-card p-6 sm:p-8 rounded-2xl flex flex-col h-full';
+                        testElement.className = 'glass-card p-6 sm:p-8 rounded-2xl flex flex-col h-full group';
                         
                         let attemptsInfo = '';
                         if (test.testId === 'cognizant-cloud-fundamentals-static') {
-                             const res = await fetch(`/api/student/test-attempts/${test.testId}`, { headers: { 'x-auth-token': token }});
-                             const data = await res.json();
-                             const attemptsLeft = MAX_ATTEMPTS - (data.attempts || 0);
-                             attemptsInfo = `<p class="text-xs font-bold uppercase tracking-wider mb-4 ${attemptsLeft > 0 ? 'text-emerald-600 bg-emerald-50' : 'text-red-600 bg-red-50'} inline-block px-3 py-1 rounded-md">Attempts left: ${attemptsLeft}</p>`;
+                             try {
+                                 const res = await fetch(`/api/student/test-attempts/${test.testId}`, { headers: { 'x-auth-token': token }});
+                                 if(res.ok) {
+                                     const data = await res.json();
+                                     const attemptsLeft = MAX_ATTEMPTS - (data.attempts || 0);
+                                     attemptsInfo = `<p class="text-xs font-bold uppercase tracking-wider mb-4 ${attemptsLeft > 0 ? 'text-emerald-600 bg-emerald-50 border border-emerald-100' : 'text-red-600 bg-red-50 border border-red-100'} inline-block px-3 py-1 rounded-md shadow-sm">Attempts left: ${attemptsLeft}</p>`;
+                                 }
+                             } catch (e) { console.warn("Could not fetch attempts for static test", e); }
                         }
 
                         testElement.innerHTML = `
                             <div class="flex-grow">
-                                <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 mb-5 border border-indigo-100">
+                                <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 mb-5 border border-indigo-100 transition-transform group-hover:scale-110">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
                                 </div>
                                 <h3 class="font-extrabold text-xl text-slate-800 leading-tight mb-2">${test.title}</h3>
                                 ${attemptsInfo}
                                 <div class="space-y-2.5 text-slate-600">
-                                    <p class="text-sm flex items-center bg-slate-50 p-2 rounded-lg border border-slate-100"><svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> 
+                                    <p class="text-sm flex items-center bg-slate-50 p-2.5 rounded-lg border border-slate-100"><svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> 
                                         Duration: <span class="font-bold ml-auto text-slate-800">${test.duration} mins</span>
                                     </p>
-                                    <p class="text-sm flex items-center bg-slate-50 p-2 rounded-lg border border-slate-100"><svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2-8H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2z"></path></svg>
+                                    <p class="text-sm flex items-center bg-slate-50 p-2.5 rounded-lg border border-slate-100"><svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2-8H7a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2z"></path></svg>
                                         Questions: <span class="font-bold ml-auto text-slate-800">${test.testId === 'cognizant-cloud-fundamentals-static' ? '20' : test.questions.length}</span>
                                     </p>
                                 </div>
                             </div>
-                            <button class="start-test-btn mt-8 w-full px-5 py-3.5 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 hover:shadow-lg transition-all focus:ring-4 focus:ring-indigo-100" data-testid="${test.testId}">
-                                Start Focus Test
+                            <button class="start-test-btn mt-8 w-full px-5 py-3.5 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-4 focus:ring-indigo-100" data-testid="${test.testId}">
+                                Launch Assessment
                             </button>
                         `;
                         testListDiv.appendChild(testElement);
                     }
                 } catch (error) {
                     console.error(error);
-                    testListDiv.innerHTML = '<div class="col-span-full p-6 bg-red-50 text-red-600 rounded-xl border border-red-100 text-center font-medium">Could not load available tests. Network error.</div>';
+                    testListDiv.innerHTML = '<div class="col-span-full p-6 bg-red-50 text-red-600 rounded-xl border border-red-100 text-center font-medium">Could not load available tests. Network connection error.</div>';
                 }
             }
             
@@ -556,12 +614,17 @@
                     const testId = e.target.dataset.testid;
                     
                     if (testId === 'cognizant-cloud-fundamentals-static') {
-                        const res = await fetch(`/api/student/test-attempts/${testId}`, { headers: { 'x-auth-token': token }});
-                        const data = await res.json();
-                        if (data.attempts >= MAX_ATTEMPTS) {
-                            showModal('You have reached the maximum number of attempts for this quiz.', 'alert');
-                            return;
-                        }
+                        try {
+                            const res = await fetch(`/api/student/test-attempts/${testId}`, { headers: { 'x-auth-token': token }});
+                            if(res.ok) {
+                                const data = await res.json();
+                                if (data.attempts >= MAX_ATTEMPTS) {
+                                    showModal('You have reached the maximum number of attempts for this assessment.', 'alert');
+                                    return;
+                                }
+                            }
+                        } catch (err) { console.warn("Attempt validation skipped:", err); }
+                        
                         currentTest = JSON.parse(JSON.stringify(cognizantCloudTest));
                         currentTest.questions = shuffleArray(currentTest.questions).slice(0, 20);
                     } else {
@@ -575,7 +638,7 @@
                             setTimeout(() => {
                                 testLoaderOverlay.classList.add('hidden');
                                 startTest(currentTest);
-                            }, 2500);
+                            }, 2000);
                         }
                     }
                 }
@@ -584,5 +647,302 @@
             function startTest(testData) {
                 enterFullScreen();
                 mainContent.classList.add('hidden');
-                document.getElementById('test-environment').classList.remove('hidden');
-                document.getElementById('test-environment').classList
+                const testEnv = document.getElementById('test-environment');
+                testEnv.classList.remove('hidden');
+                testEnv.classList.add('fullscreen');
+
+                studentAnswers = new Array(testData.questions.length).fill(null);
+                markedForReview = new Array(testData.questions.length).fill(false);
+                currentQuestionIndex = 0;
+                testInProgress = true;
+                lastViolationReason = null;
+                timeTaken = 0;
+                
+                document.getElementById('test-title').textContent = testData.title;
+                
+                startTimer(testData.duration * 60);
+                renderQuestion();
+                renderPalette();
+
+                document.addEventListener('fullscreenchange', handleFullScreenChange);
+                document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
+                document.addEventListener('visibilitychange', handleVisibilityChange);
+            }
+
+            function startTimer(duration) {
+                let timer = duration;
+                const timerDisplay = document.getElementById('timer');
+                timerInterval = setInterval(() => {
+                    timeTaken++;
+                    let minutes = parseInt(timer / 60, 10);
+                    let seconds = parseInt(timer % 60, 10);
+                    minutes = minutes < 10 ? "0" + minutes : minutes;
+                    seconds = seconds < 10 ? "0" + seconds : seconds;
+                    timerDisplay.textContent = `${minutes}:${seconds}`;
+                    
+                    if(timer < 300) { 
+                        if(timer % 2 === 0) timerDisplay.classList.add('opacity-50');
+                        else timerDisplay.classList.remove('opacity-50');
+                    }
+                    
+                    if (--timer < 0) {
+                        clearInterval(timerInterval);
+                        forceSubmitTest('Time Expired');
+                    }
+                }, 1000);
+            }
+
+            function renderQuestion() {
+                if (!currentTest) return;
+                const question = currentTest.questions[currentQuestionIndex];
+                const questionContent = document.getElementById('question-content');
+                let optionsHtml = '';
+                const savedAnswer = studentAnswers[currentQuestionIndex];
+
+                if (question.type === 'mcq-single') {
+                    optionsHtml = question.options.map((opt, i) => {
+                        const isChecked = savedAnswer == i;
+                        return `
+                            <label class="option-label flex items-start p-4 sm:p-5 mb-3 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-all ${isChecked ? 'bg-indigo-50 border-indigo-500 shadow-sm' : ''}">
+                                <input type="radio" name="q${currentQuestionIndex}" value="${i}" class="mt-0.5 h-5 w-5 text-indigo-600 focus:ring-indigo-500 border-slate-300 transition-all" ${isChecked ? 'checked' : ''}>
+                                <span class="ml-4 text-slate-700 font-medium text-base sm:text-lg leading-snug">${opt}</span>
+                            </label>
+                        `;
+                    }).join('');
+                } else if (question.type === 'mcq-multiple') {
+                    optionsHtml = question.options.map((opt, i) => {
+                        const isChecked = savedAnswer && savedAnswer.includes(String(i));
+                        return `
+                            <label class="option-label flex items-start p-4 sm:p-5 mb-3 bg-white border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-all ${isChecked ? 'bg-indigo-50 border-indigo-500 shadow-sm' : ''}">
+                                <input type="checkbox" name="q${currentQuestionIndex}" value="${i}" class="mt-0.5 h-5 w-5 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 transition-all" ${isChecked ? 'checked' : ''}>
+                                <span class="ml-4 text-slate-700 font-medium text-base sm:text-lg leading-snug">${opt}</span>
+                            </label>
+                        `;
+                    }).join('');
+                } else {
+                    optionsHtml = `<input type="text" name="q${currentQuestionIndex}" class="w-full px-5 py-4 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-lg shadow-sm outline-none transition-all" placeholder="Enter your answer here..." value="${savedAnswer || ''}">`;
+                }
+
+                questionContent.innerHTML = `
+                    <div class="flex items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100">
+                        <span class="bg-indigo-100 text-indigo-800 font-bold py-1.5 px-4 rounded-lg text-sm tracking-wide">Question ${currentQuestionIndex + 1} of ${currentTest.questions.length}</span>
+                        ${markedForReview[currentQuestionIndex] ? '<span class="bg-amber-100 text-amber-800 font-bold py-1.5 px-3 rounded-lg text-xs flex items-center"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg> Marked</span>' : ''}
+                    </div>
+                    <p class="text-xl sm:text-2xl font-semibold text-slate-800 mb-8 leading-relaxed">${question.text}</p>
+                    <div class="space-y-4" id="options-container">${optionsHtml}</div>
+                `;
+                
+                // Add event listeners to radio/checkboxes for immediate styling updates without full re-render
+                if(question.type.startsWith('mcq')) {
+                    const inputs = document.getElementById('options-container').querySelectorAll('input');
+                    inputs.forEach(input => {
+                        input.addEventListener('change', () => {
+                            saveAnswer();
+                            updatePalette();
+                        });
+                    });
+                } else {
+                    const input = document.getElementById('options-container').querySelector('input');
+                    input.addEventListener('input', () => {
+                         saveAnswer();
+                         updatePalette();
+                    });
+                }
+
+                updateNavButtons();
+                updatePalette();
+            }
+
+            function renderPalette() {
+                const questionPalette = document.getElementById('question-palette');
+                questionPalette.innerHTML = '';
+                currentTest.questions.forEach((_, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'palette-btn h-10 w-10 flex items-center justify-center rounded-lg text-sm shadow-sm transition-colors focus:outline-none';
+                    btn.textContent = i + 1;
+                    btn.dataset.index = i;
+                    btn.addEventListener('click', () => {
+                        saveAnswer();
+                        currentQuestionIndex = i;
+                        renderQuestion();
+                    });
+                    questionPalette.appendChild(btn);
+                });
+            }
+
+            function updateNavButtons() {
+                prevBtn.disabled = currentQuestionIndex === 0;
+                nextBtn.disabled = currentQuestionIndex === currentTest.questions.length - 1;
+                
+                // Update Review button visual state
+                if (markedForReview[currentQuestionIndex]) {
+                    markReviewBtn.classList.replace('bg-amber-50', 'bg-amber-500');
+                    markReviewBtn.classList.replace('text-amber-700', 'text-white');
+                    markReviewBtn.classList.replace('border-amber-200', 'border-amber-600');
+                    markReviewBtn.querySelector('span').textContent = 'Unmark';
+                } else {
+                    markReviewBtn.classList.replace('bg-amber-500', 'bg-amber-50');
+                    markReviewBtn.classList.replace('text-white', 'text-amber-700');
+                    markReviewBtn.classList.replace('border-amber-600', 'border-amber-200');
+                    markReviewBtn.querySelector('span').textContent = 'Review';
+                }
+            }
+            
+            function updatePalette() {
+                document.querySelectorAll('.palette-btn').forEach((btn, i) => {
+                    btn.classList.remove('active', 'answered', 'marked');
+                    
+                    const hasAnswer = studentAnswers[i] !== null && (!Array.isArray(studentAnswers[i]) || studentAnswers[i].length > 0) && studentAnswers[i] !== '';
+                    const isMarked = markedForReview[i];
+                    
+                    if (hasAnswer) btn.classList.add('answered');
+                    if (isMarked) btn.classList.add('marked');
+                    
+                    if (i === currentQuestionIndex) {
+                        btn.classList.add('active');
+                        // Auto scroll
+                        btn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                });
+            }
+
+            function saveAnswer() {
+                if (!currentTest) return;
+                const question = currentTest.questions[currentQuestionIndex];
+                const inputs = document.getElementsByName(`q${currentQuestionIndex}`);
+                
+                if (question.type === 'mcq-single') {
+                    const checked = Array.from(inputs).find(i => i.checked);
+                    studentAnswers[currentQuestionIndex] = checked ? checked.value : null;
+                } else if (question.type === 'mcq-multiple') {
+                    const checked = Array.from(inputs).filter(i => i.checked).map(i => i.value);
+                    studentAnswers[currentQuestionIndex] = checked.length > 0 ? checked : null;
+                } else {
+                    const val = inputs[0].value.trim();
+                    studentAnswers[currentQuestionIndex] = val ? val : null;
+                }
+            }
+
+            function navigateNext() {
+                if (currentQuestionIndex < currentTest.questions.length - 1) {
+                    saveAnswer();
+                    currentQuestionIndex++;
+                    renderQuestion();
+                }
+            }
+
+            function navigatePrev() {
+                if (currentQuestionIndex > 0) {
+                    saveAnswer();
+                    currentQuestionIndex--;
+                    renderQuestion();
+                }
+            }
+            
+            // Interactive UI Buttons
+            clearResponseBtn.addEventListener('click', () => {
+                studentAnswers[currentQuestionIndex] = null;
+                renderQuestion(); // Re-render to clear radio visual states
+            });
+            
+            markReviewBtn.addEventListener('click', () => {
+                markedForReview[currentQuestionIndex] = !markedForReview[currentQuestionIndex];
+                updateNavButtons();
+                updatePalette();
+            });
+
+            submitTestBtn.addEventListener('click', async () => {
+                if (isSubmitting) return;
+                
+                // Count unanswered
+                const unanswered = studentAnswers.filter(a => a === null || (Array.isArray(a) && a.length === 0) || a === '').length;
+                let msg = 'Are you sure you want to submit the assessment?';
+                if (unanswered > 0) msg = `You have ${unanswered} unanswered question(s). Are you sure you want to submit?`;
+                
+                const shouldSubmit = await showModal(msg);
+                if (shouldSubmit) {
+                    performSubmission('User submitted test manually');
+                }
+            });
+
+            async function forceSubmitTest(reason) {
+                if (isSubmitting) return;
+                lastViolationReason = reason;
+                await showAlert(`TERMINATION: ${reason}. The assessment is being submitted automatically.`);
+                performSubmission(reason);
+            }
+
+            async function performSubmission(reason = 'Unknown') {
+                if (isSubmitting) return;
+                isSubmitting = true;
+
+                saveAnswer(); 
+                testInProgress = false;
+                clearInterval(timerInterval);
+                
+                await exitFullScreen();
+                document.removeEventListener('fullscreenchange', handleFullScreenChange);
+                document.removeEventListener('webkitfullscreenchange', handleFullScreenChange);
+                document.removeEventListener('visibilitychange', handleVisibilityChange);
+                
+                const payload = {
+                    testId: currentTest.testId,
+                    answers: studentAnswers,
+                    timeTaken: timeTaken,
+                    violationReason: lastViolationReason || reason
+                };
+
+                try {
+                    const response = await fetch('/api/student/submit-test', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-auth-token': token
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!response.ok) throw new Error('Submission failed');
+                    await showAlert('Assessment submitted and saved successfully.');
+                    window.location.href = '/student/dashboard.html';
+                } catch (error) {
+                    await showAlert('Network error during submission. Results logged locally. Please contact administration.');
+                    console.error('Submission Error:', error);
+                    window.location.href = '/student/dashboard.html'; // Fallback
+                }
+            }
+
+            function handleFullScreenChange() {
+                const isFullScreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
+                if (!isFullScreen && testInProgress) {
+                    forceSubmitTest('Exited Full-Screen Mode');
+                }
+            }
+
+            function handleVisibilityChange() {
+                if (document.hidden && testInProgress) {
+                    forceSubmitTest('Switched to Another Tab/Window');
+                }
+            }
+
+            function enterFullScreen() {
+                const elem = document.documentElement;
+                if (elem.requestFullscreen) return elem.requestFullscreen();
+                if (elem.webkitRequestFullscreen) return elem.webkitRequestFullscreen();
+                return Promise.resolve();
+            }
+
+            function exitFullScreen() {
+                if (document.exitFullscreen && document.fullscreenElement) return document.exitFullscreen();
+                if (document.webkitExitFullscreen && document.webkitFullscreenElement) return document.webkitExitFullscreen();
+                return Promise.resolve();
+            }
+            
+            // Initialization
+            prevBtn.addEventListener('click', navigatePrev);
+            nextBtn.addEventListener('click', navigateNext);
+            
+            fetchAndDisplayTests();
+        });
+    </script>
+</body>
+</html>
