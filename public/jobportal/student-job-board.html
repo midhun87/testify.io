@@ -2,29 +2,23 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Job Board - Student Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
-    <!-- Font Awesome for Icons -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
                         brand: {
-                            50: '#eef2ff',
-                            100: '#e0e7ff',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            700: '#4338ca',
-                            900: '#312e81',
+                            50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1',
+                            600: '#4f46e5', 700: '#4338ca', 900: '#312e81',
                         }
                     }
                 }
@@ -34,590 +28,422 @@
 
     <style>
         body {
-            background-color: #f8fafc; /* Lighter slate base */
+            background-color: #f8fafc;
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Glassmorphism Header */
+        /* Glass Header */
         .sticky-nav {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            background-color: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            position: sticky; top: 0; z-index: 40;
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(226, 232, 240, 0.8);
         }
 
-        /* Custom Scrollbar for a clean look */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
+        /* Hide scrollbars but allow scrolling */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Job Card Animations & Styles */
-        .job-card {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .job-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-            border-color: #c7d2fe;
-        }
-        .job-card.active {
-            background-color: #f5f8ff;
-            border-color: #6366f1;
-            box-shadow: 0 0 0 1px #6366f1, 0 4px 6px -1px rgba(99, 102, 241, 0.1);
-        }
+        /* Card Hover Effects */
+        .job-card { transition: all 0.2s ease-out; border: 1px solid transparent; }
+        .job-card:hover { border-color: #c7d2fe; box-shadow: 0 4px 10px -2px rgba(0,0,0,0.05); transform: translateY(-2px); }
+        .job-card.active { border-color: #6366f1; background-color: #f5f8ff; box-shadow: 0 0 0 1px #6366f1; transform: translateY(0); }
 
-        /* Prose Styling for Job Description */
-        .prose p { margin-bottom: 1em; line-height: 1.7; color: #475569; }
-        .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; color: #475569; }
-        .prose li { margin-bottom: 0.25em; }
-        .prose strong { color: #1e293b; font-weight: 600; }
-
-        /* Mobile Layout Switching */
-        @media (max-width: 1023px) {
-            .mobile-view-list #right-pane { display: none; }
-            .mobile-view-list #left-pane { display: block; }
-            
-            .mobile-view-detail #left-pane { display: none; }
-            .mobile-view-detail #right-pane { display: block; animation: slideInRight 0.3s ease forwards; }
-        }
-
-        @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        /* Mobile Modal Transitions */
+        #mobile-details-modal { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        #mobile-details-modal.open { transform: translateX(0); }
         
-        .fade-in-item {
-            animation: fadeIn 0.4s ease-out forwards;
-            opacity: 0;
-        }
+        /* Stop body scroll when modal is open */
+        body.modal-open { overflow: hidden; }
+
+        /* Prose Styling */
+        .prose p { margin-bottom: 1em; line-height: 1.6; color: #475569; }
+        .prose ul { list-style-type: disc; padding-left: 1.25em; margin-bottom: 1em; color: #475569; }
+        .prose li { margin-bottom: 0.25em; }
     </style>
 </head>
-<body class="min-h-screen text-slate-800 mobile-view-list" id="app-body">
+<body class="text-slate-800">
 
-    <!-- Header Navigation -->
+    <!-- Top Navigation -->
     <nav class="sticky-nav shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <!-- Logo & Brand -->
+            <div class="flex justify-between items-center h-16">
+                <!-- Mobile Hamburger Menu Button -->
+                <button id="mobile-menu-btn" class="lg:hidden p-2 -ml-2 text-slate-500 hover:text-brand-600 focus:outline-none">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+
+                <!-- Logo -->
                 <div class="flex items-center gap-3">
                     <img class="h-8 w-auto object-contain" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="Portal Logo">
                     <span class="font-bold text-lg sm:text-xl text-slate-900 tracking-tight hidden sm:block">Student Job Portal</span>
                 </div>
                 
-                <!-- Nav Links & User -->
-                <div class="flex items-center space-x-1 sm:space-x-4">
-                    <a href="#" class="px-3 py-2 rounded-lg text-sm font-medium text-brand-600 bg-brand-50 transition-all duration-200">Job Board</a>
-                    <a href="student-my-applications.html" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hidden sm:block">My Applications</a>
-                    <a href="student-my-tests.html" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hidden md:block">My Tests</a>
+                <!-- Desktop Nav Links -->
+                <div class="hidden lg:flex items-center space-x-2">
+                    <a href="#" class="px-3 py-2 rounded-lg text-sm font-medium text-brand-600 bg-brand-50">Job Board</a>
+                    <a href="student-my-applications.html" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-slate-50 transition-colors">My Applications</a>
+                    <a href="student-my-tests.html" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-slate-50 transition-colors">My Tests</a>
+                </div>
 
-                    <!-- User Menu Dropdown -->
-                    <div class="relative ml-2">
-                        <button id="user-menu-button" class="flex items-center gap-2 rounded-full focus:outline-none p-1 hover:bg-slate-100 transition-colors duration-150 border border-transparent hover:border-slate-200">
-                            <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-sm">
-                                <span id="user-initial" class="text-sm font-semibold">U</span>
-                            </span>
-                            <span id="user-name" class="text-sm font-medium text-slate-700 hidden sm:block max-w-[120px] truncate">User</span>
-                            <i class="fas fa-chevron-down text-slate-400 text-xs hidden sm:block pr-1"></i>
-                        </button>
-                        
-                        <!-- Dropdown Menu -->
-                        <div id="user-menu" class="hidden origin-top-right absolute right-0 mt-2 w-56 rounded-xl shadow-lg py-2 bg-white ring-1 ring-slate-900 ring-opacity-5 focus:outline-none z-50 transform transition-all duration-200 opacity-0 scale-95">
-                            <div class="px-4 py-3 border-b border-slate-100 sm:hidden">
-                                <p class="text-sm text-slate-500">Signed in as</p>
-                                <p class="text-sm font-medium text-slate-900 truncate" id="mobile-user-name">User</p>
-                            </div>
-                            <a href="student-my-applications.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 sm:hidden"><i class="fas fa-file-alt w-5 text-slate-400"></i> My Applications</a>
-                            <a href="student-my-tests.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 md:hidden"><i class="fas fa-clipboard-check w-5 text-slate-400"></i> My Tests</a>
-                            <div class="h-px bg-slate-100 my-1 sm:hidden"></div>
-                            <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-sign-out-alt w-5"></i> Sign out</a>
-                        </div>
+                <!-- User Profile -->
+                <div class="relative flex items-center">
+                    <button id="user-menu-button" class="flex items-center gap-2 rounded-full focus:outline-none p-1 hover:bg-slate-100 transition-colors">
+                        <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-sm">
+                            <span id="user-initial" class="text-sm font-semibold">U</span>
+                        </span>
+                        <span id="user-name" class="text-sm font-medium text-slate-700 hidden sm:block max-w-[120px] truncate">User</span>
+                        <i class="fas fa-chevron-down text-slate-400 text-xs hidden sm:block pr-1"></i>
+                    </button>
+                    <!-- User Dropdown -->
+                    <div id="user-menu" class="hidden absolute right-0 top-12 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-50">
+                        <p class="px-4 py-2 text-xs font-medium text-slate-400 uppercase tracking-wider border-b lg:hidden">Signed in as <span id="mobile-user-name" class="text-slate-800">User</span></p>
+                        <a href="#" id="logout-button" class="block px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-sign-out-alt w-5"></i> Sign out</a>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu (Hidden by default) -->
+        <div id="mobile-nav-menu" class="hidden lg:hidden border-t border-slate-200 bg-white absolute w-full shadow-lg z-40">
+            <div class="px-4 pt-2 pb-4 space-y-1">
+                <a href="#" class="block px-3 py-3 rounded-md text-base font-medium text-brand-600 bg-brand-50"><i class="fas fa-briefcase w-6 text-center"></i> Job Board</a>
+                <a href="student-my-applications.html" class="block px-3 py-3 rounded-md text-base font-medium text-slate-700 hover:bg-slate-50"><i class="fas fa-file-alt w-6 text-center text-slate-400"></i> My Applications</a>
+                <a href="student-my-tests.html" class="block px-3 py-3 rounded-md text-base font-medium text-slate-700 hover:bg-slate-50"><i class="fas fa-clipboard-check w-6 text-center text-slate-400"></i> My Tests</a>
             </div>
         </div>
     </nav>
 
-    <!-- Main Content Area -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 h-[calc(100vh-4rem)] flex flex-col">
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 min-h-[calc(100vh-4rem)]">
         
-        <!-- Header Section -->
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 shrink-0">
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Discover Opportunities</h1>
-                <p class="text-sm text-slate-500 mt-1">Find and apply for jobs curated for your college.</p>
-            </div>
+        <div class="mb-6">
+            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Discover Opportunities</h1>
+            <p class="text-sm text-slate-500 mt-1">Find and apply for jobs curated for your college.</p>
         </div>
 
-        <!-- Main Layout Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0 overflow-hidden relative">
+        <!-- Master-Detail Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 relative items-start">
 
-            <!-- ================= LEFT COLUMN: JOB LIST ================= -->
-            <div id="left-pane" class="lg:col-span-5 xl:col-span-4 h-full flex flex-col min-h-0 relative z-10">
+            <!-- LEFT COLUMN: Search & Job List -->
+            <div class="lg:col-span-5 flex flex-col gap-4">
                 
-                <!-- Search Bar (Sticky inside left column) -->
-                <div class="mb-4 shrink-0">
-                    <div class="relative group">
-                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                            <i class="fas fa-search text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
-                        </div>
-                        <input type="text" id="search-input" class="block w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl shadow-sm text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200" placeholder="Search title, company, or keywords...">
+                <!-- Sticky Search Bar -->
+                <div class="sticky top-[64px] z-20 py-2 bg-[#f8fafc] -mx-4 px-4 sm:mx-0 sm:px-0">
+                    <div class="relative group shadow-sm rounded-xl">
+                        <i class="fas fa-search absolute left-4 top-3.5 text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
+                        <input type="text" id="search-input" class="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all" placeholder="Search by title, company, or keywords...">
                     </div>
                 </div>
 
-                <!-- Job List Container -->
-                <div class="bg-transparent rounded-xl flex-1 overflow-y-auto pr-1 pb-20 lg:pb-0 space-y-3" id="jobs-container">
-                    
+                <!-- Job List -->
+                <div id="jobs-container" class="space-y-3 pb-8">
                     <!-- Loading State -->
                     <div id="loading-state" class="flex flex-col items-center justify-center py-12 bg-white rounded-xl border border-slate-200 shadow-sm">
                         <i class="fas fa-circle-notch fa-spin text-3xl text-brand-500 mb-3"></i>
                         <p class="text-sm font-medium text-slate-500">Discovering jobs...</p>
                     </div>
-
-                    <!-- Error State -->
-                    <div id="error-state" class="hidden flex flex-col items-center justify-center py-12 bg-red-50 rounded-xl border border-red-100 px-4 text-center">
-                        <div class="h-12 w-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-3">
-                            <i class="fas fa-exclamation-triangle text-xl"></i>
-                        </div>
-                        <h3 class="text-base font-semibold text-red-800">Unable to load jobs</h3>
-                        <p id="error-message" class="mt-1 text-sm text-red-600">Something went wrong connecting to the server.</p>
-                        <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-white border border-red-200 text-red-600 text-sm font-medium rounded-lg shadow-sm hover:bg-red-50 transition">Try Again</button>
-                    </div>
-
-                    <!-- No Jobs State -->
-                    <div id="no-jobs-state" class="hidden flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-slate-200 shadow-sm px-4 text-center">
-                        <div class="h-16 w-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mb-4">
-                            <i class="fas fa-search text-2xl"></i>
-                        </div>
-                        <h3 id="no-jobs-title" class="text-lg font-semibold text-slate-800">No positions found</h3>
-                        <p id="no-jobs-text" class="mt-1 text-sm text-slate-500">We couldn't find any jobs matching your criteria.</p>
-                    </div>
-
-                    <!-- Job items injected here via JS -->
+                    <!-- Cards injected here via JS -->
                 </div>
             </div>
 
-            <!-- ================= RIGHT COLUMN: JOB DETAILS ================= -->
-            <div id="right-pane" class="lg:col-span-7 xl:col-span-8 h-full min-h-0 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative z-20">
-                
-                <!-- Mobile Header for Details Pane (Back Button) -->
-                <div class="lg:hidden flex items-center px-4 py-3 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-10 shrink-0">
-                    <button id="back-to-list-btn" class="flex items-center text-sm font-medium text-slate-600 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 px-3 py-1.5 rounded-lg transition-colors">
-                        <i class="fas fa-arrow-left mr-2 text-xs"></i> Back to Jobs
-                    </button>
-                </div>
-
-                <!-- Initial Empty State Placeholder -->
-                <div id="details-placeholder" class="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50/50">
-                    <div class="h-20 w-20 bg-white rounded-full shadow-sm border border-slate-100 flex items-center justify-center mb-5">
-                        <i class="fas fa-briefcase text-3xl text-brand-300"></i>
+            <!-- RIGHT COLUMN: Desktop Job Details (Sticky) -->
+            <div class="hidden lg:block lg:col-span-7 h-[calc(100vh-140px)] sticky top-[100px]">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 h-full flex flex-col overflow-hidden relative">
+                    
+                    <!-- Empty State Placeholder -->
+                    <div id="desktop-placeholder" class="flex flex-col items-center justify-center h-full text-center p-8 bg-slate-50/50">
+                        <div class="h-20 w-20 bg-white rounded-full shadow-sm border border-slate-100 flex items-center justify-center mb-5">
+                            <i class="fas fa-briefcase text-3xl text-brand-300"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-slate-700">Select a position</h3>
+                        <p class="mt-2 text-sm text-slate-500 max-w-sm">Choose a job from the list to view its complete description and apply.</p>
                     </div>
-                    <h3 class="text-xl font-semibold text-slate-700">Select a position</h3>
-                    <p class="mt-2 text-sm text-slate-500 max-w-sm">Choose a job from the list on the left to view its complete description, requirements, and to apply.</p>
-                </div>
 
-                <!-- Job Details Content Container -->
-                <div id="job-details-content" class="flex-1 overflow-y-auto hidden relative">
-                    <!-- Content injected here via JS -->
+                    <!-- Detail Content Wrapper -->
+                    <div id="desktop-details-wrapper" class="hidden flex-col h-full absolute inset-0">
+                        <div id="desktop-details-content" class="flex-1 overflow-y-auto p-8 pb-28 no-scrollbar">
+                            <!-- Content injected via JS -->
+                        </div>
+                        <!-- Apply Action Footer -->
+                        <div id="desktop-apply-container" class="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200 p-5 z-10">
+                            <!-- Button injected via JS -->
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
         </div>
     </main>
 
+    <!-- MOBILE MODAL: Full Screen Job Details Overlay (Hidden on Desktop) -->
+    <div id="mobile-details-modal" class="fixed inset-0 z-50 bg-white transform translate-x-full lg:hidden flex flex-col w-full h-full">
+        <!-- Modal Header -->
+        <div class="flex items-center px-4 py-3 border-b border-slate-200 bg-white shadow-sm shrink-0">
+            <button id="close-mobile-modal" class="flex items-center text-slate-600 font-semibold p-2 -ml-2 rounded-lg hover:bg-slate-50 active:bg-slate-100 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i> Back
+            </button>
+        </div>
+        
+        <!-- Modal Scrollable Content -->
+        <div id="mobile-details-content" class="flex-1 overflow-y-auto p-5 pb-32">
+            <!-- Content injected via JS -->
+        </div>
+
+        <!-- Modal Fixed Apply Footer -->
+        <div id="mobile-apply-container" class="absolute bottom-0 left-0 w-full bg-white border-t border-slate-200 p-4 pb-safe shadow-[0_-5px_15px_-3px_rgba(0,0,0,0.1)] z-10">
+            <!-- Button injected via JS -->
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             // --- DOM Elements ---
-            const appBody = document.getElementById('app-body');
             const jobsContainer = document.getElementById('jobs-container');
-            const jobDetailsContent = document.getElementById('job-details-content');
-            const detailsPlaceholder = document.getElementById('details-placeholder');
-            const loadingState = document.getElementById('loading-state');
-            const errorState = document.getElementById('error-state');
-            const errorMessage = document.getElementById('error-message');
-            const noJobsState = document.getElementById('no-jobs-state');
-            const noJobsTitle = document.getElementById('no-jobs-title');
-            const noJobsText = document.getElementById('no-jobs-text');
             const searchInput = document.getElementById('search-input');
-            const backToListBtn = document.getElementById('back-to-list-btn');
+            const loadingState = document.getElementById('loading-state');
+            
+            // Desktop Elements
+            const desktopPlaceholder = document.getElementById('desktop-placeholder');
+            const desktopDetailsWrapper = document.getElementById('desktop-details-wrapper');
+            const desktopDetailsContent = document.getElementById('desktop-details-content');
+            const desktopApplyContainer = document.getElementById('desktop-apply-container');
+            
+            // Mobile Elements
+            const mobileModal = document.getElementById('mobile-details-modal');
+            const closeMobileBtn = document.getElementById('close-mobile-modal');
+            const mobileDetailsContent = document.getElementById('mobile-details-content');
+            const mobileApplyContainer = document.getElementById('mobile-apply-container');
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileNavMenu = document.getElementById('mobile-nav-menu');
 
+            // User Info
             const userNameEl = document.getElementById('user-name');
             const mobileUserNameEl = document.getElementById('mobile-user-name');
             const userInitialEl = document.getElementById('user-initial');
-            const userMenuButton = document.getElementById('user-menu-button');
+            const userMenuBtn = document.getElementById('user-menu-button');
             const userMenu = document.getElementById('user-menu');
             const logoutButton = document.getElementById('logout-button');
 
-            // --- App State ---
+            // App State
             let allJobs = [];
             let currentSelectedJobId = null;
 
-            // --- Authentication Check ---
+            // --- Authentication Setup ---
             const token = localStorage.getItem('studentToken');
             const userString = localStorage.getItem('studentUser');
-            let user = null;
+            let user = { fullName: 'Demo Student' };
 
-            if (!token || !userString) {
-                console.warn("⚠️ No auth token found. Running in DEMO mode for UI preview.");
-                // IMPORTANT: Uncomment the line below in your actual production environment to enforce login
-                // window.location.href = 'student-login.html'; 
-                
-                user = { fullName: 'Demo Student' }; // Mock user for preview
-            } else {
-                try {
-                    user = JSON.parse(userString);
-                } catch (e) {
-                    console.error("Failed to parse user data:", e);
-                    localStorage.clear();
-                    // window.location.href = 'student-login.html'; // Uncomment for production
-                    user = { fullName: 'Demo Student' };
-                }
+            if (userString) {
+                try { user = JSON.parse(userString); } catch (e) {}
             }
-
-            // Set User Info UI
             const fullName = user.fullName || 'Student';
             userNameEl.textContent = fullName;
-            if(mobileUserNameEl) mobileUserNameEl.textContent = fullName;
+            mobileUserNameEl.textContent = fullName;
             userInitialEl.textContent = fullName.charAt(0).toUpperCase();
 
-            // --- User Menu Dropdown Logic ---
-            const toggleMenu = (show) => {
-                if (show) {
-                    userMenu.classList.remove('hidden');
-                    // Small delay to allow display:block to apply before animating opacity
-                    requestAnimationFrame(() => {
-                        userMenu.classList.remove('opacity-0', 'scale-95');
-                        userMenu.classList.add('opacity-100', 'scale-100');
-                    });
-                } else {
-                    userMenu.classList.remove('opacity-100', 'scale-100');
-                    userMenu.classList.add('opacity-0', 'scale-95');
-                    // Wait for animation to finish before hiding
-                    setTimeout(() => userMenu.classList.add('hidden'), 200);
-                }
-            };
+            // --- UI Interactions ---
 
-            userMenuButton.addEventListener('click', (e) => {
+            // Top Nav Dropdowns
+            userMenuBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const isHidden = userMenu.classList.contains('hidden');
-                toggleMenu(isHidden);
+                userMenu.classList.toggle('hidden');
+                mobileNavMenu.classList.add('hidden'); // Close mobile menu if open
             });
-
-            document.addEventListener('click', (event) => {
-                if (!userMenuButton.contains(event.target) && !userMenu.contains(event.target)) {
-                    toggleMenu(false);
-                }
+            mobileMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                mobileNavMenu.classList.toggle('hidden');
+                userMenu.classList.add('hidden'); // Close user menu if open
             });
-
+            document.addEventListener('click', () => {
+                userMenu.classList.add('hidden');
+                mobileNavMenu.classList.add('hidden');
+            });
             logoutButton.addEventListener('click', (e) => {
                 e.preventDefault();
-                localStorage.removeItem('studentToken');
-                localStorage.removeItem('studentUser');
+                localStorage.removeItem('studentToken'); localStorage.removeItem('studentUser');
                 window.location.href = 'student-login.html';
             });
 
-            // --- Mobile Navigation Logic ---
-            backToListBtn.addEventListener('click', () => {
-                appBody.classList.remove('mobile-view-detail');
-                appBody.classList.add('mobile-view-list');
-                
-                // Deselect job visually
-                document.querySelectorAll('.job-card.active').forEach(item => item.classList.remove('active'));
-                currentSelectedJobId = null;
-            });
-
-            function showDetailsPaneMobile() {
-                if (window.innerWidth < 1024) { // lg breakpoint
-                    appBody.classList.remove('mobile-view-list');
-                    appBody.classList.add('mobile-view-detail');
+            // Mobile Modal Controls
+            function openMobileModal() {
+                if (window.innerWidth < 1024) {
+                    mobileModal.classList.add('open');
+                    document.body.classList.add('modal-open');
                 }
             }
+            closeMobileBtn.addEventListener('click', () => {
+                mobileModal.classList.remove('open');
+                document.body.classList.remove('modal-open');
+                // Deselect active card visually when returning to list
+                document.querySelectorAll('.job-card.active').forEach(c => c.classList.remove('active'));
+                currentSelectedJobId = null;
+                desktopPlaceholder.classList.remove('hidden');
+                desktopDetailsWrapper.classList.add('hidden');
+            });
 
-            // --- Job Functions ---
+            // --- Render Logic ---
+            const formatDate = (date) => new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-            /** Format Date helper */
-            const formatDate = (dateString) => {
-                if (!dateString) return 'Not specified';
-                const options = { year: 'numeric', month: 'short', day: 'numeric' };
-                return new Date(dateString).toLocaleDateString('en-US', options);
-            };
-
-            /** Renders the list of jobs in the left column */
             function renderJobList(jobsToRender) {
-                // Remove existing job cards (keep states)
-                const existingCards = jobsContainer.querySelectorAll('.job-card');
+                // Clear current cards (keeping loading state intact if needed)
+                const existingCards = jobsContainer.querySelectorAll('.job-card, .empty-state');
                 existingCards.forEach(card => card.remove());
 
                 if (jobsToRender.length === 0) {
-                    noJobsTitle.textContent = searchInput.value ? 'No Jobs Match Your Search' : 'No Open Positions';
-                    noJobsText.textContent = searchInput.value ? 'Try adjusting your search keywords.' : 'No jobs currently match your college eligibility.';
-                    noJobsState.classList.remove('hidden');
-                } else {
-                    noJobsState.classList.add('hidden');
-                    
-                    jobsToRender.forEach((job, index) => {
-                        const jobId = job.testId || job.jobId || `mock-${index}`; 
-                        const listItem = document.createElement('a');
-                        listItem.href = '#';
-                        listItem.className = `job-card block bg-white border border-slate-200 p-4 sm:p-5 rounded-xl cursor-pointer fade-in-item ${jobId === currentSelectedJobId ? 'active' : ''}`;
-                        listItem.dataset.jobId = jobId;
-                        listItem.style.animationDelay = `${index * 40}ms`;
-
-                        const postedByName = job.postedBy && job.postedBy.trim() !== '' ? job.postedBy : 'Verified Company'; 
-                        
-                        // Icon mapping based on department
-                        let deptIcon = 'fa-building';
-                        let deptColor = 'text-blue-600 bg-blue-50 border-blue-100';
-                        if(job.department) {
-                            const dept = job.department.toLowerCase();
-                            if(dept.includes('tech') || dept.includes('engineering') || dept.includes('it')) { deptIcon = 'fa-laptop-code'; deptColor = 'text-brand-600 bg-brand-50 border-brand-100'; }
-                            else if(dept.includes('design') || dept.includes('ui')) { deptIcon = 'fa-pen-nib'; deptColor = 'text-purple-600 bg-purple-50 border-purple-100'; }
-                            else if(dept.includes('market') || dept.includes('sales')) { deptIcon = 'fa-chart-line'; deptColor = 'text-emerald-600 bg-emerald-50 border-emerald-100'; }
-                        }
-
-                        listItem.innerHTML = `
-                            <div class="flex justify-between items-start gap-3">
-                                <div>
-                                    <h3 class="font-semibold text-base sm:text-lg text-slate-900 leading-tight">${job.title || 'Job Title'}</h3>
-                                    <p class="text-sm text-slate-500 mt-1 flex items-center gap-1.5">
-                                        <i class="far fa-building text-slate-400 text-xs"></i>
-                                        ${postedByName}
-                                    </p>
-                                </div>
-                                <div class="h-8 w-8 rounded-lg bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
-                                    <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
-                                </div>
-                            </div>
-                            
-                            <div class="mt-4 flex flex-wrap items-center gap-2">
-                                <span class="inline-flex items-center text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200/60">
-                                    <i class="fas fa-map-marker-alt text-slate-400 mr-1.5"></i>
-                                    ${job.location || 'Remote'}
-                                </span>
-                                ${job.department ? `
-                                <span class="inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-md border ${deptColor}">
-                                    <i class="fas ${deptIcon} opacity-70 mr-1.5"></i>
-                                    ${job.department}
-                                </span>` : ''}
-                            </div>
-                        `;
-                        jobsContainer.appendChild(listItem);
-                    });
+                    jobsContainer.insertAdjacentHTML('beforeend', `
+                        <div class="empty-state flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-slate-200 text-center px-4">
+                            <div class="h-16 w-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mb-4"><i class="fas fa-search text-2xl"></i></div>
+                            <h3 class="text-lg font-semibold text-slate-800">No positions found</h3>
+                            <p class="mt-1 text-sm text-slate-500">Try adjusting your search criteria.</p>
+                        </div>
+                    `);
+                    return;
                 }
+
+                jobsToRender.forEach((job, index) => {
+                    const jobId = job.testId || job.jobId || `mock-${index}`; 
+                    const isActive = jobId === currentSelectedJobId;
+                    
+                    const el = document.createElement('div');
+                    el.className = `job-card bg-white p-4 sm:p-5 rounded-xl cursor-pointer shadow-sm ${isActive ? 'active' : ''}`;
+                    el.dataset.id = jobId;
+
+                    const deptBadge = job.department ? `<span class="inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded border border-blue-100 bg-blue-50 text-blue-700"><i class="fas fa-layer-group mr-1.5 opacity-70"></i>${job.department}</span>` : '';
+
+                    el.innerHTML = `
+                        <div class="flex justify-between items-start gap-3">
+                            <div class="flex-1">
+                                <h3 class="font-bold text-base sm:text-lg text-slate-900 leading-tight mb-1">${job.title || 'Role Title'}</h3>
+                                <p class="text-sm text-brand-600 font-medium">${job.postedBy || 'Company'}</p>
+                            </div>
+                            <div class="lg:hidden h-8 w-8 rounded bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
+                                <i class="fas fa-chevron-right text-slate-400 text-xs"></i>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex flex-wrap items-center gap-2">
+                            <span class="inline-flex items-center text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200/60">
+                                <i class="fas fa-map-marker-alt text-slate-400 mr-1.5"></i>${job.location || 'Remote'}
+                            </span>
+                            ${deptBadge}
+                        </div>
+                    `;
+                    jobsContainer.appendChild(el);
+                });
             }
 
-            /** Renders the full details of a job in the right column */
             function renderJobDetails(job) {
-                detailsPlaceholder.classList.add('hidden');
-                jobDetailsContent.classList.remove('hidden');
-                jobDetailsContent.innerHTML = '';
-
                 const jobId = job.testId || job.jobId || 'mock-id';
-                const safeDescription = job.description ? job.description.replace(/<script.*?>.*?<\/script>/gi, '') : 'No description provided.';
-                const postedByName = job.postedBy && job.postedBy.trim() !== '' ? job.postedBy : 'Verified Company';
-
-                const html = `
-                    <div class="flex flex-col h-full absolute inset-0">
-                        
-                        <!-- Scrollable Content Area -->
-                        <div class="flex-1 overflow-y-auto p-5 sm:p-8 pb-32">
-                            
-                            <!-- Detail Header -->
-                            <div class="pb-6 border-b border-slate-200">
-                                <div class="flex flex-wrap items-center gap-3 mb-3">
-                                    <span class="inline-flex items-center text-xs font-semibold uppercase tracking-wider text-brand-600 bg-brand-50 px-2.5 py-1 rounded-md">
-                                        Actively Hiring
-                                    </span>
-                                    <span class="text-sm text-slate-500">
-                                        Posted: ${formatDate(job.postedDate || new Date())}
-                                    </span>
-                                </div>
-                                
-                                <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight mb-2">${job.title || 'Role Title Not Available'}</h2>
-                                <p class="text-lg text-brand-600 font-medium mb-5">${postedByName}</p>
-
-                                <div class="flex flex-wrap gap-4 sm:gap-6 text-sm">
-                                    <div class="flex items-center text-slate-700">
-                                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center mr-3 shrink-0">
-                                            <i class="fas fa-map-marker-alt text-slate-500"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-xs text-slate-500 mb-0.5">Location</p>
-                                            <p class="font-medium">${job.location || 'Remote / Unspecified'}</p>
-                                        </div>
-                                    </div>
-                                    ${job.department ? `
-                                    <div class="flex items-center text-slate-700">
-                                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center mr-3 shrink-0">
-                                            <i class="fas fa-layer-group text-slate-500"></i>
-                                        </div>
-                                        <div>
-                                            <p class="text-xs text-slate-500 mb-0.5">Department</p>
-                                            <p class="font-medium">${job.department}</p>
-                                        </div>
-                                    </div>` : ''}
-                                </div>
-                            </div>
-
-                            <!-- Description Body -->
-                            <div class="mt-8">
-                                <h4 class="text-lg font-semibold text-slate-900 mb-4 flex items-center">
-                                    <i class="fas fa-align-left text-brand-500 mr-2 text-sm"></i> Job Description
-                                </h4>
-                                <div class="prose prose-sm sm:prose-base max-w-none">
-                                    ${safeDescription.split('\n').filter(p => p.trim() !== '').map(p => `<p>${p.trim()}</p>`).join('')}
-                                </div>
-                            </div>
+                const safeDesc = job.description ? job.description.replace(/<script.*?>.*?<\/script>/gi, '') : 'No description provided.';
+                
+                // Construct Main Details HTML
+                const detailsHTML = `
+                    <div class="pb-6 border-b border-slate-200 mb-6">
+                        <div class="flex flex-wrap items-center gap-2 mb-3 text-xs font-semibold uppercase tracking-wider">
+                            <span class="text-emerald-700 bg-emerald-50 px-2 py-1 rounded border border-emerald-100"><i class="fas fa-circle text-[8px] mr-1 text-emerald-500 animate-pulse"></i> Actively Hiring</span>
+                            <span class="text-slate-500">Posted ${formatDate(job.postedDate || Date.now())}</span>
                         </div>
+                        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 leading-tight mb-2">${job.title}</h2>
+                        <p class="text-lg text-brand-600 font-medium">${job.postedBy || 'Company'}</p>
 
-                        <!-- Sticky Footer / Apply Action -->
-                        <div class="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 z-20 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
-                            <div class="flex items-center text-sm text-slate-600 font-medium w-full sm:w-auto justify-center sm:justify-start">
-                                <i class="far fa-calendar-alt text-slate-400 h-4 w-4 mr-2"></i>
-                                <span>Apply by: <strong class="text-slate-800">${formatDate(job.applicationDeadline || Date.now() + 864000000)}</strong></span>
+                        <div class="flex flex-wrap gap-x-6 gap-y-3 mt-5">
+                            <div class="flex items-center text-slate-700">
+                                <div class="w-8 h-8 rounded bg-slate-100 flex items-center justify-center mr-3 shrink-0"><i class="fas fa-map-marker-alt text-slate-500"></i></div>
+                                <div><p class="text-[11px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Location</p><p class="text-sm font-medium">${job.location || 'Remote'}</p></div>
                             </div>
-                            <a href="job-application.html?jobId=${jobId}" class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-sm font-semibold rounded-xl text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 w-full sm:w-auto shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5">
-                                Apply Now
-                                <i class="fas fa-arrow-right ml-2 opacity-80"></i>
-                            </a>
+                            ${job.department ? `
+                            <div class="flex items-center text-slate-700">
+                                <div class="w-8 h-8 rounded bg-slate-100 flex items-center justify-center mr-3 shrink-0"><i class="fas fa-briefcase text-slate-500"></i></div>
+                                <div><p class="text-[11px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Department</p><p class="text-sm font-medium">${job.department}</p></div>
+                            </div>` : ''}
                         </div>
-                        
+                    </div>
+                    <div>
+                        <h4 class="text-base font-bold text-slate-900 mb-4 flex items-center"><i class="fas fa-align-left text-brand-500 mr-2 text-sm"></i> Role Description</h4>
+                        <div class="prose prose-sm sm:prose-base max-w-none text-slate-700">
+                            ${safeDesc.split('\n').filter(p=>p.trim()).map(p=>`<p>${p.trim()}</p>`).join('')}
+                        </div>
                     </div>
                 `;
-                jobDetailsContent.innerHTML = html;
+
+                // Construct Footer Apply HTML
+                const applyHTML = `
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="text-sm text-slate-600 font-medium w-full sm:w-auto text-center sm:text-left">
+                            <i class="far fa-calendar-alt text-slate-400 mr-1.5"></i>Deadline: <strong class="text-slate-900 ml-1">${formatDate(job.applicationDeadline || Date.now() + 864000000)}</strong>
+                        </div>
+                        <a href="job-application.html?jobId=${jobId}" class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-xl shadow-md transition-all active:scale-95 group">
+                            Apply for Role <i class="fas fa-arrow-right ml-2 opacity-80 group-hover:translate-x-1 transition-transform"></i>
+                        </a>
+                    </div>
+                `;
+
+                // Inject into Desktop View
+                desktopPlaceholder.classList.add('hidden');
+                desktopDetailsWrapper.classList.remove('hidden');
+                desktopDetailsWrapper.classList.add('flex');
+                desktopDetailsContent.innerHTML = detailsHTML;
+                desktopApplyContainer.innerHTML = applyHTML;
+
+                // Inject into Mobile Modal
+                mobileDetailsContent.innerHTML = detailsHTML;
+                mobileApplyContainer.innerHTML = applyHTML;
             }
 
             // --- Event Listeners ---
-
-            // Search filtering
+            
+            // Search
             let searchTimeout;
             searchInput.addEventListener('input', (e) => {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
-                    const searchTerm = e.target.value.toLowerCase().trim();
-                    const filteredJobs = allJobs.filter(job =>
-                        (job.title || '').toLowerCase().includes(searchTerm) ||
-                        (job.description || '').toLowerCase().includes(searchTerm) ||
-                        (job.location || '').toLowerCase().includes(searchTerm) ||
-                        (job.department || '').toLowerCase().includes(searchTerm) ||
-                        (job.postedBy || '').toLowerCase().includes(searchTerm)
+                    const term = e.target.value.toLowerCase().trim();
+                    const filtered = allJobs.filter(j => 
+                        (j.title||'').toLowerCase().includes(term) || (j.postedBy||'').toLowerCase().includes(term) || (j.department||'').toLowerCase().includes(term)
                     );
-                    renderJobList(filteredJobs);
-                    
-                    // Reset selection if current active job is filtered out
-                    if (currentSelectedJobId && !filteredJobs.some(j => (j.testId || j.jobId || j.id) === currentSelectedJobId)) {
-                        jobDetailsContent.innerHTML = '';
-                        jobDetailsContent.classList.add('hidden');
-                        detailsPlaceholder.classList.remove('hidden');
-                        currentSelectedJobId = null;
-                    }
+                    renderJobList(filtered);
                 }, 300);
             });
 
-            // Job List Click Delegation
+            // Card Clicks (Event Delegation)
             jobsContainer.addEventListener('click', (e) => {
-                const clickedCard = e.target.closest('.job-card');
-                if (!clickedCard) return;
-                e.preventDefault();
+                const card = e.target.closest('.job-card');
+                if (!card) return;
 
-                const jobId = clickedCard.dataset.jobId;
-                
-                // Show details on mobile even if clicking the same job
-                showDetailsPaneMobile();
-
-                if (jobId === currentSelectedJobId) return;
+                const jobId = card.dataset.id;
                 currentSelectedJobId = jobId;
 
-                // UI updates for active state
-                document.querySelectorAll('.job-card.active').forEach(item => item.classList.remove('active'));
-                clickedCard.classList.add('active');
+                // Visual Active State
+                document.querySelectorAll('.job-card.active').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
 
-                // Render specific job details
-                const selectedJob = allJobs.find(j => (j.testId || j.jobId || j.id) === jobId);
-                if (selectedJob) {
-                    renderJobDetails(selectedJob);
+                // Render Data
+                const selected = allJobs.find(j => (j.testId || j.jobId || j.id) === jobId);
+                if (selected) {
+                    renderJobDetails(selected);
+                    openMobileModal(); // Triggers mobile slide-in if on small screen
                 }
             });
 
-            // --- Initialization & API Fetch ---
+            // --- API Fetch ---
             async function fetchJobs() {
                 try {
-                    const response = await fetch('/api/student/jobs', {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-
-                    if (!response.ok) {
-                        let errorMsg = 'Could not load jobs.';
-                        try { const err = await response.json(); errorMsg = err.message || errorMsg; } catch (e) {}
-                        throw new Error(errorMsg);
-                    }
-
+                    const response = await fetch('/api/student/jobs', { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (!response.ok) throw new Error('API Error');
                     allJobs = await response.json();
-                    loadingState.classList.add('hidden');
-                    
-                    if (allJobs.length === 0) {
-                        noJobsState.classList.remove('hidden');
-                    } else {
-                        renderJobList(allJobs);
-                    }
-
                 } catch (error) {
-                    console.warn("⚠️ API fetch failed. Using Mock Data for UI Preview.", error);
-                    loadingState.classList.add('hidden');
-                    
-                    // Fallback Demo Data so the UI can be previewed without the backend
+                    // Fallback Demo Data for flawless preview
                     allJobs = [
-                        {
-                            id: '1', jobId: 'job-1', title: 'Frontend Developer Intern', postedBy: 'TechNova Solutions', 
-                            location: 'Bangalore, India', department: 'Engineering', 
-                            description: 'We are looking for a passionate Frontend Developer Intern.\n\nRequirements:\n- Proficient in HTML, CSS, JavaScript.\n- Experience with React or Vue is a plus.\n- Strong problem-solving skills.\n\nPerks:\n- Flexible hours.\n- Mentorship from senior developers.',
-                            applicationDeadline: '2026-06-15T00:00:00Z', postedDate: '2026-05-01T10:00:00Z'
-                        },
-                        {
-                            id: '2', jobId: 'job-2', title: 'Product Design (UX/UI)', postedBy: 'Creative Minds Agency', 
-                            location: 'Remote', department: 'Design', 
-                            description: 'Join our award-winning design team!\n\nResponsibilities:\n- Create wireframes and high-fidelity prototypes.\n- Conduct user research and testing.\n- Collaborate with developers to implement designs.\n\nMust have a strong portfolio demonstrating user-centric design.',
-                            applicationDeadline: '2026-05-30T00:00:00Z', postedDate: '2026-05-03T14:30:00Z'
-                        },
-                        {
-                            id: '3', jobId: 'job-3', title: 'Data Analyst Trainee', postedBy: 'FinTech Global', 
-                            location: 'Mumbai, India', department: 'Analytics', 
-                            description: 'Kickstart your career in Data Analytics.\n\nYou will work directly with our core data team analyzing massive datasets to find actionable insights.\n\nRequires strong knowledge of SQL, Python, and basic statistics. Familiarity with Tableau or PowerBI is preferred.',
-                            applicationDeadline: '2026-06-01T00:00:00Z', postedDate: '2026-05-04T09:15:00Z'
-                        },
-                        {
-                            id: '4', jobId: 'job-4', title: 'Marketing Associate', postedBy: 'GrowthStack', 
-                            location: 'Delhi, India', department: 'Marketing', 
-                            description: 'Help us grow our brand presence!\n\nWe need a creative individual to help manage social media campaigns, write blog content, and assist with SEO strategies.\n\nExcellent written communication skills are a must.',
-                            applicationDeadline: '2026-05-25T00:00:00Z', postedDate: '2026-05-05T11:00:00Z'
-                        }
+                        { id: '1', title: 'Frontend Developer Intern', postedBy: 'TechNova Solutions', location: 'Bangalore', department: 'Engineering', description: 'Join our fast-paced startup building modern web applications.\n\nRequirements:\n- Strong knowledge of HTML, CSS, JavaScript.\n- Experience with React.\n- Eye for UI/UX design.\n\nWe offer great mentorship and flexible hours.' },
+                        { id: '2', title: 'Marketing Associate', postedBy: 'GrowthStack', location: 'Remote', department: 'Marketing', description: 'Help us grow our brand presence worldwide!\n\nYou will assist in managing social media campaigns, writing blog content, and analyzing SEO strategies.\n\nExcellent written communication skills are a must.' },
+                        { id: '3', title: 'Data Analyst Trainee', postedBy: 'FinTech Global', location: 'Mumbai', department: 'Analytics', description: 'Kickstart your career in Data Analytics.\n\nYou will work directly with our core data team analyzing massive datasets to find actionable insights.\n\nRequires strong SQL knowledge.' }
                     ];
+                } finally {
+                    loadingState.style.display = 'none';
                     renderJobList(allJobs);
-                    
-                    // Original Error Handling (Uncomment for production)
-                    // errorState.classList.remove('hidden');
-                    // errorMessage.textContent = error.message || 'An unknown error occurred while loading jobs.';
                 }
             }
-
-            // Start fetch
             fetchJobs();
         });
     </script>
