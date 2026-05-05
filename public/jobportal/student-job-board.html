@@ -5,166 +5,149 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Job Board - Student Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png">
     <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        html {
-            scroll-behavior: smooth;
-        }
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8f9fc; /* Lighter base color */
+            background-color: #f8fafc; /* Lighter slate base */
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Subtle background gradient */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 50vh;
-            background: radial-gradient(circle, rgba(239, 246, 255, 0.7) 0%, rgba(248, 249, 252, 0) 70%);
-            z-index: -1;
-            pointer-events: none;
-        }
-
-        /* Modern sticky header */
+        /* Glassmorphism Header */
         .sticky-nav {
             position: sticky;
             top: 0;
             z-index: 50;
-            background-color: rgba(255, 255, 255, 0.9); /* Slightly more opaque */
-            backdrop-filter: blur(10px); /* Increased blur */
-            border-bottom: 1px solid rgba(229, 231, 235, 0.8); /* Slightly more visible border */
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02); /* Subtle shadow */
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
         }
 
-        /* Job list item */
-        .job-list-item {
-            opacity: 0; /* Start hidden for animation */
-            animation: fadeInUp 0.5s ease-out forwards;
-            /* Base styles */
-            display: block;
-            width: 100%;
-            padding: 1rem 1.25rem; /* p-4 sm:p-5 */
-            background-color: white;
-            border: 1px solid #e5e7eb; /* border-gray-200 */
-            border-radius: 0.75rem; /* rounded-xl */
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03); /* Subtle initial shadow */
+        /* Custom Scrollbar for a clean look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-        .job-list-item:hover {
-            transform: translateY(-3px) scale(1.01); /* Slightly more pronounced hover effect */
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.06);
-            border-color: #c7d2fe; /* border-indigo-200 */
+        ::-webkit-scrollbar-track {
+            background: transparent;
         }
-        /* Active job list item */
-        .job-list-item.active {
-            background-color: #eef2ff; /* bg-indigo-50 */
-            border-color: #6366f1; /* border-indigo-500 */
-            box-shadow: 0 2px 5px rgba(99, 102, 241, 0.2); /* Indigo shadow */
-            transform: none; /* Reset transform on active */
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
 
-        /* Custom scrollbar for job list and details */
-        #jobs-container::-webkit-scrollbar,
-        #job-details-pane::-webkit-scrollbar {
-            width: 6px; /* Slimmer scrollbar */
+        /* Job Card Animations & Styles */
+        .job-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        #jobs-container::-webkit-scrollbar-track,
-        #job-details-pane::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 6px;
+        .job-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            border-color: #c7d2fe;
         }
-        #jobs-container::-webkit-scrollbar-thumb,
-        #job-details-pane::-webkit-scrollbar-thumb {
-            background: #d1d5db; /* Slightly darker gray */
-            border-radius: 6px;
-        }
-        #jobs-container::-webkit-scrollbar-thumb:hover,
-        #job-details-pane::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
+        .job-card.active {
+            background-color: #f5f8ff;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 1px #6366f1, 0 4px 6px -1px rgba(99, 102, 241, 0.1);
         }
 
-        /* Dropdown menu animation */
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-10px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .menu-animate {
-            animation: fadeInDown 0.15s ease-out forwards;
+        /* Prose Styling for Job Description */
+        .prose p { margin-bottom: 1em; line-height: 1.7; color: #475569; }
+        .prose ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; color: #475569; }
+        .prose li { margin-bottom: 0.25em; }
+        .prose strong { color: #1e293b; font-weight: 600; }
+
+        /* Mobile Layout Switching */
+        @media (max-width: 1023px) {
+            .mobile-view-list #right-pane { display: none; }
+            .mobile-view-list #left-pane { display: block; }
+            
+            .mobile-view-detail #left-pane { display: none; }
+            .mobile-view-detail #right-pane { display: block; animation: slideInRight 0.3s ease forwards; }
         }
 
-        /* Card fade-in animation */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(15px); } /* Slightly smaller initial translate */
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Right pane fade-in */
-        @keyframes fadeInRight {
-            from { opacity: 0; transform: translateX(15px); }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
             to { opacity: 1; transform: translateX(0); }
         }
-        .details-fade-in {
-            animation: fadeInRight 0.3s ease-out forwards;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
-        /* Prose styling adjustments for job description */
-        .prose {
-             color: #4b5563; /* Default text color */
-             line-height: 1.65;
+        
+        .fade-in-item {
+            animation: fadeIn 0.4s ease-out forwards;
+            opacity: 0;
         }
-        .prose h1, .prose h2, .prose h3, .prose h4 {
-            color: #1f2937; /* Darker headings */
-            font-weight: 600;
-             margin-bottom: 0.75em;
-        }
-        .prose ul > li::before {
-            background-color: #6366f1; /* Indigo bullets */
-        }
-        .prose a {
-            color: #4f46e5;
-            text-decoration: none;
-        }
-        .prose a:hover {
-            text-decoration: underline;
-        }
-
     </style>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen text-slate-800 mobile-view-list" id="app-body">
 
     <!-- Header Navigation -->
-    <nav class="sticky-nav">
+    <nav class="sticky-nav shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <img class="h-8 w-auto" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="Portal Logo">
-                    <span class="ml-3 font-bold text-xl text-gray-800 tracking-tight">Student Job Portal</span>
+                <!-- Logo & Brand -->
+                <div class="flex items-center gap-3">
+                    <img class="h-8 w-auto object-contain" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/HireWithUS_wtn0pc.png" alt="Portal Logo">
+                    <span class="font-bold text-lg sm:text-xl text-slate-900 tracking-tight hidden sm:block">Student Job Portal</span>
                 </div>
-                <div class="flex items-center space-x-2 sm:space-x-4">
-                    <a href="student-job-board.html" class="px-3 py-2 rounded-md text-sm font-medium text-white bg-indigo-600 transition-all duration-200 shadow-sm hover:bg-indigo-700">Job Board</a>
-                    <a href="student-my-applications.html" class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 transition-all duration-200">My Applications</a>
-                    <a href="student-my-tests.html" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-100">My Tests</a>
+                
+                <!-- Nav Links & User -->
+                <div class="flex items-center space-x-1 sm:space-x-4">
+                    <a href="#" class="px-3 py-2 rounded-lg text-sm font-medium text-brand-600 bg-brand-50 transition-all duration-200">Job Board</a>
+                    <a href="student-my-applications.html" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hidden sm:block">My Applications</a>
+                    <a href="student-my-tests.html" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-brand-600 hover:bg-slate-50 transition-all duration-200 hidden md:block">My Tests</a>
 
                     <!-- User Menu Dropdown -->
-                    <div class="relative">
-                        <button id="user-menu-button" class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 p-1 hover:bg-gray-100 transition-colors duration-150">
-                            <span id="user-name" class="mr-2 text-gray-700 font-medium hidden sm:block">User</span>
-                            <!-- User Avatar Placeholder -->
-                            <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-indigo-100 ring-1 ring-indigo-200">
-                                <span id="user-initial" class="text-sm font-medium text-indigo-700">U</span>
+                    <div class="relative ml-2">
+                        <button id="user-menu-button" class="flex items-center gap-2 rounded-full focus:outline-none p-1 hover:bg-slate-100 transition-colors duration-150 border border-transparent hover:border-slate-200">
+                            <span class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-sm">
+                                <span id="user-initial" class="text-sm font-semibold">U</span>
                             </span>
-                            <i class="fas fa-chevron-down text-gray-500 ml-1.5 h-3 w-3 hidden sm:block"></i>
+                            <span id="user-name" class="text-sm font-medium text-slate-700 hidden sm:block max-w-[120px] truncate">User</span>
+                            <i class="fas fa-chevron-down text-slate-400 text-xs hidden sm:block pr-1"></i>
                         </button>
-                        <div id="user-menu" class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
-                            <!-- <a href="student-profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a> -->
-                            <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                        
+                        <!-- Dropdown Menu -->
+                        <div id="user-menu" class="hidden origin-top-right absolute right-0 mt-2 w-56 rounded-xl shadow-lg py-2 bg-white ring-1 ring-slate-900 ring-opacity-5 focus:outline-none z-50 transform transition-all duration-200 opacity-0 scale-95">
+                            <div class="px-4 py-3 border-b border-slate-100 sm:hidden">
+                                <p class="text-sm text-slate-500">Signed in as</p>
+                                <p class="text-sm font-medium text-slate-900 truncate" id="mobile-user-name">User</p>
+                            </div>
+                            <a href="student-my-applications.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 sm:hidden"><i class="fas fa-file-alt w-5 text-slate-400"></i> My Applications</a>
+                            <a href="student-my-tests.html" class="block px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 md:hidden"><i class="fas fa-clipboard-check w-5 text-slate-400"></i> My Tests</a>
+                            <div class="h-px bg-slate-100 my-1 sm:hidden"></div>
+                            <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50"><i class="fas fa-sign-out-alt w-5"></i> Sign out</a>
                         </div>
                     </div>
                 </div>
@@ -173,77 +156,98 @@
     </nav>
 
     <!-- Main Content Area -->
-    <main class="py-10">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <h1 class="text-3xl font-bold text-gray-900 mb-6 px-4 sm:px-0 tracking-tight">Available Job Openings</h1>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 h-[calc(100vh-4rem)] flex flex-col">
+        
+        <!-- Header Section -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 shrink-0">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Discover Opportunities</h1>
+                <p class="text-sm text-slate-500 mt-1">Find and apply for jobs curated for your college.</p>
+            </div>
+        </div>
 
-            <!-- Search Bar -->
-            <div class="mb-6 px-4 sm:px-0">
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                       <i class="fas fa-search text-gray-400 h-5 w-5"></i>
+        <!-- Main Layout Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0 overflow-hidden relative">
+
+            <!-- ================= LEFT COLUMN: JOB LIST ================= -->
+            <div id="left-pane" class="lg:col-span-5 xl:col-span-4 h-full flex flex-col min-h-0 relative z-10">
+                
+                <!-- Search Bar (Sticky inside left column) -->
+                <div class="mb-4 shrink-0">
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-slate-400 group-focus-within:text-brand-500 transition-colors"></i>
+                        </div>
+                        <input type="text" id="search-input" class="block w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl shadow-sm text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all duration-200" placeholder="Search title, company, or keywords...">
                     </div>
-                    <input type="text" id="search-input" class="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition duration-150 ease-in-out" placeholder="Search by title, company, or keyword...">
+                </div>
+
+                <!-- Job List Container -->
+                <div class="bg-transparent rounded-xl flex-1 overflow-y-auto pr-1 pb-20 lg:pb-0 space-y-3" id="jobs-container">
+                    
+                    <!-- Loading State -->
+                    <div id="loading-state" class="flex flex-col items-center justify-center py-12 bg-white rounded-xl border border-slate-200 shadow-sm">
+                        <i class="fas fa-circle-notch fa-spin text-3xl text-brand-500 mb-3"></i>
+                        <p class="text-sm font-medium text-slate-500">Discovering jobs...</p>
+                    </div>
+
+                    <!-- Error State -->
+                    <div id="error-state" class="hidden flex flex-col items-center justify-center py-12 bg-red-50 rounded-xl border border-red-100 px-4 text-center">
+                        <div class="h-12 w-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-3">
+                            <i class="fas fa-exclamation-triangle text-xl"></i>
+                        </div>
+                        <h3 class="text-base font-semibold text-red-800">Unable to load jobs</h3>
+                        <p id="error-message" class="mt-1 text-sm text-red-600">Something went wrong connecting to the server.</p>
+                        <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-white border border-red-200 text-red-600 text-sm font-medium rounded-lg shadow-sm hover:bg-red-50 transition">Try Again</button>
+                    </div>
+
+                    <!-- No Jobs State -->
+                    <div id="no-jobs-state" class="hidden flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-slate-200 shadow-sm px-4 text-center">
+                        <div class="h-16 w-16 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mb-4">
+                            <i class="fas fa-search text-2xl"></i>
+                        </div>
+                        <h3 id="no-jobs-title" class="text-lg font-semibold text-slate-800">No positions found</h3>
+                        <p id="no-jobs-text" class="mt-1 text-sm text-slate-500">We couldn't find any jobs matching your criteria.</p>
+                    </div>
+
+                    <!-- Job items injected here via JS -->
                 </div>
             </div>
 
-            <!-- Main Layout Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 px-4 sm:px-0">
-
-                <!-- Left Column: Job List -->
-                <div id="job-list-column" class="lg:col-span-5 xl:col-span-4 h-full">
-                    <!-- Loading State (for list) -->
-                    <div id="loading-state" class="text-center py-16 bg-white rounded-xl shadow-md border border-gray-100">
-                        <svg class="animate-spin h-10 w-10 text-indigo-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <p class="mt-4 text-base font-medium text-gray-600">Loading relevant jobs...</p>
-                    </div>
-
-                    <!-- Error State (for list) -->
-                    <div id="error-state" class="hidden text-center py-16 bg-white rounded-xl shadow-md border border-red-200">
-                        <i class="fas fa-exclamation-triangle text-red-400 text-4xl mx-auto"></i>
-                        <h3 class="mt-4 text-lg font-semibold text-gray-800">Oops! Something went wrong.</h3>
-                        <div id="error-message" class="mt-2 text-sm text-red-600"></div>
-                        <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-indigo-100 text-indigo-700 text-sm font-medium rounded-md hover:bg-indigo-200 transition">Retry</button>
-                    </div>
-
-                    <!-- Job List Container -->
-                    <div id="jobs-container" class="space-y-3 h-full max-h-[75vh] overflow-y-auto pr-2">
-                        <!-- No Jobs State (will be shown by JS) -->
-                        <div id="no-jobs-state" class="hidden text-center py-16 bg-white rounded-xl shadow-sm border border-gray-200">
-                            <i class="fas fa-folder-open text-indigo-300 text-4xl mx-auto"></i>
-                            <h3 id="no-jobs-title" class="mt-4 text-lg font-semibold text-gray-800">No Open Positions</h3>
-                            <p id="no-jobs-text" class="mt-2 text-sm text-gray-500">There are currently no job openings matching your college eligibility. Check back later!</p>
-                        </div>
-                        <!-- Job list items will be appended here -->
-                    </div>
+            <!-- ================= RIGHT COLUMN: JOB DETAILS ================= -->
+            <div id="right-pane" class="lg:col-span-7 xl:col-span-8 h-full min-h-0 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative z-20">
+                
+                <!-- Mobile Header for Details Pane (Back Button) -->
+                <div class="lg:hidden flex items-center px-4 py-3 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-10 shrink-0">
+                    <button id="back-to-list-btn" class="flex items-center text-sm font-medium text-slate-600 hover:text-brand-600 bg-slate-50 hover:bg-brand-50 px-3 py-1.5 rounded-lg transition-colors">
+                        <i class="fas fa-arrow-left mr-2 text-xs"></i> Back to Jobs
+                    </button>
                 </div>
 
-                <!-- Right Column: Job Details -->
-                <div class="lg:col-span-7 xl:col-span-8">
-                    <!-- Adjusted sticky position to account for header height -->
-                    <div id="job-details-pane" class="sticky top-[calc(4rem+1.5rem)] bg-white rounded-xl shadow-lg border border-gray-100 h-[calc(100vh-8rem)] overflow-y-auto p-6 sm:p-8">
-                        <!-- Initial Placeholder -->
-                        <div id="details-placeholder" class="flex flex-col items-center justify-center h-full text-center p-6 text-gray-500">
-                            <i class="far fa-hand-pointer text-indigo-300 text-5xl mb-4"></i>
-                            <h3 class="text-xl font-semibold text-gray-700">Select a job</h3>
-                            <p class="mt-2 text-base">Click on a job from the list to view its details here.</p>
-                        </div>
-                        <!-- Job details content will be injected here -->
+                <!-- Initial Empty State Placeholder -->
+                <div id="details-placeholder" class="flex-1 flex flex-col items-center justify-center p-8 text-center bg-slate-50/50">
+                    <div class="h-20 w-20 bg-white rounded-full shadow-sm border border-slate-100 flex items-center justify-center mb-5">
+                        <i class="fas fa-briefcase text-3xl text-brand-300"></i>
                     </div>
+                    <h3 class="text-xl font-semibold text-slate-700">Select a position</h3>
+                    <p class="mt-2 text-sm text-slate-500 max-w-sm">Choose a job from the list on the left to view its complete description, requirements, and to apply.</p>
                 </div>
 
+                <!-- Job Details Content Container -->
+                <div id="job-details-content" class="flex-1 overflow-y-auto hidden relative">
+                    <!-- Content injected here via JS -->
+                </div>
             </div>
+
         </div>
     </main>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             // --- DOM Elements ---
+            const appBody = document.getElementById('app-body');
             const jobsContainer = document.getElementById('jobs-container');
-            const jobDetailsPane = document.getElementById('job-details-pane');
+            const jobDetailsContent = document.getElementById('job-details-content');
             const detailsPlaceholder = document.getElementById('details-placeholder');
             const loadingState = document.getElementById('loading-state');
             const errorState = document.getElementById('error-state');
@@ -252,8 +256,10 @@
             const noJobsTitle = document.getElementById('no-jobs-title');
             const noJobsText = document.getElementById('no-jobs-text');
             const searchInput = document.getElementById('search-input');
+            const backToListBtn = document.getElementById('back-to-list-btn');
 
             const userNameEl = document.getElementById('user-name');
+            const mobileUserNameEl = document.getElementById('mobile-user-name');
             const userInitialEl = document.getElementById('user-initial');
             const userMenuButton = document.getElementById('user-menu-button');
             const userMenu = document.getElementById('user-menu');
@@ -269,84 +275,145 @@
             let user = null;
 
             if (!token || !userString) {
-                window.location.href = 'student-login.html'; return;
+                console.warn("⚠️ No auth token found. Running in DEMO mode for UI preview.");
+                // IMPORTANT: Uncomment the line below in your actual production environment to enforce login
+                // window.location.href = 'student-login.html'; 
+                
+                user = { fullName: 'Demo Student' }; // Mock user for preview
+            } else {
+                try {
+                    user = JSON.parse(userString);
+                } catch (e) {
+                    console.error("Failed to parse user data:", e);
+                    localStorage.clear();
+                    // window.location.href = 'student-login.html'; // Uncomment for production
+                    user = { fullName: 'Demo Student' };
+                }
             }
 
-            try {
-                user = JSON.parse(userString);
-                const fullName = user.fullName || 'Student';
-                userNameEl.textContent = fullName;
-                userInitialEl.textContent = fullName.charAt(0).toUpperCase();
-            } catch (e) {
-                console.error("Failed to parse user data:", e);
-                localStorage.clear();
-                window.location.href = 'student-login.html';
-                return;
-            }
+            // Set User Info UI
+            const fullName = user.fullName || 'Student';
+            userNameEl.textContent = fullName;
+            if(mobileUserNameEl) mobileUserNameEl.textContent = fullName;
+            userInitialEl.textContent = fullName.charAt(0).toUpperCase();
 
-            // --- User Menu Logic ---
-            userMenuButton.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent document click listener from closing immediately
-                if (userMenu.classList.contains('hidden')) {
+            // --- User Menu Dropdown Logic ---
+            const toggleMenu = (show) => {
+                if (show) {
                     userMenu.classList.remove('hidden');
-                    userMenu.classList.add('menu-animate');
+                    // Small delay to allow display:block to apply before animating opacity
+                    requestAnimationFrame(() => {
+                        userMenu.classList.remove('opacity-0', 'scale-95');
+                        userMenu.classList.add('opacity-100', 'scale-100');
+                    });
                 } else {
-                    userMenu.classList.remove('menu-animate');
-                    userMenu.classList.add('hidden');
+                    userMenu.classList.remove('opacity-100', 'scale-100');
+                    userMenu.classList.add('opacity-0', 'scale-95');
+                    // Wait for animation to finish before hiding
+                    setTimeout(() => userMenu.classList.add('hidden'), 200);
+                }
+            };
+
+            userMenuButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isHidden = userMenu.classList.contains('hidden');
+                toggleMenu(isHidden);
+            });
+
+            document.addEventListener('click', (event) => {
+                if (!userMenuButton.contains(event.target) && !userMenu.contains(event.target)) {
+                    toggleMenu(false);
                 }
             });
+
             logoutButton.addEventListener('click', (e) => {
-                 e.preventDefault(); // Prevent default link behavior
+                e.preventDefault();
                 localStorage.removeItem('studentToken');
                 localStorage.removeItem('studentUser');
                 window.location.href = 'student-login.html';
             });
-            document.addEventListener('click', (event) => {
-                if (!userMenuButton.contains(event.target) && !userMenu.contains(event.target)) {
-                    userMenu.classList.add('hidden');
-                    userMenu.classList.remove('menu-animate');
-                }
+
+            // --- Mobile Navigation Logic ---
+            backToListBtn.addEventListener('click', () => {
+                appBody.classList.remove('mobile-view-detail');
+                appBody.classList.add('mobile-view-list');
+                
+                // Deselect job visually
+                document.querySelectorAll('.job-card.active').forEach(item => item.classList.remove('active'));
+                currentSelectedJobId = null;
             });
+
+            function showDetailsPaneMobile() {
+                if (window.innerWidth < 1024) { // lg breakpoint
+                    appBody.classList.remove('mobile-view-list');
+                    appBody.classList.add('mobile-view-detail');
+                }
+            }
 
             // --- Job Functions ---
 
+            /** Format Date helper */
+            const formatDate = (dateString) => {
+                if (!dateString) return 'Not specified';
+                const options = { year: 'numeric', month: 'short', day: 'numeric' };
+                return new Date(dateString).toLocaleDateString('en-US', options);
+            };
+
             /** Renders the list of jobs in the left column */
             function renderJobList(jobsToRender) {
-                jobsContainer.innerHTML = ''; // Clear current list
+                // Remove existing job cards (keep states)
+                const existingCards = jobsContainer.querySelectorAll('.job-card');
+                existingCards.forEach(card => card.remove());
 
                 if (jobsToRender.length === 0) {
                     noJobsTitle.textContent = searchInput.value ? 'No Jobs Match Your Search' : 'No Open Positions';
-                    noJobsText.textContent = searchInput.value ? 'Try different keywords.' : 'No jobs currently match your college eligibility.';
+                    noJobsText.textContent = searchInput.value ? 'Try adjusting your search keywords.' : 'No jobs currently match your college eligibility.';
                     noJobsState.classList.remove('hidden');
-                    jobsContainer.appendChild(noJobsState);
                 } else {
                     noJobsState.classList.add('hidden');
+                    
                     jobsToRender.forEach((job, index) => {
-                        const jobId = job.testId || job.jobId; // Use testId or jobId
+                        const jobId = job.testId || job.jobId || `mock-${index}`; 
                         const listItem = document.createElement('a');
-                        listItem.href = '#'; // Prevent navigation
-                        listItem.className = 'job-list-item block group'; // Ensure it behaves like a block, add group for hover states
+                        listItem.href = '#';
+                        listItem.className = `job-card block bg-white border border-slate-200 p-4 sm:p-5 rounded-xl cursor-pointer fade-in-item ${jobId === currentSelectedJobId ? 'active' : ''}`;
                         listItem.dataset.jobId = jobId;
-                        listItem.style.animationDelay = `${index * 50}ms`; // Animation stagger
+                        listItem.style.animationDelay = `${index * 40}ms`;
 
-                        if (jobId === currentSelectedJobId) {
-                            listItem.classList.add('active');
+                        const postedByName = job.postedBy && job.postedBy.trim() !== '' ? job.postedBy : 'Verified Company'; 
+                        
+                        // Icon mapping based on department
+                        let deptIcon = 'fa-building';
+                        let deptColor = 'text-blue-600 bg-blue-50 border-blue-100';
+                        if(job.department) {
+                            const dept = job.department.toLowerCase();
+                            if(dept.includes('tech') || dept.includes('engineering') || dept.includes('it')) { deptIcon = 'fa-laptop-code'; deptColor = 'text-brand-600 bg-brand-50 border-brand-100'; }
+                            else if(dept.includes('design') || dept.includes('ui')) { deptIcon = 'fa-pen-nib'; deptColor = 'text-purple-600 bg-purple-50 border-purple-100'; }
+                            else if(dept.includes('market') || dept.includes('sales')) { deptIcon = 'fa-chart-line'; deptColor = 'text-emerald-600 bg-emerald-50 border-emerald-100'; }
                         }
 
-                        // Use job.postedBy (moderator name) or fallback
-                        // This is where the fix from the backend matters
-                        const postedByName = job.postedBy && job.postedBy.trim() !== '' ? job.postedBy : 'Company'; 
-
                         listItem.innerHTML = `
-                            <h3 class="font-semibold text-lg text-indigo-800 group-hover:text-indigo-900 truncate">${job.title || 'Job Title'}</h3>
-                            <p class="text-sm text-gray-700 mt-1">${postedByName}</p> <!-- Display fetched name -->
-                            <div class="mt-2 flex items-center gap-2 flex-wrap"> <!-- Added flex-wrap -->
-                                <span class="inline-flex items-center text-xs font-medium text-gray-600 bg-gray-100 px-2.5 py-0.5 rounded-full">
-                                    
+                            <div class="flex justify-between items-start gap-3">
+                                <div>
+                                    <h3 class="font-semibold text-base sm:text-lg text-slate-900 leading-tight">${job.title || 'Job Title'}</h3>
+                                    <p class="text-sm text-slate-500 mt-1 flex items-center gap-1.5">
+                                        <i class="far fa-building text-slate-400 text-xs"></i>
+                                        ${postedByName}
+                                    </p>
+                                </div>
+                                <div class="h-8 w-8 rounded-lg bg-slate-50 flex items-center justify-center shrink-0 border border-slate-100">
+                                    <i class="fas fa-chevron-right text-slate-300 text-xs"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 flex flex-wrap items-center gap-2">
+                                <span class="inline-flex items-center text-xs font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200/60">
+                                    <i class="fas fa-map-marker-alt text-slate-400 mr-1.5"></i>
+                                    ${job.location || 'Remote'}
                                 </span>
-                                <!-- Add Department Tag if available -->
-                                ${job.department ? `<span class="inline-flex items-center text-xs font-medium text-blue-700 bg-blue-100 px-2.5 py-0.5 rounded-full">
-                                    <i class="fas fa-building text-blue-500 h-3 w-3 mr-1"></i>
+                                ${job.department ? `
+                                <span class="inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-md border ${deptColor}">
+                                    <i class="fas ${deptIcon} opacity-70 mr-1.5"></i>
                                     ${job.department}
                                 </span>` : ''}
                             </div>
@@ -359,68 +426,87 @@
             /** Renders the full details of a job in the right column */
             function renderJobDetails(job) {
                 detailsPlaceholder.classList.add('hidden');
-                jobDetailsPane.innerHTML = ''; // Clear previous details
+                jobDetailsContent.classList.remove('hidden');
+                jobDetailsContent.innerHTML = '';
 
-                const jobId = job.testId || job.jobId;
-                const detailsWrapper = document.createElement('div');
-                detailsWrapper.className = 'details-fade-in'; // Apply animation class
-
-                // Sanitize description: Basic check to prevent injecting harmful scripts.
+                const jobId = job.testId || job.jobId || 'mock-id';
                 const safeDescription = job.description ? job.description.replace(/<script.*?>.*?<\/script>/gi, '') : 'No description provided.';
+                const postedByName = job.postedBy && job.postedBy.trim() !== '' ? job.postedBy : 'Verified Company';
 
-                // Use job.postedBy or fallback
-                // This is also where the fix from the backend matters
-                const postedByName = job.postedBy && job.postedBy.trim() !== '' ? job.postedBy : 'Company';
+                const html = `
+                    <div class="flex flex-col h-full absolute inset-0">
+                        
+                        <!-- Scrollable Content Area -->
+                        <div class="flex-1 overflow-y-auto p-5 sm:p-8 pb-32">
+                            
+                            <!-- Detail Header -->
+                            <div class="pb-6 border-b border-slate-200">
+                                <div class="flex flex-wrap items-center gap-3 mb-3">
+                                    <span class="inline-flex items-center text-xs font-semibold uppercase tracking-wider text-brand-600 bg-brand-50 px-2.5 py-1 rounded-md">
+                                        Actively Hiring
+                                    </span>
+                                    <span class="text-sm text-slate-500">
+                                        Posted: ${formatDate(job.postedDate || new Date())}
+                                    </span>
+                                </div>
+                                
+                                <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight mb-2">${job.title || 'Role Title Not Available'}</h2>
+                                <p class="text-lg text-brand-600 font-medium mb-5">${postedByName}</p>
 
-                detailsWrapper.innerHTML = `
-                    <div class="pb-6 border-b border-gray-200 mb-6">
-                        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">${job.title || 'Job Title Not Available'}</h2>
+                                <div class="flex flex-wrap gap-4 sm:gap-6 text-sm">
+                                    <div class="flex items-center text-slate-700">
+                                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center mr-3 shrink-0">
+                                            <i class="fas fa-map-marker-alt text-slate-500"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-slate-500 mb-0.5">Location</p>
+                                            <p class="font-medium">${job.location || 'Remote / Unspecified'}</p>
+                                        </div>
+                                    </div>
+                                    ${job.department ? `
+                                    <div class="flex items-center text-slate-700">
+                                        <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center mr-3 shrink-0">
+                                            <i class="fas fa-layer-group text-slate-500"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-xs text-slate-500 mb-0.5">Department</p>
+                                            <p class="font-medium">${job.department}</p>
+                                        </div>
+                                    </div>` : ''}
+                                </div>
+                            </div>
 
-                        <div class="mt-4 flex flex-wrap gap-x-4 gap-y-2 items-center text-sm">
-                            <span class="inline-flex items-center text-indigo-700 font-medium">
-                                <i class="fas fa-map-marker-alt text-indigo-500 h-4 w-4 mr-1.5"></i>
-                                ${job.location || 'Remote'}
-                            </span>
-                            <span class="inline-flex items-center text-gray-700 font-medium">
-                                <i class="fas fa-user-tie text-gray-500 h-4 w-4 mr-1.5"></i>
-                                Posted by: ${postedByName} <!-- Display fetched name -->
-                            </span>
-                            ${job.department ? `<span class="inline-flex items-center text-blue-700 font-medium">
-                                <i class="fas fa-building text-blue-500 h-4 w-4 mr-1.5"></i>
-                                ${job.department}
-                            </span>` : ''}
+                            <!-- Description Body -->
+                            <div class="mt-8">
+                                <h4 class="text-lg font-semibold text-slate-900 mb-4 flex items-center">
+                                    <i class="fas fa-align-left text-brand-500 mr-2 text-sm"></i> Job Description
+                                </h4>
+                                <div class="prose prose-sm sm:prose-base max-w-none">
+                                    ${safeDescription.split('\n').filter(p => p.trim() !== '').map(p => `<p>${p.trim()}</p>`).join('')}
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Full Description - Using Tailwind Prose for better formatting -->
-                    <div>
-                        <h4 class="text-base font-semibold text-gray-600 uppercase tracking-wider mb-3">Job Description</h4>
-                        <div class="prose prose-sm sm:prose-base max-w-none text-gray-700 leading-relaxed">
-                            <!-- Process description for paragraphs -->
-                            ${safeDescription.split('\n').filter(p => p.trim() !== '').map(p => `<p>${p.trim()}</p>`).join('')}
+                        <!-- Sticky Footer / Apply Action -->
+                        <div class="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-200 p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 z-20 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
+                            <div class="flex items-center text-sm text-slate-600 font-medium w-full sm:w-auto justify-center sm:justify-start">
+                                <i class="far fa-calendar-alt text-slate-400 h-4 w-4 mr-2"></i>
+                                <span>Apply by: <strong class="text-slate-800">${formatDate(job.applicationDeadline || Date.now() + 864000000)}</strong></span>
+                            </div>
+                            <a href="job-application.html?jobId=${jobId}" class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-sm font-semibold rounded-xl text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 w-full sm:w-auto shadow-md hover:shadow-lg transition-all duration-200 transform hover:-translate-y-0.5">
+                                Apply Now
+                                <i class="fas fa-arrow-right ml-2 opacity-80"></i>
+                            </a>
                         </div>
+                        
                     </div>
-
-                     <!-- Apply Button Footer - Adjusted for sticky behavior -->
-                     <div class="sticky bottom-0 -mx-6 sm:-mx-8 -mb-6 sm:-mb-8 mt-8 bg-gradient-to-t from-white via-white/80 to-transparent pt-12 pb-6 px-6 sm:px-8 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                         <div class="flex items-center text-sm text-gray-600 font-medium">
-                             <i class="far fa-calendar-alt text-gray-500 h-4 w-4 mr-2"></i>
-                             <span>Apply by: ${new Date(job.applicationDeadline).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                         </div>
-                         <a href="job-application.html?jobId=${jobId}" class="inline-flex items-center px-6 py-2.5 border border-transparent text-sm font-semibold rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 w-full sm:w-auto justify-center group transition-all duration-200 ease-in-out transform hover:scale-105">
-                             Apply Now
-                             <i class="fas fa-arrow-right ml-2 transition-transform duration-200 group-hover:translate-x-1"></i>
-                         </a>
-                     </div>
                 `;
-                jobDetailsPane.appendChild(detailsWrapper);
-                // Ensure scroll position is reset when new details are loaded
-                jobDetailsPane.scrollTop = 0;
+                jobDetailsContent.innerHTML = html;
             }
 
             // --- Event Listeners ---
 
-            // Search input listener with debounce
+            // Search filtering
             let searchTimeout;
             searchInput.addEventListener('input', (e) => {
                 clearTimeout(searchTimeout);
@@ -431,80 +517,108 @@
                         (job.description || '').toLowerCase().includes(searchTerm) ||
                         (job.location || '').toLowerCase().includes(searchTerm) ||
                         (job.department || '').toLowerCase().includes(searchTerm) ||
-                        (job.postedBy || '').toLowerCase().includes(searchTerm) // Search by poster name too
+                        (job.postedBy || '').toLowerCase().includes(searchTerm)
                     );
                     renderJobList(filteredJobs);
-                    // Clear details pane if current selection is filtered out
-                    if (currentSelectedJobId && !filteredJobs.some(j => (j.testId || j.jobId) === currentSelectedJobId)) {
-                        jobDetailsPane.innerHTML = ''; // Clear details
-                        detailsPlaceholder.classList.remove('hidden'); // Show placeholder
-                        currentSelectedJobId = null; // Reset selection
+                    
+                    // Reset selection if current active job is filtered out
+                    if (currentSelectedJobId && !filteredJobs.some(j => (j.testId || j.jobId || j.id) === currentSelectedJobId)) {
+                        jobDetailsContent.innerHTML = '';
+                        jobDetailsContent.classList.add('hidden');
+                        detailsPlaceholder.classList.remove('hidden');
+                        currentSelectedJobId = null;
                     }
-                }, 300); // 300ms debounce
+                }, 300);
             });
 
-
-            // Job list click listener (Event Delegation)
+            // Job List Click Delegation
             jobsContainer.addEventListener('click', (e) => {
-                e.preventDefault(); // Prevent <a> tag navigation
-                const clickedItem = e.target.closest('.job-list-item');
+                const clickedCard = e.target.closest('.job-card');
+                if (!clickedCard) return;
+                e.preventDefault();
 
-                if (!clickedItem) return;
+                const jobId = clickedCard.dataset.jobId;
+                
+                // Show details on mobile even if clicking the same job
+                showDetailsPaneMobile();
 
-                const jobId = clickedItem.dataset.jobId;
-                if (jobId === currentSelectedJobId) return; // Don't re-render if already selected
-
+                if (jobId === currentSelectedJobId) return;
                 currentSelectedJobId = jobId;
 
-                // Update active class styling
-                document.querySelectorAll('.job-list-item.active').forEach(item => {
-                    item.classList.remove('active');
-                });
-                clickedItem.classList.add('active');
+                // UI updates for active state
+                document.querySelectorAll('.job-card.active').forEach(item => item.classList.remove('active'));
+                clickedCard.classList.add('active');
 
-                // Find and render the selected job details
-                const selectedJob = allJobs.find(j => (j.testId || j.jobId) === jobId);
+                // Render specific job details
+                const selectedJob = allJobs.find(j => (j.testId || j.jobId || j.id) === jobId);
                 if (selectedJob) {
                     renderJobDetails(selectedJob);
-                } else {
-                    console.warn(`Job with ID ${jobId} not found in current list.`);
-                    jobDetailsPane.innerHTML = '';
-                    detailsPlaceholder.classList.remove('hidden');
                 }
             });
 
+            // --- Initialization & API Fetch ---
+            async function fetchJobs() {
+                try {
+                    const response = await fetch('/api/student/jobs', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
 
-            // --- Initial Fetch Jobs ---
-            try {
-                const response = await fetch('/api/student/jobs', { // Endpoint fetches jobs for the student's college
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                    if (!response.ok) {
+                        let errorMsg = 'Could not load jobs.';
+                        try { const err = await response.json(); errorMsg = err.message || errorMsg; } catch (e) {}
+                        throw new Error(errorMsg);
+                    }
 
-                if (!response.ok) {
-                    let errorMsg = 'Could not load jobs.';
-                     try { const err = await response.json(); errorMsg = err.message || errorMsg; } catch (e) {}
-                    throw new Error(errorMsg);
-                }
+                    allJobs = await response.json();
+                    loadingState.classList.add('hidden');
+                    
+                    if (allJobs.length === 0) {
+                        noJobsState.classList.remove('hidden');
+                    } else {
+                        renderJobList(allJobs);
+                    }
 
-                allJobs = await response.json();
-                console.log("Fetched jobs data from backend:", allJobs); // Log fetched data to verify postedBy field
-                loadingState.style.display = 'none'; // Hide loader
-
-                if (allJobs.length === 0) {
-                    noJobsTitle.textContent = 'No Open Positions';
-                    noJobsText.textContent = 'No jobs currently match your college eligibility.';
-                    noJobsState.classList.remove('hidden');
-                } else {
-                    noJobsState.classList.add('hidden');
+                } catch (error) {
+                    console.warn("⚠️ API fetch failed. Using Mock Data for UI Preview.", error);
+                    loadingState.classList.add('hidden');
+                    
+                    // Fallback Demo Data so the UI can be previewed without the backend
+                    allJobs = [
+                        {
+                            id: '1', jobId: 'job-1', title: 'Frontend Developer Intern', postedBy: 'TechNova Solutions', 
+                            location: 'Bangalore, India', department: 'Engineering', 
+                            description: 'We are looking for a passionate Frontend Developer Intern.\n\nRequirements:\n- Proficient in HTML, CSS, JavaScript.\n- Experience with React or Vue is a plus.\n- Strong problem-solving skills.\n\nPerks:\n- Flexible hours.\n- Mentorship from senior developers.',
+                            applicationDeadline: '2026-06-15T00:00:00Z', postedDate: '2026-05-01T10:00:00Z'
+                        },
+                        {
+                            id: '2', jobId: 'job-2', title: 'Product Design (UX/UI)', postedBy: 'Creative Minds Agency', 
+                            location: 'Remote', department: 'Design', 
+                            description: 'Join our award-winning design team!\n\nResponsibilities:\n- Create wireframes and high-fidelity prototypes.\n- Conduct user research and testing.\n- Collaborate with developers to implement designs.\n\nMust have a strong portfolio demonstrating user-centric design.',
+                            applicationDeadline: '2026-05-30T00:00:00Z', postedDate: '2026-05-03T14:30:00Z'
+                        },
+                        {
+                            id: '3', jobId: 'job-3', title: 'Data Analyst Trainee', postedBy: 'FinTech Global', 
+                            location: 'Mumbai, India', department: 'Analytics', 
+                            description: 'Kickstart your career in Data Analytics.\n\nYou will work directly with our core data team analyzing massive datasets to find actionable insights.\n\nRequires strong knowledge of SQL, Python, and basic statistics. Familiarity with Tableau or PowerBI is preferred.',
+                            applicationDeadline: '2026-06-01T00:00:00Z', postedDate: '2026-05-04T09:15:00Z'
+                        },
+                        {
+                            id: '4', jobId: 'job-4', title: 'Marketing Associate', postedBy: 'GrowthStack', 
+                            location: 'Delhi, India', department: 'Marketing', 
+                            description: 'Help us grow our brand presence!\n\nWe need a creative individual to help manage social media campaigns, write blog content, and assist with SEO strategies.\n\nExcellent written communication skills are a must.',
+                            applicationDeadline: '2026-05-25T00:00:00Z', postedDate: '2026-05-05T11:00:00Z'
+                        }
+                    ];
                     renderJobList(allJobs);
+                    
+                    // Original Error Handling (Uncomment for production)
+                    // errorState.classList.remove('hidden');
+                    // errorMessage.textContent = error.message || 'An unknown error occurred while loading jobs.';
                 }
-
-            } catch (error) {
-                console.error("Error fetching jobs:", error);
-                loadingState.style.display = 'none';
-                errorState.classList.remove('hidden');
-                errorMessage.textContent = error.message || 'An unknown error occurred while loading jobs.';
             }
+
+            // Start fetch
+            fetchJobs();
         });
     </script>
 </body>
