@@ -51,6 +51,16 @@
             animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
         }
 
+        /* Success Pulse Animation */
+        @keyframes successPulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .success-pulse {
+            animation: successPulse 0.6s ease-out forwards;
+        }
+
         /* Entry Animation */
         .fade-in-up {
             animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -102,27 +112,24 @@
                 
                 <form id="join-quiz-form" class="relative">
                     
-                    <!-- 6-Digit Premium Input -->
-                    <div id="otp-container" class="flex justify-between gap-2 sm:gap-3 mb-6 dir-ltr">
-                        <input type="text" maxlength="1" class="code-input w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-bold text-slate-900 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all outline-none shadow-sm placeholder-slate-300" placeholder="·" required>
-                        <input type="text" maxlength="1" class="code-input w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-bold text-slate-900 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all outline-none shadow-sm placeholder-slate-300" placeholder="·" required>
-                        <input type="text" maxlength="1" class="code-input w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-bold text-slate-900 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all outline-none shadow-sm placeholder-slate-300" placeholder="·" required>
-                        <input type="text" maxlength="1" class="code-input w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-bold text-slate-900 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all outline-none shadow-sm placeholder-slate-300" placeholder="·" required>
-                        <input type="text" maxlength="1" class="code-input w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-bold text-slate-900 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all outline-none shadow-sm placeholder-slate-300" placeholder="·" required>
-                        <input type="text" maxlength="1" class="code-input w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-bold text-slate-900 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all outline-none shadow-sm placeholder-slate-300" placeholder="·" required>
+                    <!-- 6-Digit Premium Input (inputmode="numeric" keeps numpad open on mobile) -->
+                    <div id="otp-container" class="flex justify-between gap-2 sm:gap-3 mb-6 dir-ltr rounded-xl">
+                        <input type="text" inputmode="numeric" pattern="\d*" maxlength="1" class="code-input w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-bold text-slate-900 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all outline-none shadow-sm placeholder-slate-300" placeholder="·" required>
+                        <input type="text" inputmode="numeric" pattern="\d*" maxlength="1" class="code-input w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-bold text-slate-900 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all outline-none shadow-sm placeholder-slate-300" placeholder="·" required>
+                        <input type="text" inputmode="numeric" pattern="\d*" maxlength="1" class="code-input w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-bold text-slate-900 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all outline-none shadow-sm placeholder-slate-300" placeholder="·" required>
+                        <input type="text" inputmode="numeric" pattern="\d*" maxlength="1" class="code-input w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-bold text-slate-900 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all outline-none shadow-sm placeholder-slate-300" placeholder="·" required>
+                        <input type="text" inputmode="numeric" pattern="\d*" maxlength="1" class="code-input w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-bold text-slate-900 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all outline-none shadow-sm placeholder-slate-300" placeholder="·" required>
+                        <input type="text" inputmode="numeric" pattern="\d*" maxlength="1" class="code-input w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl sm:text-3xl font-bold text-slate-900 bg-slate-50/50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all outline-none shadow-sm placeholder-slate-300" placeholder="·" required>
                     </div>
-
-                    <!-- Hidden input to store combined code for form submission logic if needed -->
-                    <input type="hidden" id="quiz-code-full" name="quizCode">
 
                     <!-- Error Message Container -->
                     <div class="h-6 mb-4">
                         <p id="error-message" class="text-rose-500 text-sm font-semibold tracking-wide opacity-0 transition-opacity duration-300"></p>
                     </div>
 
-                    <!-- Submit Button with Loading State -->
-                    <button type="submit" id="submit-btn" class="relative flex items-center justify-center w-full py-4 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 hover:shadow-indigo-600/50 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 overflow-hidden disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:-translate-y-0">
-                        <span id="btn-text" class="flex items-center gap-2">
+                    <!-- Submit Button with Loading & Success States -->
+                    <button type="submit" id="submit-btn" class="relative flex items-center justify-center w-full py-4 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 hover:shadow-indigo-600/50 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 overflow-hidden disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:-translate-y-0 disabled:shadow-none">
+                        <span id="btn-text" class="flex items-center gap-2 transition-opacity duration-200">
                             Join Session
                             <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                         </span>
@@ -200,11 +207,6 @@
                         // Focus the next empty input or the last one
                         const focusIndex = Math.min(pastedData.length, inputs.length - 1);
                         inputs[focusIndex].focus();
-                        
-                        // If full, try submitting
-                        if (pastedData.length === 6) {
-                             // Optional: form.dispatchEvent(new Event('submit'));
-                        }
                     }
                 });
             });
@@ -239,6 +241,28 @@
                 }, 500);
             };
 
+            // Show Success Validation State UI
+            const setSuccessState = () => {
+                // Change button style to green success state
+                submitBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                submitBtn.classList.add('bg-emerald-500', 'hover:bg-emerald-600', 'shadow-emerald-500/40');
+                
+                // Hide spinner, show success checkmark
+                btnSpinner.classList.add('hidden');
+                btnText.innerHTML = `
+                    Success!
+                    <svg class="w-6 h-6 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                `;
+                btnText.classList.remove('opacity-0');
+
+                // Add success pulse to inputs
+                otpContainer.classList.add('success-pulse');
+                inputs.forEach(input => {
+                    input.classList.remove('focus:ring-indigo-500/20', 'focus:border-indigo-500');
+                    input.classList.add('border-emerald-500', 'text-emerald-700', 'bg-emerald-50/50');
+                });
+            };
+
             // Form Submit Logic
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -258,7 +282,7 @@
                 errorMessageEl.classList.add('opacity-0');
 
                 try {
-                    // Slight artificial delay to show the nice animation (optional, remove in prod if desired)
+                    // Slight artificial delay to show the nice loading animation (optional)
                     await new Promise(resolve => setTimeout(resolve, 600));
 
                     const response = await fetch('/api/quizcom/join', {
@@ -273,9 +297,14 @@
                         throw new Error(data.message || 'Invalid code or failed to connect.');
                     }
 
-                    // Success - redirecting
+                    // On Success: Show Animation, then Redirect
+                    setSuccessState();
                     localStorage.setItem('liveQuizId', data.liveQuizId);
-                    window.location.href = `quiz-start.html`;
+                    
+                    // Delay the redirect to allow the user to see the success animation
+                    setTimeout(() => {
+                        window.location.href = `quiz-start.html`;
+                    }, 1200);
 
                 } catch (error) {
                     // Revert UI on error
