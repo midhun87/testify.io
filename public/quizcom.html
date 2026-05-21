@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QuizCom | Welcome</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Configuration for Custom Brand Colors -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            purple: '#A21D7F',
+                            teal: '#2C5E5D',
+                            yellow: '#F8A836',
+                            green: '#8DC63F',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Prevents pull-to-refresh on mobile browsers for an app-like feel */
+        body {
+            overscroll-behavior-y: none;
+        }
+    </style>
+</head>
+<body class="antialiased bg-slate-50 min-h-[100dvh] flex flex-col text-slate-800 selection:bg-brand-purple selection:text-white">
+
+    <!-- Enterprise Top Navigation -->
+    <header class="w-full bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Left Side Brands -->
+            <div class="flex items-center gap-4 sm:gap-6">
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760086493/QuizCom_u5wzcp.png" 
+                     alt="QuizCom" 
+                     class="h-8 sm:h-10 object-contain">
+                
+                <div class="h-6 w-px bg-slate-300 hidden sm:block"></div>
+                
+                <div class="hidden sm:flex items-center gap-2">
+                    <span class="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Powered By</span>
+                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" 
+                         alt="Testify" 
+                         class="h-5 object-contain grayscale opacity-60">
+                </div>
+            </div>
+            
+            <!-- Admin Access -->
+            <a href="https://testify.xetasolutions.in/quizcom/quiz-moderator-login.html" 
+               class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-brand-teal transition-colors px-3 py-2 rounded-md hover:bg-slate-50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <span class="hidden sm:inline">Moderator Console</span>
+                <span class="sm:hidden">Admin</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content Area (Split Enterprise Layout) -->
+    <main class="flex-1 w-full flex items-center bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiNlMmU4ZjAiLz48L3N2Zz4=')]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20 w-full grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            
+            <!-- Left Side: Enterprise Value Proposition -->
+            <div class="order-2 lg:order-1 text-center lg:text-left">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-brand-teal/10 text-brand-teal text-xs font-bold tracking-wide uppercase mb-6 border border-brand-teal/20">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-teal opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-brand-teal"></span>
+                    </span>
+                    Enterprise Assessment Platform
+                </div>
+                
+                <h1 class="text-4xl sm:text-5xl font-extrabold text-slate-900 leading-[1.15] mb-6 tracking-tight">
+                    Evaluate knowledge with <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-purple to-brand-teal">unmatched precision.</span>
+                </h1>
+                
+                <p class="text-lg text-slate-600 mb-8 max-w-xl mx-auto lg:mx-0">
+                    Join secure, live assessment sessions instantly. QuizCom provides a scalable, enterprise-ready environment for seamless evaluation and real-time insights.
+                </p>
+                
+                <!-- Trust Signals -->
+                <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 sm:gap-8 text-sm text-slate-600 font-medium">
+                    <div class="flex items-center gap-2">
+                        <svg class="h-5 w-5 text-brand-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        Frictionless Entry
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg class="h-5 w-5 text-brand-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                        Secure Sessions
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg class="h-5 w-5 text-brand-green" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                        Real-time Sync
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: Action Card -->
+            <div class="order-1 lg:order-2 w-full max-w-md mx-auto lg:mr-0">
+                <div class="bg-white p-8 sm:p-10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-200 relative overflow-hidden group hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] transition-shadow duration-300">
+                    <!-- Brand Top Accent Line -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand-purple via-brand-teal to-brand-yellow"></div>
+                    
+                    <div class="text-center mb-8">
+                        <div class="mx-auto w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100 group-hover:scale-110 transition-transform duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-brand-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                            </svg>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-900 mb-2">Student Access</h2>
+                        <p class="text-sm text-slate-500">Enter your live session instantly. No registration required.</p>
+                    </div>
+
+                    <!-- Join Session Button -->
+                    <a href="https://testify.xetasolutions.in/student/quiz-join" 
+                       class="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-brand-purple text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300 shadow-md hover:shadow-xl hover:shadow-brand-purple/20">
+                        Join Quiz Session
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                    </a>
+
+                    <!-- Admin Portal Link -->
+                    <div class="mt-8 pt-6 border-t border-slate-100 text-center">
+                        <p class="text-xs text-slate-500 mb-3 uppercase tracking-wide font-semibold">System Administration</p>
+                        <a href="https://testify.xetasolutions.in/quizcom/quiz-moderator-login.html" class="text-brand-teal hover:text-brand-purple font-medium text-sm transition-colors inline-flex items-center gap-1">
+                            Access Moderator Console <span aria-hidden="true">&rarr;</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Enterprise Footer -->
+    <footer class="w-full bg-white border-t border-slate-200 py-8 mt-auto z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p class="text-sm text-slate-500 font-medium">
+                &copy; <script>document.write(new Date().getFullYear())</script> QuizCom by Testify. All rights reserved.
+            </p>
+            <div class="flex items-center gap-3 text-sm text-slate-500 font-medium">
+                <span>Enterprise Solutions by</span>
+                <a href="#" class="opacity-80 hover:opacity-100 transition-opacity">
+                    <img src="https://res.cloudinary.com/djdwpjm7x/image/upload/v1771001520/Xeta_Header_wfw12w.png" 
+                         alt="Xeta Tech" 
+                         class="h-6 object-contain">
+                </a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
