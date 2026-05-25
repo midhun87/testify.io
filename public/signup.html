@@ -543,7 +543,7 @@
 
                     const result = await response.json();
                     
-                    if (response.ok || !response.ok) { // Mocking success for UI preview
+                    if (response.ok) {
                         showMessage("Code sent to your email. Enter it below to continue.", true);
                         
                         otpStepDiv.classList.add('hidden');
@@ -557,13 +557,7 @@
                         showMessage(result.message || 'Failed to send verification code.', false);
                     }
                 } catch (error) {
-                    showMessage("Code sent to your email. Enter it below to continue.", true);
-                    otpStepDiv.classList.add('hidden');
-                    signupForm.classList.remove('hidden');
-                    emailFinalInput.value = email;
-                    mobileFinalInput.value = mobile;
-                    emailFinalInputDisplay.value = email;
-                    mobileFinalInputDisplay.value = mobile;
+                    showMessage("An unexpected error occurred. Please try again.", false);
                 } finally {
                     getOtpBtn.disabled = false;
                     getOtpText.textContent = 'Continue with Email';
@@ -620,8 +614,7 @@
                         setTimeout(() => { window.location.href = 'login.html'; }, 2000);
                     }
                 } catch (error) {
-                    showMessage('Account created successfully! Redirecting...', true);
-                    setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+                    showMessage('An unexpected error occurred during signup.', false);
                 } finally {
                     if(!submitSignupBtn.disabled) {
                        submitSignupBtn.disabled = false;
