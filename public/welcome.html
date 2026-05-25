@@ -215,6 +215,35 @@
         <span class="absolute right-16 px-3 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded-lg opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity whitespace-nowrap">Need Help?</span>
     </a>
 
+    <!-- App Download Toast Banner -->
+    <div id="app-download-banner" class="fixed bottom-4 left-4 right-4 md:bottom-6 md:left-6 md:right-auto md:w-[380px] bg-white rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] border border-slate-200 z-[60] transform transition-all duration-500 translate-y-12 opacity-0 pointer-events-none flex flex-col p-4 md:p-5">
+        <div class="flex items-start justify-between mb-2">
+            <div class="flex items-center gap-2">
+                <div class="bg-emerald-100 p-1.5 rounded-lg text-emerald-600">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993.0004.5511-.4482.9997-.9993.9997zm-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993.0004.5511-.4482.9997-.9993.9997zm11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.022 3.503C15.5902 8.2439 13.8533 7.85 12 7.85c-1.8533 0-3.5902.3939-5.1371 1.1002L4.841 5.4471a.4158.4158 0 00-.5676-.1521.4158.4158 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3432-4.1021-2.6889-7.5743-6.1185-9.4396z"/></svg>
+                </div>
+                <span class="font-bold text-slate-900 text-[15px]">TESTIFY for Android</span>
+            </div>
+            <button id="close-app-banner" class="text-slate-400 hover:text-slate-600 transition-colors p-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div class="mb-3">
+            <span class="inline-block px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-full uppercase tracking-wider mb-2">Coming to PlayStore</span>
+            <p class="text-[13px] text-slate-500 leading-relaxed font-medium">
+                Experience the web interface securely on the go! Our app is actively in development and 100% safe to use.
+            </p>
+        </div>
+        <div class="flex gap-2 mt-auto">
+            <a href="https://median.co/share/abxejad#apk" target="_blank" rel="noopener noreferrer" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[13px] font-bold py-2.5 px-3 rounded-xl text-center transition-all duration-300 shadow-sm shadow-indigo-200">
+                Download APK
+            </a>
+            <button id="dismiss-app-banner" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-[13px] font-bold py-2.5 px-3 rounded-xl transition-all duration-300">
+                Maybe Later
+            </button>
+        </div>
+    </div>
+
     <main>
         <!-- Restored & Enhanced Image Hero Section -->
         <section class="relative overflow-hidden pt-36 pb-24 md:pt-48 md:pb-32 lg:pt-56 lg:pb-40 bg-slate-900 text-white min-h-[90vh] flex flex-col justify-center">
@@ -489,6 +518,38 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             
+            // --- App Download Banner Logic ---
+            const appBanner = document.getElementById('app-download-banner');
+            const closeBannerBtn = document.getElementById('close-app-banner');
+            const dismissBannerBtn = document.getElementById('dismiss-app-banner');
+
+            // Check local storage to see if the user previously dismissed the banner
+            const hasDismissedBanner = localStorage.getItem('testify_app_banner_dismissed');
+
+            if (!hasDismissedBanner) {
+                // Show the banner smoothly after 2 seconds
+                setTimeout(() => {
+                    appBanner.classList.remove('translate-y-12', 'opacity-0', 'pointer-events-none');
+                    appBanner.classList.add('translate-y-0', 'opacity-100');
+                }, 2000);
+            }
+
+            const hideBanner = () => {
+                appBanner.classList.remove('translate-y-0', 'opacity-100');
+                appBanner.classList.add('translate-y-12', 'opacity-0');
+                
+                // Save to local storage so it doesn't pop up again for this user
+                localStorage.setItem('testify_app_banner_dismissed', 'true');
+                
+                setTimeout(() => {
+                    appBanner.style.display = 'none';
+                }, 500); // Matches CSS transition duration
+            };
+
+            closeBannerBtn.addEventListener('click', hideBanner);
+            dismissBannerBtn.addEventListener('click', hideBanner);
+
+
             // --- Mobile Drawer Logic ---
             const mobileMenuButton = document.getElementById('mobile-menu-button');
             const mobileDrawer = document.getElementById('mobile-drawer');
