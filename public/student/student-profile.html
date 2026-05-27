@@ -20,276 +20,535 @@
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .sidebar-link { transition: all 0.2s ease-in-out; }
         .sidebar-link:hover { background-color: rgba(255, 255, 255, 0.1); transform: translateX(4px); }
-        .sidebar-link.active { background-color: rgba(255, 255, 255, 0.2); font-weight: 600; }
+        .sidebar-link.active {
+            background-color: #4F46E5; color: #ffffff; font-weight: 600;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+        }
+        .glass-card {
+            background: #ffffff; border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        #mobile-sidebar { transition: transform 0.3s ease-in-out; }
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         
-        /* ID Card hidden container styling */
+        /* Ensure the cropper's image is not distorted */
+        #image-to-crop-container { width: 100%; height: 300px; background-color: #f3f4f6; border-radius: 0.5rem; overflow: hidden; }
+        #image-to-crop { display: block; max-width: 100%; max-height: 300px; }
+
+        /* ID Card hidden container */
         #id-card-export-container {
             position: absolute;
             left: -9999px;
-            top: 0;
+            top: -9999px;
+            pointer-events: none;
         }
     </style>
 </head>
-<body class="flex h-screen overflow-hidden">
+<body class="text-slate-800 antialiased overflow-hidden">
 
-    <!-- Sidebar -->
-    <aside class="w-64 bg-indigo-900 text-white flex flex-col hidden md:flex">
-        <div class="p-6 text-center text-2xl font-bold border-b border-indigo-800 tracking-wider">
-            TESTIFY
-        </div>
-        <nav class="flex-1 p-4 space-y-2">
-            <a href="student-dashboard.html" class="sidebar-link block p-3 rounded-lg text-indigo-200">Dashboard</a>
-            <a href="student-profile.html" class="sidebar-link active block p-3 rounded-lg bg-white/10 text-white">My Profile</a>
-            <a href="student-tests.html" class="sidebar-link block p-3 rounded-lg text-indigo-200">My Tests</a>
-            <a href="student-reports.html" class="sidebar-link block p-3 rounded-lg text-indigo-200">Reports</a>
-        </nav>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col overflow-y-auto relative">
+    <div class="flex h-screen bg-slate-50 overflow-hidden">
         
-        <!-- Header -->
-        <header class="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-10">
-            <div class="flex items-center gap-4">
-                <button class="md:hidden text-gray-600 hover:text-indigo-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        <!-- Mobile Sidebar Overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden md:hidden transition-opacity"></div>
+
+        <!-- Sidebar (Desktop & Mobile) -->
+        <aside id="mobile-sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 text-slate-300 transform -translate-x-full md:relative md:translate-x-0 flex flex-col transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none">
+            <div class="flex items-center justify-between md:justify-center h-20 border-b border-slate-700/50 px-6 md:px-0 flex-shrink-0">
+                <div class="flex items-center">
+                    <img class="h-10 w-10 object-contain" src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY Logo">
+                    <span class="ml-3 text-2xl font-bold tracking-tight text-white">TESTIFY</span>
+                </div>
+                <button id="close-sidebar-btn" class="md:hidden text-slate-400 hover:text-white focus:outline-none">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
-                <h1 class="text-xl font-bold text-gray-800">Student Profile</h1>
             </div>
-
-            <!-- NEW ID CARD BUTTON ADDED HERE -->
-            <button onclick="generateIDCard()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 shadow-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                Generate ID Card
-            </button>
-        </header>
-
-        <!-- Profile Details Section -->
-        <div class="p-6 max-w-4xl mx-auto w-full">
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 flex flex-col md:flex-row gap-8 items-center md:items-start relative">
-                
-                <!-- Profile Image with Edit Button -->
-                <div class="relative group">
-                    <img id="profile-image" src="https://ui-avatars.com/api/?name=Student&background=random" alt="Profile" class="w-32 h-32 rounded-full object-cover border-4 border-indigo-50 shadow-md">
-                    <label for="image-upload" class="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full shadow hover:bg-indigo-700 transition cursor-pointer">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                        <input type="file" id="image-upload" accept="image/*" class="hidden">
-                    </label>
-                </div>
-
-                <!-- User Info -->
-                <div class="flex-1 text-center md:text-left">
-                    <h2 id="user-name" class="text-2xl font-bold text-gray-900">Loading Name...</h2>
-                    <p id="user-email" class="text-gray-500 mb-4">loading@email.com</p>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 text-sm">
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                            <span class="block text-gray-400 text-xs uppercase tracking-wider mb-1">Role</span>
-                            <span class="font-semibold text-gray-700">Student</span>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                            <span class="block text-gray-400 text-xs uppercase tracking-wider mb-1">Status</span>
-                            <span class="font-semibold text-green-600">Active</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- HIDDEN ID CARD TEMPLATE (Used for rendering the image) -->
-        <div id="id-card-export-container">
-            <div id="id-card-dom" class="w-[350px] bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 relative">
-                <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-indigo-600 to-purple-600"></div>
-                <div class="relative pt-6 pb-2 text-center z-10">
-                    <h2 class="text-white font-extrabold text-2xl tracking-widest drop-shadow-md">TESTIFY</h2>
-                    <p class="text-indigo-100 text-xs font-medium uppercase tracking-wider mt-1">Official Student ID</p>
-                </div>
-                <div class="relative px-6 pb-6 pt-4 flex flex-col items-center bg-white mt-4 rounded-t-[2rem]">
-                    <img id="card-render-image" class="w-24 h-24 rounded-full border-4 border-white shadow-lg -mt-14 object-cover bg-gray-100 relative z-20" src="" alt="Profile">
-                    <h3 id="card-render-name" class="mt-3 font-bold text-xl text-gray-800">Student Name</h3>
-                    <p id="card-render-email" class="text-sm text-gray-500 mb-1">student@email.com</p>
-                    <p class="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-4 py-1 rounded-full mb-5 mt-2">STUDENT</p>
-                    <div class="flex flex-col items-center w-full border-t border-gray-100 pt-5 mt-2">
-                        <div id="card-render-qr" class="p-2 bg-white border-2 border-gray-100 rounded-xl shadow-sm"></div>
-                        <p class="text-[10px] text-gray-400 mt-3 text-center uppercase tracking-wider font-semibold">Scan to View Reports</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Image Crop Modal -->
-        <div id="imageCropModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-            <div class="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
-                <div class="p-4 border-b flex justify-between items-center">
-                    <h3 class="font-bold text-lg">Crop Profile Picture</h3>
-                    <button id="closeCropModal" class="text-gray-500 hover:text-gray-700">&times;</button>
-                </div>
-                <div class="p-4">
-                    <div class="w-full h-64 bg-gray-100 relative">
-                        <img id="cropImage" src="" alt="To Crop" class="max-w-full max-h-full">
-                    </div>
-                </div>
-                <div class="p-4 border-t flex justify-end gap-2">
-                    <button id="cancelCrop" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
-                    <button id="saveCrop" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Confirm & Upload</button>
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <!-- Cropper.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-
-    <script>
-        // Load User Data
-        document.addEventListener('DOMContentLoaded', () => {
-            let user = JSON.parse(localStorage.getItem('user'));
             
-            // Fallback
-            if(!user) {
-                user = { name: "Student User", email: "student@example.com" };
+            <div class="flex flex-col flex-grow p-4 overflow-y-auto space-y-1 custom-scrollbar">
+                <a href="/student/dashboard" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Dashboard
+                </a>
+                <a href="/student/join-meeting" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>
+                    Join Meeting
+                </a>
+                <a href="/student/Test" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    Take Test
+                </a>
+                <a href="/student/test-history" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Test History
+                </a>
+                <a href="/student/my-certificates" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    My Certificates
+                </a>
+                <a href="/student/my-courses" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path></svg>
+                    My Courses
+                </a>
+                <div class="pt-4 mt-4 border-t border-slate-700/50">
+                    <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Workspace</p>
+                    <a href="/student/compiler" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                        <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6.75 7.5l3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0021 18V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v12a2.25 2.25 0 002.25 2.25z"></path></svg>
+                        Code Space
+                    </a>
+                    <a href="/student/sql-compiler" class="sidebar-link flex items-center px-4 py-3 rounded-xl text-sm font-medium mt-1">
+                        <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 9.75h7.5v7.5h-7.5v-7.5zM3.375 3.375h17.25v17.25h-17.25v-17.25z"></path></svg>
+                        SQL CodeLab
+                    </a>
+                </div>
+            </div>
+            
+            <div class="p-4 mt-auto border-t border-slate-700/50 flex-shrink-0">
+                 <a href="/student/profile" class="sidebar-link active flex items-center px-4 py-3 rounded-xl text-sm font-medium">
+                    <svg class="h-5 w-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a8.25 8.25 0 1115 0v.75H4.5v-.75z"></path></svg>
+                    My Profile
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-1 overflow-y-auto w-full custom-scrollbar">
+            
+            <!-- Header -->
+            <header class="flex items-center justify-between h-20 bg-white border-b border-slate-200 px-4 sm:px-8 sticky top-0 z-30 flex-shrink-0">
+                <div class="flex items-center">
+                    <button id="open-sidebar-btn" class="mr-4 md:hidden text-slate-500 hover:text-slate-800 focus:outline-none bg-slate-100 p-2 rounded-lg">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    </button>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">Account Settings</h1>
+                        <p class="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">Manage your profile and preferences.</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <span id="user-info" class="font-semibold text-slate-700 text-sm hidden sm:block"></span>
+                    
+                    <!-- Beautiful Generate ID Button -->
+                    <button id="generate-id-btn" onclick="generateIDCard()" class="bg-white border-2 border-indigo-100 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-200 px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 shadow-sm focus:ring-4 focus:ring-indigo-100">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
+                        <span class="hidden sm:inline">Generate ID</span>
+                        <span class="sm:hidden">ID</span>
+                    </button>
+                </div>
+            </header>
+
+            <main class="p-4 sm:p-8 max-w-5xl mx-auto w-full flex-grow">
+                <div class="glass-card p-6 sm:p-10 rounded-2xl mb-6">
+                    
+                    <!-- Profile Header Block -->
+                    <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8 mb-8 pb-8 border-b border-slate-200">
+                        <div class="relative group">
+                            <img id="profile-image" src="https://ui-avatars.com/api/?name=Student&background=E0E7FF&color=4F46E5" alt="Profile Picture" crossorigin="anonymous" class="w-32 h-32 sm:w-40 sm:h-40 rounded-full object-cover border-4 border-white shadow-lg z-10 relative bg-white">
+                            <div class="absolute inset-0 rounded-full border-2 border-indigo-100 scale-110 -z-0"></div>
+                            <button onclick="document.getElementById('image-input').click()" class="absolute bottom-0 right-0 sm:bottom-2 sm:right-2 bg-indigo-600 text-white p-2.5 rounded-full shadow-md hover:bg-indigo-700 transition-colors z-20" title="Change Picture">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            </button>
+                        </div>
+                        <div class="text-center md:text-left flex-1">
+                            <h2 id="profile-name" class="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight mb-1">Loading...</h2>
+                            <p id="profile-email" class="text-slate-500 font-medium flex items-center justify-center md:justify-start mb-1">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                <span>...</span>
+                            </p>
+                            <p id="profile-college" class="text-slate-500 font-medium flex items-center justify-center md:justify-start">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                <span>...</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Profile Form -->
+                    <form id="profile-form">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div>
+                                <label for="mobile" class="block text-sm font-bold text-slate-700 mb-1.5 tracking-wide">Mobile Number</label>
+                                <input type="text" id="mobile" class="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-all text-slate-800 outline-none" placeholder="Enter mobile number">
+                            </div>
+                            <div>
+                                <label for="department" class="block text-sm font-bold text-slate-700 mb-1.5 tracking-wide">Department</label>
+                                <input type="text" id="department" class="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-all text-slate-800 outline-none" placeholder="e.g. Computer Science">
+                            </div>
+                            <div>
+                                <label for="rollNumber" class="block text-sm font-bold text-slate-700 mb-1.5 tracking-wide">Roll Number</label>
+                                <input type="text" id="rollNumber" class="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-white transition-all text-slate-800 outline-none" placeholder="Enter roll number">
+                            </div>
+                        </div>
+                        <div class="flex justify-end pt-4 border-t border-slate-100">
+                            <button type="submit" class="px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 hover:-translate-y-0.5 transition-all focus:ring-4 focus:ring-indigo-100 w-full sm:w-auto">Save Changes</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="bg-amber-50 border border-amber-200 p-5 rounded-xl flex gap-4 text-amber-800 items-start">
+                    <svg class="w-6 h-6 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <div>
+                        <p class="font-bold text-sm">Profile Picture Requirements</p>
+                        <p class="text-sm mt-1">Please upload a clear, recent photograph of your face. <b>Your identity for proctored tests will be strictly verified against this image.</b> To prevent fraud, the profile picture can only be set once.</p>
+                    </div>
+                </div>
+            </main>
+            
+            <footer class="bg-white border-t border-slate-200 p-5 mt-auto flex-shrink-0">
+                <div class="text-center text-sm font-medium text-slate-500">
+                    &copy; 2025 TESTIFY. All Rights Reserved.
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Hidden Professional ID Card Template for Export -->
+    <div id="id-card-export-container">
+        <!-- Exact dimensions for a highly professional 2.13x3.38 ratio ID card -->
+        <div id="id-card-dom" class="w-[360px] h-[570px] bg-white rounded-2xl shadow-2xl overflow-hidden relative flex flex-col font-['Inter']">
+            
+            <!-- Rich Header Background -->
+            <div class="absolute top-0 left-0 w-full h-40 bg-gradient-to-br from-slate-900 via-indigo-950 to-indigo-900 border-b-[6px] border-indigo-500 z-0">
+                <!-- Abstract Pattern overlay for premium feel -->
+                <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white to-transparent"></div>
+            </div>
+            
+            <!-- Double Logo Header Section -->
+            <div class="relative z-10 flex justify-between items-center px-6 pt-6">
+                <!-- Testify Logo -->
+                <div class="flex items-center bg-white/10 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-white/20 shadow-sm">
+                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY" class="h-6 w-6 object-contain" crossorigin="anonymous">
+                    <span class="ml-2 text-white font-extrabold tracking-widest text-[13px] uppercase">Testify</span>
+                </div>
+                <!-- Xeta Logo -->
+                <div class="bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-lg shadow-md flex items-center justify-center">
+                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png" alt="XETA" class="h-5 object-contain" crossorigin="anonymous">
+                </div>
+            </div>
+
+            <!-- Profile Details Section -->
+            <div class="relative z-20 flex flex-col items-center flex-grow mt-6">
+                <!-- Profile Image with double border -->
+                <div class="p-1.5 bg-white rounded-full shadow-xl">
+                    <img id="card-render-image" class="w-36 h-36 rounded-full object-cover border-[5px] border-indigo-50 bg-slate-100" src="" alt="Profile" crossorigin="anonymous">
+                </div>
+                
+                <div class="text-center mt-5 px-4 w-full">
+                    <h3 id="card-render-name" class="font-extrabold text-[26px] text-slate-800 tracking-tight leading-tight">Student Name</h3>
+                    
+                    <div class="mt-2.5 mb-1.5 inline-block">
+                        <span class="text-[11px] font-black text-indigo-700 bg-indigo-50 border border-indigo-100 px-4 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-sm">Official Student ID</span>
+                    </div>
+                    
+                    <p id="card-render-email" class="text-[13px] font-semibold text-slate-500 mt-1">student@email.com</p>
+                </div>
+
+                <!-- Footer / QR Code Area -->
+                <div class="mt-auto mb-6 w-full px-8">
+                    <div class="w-full border-t-[1.5px] border-slate-100 pt-5 flex justify-between items-center bg-white">
+                        <div class="text-left pr-3">
+                            <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-widest mb-1">Verification</p>
+                            <p class="text-[11px] text-slate-600 font-semibold leading-snug">Valid solely for platform examinations.</p>
+                        </div>
+                        <div class="bg-white p-1.5 rounded-xl shadow-sm border border-slate-200 flex-shrink-0">
+                            <div id="card-render-qr" class="rounded-lg overflow-hidden"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bottom Accent Bar -->
+            <div class="h-8 bg-indigo-600 w-full flex items-center justify-center relative z-20">
+                <span class="text-[9px] text-indigo-100 font-semibold tracking-[0.3em] uppercase">Powered by Xeta Solutions</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Upload & Crop Modal -->
+    <div id="image-crop-modal" class="fixed z-[100] inset-0 overflow-y-auto hidden">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
+            <div class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm transition-opacity" aria-hidden="true"></div>
+            
+            <div class="relative bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:max-w-lg w-full border border-slate-100">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10 mb-4 sm:mb-0">
+                            <svg class="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-extrabold text-slate-800">Upload Profile Picture</h3>
+                            <p class="text-sm text-slate-500 mt-1">Adjust the image so your face is clearly visible. This cannot be easily changed later.</p>
+                            <div class="mt-5 w-full">
+                                 <div id="image-to-crop-container">
+                                    <img id="image-to-crop" src="">
+                                 </div>
+                                 <input type="file" id="image-input" accept="image/*" class="hidden">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-50 px-4 py-4 sm:px-6 flex flex-col sm:flex-row-reverse gap-3">
+                    <button type="button" id="save-cropped-image" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-5 py-2.5 bg-indigo-600 text-base font-bold text-white hover:bg-indigo-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                        Confirm & Upload
+                    </button>
+                    <button type="button" id="close-crop-modal" class="w-full inline-flex justify-center rounded-xl border border-slate-300 shadow-sm px-5 py-2.5 bg-white text-base font-bold text-slate-700 hover:bg-slate-50 focus:outline-none sm:mt-0 sm:w-auto sm:text-sm transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cropper.js JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script>
+        // --- Mobile Sidebar Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const openBtn = document.getElementById('open-sidebar-btn');
+            const closeBtn = document.getElementById('close-sidebar-btn');
+            const sidebar = document.getElementById('mobile-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+
+            function toggleSidebar() {
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
             }
 
-            document.getElementById('user-name').textContent = user.name || "Student Name";
-            document.getElementById('user-email').textContent = user.email || "student@email.com";
-            
-            const profileImgUrl = user.profileImageUrl || `https://ui-avatars.com/api/?name=${user.name}&background=random`;
-            document.getElementById('profile-image').src = profileImgUrl;
+            if(openBtn) openBtn.addEventListener('click', toggleSidebar);
+            if(closeBtn) closeBtn.addEventListener('click', toggleSidebar);
+            if(overlay) overlay.addEventListener('click', toggleSidebar);
         });
 
-        // Generate ID Card Function
+        // --- ID Card Generation Logic ---
         function generateIDCard() {
-            const btn = document.querySelector('button[onclick="generateIDCard()"]');
+            const btn = document.getElementById('generate-id-btn');
             const originalText = btn.innerHTML;
-            btn.innerHTML = 'Generating...';
+            btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-indigo-700" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating...';
             btn.disabled = true;
 
-            const user = JSON.parse(localStorage.getItem('user')) || { name: document.getElementById('user-name').textContent, email: document.getElementById('user-email').textContent };
-
-            document.getElementById('card-render-name').textContent = user.name || "Student Name";
-            document.getElementById('card-render-email').textContent = user.email || "student@email.com";
+            // 1. Get Data strictly from the Displayed DOM to ensure the name populates properly
+            const uiName = document.getElementById('profile-name').textContent || "Student User";
+            const uiEmailSpan = document.querySelector('#profile-email span');
+            const uiEmail = uiEmailSpan ? uiEmailSpan.textContent : "student@email.com";
             
-            const imgEl = document.getElementById('card-render-image');
-            imgEl.crossOrigin = "Anonymous";
-            const existingImg = document.getElementById('profile-image');
-            imgEl.src = existingImg ? existingImg.src : (user.profileImageUrl || `https://ui-avatars.com/api/?name=${user.name}`);
+            // Map values to hidden ID Card
+            document.getElementById('card-render-name').textContent = uiName;
+            document.getElementById('card-render-email').textContent = uiEmail;
+            
+            // Load Profile Image securely
+            const uiImageSrc = document.getElementById('profile-image').src;
+            const cardImg = document.getElementById('card-render-image');
+            cardImg.crossOrigin = "anonymous";
+            cardImg.src = uiImageSrc;
 
+            // Generate QR
             const qrContainer = document.getElementById('card-render-qr');
             qrContainer.innerHTML = ""; 
-            
-            const verifyUrl = `${window.location.origin}/verify-reports.html?email=${encodeURIComponent(user.email)}`;
+            const verifyUrl = `${window.location.origin}/verify-reports.html?email=${encodeURIComponent(uiEmail)}`;
             
             new QRCode(qrContainer, {
                 text: verifyUrl,
-                width: 110,
-                height: 110,
+                width: 80,
+                height: 80,
                 colorDark : "#1e1b4b",
                 colorLight : "#ffffff",
                 correctLevel : QRCode.CorrectLevel.H
             });
 
-            setTimeout(() => {
-                const cardDom = document.getElementById('id-card-dom');
-                html2canvas(cardDom, { scale: 3, useCORS: true, backgroundColor: null, logging: false })
-                .then(canvas => {
-                    const link = document.createElement('a');
-                    link.download = `Testify_ID_${user.name ? user.name.replace(/\s+/g, '_') : 'card'}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                }).catch(err => {
-                    console.error(err);
-                    alert("Failed to generate ID card.");
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                });
-            }, 500); 
+            // 2. Wait for image to fully load before rendering canvas to prevent missing image
+            cardImg.onload = () => {
+                setTimeout(() => { // slight delay to ensure QR is fully painted
+                    const cardDom = document.getElementById('id-card-dom');
+                    html2canvas(cardDom, { 
+                        scale: 3, 
+                        useCORS: true, 
+                        allowTaint: false,
+                        backgroundColor: null, 
+                        logging: false 
+                    })
+                    .then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = `TESTIFY_ID_${uiName.replace(/[^a-z0-9]/gi, '_').toUpperCase()}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                        
+                        // Reset button
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }).catch(err => {
+                        console.error("Canvas error", err);
+                        alert("Failed to generate ID card. Please try again.");
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    });
+                }, 300); 
+            };
+
+            // Safety fallback if image is already cached and onload doesn't fire
+            if (cardImg.complete && cardImg.naturalHeight !== 0) {
+                cardImg.onload();
+            }
         }
 
-        // --- ORIGINAL CROPPER LOGIC ---
-        let cropper;
-        const imageUpload = document.getElementById('image-upload');
-        const imageCropModal = document.getElementById('imageCropModal');
-        const cropImage = document.getElementById('cropImage');
-        const closeCropModalBtn = document.getElementById('closeCropModal');
-        const cancelCropBtn = document.getElementById('cancelCrop');
-        const saveButton = document.getElementById('saveCrop');
+        // --- Profile Core Logic ---
+        document.addEventListener('DOMContentLoaded', function() {
+            // Note: Wrapping auth redirect so preview looks good even if missing localStorage token
+            const token = localStorage.getItem('token');
+            let user = JSON.parse(localStorage.getItem('user'));
 
-        imageUpload.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    cropImage.src = event.target.result;
-                    imageCropModal.classList.remove('hidden');
-                    
-                    if (cropper) cropper.destroy();
-                    
-                    cropper = new Cropper(cropImage, {
-                        aspectRatio: 1,
-                        viewMode: 1,
-                    });
-                };
-                reader.readAsDataURL(file);
+            /* Uncomment this in production to enforce strict Auth
+            if (!token || !user || user.role !== 'Student') {
+                window.location.href = '/login';
+                return;
+            } */
+
+            // Fallback user for preview mode
+            if(!user) {
+                user = { fullName: "Jane Doe", email: "jane.doe@university.edu", role: "Student" };
             }
-            e.target.value = ''; // Reset
-        });
 
-        const closeModal = () => {
-            imageCropModal.classList.add('hidden');
-            if (cropper) cropper.destroy();
-        };
+            document.getElementById('user-info').innerHTML = `<span class="mr-2">${user.fullName}</span>`;
 
-        closeCropModalBtn.addEventListener('click', closeModal);
-        cancelCropBtn.addEventListener('click', closeModal);
+            const imageCropModal = document.getElementById('image-crop-modal');
+            const imageToCrop = document.getElementById('image-to-crop');
+            const imageInput = document.getElementById('image-input');
+            let cropper;
 
-        saveButton.addEventListener('click', () => {
-            if (!cropper) return;
-            
-            saveButton.disabled = true;
-            saveButton.textContent = 'Uploading...';
+            function populateProfile(profile) {
+                document.getElementById('profile-name').textContent = profile.fullName || "Jane Doe";
+                document.querySelector('#profile-email span').textContent = profile.email || "jane.doe@university.edu";
+                document.querySelector('#profile-college span').textContent = profile.college || "University of Technology";
+                document.getElementById('mobile').value = profile.mobile || '';
+                document.getElementById('department').value = profile.department || '';
+                document.getElementById('rollNumber').value = profile.rollNumber || '';
+                if (profile.profileImageUrl) {
+                    document.getElementById('profile-image').src = profile.profileImageUrl;
+                }
+            }
 
-            cropper.getCroppedCanvas({
-                width: 400,
-                height: 400
-            }).toBlob(blob => {
-                const formData = new FormData();
-                formData.append('profileImage', blob, 'profile.jpg');
-                
-                const token = localStorage.getItem('token'); // Assuming you use token based auth
-
-                fetch('/api/student/profile/image', {
-                    method: 'POST',
-                    headers: { 'x-auth-token': token },
-                    body: formData
+            // Simulate Fetch or actual Fetch
+            if(token) {
+                fetch('/api/student/profile', {
+                    headers: { 'x-auth-token': token }
                 })
-                .then(res => {
-                    if(!res.ok) return res.json().then(err => Promise.reject(err));
-                    return res.json();
-                })
-                .then(data => {
-                    alert('Profile image uploaded successfully!');
-                    document.getElementById('profile-image').src = data.imageUrl;
-                    
-                    const localUser = JSON.parse(localStorage.getItem('user'));
-                    if(localUser) {
-                        localUser.profileImageUrl = data.imageUrl;
-                        localStorage.setItem('user', JSON.stringify(localUser));
+                .then(res => res.json())
+                .then(profile => {
+                    populateProfile(profile);
+                    if (!profile.profileImageUrl) {
+                        imageCropModal.classList.remove('hidden');
+                        imageInput.click();
                     }
+                }).catch(e => populateProfile(user)); // populate fallback on error
+            } else {
+                populateProfile(user); // preview mode
+            }
 
-                    imageCropModal.classList.add('hidden');
-                    if (cropper) cropper.destroy();
-                })
-                .catch(err => {
-                    alert(`Error: ${err.message}`);
-                })
-                .finally(() => {
-                    saveButton.disabled = false;
-                    saveButton.textContent = 'Confirm & Upload';
-                });
-            }, 'image/jpeg');
+            document.getElementById('profile-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const updatedData = {
+                    mobile: document.getElementById('mobile').value,
+                    department: document.getElementById('department').value,
+                    rollNumber: document.getElementById('rollNumber').value
+                };
+
+                if(token) {
+                    fetch('/api/student/profile', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                        body: JSON.stringify(updatedData)
+                    })
+                    .then(res => res.json())
+                    .then(data => alert(data.message));
+                } else {
+                    alert("Profile changes saved! (Preview Mode)");
+                }
+            });
+
+            // Cropper handling
+            imageInput.addEventListener('change', (e) => {
+                const files = e.target.files;
+                if (files && files.length > 0) {
+                    imageCropModal.classList.remove('hidden'); 
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        imageToCrop.src = reader.result;
+                        if (cropper) cropper.destroy();
+                        cropper = new Cropper(imageToCrop, {
+                            aspectRatio: 1,
+                            viewMode: 1,
+                            background: false,
+                            autoCropArea: 0.8,
+                        });
+                    };
+                    reader.readAsDataURL(files[0]);
+                }
+                e.target.value = ''; // Reset input
+            });
+            
+            document.getElementById('close-crop-modal').addEventListener('click', () => {
+                imageCropModal.classList.add('hidden');
+                if (cropper) cropper.destroy();
+            });
+
+            document.getElementById('save-cropped-image').addEventListener('click', () => {
+                if (!cropper) return;
+
+                const saveButton = document.getElementById('save-cropped-image');
+                saveButton.disabled = true;
+                saveButton.textContent = 'Uploading...';
+
+                cropper.getCroppedCanvas({
+                    width: 512,
+                    height: 512,
+                }).toBlob((blob) => {
+                    const formData = new FormData();
+                    formData.append('profileImage', blob, 'profile.jpg');
+                    
+                    if(token) {
+                        fetch('/api/student/profile/image', {
+                            method: 'POST',
+                            headers: { 'x-auth-token': token },
+                            body: formData
+                        })
+                        .then(res => {
+                            if(!res.ok) return res.json().then(err => Promise.reject(err));
+                            return res.json();
+                        })
+                        .then(data => {
+                            alert('Profile image uploaded successfully!');
+                            document.getElementById('profile-image').src = data.imageUrl;
+                            
+                            const localUser = JSON.parse(localStorage.getItem('user'));
+                            if(localUser) {
+                                localUser.profileImageUrl = data.imageUrl;
+                                localStorage.setItem('user', JSON.stringify(localUser));
+                            }
+    
+                            imageCropModal.classList.add('hidden');
+                            if (cropper) cropper.destroy();
+                        })
+                        .catch(err => {
+                            alert(`Error: ${err.message}`);
+                        })
+                        .finally(() => {
+                            saveButton.disabled = false;
+                            saveButton.textContent = 'Confirm & Upload';
+                        });
+                    } else {
+                        // Preview Mode handling
+                        const reader = new FileReader();
+                        reader.readAsDataURL(blob);
+                        reader.onloadend = function() {
+                            document.getElementById('profile-image').src = reader.result;
+                            imageCropModal.classList.add('hidden');
+                            if (cropper) cropper.destroy();
+                            saveButton.disabled = false;
+                            saveButton.textContent = 'Confirm & Upload';
+                        }
+                    }
+                }, 'image/jpeg');
+            });
         });
     </script>
 </body>
