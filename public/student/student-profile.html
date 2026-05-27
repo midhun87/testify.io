@@ -203,62 +203,119 @@
         </div>
     </div>
 
-    <!-- Hidden Custom ID Card Template Based on Image Design -->
+    <!-- Hidden Custom ID Card Template - Enhanced UI with All Details -->
     <div id="id-card-export-container">
-        <!-- New exact layout based on user feedback -->
-        <div id="id-card-dom" class="w-[420px] h-[680px] bg-white rounded-xl shadow-2xl overflow-hidden relative flex flex-col font-['Inter']">
+        <!-- New 440x740 exact layout for high-res professional look -->
+        <div id="id-card-dom" class="w-[440px] h-[740px] bg-white bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] rounded-2xl shadow-2xl overflow-hidden relative flex flex-col font-['Inter']">
             
-            <!-- Dark Blue Gradient Header -->
-            <div class="h-[210px] bg-gradient-to-b from-[#1a1b3c] to-[#292c67] w-full flex-shrink-0">
-                <div class="flex justify-between items-start px-8 pt-8">
-                    <!-- Left Logo Button -->
-                    <div class="flex items-center gap-2 border border-white/20 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
-                        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY" class="h-5 w-5 object-contain" crossorigin="anonymous">
-                        <span class="text-white font-extrabold tracking-widest text-[15px] uppercase">Testify</span>
+            <!-- Curved/Wave Header -->
+            <div class="h-[180px] bg-gradient-to-br from-indigo-900 via-indigo-800 to-blue-900 w-full relative flex-shrink-0">
+                <!-- SVG Wave for sleek bottom border of the header -->
+                <svg class="absolute bottom-0 w-full h-12 text-white" preserveAspectRatio="none" viewBox="0 0 1440 320" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M0,128L48,138.7C96,149,192,171,288,170.7C384,171,480,149,576,149.3C672,149,768,171,864,181.3C960,192,1056,192,1152,176C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                </svg>
+
+                <div class="flex justify-between items-center px-8 pt-8">
+                    <!-- Left Logo Integration -->
+                    <div class="flex items-center gap-2">
+                        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="TESTIFY" class="h-8 w-8 object-contain" crossorigin="anonymous">
+                        <span class="text-white font-extrabold tracking-widest text-[18px] uppercase drop-shadow-md">Testify</span>
                     </div>
-                    <!-- Right Xeta Button -->
-                    <div class="bg-white rounded-lg px-3 py-2 flex items-center justify-center">
-                        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png" alt="XETA" class="h-[20px] object-contain" crossorigin="anonymous">
+                    <!-- Right Logo Background Pill -->
+                    <div class="bg-white/95 backdrop-blur-sm rounded-full px-4 py-1.5 shadow-lg flex items-center justify-center border border-white/20">
+                        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png" alt="XETA" class="h-[16px] object-contain" crossorigin="anonymous">
                     </div>
                 </div>
             </div>
 
             <!-- Profile Overlap Section -->
-            <div class="relative flex justify-center -mt-[110px] z-10 w-full">
-                <!-- Large Circle Profile Pic with thick white border -->
-                <div class="bg-white rounded-full p-1.5 shadow-sm">
-                    <img id="card-render-image" class="w-[200px] h-[200px] rounded-full object-cover border-[8px] border-white bg-slate-100" src="" alt="Profile" crossorigin="anonymous">
+            <div class="relative flex justify-center -mt-16 z-10 w-full">
+                <div class="bg-white rounded-full p-1.5 shadow-[0_4px_20px_rgba(0,0,0,0.08)]">
+                    <img id="card-render-image" class="w-[140px] h-[140px] rounded-full object-cover border-[4px] border-indigo-50 bg-slate-100" src="" alt="Profile" crossorigin="anonymous">
                 </div>
             </div>
 
-            <!-- Main Info Section -->
-            <div class="flex flex-col items-center flex-grow mt-4 px-8 w-full text-center">
-                <h3 id="card-render-name" class="font-extrabold text-[32px] text-[#1e293b] tracking-tight">Student Name</h3>
-                
-                <div class="mt-4 mb-3">
-                    <span class="inline-block bg-[#eff6ff] text-[#4f46e5] font-black text-[13px] px-6 py-2.5 rounded-full tracking-[0.15em] uppercase border border-[#e0e7ff]">
+            <!-- Student Name & Badge -->
+            <div class="flex flex-col items-center mt-3 px-8 w-full text-center">
+                <h3 id="card-render-name" class="font-extrabold text-[28px] text-slate-800 tracking-tight leading-tight">Student Name</h3>
+                <div class="mt-2">
+                    <span class="inline-flex items-center justify-center bg-indigo-50 text-indigo-700 font-bold text-[11px] px-5 py-1.5 rounded-full tracking-[0.2em] uppercase border border-indigo-100/80 shadow-sm">
                         Official Student ID
                     </span>
                 </div>
-                
-                <p id="card-render-email" class="text-[17px] font-semibold text-[#64748b]">student@email.com</p>
+            </div>
 
-                <!-- Footer/QR Area -->
-                <div class="w-full border-t border-slate-100 mt-auto mb-8 pt-8 flex justify-between items-center">
-                    <div class="flex-1 pr-6 text-left">
-                        <p class="text-[13px] font-bold text-[#6366f1] uppercase tracking-[0.1em] mb-2">Verification</p>
-                        <p class="text-[15px] text-[#475569] font-medium leading-snug">Valid solely for platform examinations.</p>
+            <!-- Detailed Information Panel -->
+            <div class="px-8 mt-5 flex-grow w-full">
+                <div class="bg-white rounded-[1.25rem] border border-slate-200/80 shadow-sm p-5 space-y-4 relative overflow-hidden">
+                    <!-- Subtle accent line on the left -->
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 rounded-l-xl"></div>
+                    
+                    <!-- College Block -->
+                    <div class="flex items-start gap-3.5 pl-2">
+                        <div class="mt-0.5 p-1.5 bg-indigo-50 text-indigo-500 rounded-lg">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Institution</p>
+                            <p id="card-render-college" class="text-[14px] font-bold text-slate-700 leading-tight mt-0.5">University Name Goes Here</p>
+                        </div>
                     </div>
-                    <!-- Large, Scannable QR Container -->
-                    <div class="bg-white p-2.5 rounded-2xl shadow-sm border border-slate-200/80 flex-shrink-0">
-                        <div id="card-render-qr" class="rounded-lg overflow-hidden w-[110px] h-[110px] flex items-center justify-center"></div>
+
+                    <!-- Split Row: Dept & Mobile -->
+                    <div class="grid grid-cols-2 gap-4 border-t border-slate-100 pt-3 pl-2">
+                        <div class="flex items-start gap-2.5">
+                            <div class="mt-0.5 text-indigo-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Department</p>
+                                <p id="card-render-dept" class="text-[13px] font-semibold text-slate-700 mt-0.5 truncate max-w-[110px]">Computer Science</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2.5">
+                            <div class="mt-0.5 text-indigo-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Mobile</p>
+                                <p id="card-render-mobile" class="text-[13px] font-semibold text-slate-700 mt-0.5 truncate max-w-[110px]">+1 234 567 890</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Email Row -->
+                    <div class="border-t border-slate-100 pt-3 pl-2 flex items-start gap-3.5">
+                         <div class="mt-0.5 p-1 bg-indigo-50 text-indigo-500 rounded flex-shrink-0">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <div class="overflow-hidden">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Email Address</p>
+                            <p id="card-render-email" class="text-[13px] font-semibold text-slate-700 mt-0.5 truncate w-full">student.name@university.edu</p>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Footer Area with QR & Verification Text -->
+            <div class="px-8 pb-5 mt-auto flex justify-between items-end w-full">
+                <div class="pb-2 text-left flex-1 pr-4">
+                    <p class="text-[11px] font-black text-indigo-600 uppercase tracking-[0.15em] mb-1.5 flex items-center gap-1.5">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        Verification
+                    </p>
+                    <p class="text-[12px] text-slate-500 font-medium leading-relaxed">Valid strictly for examination access and identity verification.</p>
+                </div>
+                <!-- Crisp QR Container strictly maintaining size for scannability -->
+                <div class="bg-white p-2 rounded-xl shadow-md border border-slate-200 flex-shrink-0 relative">
+                    <div class="absolute -inset-0.5 bg-gradient-to-tr from-indigo-500 to-blue-500 rounded-xl opacity-20 blur-sm"></div>
+                    <div id="card-render-qr" class="rounded-lg overflow-hidden relative bg-white flex items-center justify-center"></div>
+                </div>
+            </div>
             
-            <!-- Solid Footer Block -->
-            <div class="h-14 bg-[#4f46e5] w-full flex items-center justify-center flex-shrink-0 z-20">
-                <span class="text-[12px] text-white font-bold tracking-[0.25em] uppercase">Powered by Xeta Solutions</span>
+            <!-- Solid Footer Strip -->
+            <div class="h-10 bg-slate-900 w-full flex items-center justify-center flex-shrink-0 z-20">
+                <span class="text-[9px] text-slate-300 font-bold tracking-[0.25em] uppercase">Powered by Xeta Solutions</span>
             </div>
         </div>
     </div>
@@ -325,14 +382,26 @@
             btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-indigo-700" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating...';
             btn.disabled = true;
 
-            // 1. Get Data strictly from the Displayed DOM
+            // 1. Get ALL Data strictly from the Displayed DOM and Form Inputs
             const uiName = document.getElementById('profile-name').textContent || "Student User";
             const uiEmailSpan = document.querySelector('#profile-email span');
             const uiEmail = uiEmailSpan ? uiEmailSpan.textContent : "student@email.com";
             
-            // Map values to hidden ID Card
+            const uiCollegeSpan = document.querySelector('#profile-college span');
+            const uiCollege = uiCollegeSpan && uiCollegeSpan.textContent !== '...' ? uiCollegeSpan.textContent : "University / Institution Name";
+            
+            const uiDeptInput = document.getElementById('department').value;
+            const uiDept = uiDeptInput ? uiDeptInput : "Not Provided";
+            
+            const uiMobileInput = document.getElementById('mobile').value;
+            const uiMobile = uiMobileInput ? uiMobileInput : "Not Provided";
+            
+            // Map values to hidden ID Card elements
             document.getElementById('card-render-name').textContent = uiName;
             document.getElementById('card-render-email').textContent = uiEmail;
+            document.getElementById('card-render-college').textContent = uiCollege;
+            document.getElementById('card-render-dept').textContent = uiDept;
+            document.getElementById('card-render-mobile').textContent = uiMobile;
             
             // Load Profile Image securely
             const uiImageSrc = document.getElementById('profile-image').src;
@@ -340,7 +409,7 @@
             cardImg.crossOrigin = "anonymous";
             cardImg.src = uiImageSrc;
 
-            // Generate QR - Increased size dramatically to 110x110 for better scanning
+            // Generate QR - Backend code strictly preserved for scannability
             const qrContainer = document.getElementById('card-render-qr');
             qrContainer.innerHTML = ""; 
             const verifyUrl = `${window.location.origin}/verify-reports.html?email=${encodeURIComponent(uiEmail)}`;
