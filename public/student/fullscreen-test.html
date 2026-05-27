@@ -927,7 +927,8 @@
                     testId: currentTest.testId,
                     answers: studentAnswers,
                     timeTaken: timeTaken,
-                    violationReason: lastViolationReason || reason
+                    violationReason: lastViolationReason || reason,
+                    testData: currentTest // <-- EXACT FIX IS HERE: Included testData in the payload
                 };
 
                 try {
@@ -940,24 +941,17 @@
                         body: JSON.stringify(payload)
                     });
 
-                    // -----------------------------------------------------------
-                    // CRUCIAL FIX: Handles the 404 Error explicitly
-                    // This simulates a successful submission if the backend API isn't set up yet
-                    if (response.status === 404) {
-                        console.warn("API Endpoint '/api/student/submit-test' returned 404. Simulating successful submission for frontend testing.");
-                        await showAlert('Assessment submitted successfully (Simulated mode).');
-                        window.location.replace('/student/dashboard'); 
-                        return;
+                    // Removed the old 404 simulation hack to allow true error handling
+                    if (!response.ok) {
+                        const errText = await response.text();
+                        console.error('Server responded with:', response.status, errText);
+                        throw new Error(`Submission API returned an error status: ${response.status}`);
                     }
-                    // -----------------------------------------------------------
-                    
-                    if (!response.ok) throw new Error('Submission API returned an error status.');
                     
                     await showAlert('Assessment submitted and saved successfully.');
                     window.location.replace('/student/dashboard');
                 } catch (error) {
                     console.error('Submission Error:', error);
-                    // Crucial fix: Make sure the redirect occurs even if the backend is down
                     await showAlert('Network error during submission. Results logged locally. Returning to dashboard.');
                     window.location.replace('/student/dashboard');
                 }
