@@ -301,7 +301,7 @@
     <!-- Modals -->
     <div id="test-loader-overlay" class="hidden fixed inset-0 bg-slate-900/90 z-[10001] flex flex-col items-center justify-center text-white backdrop-blur-md transition-opacity">
         <div class="inline-block border-4 border-slate-700 border-t-indigo-500 rounded-full w-14 h-14 animate-spin shadow-lg mb-6"></div>
-        <p class="text-2xl font-bold tracking-tight">Initiating Secure Environment...</p>
+        <p id="loader-text" class="text-2xl font-bold tracking-tight">Initiating Secure Environment...</p>
         <p class="text-slate-400 mt-2 font-medium">Please do not refresh the page.</p>
     </div>
 
@@ -671,9 +671,12 @@
                     if (currentTest) {
                         const consent = await showPreTestInstructions();
                         if (consent) {
-                            testLoaderOverlay.classList.remove('hidden');
+                            const loaderOverlay = document.getElementById('test-loader-overlay');
+                            document.getElementById('loader-text').textContent = "Initiating Secure Environment...";
+                            loaderOverlay.classList.remove('hidden');
+                            
                             setTimeout(() => {
-                                testLoaderOverlay.classList.add('hidden');
+                                loaderOverlay.classList.add('hidden');
                                 startTest(currentTest);
                             }, 2000);
                         }
@@ -909,6 +912,23 @@
                 performSubmission(reason);
             }
 
+            function returnToDashboard() {
+                // Dynamically reset the DOM back to the dashboard view
+                const testEnv = document.getElementById('test-environment');
+                testEnv.classList.add('hidden');
+                testEnv.classList.remove('fullscreen');
+                
+                const mainContent = document.getElementById('main-content');
+                mainContent.classList.remove('hidden');
+                
+                // Reset testing state
+                isSubmitting = false;
+                currentTest = null;
+                
+                // Refetch tests to update attempts logic visually
+                fetchAndDisplayTests();
+            }
+
             async function performSubmission(reason = 'Unknown') {
                 if (isSubmitting) return;
                 isSubmitting = true;
@@ -921,14 +941,25 @@
                 document.removeEventListener('fullscreenchange', handleFullScreenChange);
                 document.removeEventListener('webkitfullscreenchange', handleFullScreenChange);
                 document.removeEventListener('visibilitychange', handleVisibilityChange);
-                await exitFullScreen();
+
+                // Exit fullscreen carefully without stalling the thread
+                try {
+                    await exitFullScreen();
+                } catch(e) {
+                    console.warn("Handled fullscreen exit error", e);
+                }
+
+                // Show UX loading state while API executes
+                const loaderOverlay = document.getElementById('test-loader-overlay');
+                document.getElementById('loader-text').textContent = "Submitting Assessment...";
+                loaderOverlay.classList.remove('hidden');
                 
                 const payload = {
                     testId: currentTest.testId,
                     answers: studentAnswers,
                     timeTaken: timeTaken,
                     violationReason: lastViolationReason || reason,
-                    testData: currentTest // <-- EXACT FIX IS HERE: Included testData in the payload
+                    testData: currentTest
                 };
 
                 try {
@@ -941,7 +972,9 @@
                         body: JSON.stringify(payload)
                     });
 
-                    // Removed the old 404 simulation hack to allow true error handling
+                    // Hide the loader before showing the success alert
+                    loaderOverlay.classList.add('hidden');
+
                     if (!response.ok) {
                         const errText = await response.text();
                         console.error('Server responded with:', response.status, errText);
@@ -949,11 +982,15 @@
                     }
                     
                     await showAlert('Assessment submitted and saved successfully.');
-                    window.location.replace('/student/dashboard');
+                    returnToDashboard(); // Reset UI seamlessly
                 } catch (error) {
                     console.error('Submission Error:', error);
+                    
+                    // Hide the loader before showing the error alert
+                    loaderOverlay.classList.add('hidden');
+                    
                     await showAlert('Network error during submission. Results logged locally. Returning to dashboard.');
-                    window.location.replace('/student/dashboard');
+                    returnToDashboard(); // Reset UI seamlessly
                 }
             }
 
@@ -978,8 +1015,12 @@
             }
 
             function exitFullScreen() {
-                if (document.exitFullscreen && document.fullscreenElement) return document.exitFullscreen();
-                if (document.webkitExitFullscreen && document.webkitFullscreenElement) return document.webkitExitFullscreen();
+                try {
+                    if (document.exitFullscreen && document.fullscreenElement) return document.exitFullscreen();
+                    if (document.webkitExitFullscreen && document.webkitFullscreenElement) return document.webkitExitFullscreen();
+                } catch(e) {
+                    console.warn("Fullscreen exit error", e);
+                }
                 return Promise.resolve();
             }
             
