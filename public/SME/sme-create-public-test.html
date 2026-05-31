@@ -11,7 +11,6 @@
         .sidebar-link:hover { background-color: #4338CA; }
         .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
         
-        /* Custom scrollbar for builder */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 4px; }
@@ -26,9 +25,7 @@
             <span class="text-xl font-bold tracking-wider">HIRE WITH US</span>
         </div>
         <nav class="flex-grow p-4 overflow-y-auto" id="sidebar-nav">
-            <!-- Included by sme-common.js -->
-            <a href="sme-dashboard.html" class="sidebar-link flex items-center py-3 px-4 rounded-lg text-gray-300 hover:text-white">Dashboard</a>
-            <a href="#" class="sidebar-link active flex items-center py-3 px-4 rounded-lg text-white">Create Public Test</a>
+            <!-- Populated by sme-common.js -->
         </nav>
     </div>
 
@@ -36,9 +33,7 @@
     <div class="flex flex-col flex-1 overflow-y-auto w-full">
         <div class="flex items-center justify-between h-20 bg-white border-b border-gray-200 px-8 sticky top-0 z-10 shadow-sm">
             <h1 class="text-2xl font-bold text-gray-800">Create Public Assessment</h1>
-            <div id="user-menu-container">
-                <span class="font-semibold text-gray-700">SME User</span>
-            </div>
+            <div id="user-menu-container"></div>
         </div>
 
         <div class="p-4 md:p-8 w-full max-w-5xl mx-auto">
@@ -99,7 +94,7 @@
                 <!-- Submission -->
                 <div class="flex items-center justify-between pt-6 border-t border-gray-200">
                     <div id="status-message" class="text-sm font-medium"></div>
-                    <button type="submit" class="px-8 py-3 bg-green-600 text-white font-bold rounded-lg shadow-lg hover:bg-green-700 transition-all focus:ring-4 focus:ring-green-300">
+                    <button type="submit" id="submit-btn" class="px-8 py-3 bg-green-600 text-white font-bold rounded-lg shadow-lg hover:bg-green-700 transition-all focus:ring-4 focus:ring-green-300 disabled:opacity-50">
                         Publish Assessment
                     </button>
                 </div>
@@ -107,7 +102,15 @@
         </div>
     </div>
 
+    <!-- Assuming sme-common.js is available to handle auth/sidebar -->
+    <script src="sme-common.js"></script>
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if(typeof initializeSmePage === 'function') {
+                initializeSmePage('Create Public Test');
+            }
+        });
+
         let sectionCount = 0;
 
         function generateId() {
@@ -145,7 +148,7 @@
             `;
             
             document.getElementById('sections-container').insertAdjacentHTML('beforeend', sectionHTML);
-            addQuestion(sectionId); // Add one question by default
+            addQuestion(sectionId);
         }
 
         function addQuestion(sectionId) {
@@ -182,7 +185,7 @@
             const type = block.querySelector('.q-type').value;
             const optionsArea = block.querySelector('.options-area');
             
-            optionsArea.innerHTML = ''; // Clear
+            optionsArea.innerHTML = ''; 
 
             if (type === 'single' || type === 'multi') {
                 const inputType = type === 'single' ? 'radio' : 'checkbox';
@@ -209,12 +212,15 @@
             }
         }
 
-        // Handle Submission
+        // --- DYNAMIC API SUBMISSION ---
         document.getElementById('create-public-test-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const msg = document.getElementById('status-message');
-            msg.textContent = 'Processing...';
+            const submitBtn = document.getElementById('submit-btn');
+            
+            msg.textContent = 'Publishing to Database...';
             msg.className = 'text-sm font-medium text-blue-600';
+            submitBtn.disabled = true;
 
             const payload = {
                 type: document.getElementById('testType').value,
@@ -229,6 +235,7 @@
             if (sectionBlocks.length === 0) {
                 msg.textContent = 'Please add at least one section.';
                 msg.className = 'text-sm font-medium text-red-600';
+                submitBtn.disabled = false;
                 return;
             }
 
@@ -243,39 +250,70 @@
                 qBlocks.forEach(qb => {
                     const qType = qb.querySelector('.q-type').value;
                     const qData = {
-                        question: qb.querySelector('.q-text').value,
+                        id: `q_${generateId()}`,
+                        text: qb.querySelector('.q-text').value,
                         type: qType,
                     };
 
-                    if (qType === 'single' || qType === 'multi') {
+                    if (qType === 'single') {
                         const opts = [];
+                        let correctIdx = null;
                         qb.querySelectorAll('.opt-list .flex').forEach((row, idx) => {
-                            opts.push({
-                                text: row.querySelector('.opt-text').value,
-                                isCorrect: row.querySelector('.opt-check').checked
-                            });
+                            opts.push(row.querySelector('.opt-text').value);
+                            if(row.querySelector('.opt-check').checked) correctIdx = idx;
                         });
                         qData.options = opts;
+                        qData.correct = correctIdx; // index
+                    } else if (qType === 'multi') {
+                        const opts = [];
+                        const correctIndices = [];
+                        qb.querySelectorAll('.opt-list .flex').forEach((row, idx) => {
+                            opts.push(row.querySelector('.opt-text').value);
+                            if(row.querySelector('.opt-check').checked) correctIndices.push(idx);
+                        });
+                        qData.options = opts;
+                        qData.correct = correctIndices; // array of indices
                     } else if (qType === 'fill') {
-                        qData.acceptedAnswers = qb.querySelector('.fill-answers').value.split(',').map(s => s.trim().toLowerCase());
+                        qData.correctAnswers = qb.querySelector('.fill-answers').value.split(',').map(s => s.trim().toLowerCase());
                     }
                     sectionData.questions.push(qData);
                 });
                 payload.sections.push(sectionData);
             });
 
-            // MOCK API CALL for preview purposes
-            console.log("Submitting Payload to /api/sme/public-tests:", payload);
-            
-            setTimeout(() => {
-                msg.textContent = 'Test Published Successfully!';
+            // REAL API CALL
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/sme/public-tests', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': token // Protected endpoint
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to publish test');
+                }
+
+                msg.textContent = `Test Published! ID: ${result.testId}`;
                 msg.className = 'text-sm font-medium text-green-600';
                 e.target.reset();
                 document.getElementById('sections-container').innerHTML = '';
-            }, 1000);
+                addSection(); // Reset UI
+            } catch (error) {
+                console.error("API Error:", error);
+                msg.textContent = error.message;
+                msg.className = 'text-sm font-medium text-red-600';
+            } finally {
+                submitBtn.disabled = false;
+            }
         });
 
-        // Initialize with one empty section
+        // Initialize
         window.onload = addSection;
     </script>
 </body>
