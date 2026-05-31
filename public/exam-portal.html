@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Exam Portal | Xeta Tech Solutions & Testify</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Load face-api.js for AI Face Detection -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; margin: 0; user-select: none; } 
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #6366f1; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Exam Portal Specific Styles */
+        .q-badge { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-size: 0.875rem; border: 1px solid transparent; }
+        .q-badge:hover { opacity: 0.8; }
+        .status-answered { background-color: #22c55e; color: white; border-color: #16a34a; }
+        .status-not_answered { background-color: #ef4444; color: white; border-color: #dc2626; }
+        .status-not_visited { background-color: #f3f4f6; color: #4b5563; border-color: #d1d5db; }
+        .status-marked { background-color: #a855f7; color: white; border-color: #9333ea; }
+        .status-answered_marked { background-color: #a855f7; color: white; border-color: #9333ea; position: relative; }
+        .status-answered_marked::after { content: ''; position: absolute; bottom: 2px; right: 2px; width: 8px; height: 8px; background-color: #22c55e; border-radius: 50%; border: 1px solid white; }
+        .q-badge.active { box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4); border-color: #6366f1; }
+        
+        /* Fullscreen override & Security */
+        :fullscreen { background-color: #f8fafc; }
+        ::-backdrop { background-color: #f8fafc; }
+        
+        /* Draggable PIP Webcam */
+        #proctor-pip {
+            position: fixed;
+            bottom: 20px;
+            right: 340px;
+            width: 200px;
+            background: #111;
+            border-radius: 12px;
+            border: 2px solid #3b82f6;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            z-index: 50;
+            overflow: hidden;
+            display: none;
+            flex-direction: column;
+        }
+        .pip-active #proctor-pip { display: flex; }
+        
+        .pip-header {
+            background: #1e3a8a;
+            color: white;
+            font-size: 10px;
+            padding: 6px;
+            text-align: center;
+            font-weight: bold;
+            cursor: grab;
+            user-select: none;
+            letter-spacing: 0.5px;
+        }
+        .pip-header:active { cursor: grabbing; }
+
+        /* Audio Meter Styles */
+        .audio-bar-container {
+            height: 6px;
+            background: #333;
+            width: 100%;
+        }
+        .audio-bar-fill {
+            height: 100%;
+            background: #22c55e;
+            width: 0%;
+            transition: width 0.1s ease-out, background-color 0.3s ease;
+        }
+        
+        #warning-overlay { z-index: 9999; backdrop-filter: blur(5px); }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden" oncontextmenu="return false;">
+
+    <!-- WARNING MODAL -->
+    <div id="warning-overlay" class="hidden fixed inset-0 bg-gray-900/80 flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center fade-in border-t-8 border-red-600">
+            <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Proctoring Violation</h2>
+            <p id="warning-message" class="text-gray-600 mb-4 font-medium">Please return to the exam.</p>
+            <p class="text-sm font-bold text-red-600 mb-6 bg-red-50 py-2 rounded">Warnings Left: <span id="warnings-left">5</span></p>
+            <button onclick="dismissWarning()" class="w-full px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition shadow-lg">I Understand, Return to Exam</button>
+        </div>
+    </div>
+
+    <!-- VIEW 1: Loading & Validation -->
+    <div id="view-loading" class="flex-1 flex flex-col items-center justify-center fade-in bg-gray-50">
+        <!-- Partner Logos -->
+        <div class="flex items-center gap-6 mb-8">
+            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png" alt="Xeta Tech Solutions" class="h-16 bg-white p-2 rounded-xl shadow-sm border border-gray-100 object-contain">
+            <span class="text-gray-300 font-bold text-xl">&times;</span>
+            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify" class="h-16 bg-white p-2 rounded-xl shadow-sm border border-gray-100 object-contain">
+        </div>
+
+        <div class="loader mb-4 border-indigo-600 border-t-indigo-200" style="width: 40px; height: 40px; border-width: 4px;"></div>
+        <h2 class="text-xl font-bold text-gray-800" id="loading-header">Validating Exam Link...</h2>
+        <p class="text-gray-500 mt-2 text-sm" id="loading-msg">Please wait while we verify your voucher and load the test.</p>
+    </div>
+
+    <!-- VIEW 2: Instructions & Hardware Check -->
+    <div id="view-instructions" class="hidden flex-1 flex flex-col items-center justify-center fade-in bg-gray-900 px-4 py-8 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden my-auto">
+            <div class="bg-indigo-600 px-8 py-6 text-white flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="flex bg-white rounded p-1.5 gap-2 items-center shadow-sm">
+                        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png" alt="Xeta Tech" class="h-6 object-contain">
+                        <span class="text-gray-200 text-xs">|</span>
+                        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify" class="h-6 object-contain">
+                    </div>
+                    <h1 class="text-xl md:text-2xl font-bold hidden sm:block">Secure Proctoring Setup</h1>
+                </div>
+                <span class="px-3 py-1 bg-white/20 rounded font-mono text-sm uppercase tracking-widest" id="display-voucher"></span>
+            </div>
+            <div class="p-8">
+                <h2 class="text-xl font-bold text-gray-900 mb-2" id="inst-test-title">Loading Test Title...</h2>
+                <p class="text-gray-600 mb-6">This is an AI-proctored mock test powered by Testify & Xeta Tech Solutions. Read the rules and verify your hardware before proceeding.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-red-50 border border-red-100 p-4 rounded-xl">
+                        <h3 class="font-bold text-red-800 mb-2 flex items-center gap-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> Security Rules</h3>
+                        <ul class="text-sm text-red-700 space-y-1 list-disc pl-4 font-medium">
+                            <li>Your face must remain visible at all times.</li>
+                            <li>No additional faces allowed in the frame.</li>
+                            <li>Keep audio levels low (no talking).</li>
+                            <li>Do NOT switch tabs or minimize the browser.</li>
+                            <li>Do NOT exit fullscreen mode.</li>
+                            <li>Auto-submit occurs on the 5th violation.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-xl flex flex-col items-center justify-center text-center">
+                        <video id="setup-video" class="w-32 h-24 bg-black rounded-lg mb-2 object-cover shadow-inner" autoplay muted playsinline style="transform: scaleX(-1);"></video>
+                        
+                        <!-- Mini Audio Meter for Setup -->
+                        <div class="w-full max-w-[128px] h-1.5 bg-gray-200 rounded-full mb-4 overflow-hidden relative">
+                            <div id="setup-audio-fill" class="h-full bg-green-500 w-0 transition-all duration-75"></div>
+                        </div>
+
+                        <button type="button" id="btn-hardware" onclick="initProctoringHardware()" class="px-4 py-2 bg-gray-800 text-white text-sm font-bold rounded shadow hover:bg-gray-700">Enable Camera & Mic</button>
+                        <p id="hardware-status" class="text-xs text-gray-500 mt-2">Required to proceed.</p>
+                    </div>
+                </div>
+
+                <form id="preflight-form" class="space-y-4 border-t border-gray-200 pt-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Full Name</label>
+                            <input type="text" id="cand-name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Registered Email</label>
+                            <input type="email" id="cand-email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50">
+                        </div>
+                    </div>
+                    <div class="pt-4 flex items-center justify-between">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="agree-rules" required class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300">
+                            <span class="text-sm font-medium text-gray-700">I agree to the AI proctoring rules.</span>
+                        </label>
+                        <button type="submit" id="btn-start-exam" disabled class="px-8 py-3 bg-gray-400 text-white font-bold rounded-lg cursor-not-allowed transition shadow-md">Start Exam</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 3: The CBT Engine Interface -->
+    <div id="view-test" class="hidden flex-1 flex flex-col bg-gray-50 fade-in overflow-hidden w-full">
+        
+        <!-- Draggable PIP Webcam during test -->
+        <div id="proctor-pip">
+            <div class="pip-header" id="pip-drag-handle">≡ DRAG TO MOVE ≡</div>
+            <div class="relative w-full h-[140px] bg-black">
+                <video id="exam-video" autoplay muted playsinline class="w-full h-full object-cover" style="transform: scaleX(-1);"></video>
+                <div class="absolute bottom-1 left-1 bg-red-600/90 text-white text-[9px] px-1.5 py-0.5 rounded font-bold uppercase animate-pulse flex items-center gap-1">
+                    <div class="w-1.5 h-1.5 bg-white rounded-full"></div> REC
+                </div>
+            </div>
+            <!-- Audio Meter Indicator -->
+            <div class="audio-bar-container">
+                <div id="audio-bar-fill" class="audio-bar-fill"></div>
+            </div>
+        </div>
+
+        <!-- Engine Header -->
+        <header class="bg-indigo-900 text-white px-6 py-3 flex justify-between items-center shadow-md z-10 flex-shrink-0">
+            <div class="flex items-center gap-4">
+                <div class="flex bg-white rounded p-1.5 gap-2 items-center shadow-sm">
+                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png" alt="Xeta Tech" class="h-6 md:h-8 object-contain">
+                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify" class="h-6 md:h-8 object-contain">
+                </div>
+                <div class="border-l-2 border-indigo-700 pl-4 hidden md:block">
+                    <h1 id="engine-title" class="text-lg font-bold leading-tight">Test Title</h1>
+                    <p class="text-xs text-indigo-300">Powered by Xeta Tech Solutions & Testify</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-2">
+                    <span class="text-indigo-200 text-sm hidden sm:block">Time Left:</span>
+                    <div class="bg-white/10 px-3 py-1 rounded font-mono font-bold text-lg" id="engine-timer">00:00</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-1 flex overflow-hidden">
+            <!-- Main Question Area -->
+            <main class="flex-1 flex flex-col bg-white relative">
+                <!-- Section Tabs -->
+                <div id="engine-section-tabs" class="flex overflow-x-auto border-b border-gray-200 bg-gray-50">
+                    <!-- JS Injected Tabs -->
+                </div>
+                
+                <!-- Question Content -->
+                <div class="flex-1 overflow-y-auto p-8" id="engine-question-area">
+                    <div class="max-w-4xl mx-auto">
+                        <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
+                            <h2 class="text-xl font-bold text-gray-800" id="q-header-text">Question 1</h2>
+                            <span class="px-2 py-1 bg-gray-100 text-xs font-semibold text-gray-500 rounded" id="q-type-badge">Single Correct</span>
+                        </div>
+                        <div class="prose max-w-none text-gray-800 mb-8 text-lg user-select-none" id="q-text">
+                            <!-- Question Text -->
+                        </div>
+                        <div class="space-y-4" id="q-options">
+                            <!-- Options -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Action Bar -->
+                <footer class="border-t border-gray-200 p-4 bg-gray-50 flex justify-between items-center flex-shrink-0">
+                    <div class="flex gap-3">
+                        <button onclick="markAndNext()" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-semibold rounded hover:bg-gray-50 shadow-sm transition">Mark for Review & Next</button>
+                        <button onclick="clearResponse()" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-semibold rounded hover:bg-gray-50 shadow-sm transition">Clear Response</button>
+                    </div>
+                    <button onclick="saveAndNext()" class="px-8 py-2.5 bg-indigo-600 text-white font-bold rounded hover:bg-indigo-700 shadow-sm transition flex items-center gap-2">
+                        Save & Next
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                </footer>
+            </main>
+
+            <!-- Right Sidebar (Question Palette) -->
+            <aside class="w-80 bg-gray-50 border-l border-gray-200 flex flex-col flex-shrink-0 relative z-10">
+                <div class="p-4 border-b border-gray-200 bg-white">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold uppercase" id="student-initials">S</div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-800 truncate w-48" id="student-name">Student Name</p>
+                            <p class="text-xs text-gray-500 truncate w-48" id="student-email">email@example.com</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 border-b border-gray-200">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Question Palette</h3>
+                    <div class="grid grid-cols-2 gap-3 text-xs font-medium text-gray-600">
+                        <div class="flex items-center gap-2"><span class="w-6 h-6 status-answered rounded-md flex items-center justify-center" id="count-answered">0</span> Answered</div>
+                        <div class="flex items-center gap-2"><span class="w-6 h-6 status-not_answered rounded-md flex items-center justify-center" id="count-not_answered">0</span> Not Answered</div>
+                        <div class="flex items-center gap-2"><span class="w-6 h-6 status-not_visited rounded-md border flex items-center justify-center" id="count-not_visited">0</span> Not Visited</div>
+                        <div class="flex items-center gap-2"><span class="w-6 h-6 status-marked rounded-md flex items-center justify-center" id="count-marked">0</span> Marked</div>
+                        <div class="flex items-center gap-2 col-span-2"><span class="w-6 h-6 status-answered_marked rounded-md flex items-center justify-center" id="count-answered_marked">0</span> Answered & Marked</div>
+                    </div>
+                </div>
+
+                <div class="flex-1 p-4 overflow-y-auto">
+                    <div class="grid grid-cols-5 gap-2" id="palette-grid">
+                        <!-- JS Injected Buttons -->
+                    </div>
+                </div>
+
+                <div class="p-4 border-t border-gray-200 bg-white">
+                    <button onclick="submitMockTest(false)" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-md transition">Final Submit Exam</button>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- VIEW 4: Results / Post-Submit -->
+    <div id="view-results" class="hidden flex-1 flex flex-col items-center justify-center bg-gray-900 px-4 fade-in">
+        <div class="bg-white p-10 rounded-2xl shadow-2xl max-w-lg w-full text-center relative overflow-hidden">
+            <!-- Transparent Background Logos for branding on submit -->
+            <div class="absolute top-4 left-0 right-0 flex justify-center gap-4 opacity-50 pointer-events-none">
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png" alt="Xeta" class="h-6">
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify" class="h-6">
+            </div>
+
+            <div id="res-loading" class="flex flex-col items-center py-4 mt-6">
+                <div class="loader mb-4 border-indigo-600 border-t-indigo-200" style="width: 40px; height: 40px; border-width: 4px;"></div>
+                <h2 class="text-xl font-bold text-gray-900">Submitting Exam...</h2>
+                <p class="text-gray-500 mt-2">Please do not close this window.</p>
+            </div>
+            
+            <div id="res-success" class="hidden mt-6">
+                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <h2 class="text-3xl font-extrabold text-gray-900 mb-2">Exam Submitted</h2>
+                <p class="text-gray-600 mb-8" id="res-final-msg">Your mock exam has been recorded successfully. A detailed score report will be sent to your email.</p>
+                <button onclick="window.location.href='public-portal.html'" class="w-full px-6 py-3 bg-gray-900 text-white font-bold rounded-lg hover:bg-gray-800 transition">Return to Home</button>
+            </div>
+            
+            <div id="res-error" class="hidden mt-6">
+                <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Submission Failed</h2>
+                <p id="res-error-msg" class="text-gray-600 mb-8">An error occurred while communicating with the server.</p>
+                <button onclick="submitMockTest(false)" class="w-full px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition">Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Exam State Variables ---
+        let urlParams = new URLSearchParams(window.location.search);
+        let testId = urlParams.get('testId');
+        let voucherCode = urlParams.get('voucher');
+        
+        let currentTest = null;
+        let currentUser = {}; 
+        
+        let timerInterval = null;
+        let timeLeft = 0; 
+        let activeSecIdx = 0;
+        let activeQIdx = 0;
+        let qState = {}; 
+        let isTesting = false;
+
+        // --- Proctoring State Variables ---
+        let hwReady = false;
+        let aiModelsLoaded = false;
+        let localStream = null;
+        let audioContext, analyser, microphone, audioDataArray;
+        let violationsCount = 0;
+        const MAX_VIOLATIONS = 5;
+        let finalViolationReason = null;
+        let isWarningOpen = false;
+
+        // Prevent Keyboard shortcuts (Ctrl+C, Ctrl+V, F12, etc.)
+        document.addEventListener('keydown', (e) => {
+            if(e.ctrlKey && ['c','v','x','p','s'].includes(e.key.toLowerCase())) e.preventDefault();
+            if(e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) e.preventDefault();
+        });
+
+        // --- Initialization ---
+        async function initPortal() {
+            if (!testId || !voucherCode) {
+                showError("Invalid Exam Link. Missing Test ID or Voucher.");
+                return;
+            }
+            document.getElementById('display-voucher').textContent = `Voucher: ${voucherCode}`;
+
+            try {
+                // Fetch tests
+                const res = await fetch('/api/public/tests');
+                const data = await res.json();
+                
+                const allTests = [...(data.mock || []), ...(data.practice || [])];
+                currentTest = allTests.find(t => t.testId === testId);
+
+                if (!currentTest) throw new Error("Test not found or is no longer active.");
+
+                // Start loading AI Models
+                loadAIModels();
+
+                document.getElementById('inst-test-title').textContent = currentTest.title;
+                showView('view-instructions');
+
+            } catch (err) {
+                showError(err.message || "Failed to load exam data.");
+            }
+        }
+
+        function showError(msg) {
+            document.getElementById('loading-msg').innerHTML = `<span class="text-red-500 font-bold">${msg}</span>`;
+            document.querySelector('.loader').style.display = 'none';
+        }
+
+        function showView(viewId) {
+            ['view-loading', 'view-instructions', 'view-test', 'view-results'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(viewId).classList.remove('hidden');
+            if(viewId === 'view-test') document.body.classList.add('pip-active');
+            else document.body.classList.remove('pip-active');
+        }
+
+        // --- Draggable PIP Widget Logic ---
+        const pip = document.getElementById('proctor-pip');
+        const pipHandle = document.getElementById('pip-drag-handle');
+        let isDragging = false, startX, startY, initialX, initialY;
+
+        pipHandle.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            const rect = pip.getBoundingClientRect();
+            initialX = rect.left;
+            initialY = rect.top;
+            
+            // Switch from right/bottom to top/left coordinate system for smooth dragging
+            pip.style.right = 'auto';
+            pip.style.bottom = 'auto';
+            pip.style.left = initialX + 'px';
+            pip.style.top = initialY + 'px';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            
+            // Basic screen boundary limits
+            let newLeft = initialX + dx;
+            let newTop = initialY + dy;
+            
+            const maxLeft = window.innerWidth - pip.offsetWidth;
+            const maxTop = window.innerHeight - pip.offsetHeight;
+
+            if(newLeft < 0) newLeft = 0;
+            if(newTop < 0) newTop = 0;
+            if(newLeft > maxLeft) newLeft = maxLeft;
+            if(newTop > maxTop) newTop = maxTop;
+
+            pip.style.left = newLeft + 'px';
+            pip.style.top = newTop + 'px';
+        });
+
+        document.addEventListener('mouseup', () => { isDragging = false; });
+
+        // --- PROCTORING: HW & AI Logic ---
+        async function loadAIModels() {
+            try {
+                document.getElementById('hardware-status').textContent = "Downloading AI Proctoring Models (1/2)...";
+                const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights';
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                aiModelsLoaded = true;
+                if(hwReady) unlockStartButton();
+                else document.getElementById('hardware-status').textContent = "AI Ready. Please Enable Camera & Mic.";
+            } catch (e) {
+                console.error("AI Model Load Error:", e);
+                document.getElementById('hardware-status').innerHTML = `<span class="text-red-600">Failed to load AI models. Please refresh.</span>`;
+            }
+        }
+
+        async function initProctoringHardware() {
+            try {
+                document.getElementById('hardware-status').textContent = "Requesting permissions...";
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                
+                const setupVid = document.getElementById('setup-video');
+                setupVid.srcObject = localStream;
+                
+                const examVid = document.getElementById('exam-video');
+                examVid.srcObject = localStream;
+
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                microphone = audioContext.createMediaStreamSource(localStream);
+                microphone.connect(analyser);
+                analyser.fftSize = 256;
+                audioDataArray = new Uint8Array(analyser.frequencyBinCount);
+
+                document.getElementById('btn-hardware').classList.add('hidden');
+                document.getElementById('hardware-status').innerHTML = `<span class="text-green-600 font-bold">Hardware Checked successfully.</span>`;
+                hwReady = true;
+
+                // Start Setup Mic Indicator
+                startSetupAudioMeter();
+
+                if(aiModelsLoaded) unlockStartButton();
+
+            } catch (err) {
+                document.getElementById('hardware-status').innerHTML = `<span class="text-red-600 font-bold">Hardware Access Denied.</span> Check browser permissions.`;
+            }
+        }
+
+        function startSetupAudioMeter() {
+            function checkSetupAudio() {
+                if(isTesting) return; // Stop if exam started
+                if (analyser && audioDataArray) {
+                    analyser.getByteFrequencyData(audioDataArray);
+                    let sum = 0;
+                    for(let i=0; i<audioDataArray.length; i++) sum += audioDataArray[i];
+                    let avgVolume = sum / audioDataArray.length;
+                    
+                    let widthPct = Math.min(100, (avgVolume / 128) * 100);
+                    const setupFill = document.getElementById('setup-audio-fill');
+                    if(setupFill) {
+                        setupFill.style.width = widthPct + '%';
+                        if (widthPct > 80) setupFill.style.backgroundColor = '#ef4444'; // Red
+                        else if (widthPct > 40) setupFill.style.backgroundColor = '#eab308'; // Yellow
+                        else setupFill.style.backgroundColor = '#22c55e'; // Green
+                    }
+                }
+                requestAnimationFrame(checkSetupAudio);
+            }
+            checkSetupAudio();
+        }
+
+        function unlockStartButton() {
+            const btn = document.getElementById('btn-start-exam');
+            btn.disabled = false;
+            btn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+            btn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+        }
+
+        // --- Start Exam ---
+        document.getElementById('preflight-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if(!hwReady || !aiModelsLoaded) return;
+            
+            currentUser.name = document.getElementById('cand-name').value;
+            currentUser.email = document.getElementById('cand-email').value;
+            
+            // Force Fullscreen
+            try {
+                if (document.documentElement.requestFullscreen) {
+                    await document.documentElement.requestFullscreen();
+                }
+            } catch(e) {
+                console.log("Fullscreen request denied initially.");
+            }
+
+            startEngine(currentTest);
+        });
+
+        // --- Engine Initialization ---
+        function startEngine(testData) {
+            isTesting = true;
+            showView('view-test');
+            document.getElementById('engine-title').textContent = testData.title;
+            document.getElementById('student-name').textContent = currentUser.name;
+            document.getElementById('student-email').textContent = currentUser.email;
+            document.getElementById('student-initials').textContent = currentUser.name.charAt(0).toUpperCase();
+            
+            qState = {};
+            let totalMins = 0;
+            testData.sections.forEach((sec, sIdx) => {
+                totalMins += (sec.timer || 0);
+                qState[sIdx] = {};
+                sec.questions.forEach((q, qIdx) => {
+                    qState[sIdx][qIdx] = { status: 'not_visited', answer: null };
+                });
+            });
+
+            timeLeft = (testData.duration || totalMins || 60) * 60; 
+            updateTimerDisplay();
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if(timeLeft <= 0) {
+                    finalViolationReason = "Time Expired";
+                    submitMockTest(true);
+                }
+            }, 1000);
+
+            activeSecIdx = 0;
+            activeQIdx = 0;
+            qState[activeSecIdx][activeQIdx].status = 'not_answered';
+
+            renderSectionTabs();
+            renderQuestion();
+            renderPalette();
+
+            // Start Monitoring Loops
+            startAIFaceTracking();
+            startAudioMonitoring();
+            startEventMonitoring();
+        }
+
+        // --- Monitoring Routines ---
+        let noFaceCounter = 0;
+        let multiFaceCounter = 0;
+        let loudAudioCounter = 0;
+
+        function startAIFaceTracking() {
+            const video = document.getElementById('exam-video');
+            
+            // Interval changed from 3000ms to 1500ms for smoother tracking buffers
+            setInterval(async () => {
+                if(!isTesting || isWarningOpen) return;
+                
+                // Adjust strictness of face detector to prevent false positives
+                const detectOptions = new faceapi.TinyFaceDetectorOptions({
+                    inputSize: 320,       // Process at a higher resolution
+                    scoreThreshold: 0.25  // Be more forgiving about confidence levels 
+                });
+
+                try {
+                    const detections = await faceapi.detectAllFaces(video, detectOptions);
+                    
+                    // Allow a buffer for glitches/blinks/bad lighting. Must fail consecutively.
+                    if (detections.length === 0) {
+                        noFaceCounter++;
+                        multiFaceCounter = 0;
+                        if (noFaceCounter >= 5) { // Requires 7.5 seconds of absolutely no face to warn
+                            triggerProctorViolation("No Face Detected. Please look directly at the camera.");
+                            noFaceCounter = 0;
+                        }
+                    } else if (detections.length > 1) {
+                        multiFaceCounter++;
+                        noFaceCounter = 0;
+                        if (multiFaceCounter >= 3) { // Requires 4.5 seconds of multiple faces to warn
+                            triggerProctorViolation("Multiple Faces Detected in the frame. Ensure no one else is around.");
+                            multiFaceCounter = 0;
+                        }
+                    } else {
+                        // Resets counters back to 0 if exactly 1 face is seen clearly
+                        noFaceCounter = 0;
+                        multiFaceCounter = 0;
+                    }
+                } catch (e) {
+                    console.log("Detection iteration skipped.");
+                }
+            }, 1500); 
+        }
+
+        function startAudioMonitoring() {
+            function checkAudio() {
+                if(!isTesting) return;
+                analyser.getByteFrequencyData(audioDataArray);
+                let sum = 0;
+                for(let i=0; i<audioDataArray.length; i++) sum += audioDataArray[i];
+                let avgVolume = sum / audioDataArray.length;
+                
+                // Update PIP Audio Meter
+                const audioFill = document.getElementById('audio-bar-fill');
+                let widthPct = Math.min(100, (avgVolume / 128) * 100);
+                if (audioFill) {
+                    audioFill.style.width = widthPct + '%';
+                    if (widthPct > 85) audioFill.style.backgroundColor = '#ef4444'; // Red
+                    else if (widthPct > 50) audioFill.style.backgroundColor = '#eab308'; // Yellow
+                    else audioFill.style.backgroundColor = '#22c55e'; // Green
+                }
+
+                if(!isWarningOpen) {
+                    if (avgVolume > 85) {
+                        loudAudioCounter++;
+                        // Require sustained loud noise for roughly 1+ seconds instead of instant flagging
+                        if(loudAudioCounter > 10) { 
+                            triggerProctorViolation("Continuous High Audio/Talking detected. Please remain quiet.");
+                            loudAudioCounter = 0;
+                        }
+                    } else {
+                        loudAudioCounter = 0;
+                    }
+                }
+                
+                // Slightly debounce checking frame rate so micro-sounds don't trip it
+                setTimeout(() => { requestAnimationFrame(checkAudio); }, 100);
+            }
+            checkAudio();
+        }
+
+        function startEventMonitoring() {
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden && isTesting && !isWarningOpen) {
+                    triggerProctorViolation("Navigating away from the exam tab is not allowed.");
+                }
+            });
+            document.addEventListener('fullscreenchange', () => {
+                if (!document.fullscreenElement && isTesting && !isWarningOpen) {
+                    triggerProctorViolation("Exiting Fullscreen mode is strictly prohibited.");
+                }
+            });
+        }
+
+        // --- Violation Management ---
+        function triggerProctorViolation(reason) {
+            if(isWarningOpen || !isTesting) return;
+            isWarningOpen = true;
+            violationsCount++;
+            
+            const remaining = MAX_VIOLATIONS - violationsCount;
+            
+            if (remaining <= 0) {
+                finalViolationReason = `Auto-submitted due to max violations. Last violation: ${reason}`;
+                submitMockTest(true); 
+                return;
+            }
+
+            document.getElementById('warning-message').textContent = reason;
+            document.getElementById('warnings-left').textContent = remaining;
+            document.getElementById('warning-overlay').classList.remove('hidden');
+        }
+
+        async function dismissWarning() {
+            // Force fullscreen return bound directly to the user's click interaction
+            if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                try {
+                    await document.documentElement.requestFullscreen();
+                } catch(e) {
+                    console.log("Could not return to fullscreen automatically.", e);
+                }
+            }
+            
+            document.getElementById('warning-overlay').classList.add('hidden');
+            // Grace period before next tracking flag triggers
+            setTimeout(() => { isWarningOpen = false; }, 3000);
+        }
+
+        // --- UI Rendering ---
+        function renderSectionTabs() {
+            const tabsContainer = document.getElementById('engine-section-tabs');
+            tabsContainer.innerHTML = currentTest.sections.map((sec, i) => `
+                <button onclick="goToSection(${i})" class="px-6 py-3 text-sm font-bold transition whitespace-nowrap ${i === activeSecIdx ? 'bg-white text-indigo-700 border-t-2 border-indigo-600 border-r border-gray-200' : 'text-gray-600 hover:bg-gray-100 border-r border-gray-200 border-t-2 border-transparent'}">
+                    ${sec.title}
+                </button>
+            `).join('');
+        }
+
+        function renderQuestion() {
+            const sec = currentTest.sections[activeSecIdx];
+            const q = sec.questions[activeQIdx];
+            const savedAns = qState[activeSecIdx][activeQIdx].answer;
+            
+            document.getElementById('q-header-text').textContent = `Question ${activeQIdx + 1}`;
+            
+            let typeText = "Single Correct";
+            if(q.type === 'multi') typeText = "Multiple Correct";
+            if(q.type === 'fill') typeText = "Fill in the Blanks";
+            document.getElementById('q-type-badge').textContent = typeText;
+
+            document.getElementById('q-text').innerHTML = q.text.replace(/\n/g, '<br>');
+
+            let optionsHtml = '';
+            if (q.type === 'single') {
+                optionsHtml = q.options.map((opt, i) => `
+                    <label class="flex items-center gap-3 cursor-pointer p-4 rounded-lg border border-gray-200 hover:bg-indigo-50 transition ${savedAns === i ? 'bg-indigo-50 border-indigo-300' : 'bg-white'}">
+                        <input type="radio" name="current_q" value="${i}" ${savedAns === i ? 'checked' : ''} class="w-5 h-5 text-indigo-600 focus:ring-indigo-500">
+                        <span class="text-gray-700 font-medium select-none">${opt}</span>
+                    </label>
+                `).join('');
+            } else if (q.type === 'multi') {
+                const savedArr = Array.isArray(savedAns) ? savedAns : [];
+                optionsHtml = q.options.map((opt, i) => `
+                    <label class="flex items-center gap-3 cursor-pointer p-4 rounded-lg border border-gray-200 hover:bg-indigo-50 transition ${savedArr.includes(i) ? 'bg-indigo-50 border-indigo-300' : 'bg-white'}">
+                        <input type="checkbox" name="current_q" value="${i}" ${savedArr.includes(i) ? 'checked' : ''} class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500">
+                        <span class="text-gray-700 font-medium select-none">${opt}</span>
+                    </label>
+                `).join('');
+            } else if (q.type === 'fill') {
+                optionsHtml = `<input type="text" id="current_q_ans" value="${savedAns || ''}" autocomplete="off" spellcheck="false" placeholder="Type your answer here..." class="w-full px-4 py-4 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">`;
+            }
+            
+            document.getElementById('q-options').innerHTML = optionsHtml;
+        }
+
+        function renderPalette() {
+            let counts = { answered: 0, not_answered: 0, not_visited: 0, marked: 0, answered_marked: 0 };
+            const secState = qState[activeSecIdx];
+            const numQs = currentTest.sections[activeSecIdx].questions.length;
+            
+            let gridHtml = '';
+            for(let i=0; i<numQs; i++) {
+                const stat = secState[i].status;
+                counts[stat]++;
+                const isActive = (i === activeQIdx) ? 'active' : '';
+                gridHtml += `<div onclick="goToQuestion(${i})" class="q-badge status-${stat} ${isActive}">${i + 1}</div>`;
+            }
+
+            document.getElementById('palette-grid').innerHTML = gridHtml;
+            Object.keys(counts).forEach(k => {
+                document.getElementById(`count-${k}`).textContent = counts[k];
+            });
+        }
+
+        function extractCurrentAnswer() {
+            const q = currentTest.sections[activeSecIdx].questions[activeQIdx];
+            let ans = null;
+            if (q.type === 'single') {
+                const selected = document.querySelector(`input[name="current_q"]:checked`);
+                if (selected) ans = parseInt(selected.value);
+            } else if (q.type === 'multi') {
+                const selected = Array.from(document.querySelectorAll(`input[name="current_q"]:checked`)).map(cb => parseInt(cb.value));
+                if (selected.length > 0) ans = selected;
+            } else if (q.type === 'fill') {
+                const val = document.getElementById('current_q_ans').value.trim();
+                if (val) ans = val;
+            }
+            return ans;
+        }
+
+        function saveAndNext() {
+            const ans = extractCurrentAnswer();
+            qState[activeSecIdx][activeQIdx].answer = ans;
+            qState[activeSecIdx][activeQIdx].status = (ans !== null) ? 'answered' : 'not_answered';
+            moveToNext();
+        }
+
+        function markAndNext() {
+            const ans = extractCurrentAnswer();
+            qState[activeSecIdx][activeQIdx].answer = ans;
+            qState[activeSecIdx][activeQIdx].status = (ans !== null) ? 'answered_marked' : 'marked';
+            moveToNext();
+        }
+
+        function clearResponse() {
+            qState[activeSecIdx][activeQIdx].answer = null;
+            qState[activeSecIdx][activeQIdx].status = 'not_answered';
+            renderQuestion();
+            renderPalette();
+        }
+
+        function moveToNext() {
+            const secQs = currentTest.sections[activeSecIdx].questions.length;
+            if (activeQIdx < secQs - 1) goToQuestion(activeQIdx + 1);
+            else if (activeSecIdx < currentTest.sections.length - 1) goToSection(activeSecIdx + 1);
+            else renderPalette();
+        }
+
+        function goToQuestion(qIndex) {
+            if(qState[activeSecIdx][activeQIdx].status === 'not_visited') qState[activeSecIdx][activeQIdx].status = 'not_answered';
+            activeQIdx = qIndex;
+            if (qState[activeSecIdx][activeQIdx].status === 'not_visited') qState[activeSecIdx][activeQIdx].status = 'not_answered';
+            renderQuestion(); renderPalette();
+        }
+
+        function goToSection(sIndex) {
+            activeSecIdx = sIndex;
+            activeQIdx = 0;
+            if (qState[activeSecIdx][activeQIdx].status === 'not_visited') qState[activeSecIdx][activeQIdx].status = 'not_answered';
+            renderSectionTabs(); renderQuestion(); renderPalette();
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(Math.max(0, timeLeft) / 60).toString().padStart(2, '0');
+            const s = (Math.max(0, timeLeft) % 60).toString().padStart(2, '0');
+            document.getElementById('engine-timer').textContent = `${m}:${s}`;
+        }
+
+        // --- Final Submission ---
+        async function submitMockTest(isForced = false) {
+            if(!isForced && !confirm("Are you sure you want to finally submit your exam?")) return;
+            
+            isTesting = false; 
+            clearInterval(timerInterval);
+            document.getElementById('warning-overlay').classList.add('hidden'); 
+            
+            // Save current answer
+            const finalAns = extractCurrentAnswer();
+            if(finalAns !== null) qState[activeSecIdx][activeQIdx].answer = finalAns;
+
+            showView('view-results');
+            document.getElementById('res-loading').classList.remove('hidden');
+            document.getElementById('res-success').classList.add('hidden');
+            document.getElementById('res-error').classList.add('hidden');
+
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            if (audioContext) audioContext.close();
+
+            if (document.fullscreenElement) {
+                document.exitFullscreen().catch(()=>{});
+            }
+
+            const answers = {};
+            currentTest.sections.forEach((sec, sIdx) => {
+                sec.questions.forEach((q, qIdx) => {
+                    const ans = qState[sIdx][qIdx].answer;
+                    if (ans !== null) answers[`${sIdx}_${qIdx}`] = ans;
+                });
+            });
+
+            try {
+                const payload = {
+                    testId,
+                    voucherCode,
+                    userEmail: currentUser.email,
+                    userName: currentUser.name,
+                    answers,
+                    violationReason: finalViolationReason
+                };
+
+                const res = await fetch('/api/public/mock/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Submission failed');
+
+                document.getElementById('res-loading').classList.add('hidden');
+                document.getElementById('res-success').classList.remove('hidden');
+
+                if(finalViolationReason) {
+                    document.getElementById('res-final-msg').innerHTML = `<span class="text-red-600 font-bold">Exam Submitted Automatically Due to Violations.</span><br/>Reason: ${finalViolationReason}`;
+                }
+
+            } catch (err) {
+                document.getElementById('res-loading').classList.add('hidden');
+                document.getElementById('res-error').classList.remove('hidden');
+                document.getElementById('res-error-msg').textContent = err.message;
+            }
+        }
+
+        // Initialize portal immediately
+        initPortal();
+    </script>
+</body>
+</html>

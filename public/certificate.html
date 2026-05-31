@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verified Certificate | Testify & Xeta Tech Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,400&family=Inter:wght@400;500;600;700;800&family=Great+Vibes&family=Pinyon+Script&display=swap" rel="stylesheet">
+    
+    <!-- QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- PDF Downloader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        body { 
+            background-color: #f1f5f9; 
+            font-family: 'Inter', sans-serif; 
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .font-cursive { font-family: 'Great Vibes', cursive; }
+        .font-signature { font-family: 'Pinyon Script', cursive; }
+
+        /* Certificate Master Wrapper */
+        .cert-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            overflow: hidden;
+            padding: 2rem 0;
+        }
+
+        /* Fixed Resolution Certificate (A4 Landscape aspect ratio) */
+        #certificate-node {
+            width: 1123px !important; /* Fixed standard width */
+            height: 794px !important; /* Fixed standard height */
+            background-color: #fcfbf9; /* Subtle warm paper tint */
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            flex-shrink: 0;
+            transform-origin: top center; /* Critical for scaling cleanly */
+            overflow: hidden;
+            box-sizing: border-box;
+            padding: 12px; /* Space for outer border */
+        }
+
+        /* Certificate Borders & Backgrounds */
+        .cert-bg-pattern {
+            position: absolute;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231e3a8a' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            z-index: 0;
+        }
+
+        .cert-outer-border {
+            position: absolute;
+            inset: 0;
+            border: 16px solid #1e3a8a; /* Navy Blue */
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .cert-inner-border {
+            position: absolute;
+            inset: 22px;
+            border: 2px solid #c29b0c; /* Elegant Gold */
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        .cert-inner-border-2 {
+            position: absolute;
+            inset: 28px;
+            border: 1px solid rgba(194, 155, 12, 0.4); /* Inner thin gold */
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 550px;
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 0;
+            filter: grayscale(100%);
+        }
+
+        /* Content Layout */
+        .cert-content {
+            position: relative;
+            z-index: 10;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 30px 60px; /* Carefully calculated padding */
+        }
+
+        .gold-text {
+            color: #c29b0c;
+        }
+
+        @media print {
+            body { background: white; }
+            .no-print { display: none !important; }
+            .cert-wrapper { padding: 0; overflow: visible; }
+            #certificate-node { box-shadow: none; transform: scale(1) !important; border: none; }
+            @page { margin: 0; size: landscape; }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center">
+
+    <!-- Loading State -->
+    <div id="loading-state" class="flex flex-col items-center justify-center min-h-screen w-full">
+        <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600 mb-4"></div>
+        <p class="text-gray-600 font-medium text-lg">Fetching Authentic Record...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="hidden flex-col items-center justify-center min-h-screen w-full text-center px-4">
+        <div class="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mb-6">
+            <svg class="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">Invalid or Expired Record</h2>
+        <p class="text-gray-600 mb-8 max-w-md mx-auto" id="error-message">This certificate ID could not be verified against our database. It may be invalid or revoked.</p>
+        <button onclick="window.location.href='/'" class="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition">Return to Home</button>
+    </div>
+
+    <!-- Success State -->
+    <div id="success-state" class="hidden w-full flex-col items-center pb-12">
+        
+        <!-- Verification Banner (Perfect for mobile QR scanners) -->
+        <div class="no-print w-full bg-white border-b border-gray-200 shadow-sm px-4 py-4 md:py-6 mb-4 sticky top-0 z-50">
+            <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                
+                <div class="flex items-center gap-4 w-full sm:w-auto bg-green-50 px-4 py-3 rounded-xl border border-green-200">
+                    <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold text-green-800 leading-tight">Authentic Record Verified</h2>
+                        <p class="text-xs text-green-600 font-medium">Issued by Testify (Xeta Tech Solutions)</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 w-full sm:w-auto">
+                    <button id="download-btn" onclick="downloadPDF()" class="flex-1 sm:flex-none bg-gray-900 hover:bg-gray-800 text-white px-6 py-3 rounded-xl font-bold shadow-md transition flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Download PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Certificate Scalable Wrapper -->
+        <div class="cert-wrapper no-print-overflow" id="cert-scale-wrapper">
+            <!-- The Actual Fixed-Dimension Certificate -->
+            <div id="certificate-node">
+                
+                <div class="cert-bg-pattern"></div>
+                <div class="cert-outer-border"></div>
+                <div class="cert-inner-border"></div>
+                <div class="cert-inner-border-2"></div>
+
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png" class="watermark">
+
+                <div class="cert-content">
+                    
+                    <!-- Top Section: Logos -->
+                    <div class="flex items-center justify-center gap-8 mb-6">
+                        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png" alt="Xeta Tech" class="h-10 object-contain">
+                        <div class="h-8 w-px bg-gray-400"></div>
+                        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify" class="h-10 object-contain rounded shadow-sm">
+                    </div>
+
+                    <!-- Header -->
+                    <div class="text-center mb-6">
+                        <h1 class="font-serif text-indigo-900 text-[64px] font-black tracking-[0.15em] leading-none mb-2 uppercase">Certificate</h1>
+                        <p class="font-serif gold-text italic text-2xl font-semibold">of Professional Achievement</p>
+                    </div>
+                    
+                    <!-- Candidate Info -->
+                    <div class="text-center flex-1 flex flex-col justify-center">
+                        <p class="text-gray-500 font-semibold tracking-widest uppercase text-xs mb-4">This is to certify that</p>
+                        
+                        <div class="relative inline-block mx-auto mb-6 px-12">
+                            <!-- Adjusted font size for long names -->
+                            <h2 id="cert-name" class="font-cursive text-[60px] text-gray-900 leading-tight capitalize z-10 relative px-4">
+                                Student Name
+                            </h2>
+                            <div class="absolute bottom-2 left-0 right-0 h-px bg-gray-400"></div>
+                        </div>
+
+                        <p class="text-gray-600 text-[15px] font-medium mb-3 max-w-2xl mx-auto">has successfully completed the requirements and passed the AI-Proctored certification examination for</p>
+                        
+                        <!-- Exam Title -->
+                        <h3 id="cert-test" class="font-serif text-[28px] font-bold text-gray-900 mb-8 max-w-3xl mx-auto leading-snug px-8 whitespace-nowrap">
+                            Assessment Title Loading...
+                        </h3>
+
+                        <!-- Score and Date Row -->
+                        <div class="flex justify-center items-center gap-16 mb-4">
+                            <div class="text-center px-8">
+                                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1.5 whitespace-nowrap">Score Achieved</p>
+                                <p id="cert-score" class="text-3xl font-black text-indigo-800 whitespace-nowrap">--%</p>
+                            </div>
+                            <div class="w-px h-10 bg-gray-300"></div>
+                            <div class="text-center px-8">
+                                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1.5 whitespace-nowrap">Date of Issue</p>
+                                <p id="cert-date" class="text-xl font-bold text-gray-800 mt-1 whitespace-nowrap">--/--/----</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer: Verification, Signature & QR -->
+                    <div class="flex justify-between items-end w-full mt-auto pt-4 pb-2 px-6 z-10">
+                        
+                        <!-- Left: Verification Info -->
+                        <div class="text-left w-[30%] pb-1">
+                            <p class="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1 whitespace-nowrap">Verify Authenticity</p>
+                            <p class="text-xs text-indigo-700 font-semibold mb-1 whitespace-nowrap">testify.xetatech.com/verify</p>
+                            <p class="text-[10px] text-gray-500 font-mono whitespace-nowrap">ID: <span id="cert-id-display" class="font-bold text-gray-700">---</span></p>
+                        </div>
+                        
+                        <!-- Center: Signature -->
+                        <!-- Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=WindSong:wght@400&display=swap" rel="stylesheet">
+
+<div class="text-center flex flex-col items-center w-[40%]">
+    
+    <!-- Signature -->
+    <div class="h-20 mb-1 flex items-end justify-center">
+        <span
+            class="text-[30px] text-slate-700 leading-none whitespace-nowrap"
+            style="
+                font-family: 'WindSong', cursive;
+                font-weight: 400;
+                letter-spacing: 0.5px;
+                transform: rotate(-3deg);
+            "
+        >
+            N. Varshika
+        </span>
+    </div>
+
+    <!-- Signature Line -->
+    <div class="w-56 border-b border-gray-400 mb-2"></div>
+
+    <!-- Printed Name -->
+    <p class="text-sm font-semibold text-gray-800 tracking-wide whitespace-nowrap">
+        N. Varshika
+    </p>
+
+    <!-- Designation -->
+    <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em] whitespace-nowrap mt-0.5">
+        Director of Assessments
+    </p>
+
+</div>
+                        <!-- Right: QR Code -->
+                        <div class="w-[30%] flex justify-end">
+                            <div class="bg-white p-2 border border-gray-200 shadow-sm flex flex-col items-center">
+                                <div id="qrcode"></div>
+                                <p class="text-[8px] text-gray-500 mt-1 uppercase font-bold tracking-widest whitespace-nowrap">Scan to Verify</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const certId = urlParams.get('certId');
+
+        // Automatic Scaling Logic to fit mobile screens perfectly
+        function scaleCertificate() {
+            const wrapper = document.getElementById('cert-scale-wrapper');
+            const certNode = document.getElementById('certificate-node');
+            if(!wrapper || !certNode) return;
+
+            // Target width is 1123. Calculate ratio based on screen padding.
+            const screenWidth = window.innerWidth;
+            const targetWidth = 1123;
+            
+            // Add padding (32px on mobile, more on desktop)
+            const padding = screenWidth < 640 ? 32 : 64; 
+            let scaleRatio = (screenWidth - padding) / targetWidth;
+            
+            // Cap scale at 1 to prevent it getting blurry on huge screens
+            if (scaleRatio > 1) scaleRatio = 1;
+
+            certNode.style.transform = `scale(${scaleRatio})`;
+            
+            // Adjust wrapper height so layout doesn't break due to absolute scaling
+            const scaledHeight = 794 * scaleRatio;
+            wrapper.style.height = `${scaledHeight + 40}px`; 
+        }
+
+        window.addEventListener('resize', scaleCertificate);
+
+        async function initVerification() {
+            const loading = document.getElementById('loading-state');
+            const error = document.getElementById('error-state');
+            const success = document.getElementById('success-state');
+
+            if (!certId) {
+                loading.classList.add('hidden');
+                error.classList.remove('hidden');
+                error.classList.add('flex');
+                document.getElementById('error-message').textContent = "No Certificate ID was provided in the URL.";
+                return;
+            }
+
+            try {
+                // Fetch data from backend
+                const response = await fetch(`/api/public/certificate/${certId}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.message || "Certificate not found.");
+                }
+
+                // Populate DOM
+                document.getElementById('cert-name').textContent = data.name;
+                document.getElementById('cert-test').textContent = data.testName;
+                document.getElementById('cert-score').textContent = `${data.score}%`;
+                document.getElementById('cert-date').textContent = data.date;
+                document.getElementById('cert-id-display').textContent = data.certId;
+                
+                // Generate QR Code (Using current page URL)
+                const currentUrl = window.location.href; 
+                new QRCode(document.getElementById("qrcode"), {
+                    text: currentUrl,
+                    width: 70, // Slightly reduced to fit nicely in the new layout
+                    height: 70,
+                    colorDark : "#1e3a8a",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.M
+                });
+
+                // Show UI & Scale
+                loading.classList.add('hidden');
+                success.classList.remove('hidden');
+                success.classList.add('flex');
+                
+                // Preload fonts for PDF export reliability
+                await document.fonts.ready;
+                
+                scaleCertificate();
+
+            } catch(e) {
+                loading.classList.add('hidden');
+                error.classList.remove('hidden');
+                error.classList.add('flex');
+                document.getElementById('error-message').textContent = e.message;
+            }
+        }
+
+        async function downloadPDF() {
+            const btn = document.getElementById('download-btn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = `<svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating...`;
+            btn.disabled = true;
+
+            // Wait for fonts to fully render to avoid missing text in PDF
+            await document.fonts.ready;
+
+            const element = document.getElementById('certificate-node');
+            
+            // 1. Create a clone to prevent screen layout from squishing the PDF
+            const clone = element.cloneNode(true);
+            document.body.appendChild(clone);
+            
+            // 2. Force absolute full A4 pixel dimensions on the clone, hidden off-screen
+            clone.style.transform = 'none';
+            clone.style.position = 'absolute';
+            clone.style.top = '-9999px';
+            clone.style.left = '-9999px';
+            clone.style.width = '1123px';
+            clone.style.height = '794px';
+            clone.style.minWidth = '1123px';
+            clone.style.minHeight = '794px';
+            clone.style.overflow = 'hidden';
+
+            // 3. Re-draw the QR Code on the clone (Canvas elements don't copy over normally)
+            const qrContainer = clone.querySelector('#qrcode');
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, {
+                text: window.location.href,
+                width: 70,
+                height: 70,
+                colorDark : "#1e3a8a",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.M
+            });
+
+            // 4. Slight delay to let the browser paint the DOM and QR code before snapping photo
+            setTimeout(() => {
+                const opt = {
+                    margin:       0,
+                    filename:     `Testify_Certificate_${certId || 'Preview'}.pdf`,
+                    image:        { type: 'jpeg', quality: 1 },
+                    html2canvas:  { scale: 2, useCORS: true, logging: false, width: 1123, height: 794 }, 
+                    jsPDF:        { unit: 'px', format: [1123, 794], orientation: 'landscape' }
+                };
+                
+                html2pdf().set(opt).from(clone).save().then(() => {
+                    // 5. Cleanup
+                    document.body.removeChild(clone);
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                }).catch(err => {
+                    console.error('PDF Error:', err);
+                    document.body.removeChild(clone);
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                    alert("Failed to generate PDF. Please try again.");
+                });
+            }, 800);
+        }
+
+        // Initialize
+        initVerification();
+    </script>
+</body>
+</html>
