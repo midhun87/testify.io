@@ -322,7 +322,7 @@
 
             try {
                 // Fetch data from backend
-                const response = await fetch(`/api/public/certificate/${certId}`);
+                const response = await fetch(`/api/public/certificate/:certId${certId}`);
                 const data = await response.json();
 
                 if (!response.ok) {
