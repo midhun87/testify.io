@@ -299,9 +299,20 @@
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Voucher Code</label>
                     <input type="text" id="s-voucher" placeholder="e.g. CRDX-2026-XYZ" required class="touch-target w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-bold text-slate-900 uppercase tracking-widest shadow-sm">
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Preferred Slot</label>
-                    <input type="datetime-local" id="s-time" required class="touch-target w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium text-slate-900 shadow-sm">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Date</label>
+                        <input type="date" id="s-date" required class="touch-target w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium text-slate-900 shadow-sm">
+                    </div>
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Time Slot</label>
+                        <select id="s-time-slot" required class="touch-target w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-medium text-slate-900 shadow-sm appearance-none pr-10 cursor-pointer">
+                            <!-- Populated via JS -->
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 pt-5 text-slate-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
                 </div>
                 
                 <div id="schedule-msg" class="text-sm font-medium hidden p-3 rounded-xl"></div>
@@ -602,6 +613,29 @@
         function openScheduleModal() {
             document.getElementById('modal-schedule').classList.remove('hidden');
             document.getElementById('schedule-msg').classList.add('hidden');
+            
+            // Set minimum date to today
+            const dateInput = document.getElementById('s-date');
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.min = today;
+            if(!dateInput.value) dateInput.value = today;
+
+            // Populate time slots every 15 minutes (9:00 AM to 6:00 PM)
+            const timeSelect = document.getElementById('s-time-slot');
+            if (timeSelect.options.length === 0) {
+                for (let h = 9; h <= 18; h++) {
+                    for (let m = 0; m < 60; m += 15) {
+                        const ampm = h >= 12 ? 'PM' : 'AM';
+                        const hour12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+                        const mins = m === 0 ? '00' : m;
+                        
+                        const timeString = `${hour12}:${mins} ${ampm}`;
+                        const valueString = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+                        
+                        timeSelect.add(new Option(timeString, valueString));
+                    }
+                }
+            }
         }
 
         // --- Modals Form Submissions (Strict Backend Fetches) ---
@@ -647,13 +681,18 @@
             const msg = document.getElementById('schedule-msg');
             btn.disabled = true; btn.textContent = 'Validating...';
             
+            // Combine Date and selected Time slot into a single ISO timestamp for the backend
+            const selectedDate = document.getElementById('s-date').value;
+            const selectedTime = document.getElementById('s-time-slot').value;
+            const scheduledIsoString = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
+            
             try {
                 const res = await fetch('/api/public/mock/schedule', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         email: document.getElementById('s-email').value,
                         voucherCode: document.getElementById('s-voucher').value,
-                        scheduledTime: document.getElementById('s-time').value
+                        scheduledTime: scheduledIsoString
                     })
                 });
                 const data = await res.json();
