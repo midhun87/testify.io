@@ -23,7 +23,6 @@
             overflow-x: hidden;
         }
 
-        /* Glassmorphism & UI Effects */
         .glass-nav {
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(16px);
@@ -36,7 +35,7 @@
             background: rgba(255, 255, 255, 0.98); 
             backdrop-filter: blur(20px); 
             border: 1px solid rgba(255,255,255,0.4);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
         }
 
         .text-gradient-primary {
@@ -46,15 +45,13 @@
             background-clip: text;
         }
 
-        /* Hero Overlay Gradients */
         .hero-overlay {
-            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(67, 56, 202, 0.8) 100%);
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(67, 56, 202, 0.85) 100%);
         }
         .hero-fade-bottom {
             background: linear-gradient(to top, #fafafa 0%, rgba(250, 250, 250, 0) 100%);
         }
 
-        /* Advanced Hover Button */
         .btn-glow { position: relative; }
         .btn-glow::before {
             content: '';
@@ -76,14 +73,15 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* Animations */
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         
+        .scale-in { animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
         .loader { border: 3px solid #e2e8f0; border-top: 3px solid #4f46e5; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Exam Portal Palette Badges */
         .q-badge { 
             width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; 
             font-weight: 700; border-radius: 10px; cursor: pointer; transition: all 0.2s; 
@@ -146,14 +144,12 @@
     <!-- VIEW 1: Listing View -->
     <div id="view-listing" class="fade-in">
         
-        <!-- Premium Hero Section -->
-        <section class="relative overflow-hidden pt-32 pb-20 md:pt-48 md:pb-32 bg-slate-900 text-white flex flex-col justify-center">
+        <section class="relative overflow-hidden pt-32 pb-24 md:pt-48 md:pb-36 bg-slate-900 text-white flex flex-col justify-center">
             <!-- Background Image & Gradients -->
             <div class="absolute inset-0 z-0">
-                <img class="h-full w-full object-cover object-center opacity-40" src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070&auto=format&fit=crop" alt="Assessment Environment">
+                <img class="h-full w-full object-cover object-center opacity-30" src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2070&auto=format&fit=crop" alt="Assessment Environment">
                 <div class="absolute inset-0 hero-overlay mix-blend-multiply"></div>
-                <div class="absolute inset-0 bg-slate-900/40"></div>
-                <div class="absolute bottom-0 left-0 right-0 h-32 hero-fade-bottom"></div>
+                <div class="absolute bottom-0 left-0 right-0 h-40 hero-fade-bottom"></div>
             </div>
 
             <div class="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10 w-full">
@@ -168,58 +164,85 @@
                 </h1>
                 
                 <p class="mt-6 md:mt-8 max-w-2xl mx-auto text-base sm:text-lg md:text-xl text-slate-200 leading-relaxed font-light px-2">
-                    Take industry-standard practice exams or schedule premium mock interviews to stand out to employers globally. AI-driven precision testing.
+                    Evaluate your skills with industry-standard practice exams or schedule proctored premium mock interviews to stand out globally.
                 </p>
             </div>
         </section>
 
-        <!-- Bento Grid Tests Section -->
-        <section class="py-12 md:py-16 bg-[#fafafa] relative z-20 -mt-10">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section class="py-12 md:py-16 bg-[#fafafa] relative z-20 -mt-16">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 
+                <!-- Unique Segmented Control for Test Selection -->
+                <div class="flex justify-center mb-10 md:mb-12">
+                    <div class="bg-white p-1.5 rounded-full border border-slate-200 shadow-sm inline-flex relative w-full sm:w-auto overflow-x-auto hide-scrollbar">
+                        <button id="tab-practice" onclick="switchTab('practice')" class="flex-1 sm:flex-none px-6 md:px-10 py-3 rounded-full text-sm font-bold bg-indigo-600 text-white shadow-md transition-all duration-300 whitespace-nowrap">
+                            Practice Tests
+                        </button>
+                        <button id="tab-mock" onclick="switchTab('mock')" class="flex-1 sm:flex-none px-6 md:px-10 py-3 rounded-full text-sm font-bold text-slate-500 hover:text-slate-900 transition-all duration-300 whitespace-nowrap">
+                            Premium Mock Exams
+                        </button>
+                    </div>
+                </div>
+
                 <div id="loading-tests" class="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-slate-200 shadow-sm">
                     <div class="loader mb-4"></div>
                     <p class="text-slate-500 font-medium">Fetching active assessments...</p>
                 </div>
 
-                <div id="tests-container" class="grid grid-cols-1 lg:grid-cols-2 gap-8 hidden">
-                    
-                    <!-- Free Practice Tests Column -->
-                    <div class="flex flex-col gap-6">
-                        <div class="flex items-center space-x-4 mb-2">
-                            <div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100 shadow-sm">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            </div>
-                            <div>
-                                <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Free Practice Tests</h2>
-                                <p class="text-sm text-slate-500">Sharpen your skills instantly</p>
-                            </div>
-                        </div>
-                        <div class="grid gap-4" id="practice-list"></div>
+                <!-- Unified Grid Container -->
+                <div id="tests-container" class="hidden">
+                    <div id="active-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- JS injected cards -->
                     </div>
-
-                    <!-- Premium Mock Tests Column -->
-                    <div class="flex flex-col gap-6">
-                        <div class="flex items-center space-x-4 mb-2">
-                            <div class="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 border border-indigo-100 shadow-sm">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                            </div>
-                            <div>
-                                <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Premium Mock Tests</h2>
-                                <p class="text-sm text-slate-500">Corporate simulated environments</p>
-                            </div>
-                        </div>
-                        <div class="grid gap-4" id="mock-list"></div>
-                    </div>
-
                 </div>
+
             </div>
         </section>
     </div>
 
     <!-- Modals (Using Premium Glass Theme) -->
     
-    <!-- Registration Modal (Practice) -->
+    <div id="modal-test-details" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4 transition-opacity">
+        <div class="glass-modal w-full max-w-lg rounded-[2rem] p-8 md:p-10 scale-in relative overflow-hidden">
+            <!-- Decorative background blob -->
+            <div class="absolute -top-16 -right-16 w-32 h-32 bg-indigo-100 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+            
+            <button onclick="closeModals()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-700 bg-slate-50 p-2 rounded-full transition-colors z-10">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+
+            <div class="mb-6 pr-8">
+                <div class="inline-flex items-center gap-2 px-3 py-1 bg-slate-50 border border-slate-200 text-xs font-bold text-slate-600 rounded-lg uppercase tracking-wider mb-4" id="detail-domain">Domain</div>
+                <h3 class="text-2xl md:text-3xl font-black text-slate-900 leading-tight mb-2" id="detail-title">Test Title</h3>
+                <div class="flex items-center gap-2 text-sm font-semibold text-slate-500">
+                    <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span id="detail-duration">00 Mins</span>
+                    <span class="mx-1">•</span>
+                    <span id="detail-type" class="text-indigo-600">Practice</span>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-5 border border-slate-100 mb-6 shadow-sm">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Description</h4>
+                <p class="text-sm text-slate-700 leading-relaxed font-medium" id="detail-desc">
+                    Description goes here.
+                </p>
+            </div>
+
+            <div class="mb-8">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Skills Assessed</h4>
+                <div class="flex flex-wrap gap-2" id="detail-skills">
+                    <!-- JS Injected tags -->
+                </div>
+            </div>
+
+            <button onclick="proceedToRegistration()" class="touch-target w-full px-4 py-4 bg-indigo-600 text-white text-[15px] font-bold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all btn-glow flex justify-center items-center gap-2">
+                Continue to Registration
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            </button>
+        </div>
+    </div>
+
     <div id="modal-practice" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4 transition-opacity">
         <div class="glass-modal w-full max-w-md rounded-3xl p-8 md:p-10 fade-in">
             <h3 class="text-2xl font-bold text-slate-900 mb-2">Start Practice Test</h3>
@@ -423,7 +446,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row justify-between items-center gap-6">
                 <div class="flex items-center gap-4">
-                     <img src="https://res.cloudinary.com/dzuxwvamy/image/upload/v1780483593/Credex_szkzcq.png" alt="Credex" class="h-6 object-contain grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all">
+                     <img src="https://res.cloudinary.com/dzuxwvamy/image/upload/v1780483593/Credex_szkzcq.png" alt="Credex" class="h-8 object-contain">
                 </div>
                 
                 <div class="flex flex-col sm:flex-row items-center gap-3 sm:gap-6 text-sm text-slate-500 font-medium">
@@ -447,6 +470,7 @@
         let dbMock = [];
         
         let currentTest = null;
+        let currentActiveTab = 'practice'; // 'practice' or 'mock'
         let currentUser = {}; // stores {name, email}
         
         // --- CBT Engine State ---
@@ -474,30 +498,52 @@
             }
         }
 
-        function renderListings() {
-            const pList = document.getElementById('practice-list');
-            if (dbPractice.length === 0) pList.innerHTML = '<p class="text-slate-500 italic text-sm">No practice tests currently active.</p>';
-            else pList.innerHTML = dbPractice.map(t => `
-                <div class="group relative p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-emerald-300 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col" onclick="openPracticeModal('${t.testId}')">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="inline-flex px-3 py-1 bg-slate-50 border border-slate-100 text-[10px] font-bold text-slate-600 rounded-full uppercase tracking-wider">${t.domain || 'General'}</div>
-                        <span class="text-xs font-bold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">${t.duration}m</span>
-                    </div>
-                    <h3 class="text-lg font-black text-slate-900 mb-2 group-hover:text-emerald-600 transition-colors">${t.title}</h3>
-                    <p class="text-slate-500 text-sm font-medium">${(t.skills || []).join(', ')}</p>
-                </div>
-            `).join('');
+        function switchTab(tabType) {
+            currentActiveTab = tabType;
+            
+            const btnPractice = document.getElementById('tab-practice');
+            const btnMock = document.getElementById('tab-mock');
 
-            const mList = document.getElementById('mock-list');
-            if (dbMock.length === 0) mList.innerHTML = '<p class="text-slate-500 italic text-sm">No mock tests currently active.</p>';
-            else mList.innerHTML = dbMock.map(t => `
-                <div class="group relative p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-300 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col" onclick="openMockModal('${t.testId}')">
+            if (tabType === 'practice') {
+                btnPractice.className = "flex-1 sm:flex-none px-6 md:px-10 py-3 rounded-full text-sm font-bold bg-indigo-600 text-white shadow-md transition-all duration-300 whitespace-nowrap";
+                btnMock.className = "flex-1 sm:flex-none px-6 md:px-10 py-3 rounded-full text-sm font-bold text-slate-500 hover:text-slate-900 transition-all duration-300 whitespace-nowrap";
+            } else {
+                btnMock.className = "flex-1 sm:flex-none px-6 md:px-10 py-3 rounded-full text-sm font-bold bg-slate-900 text-white shadow-md transition-all duration-300 whitespace-nowrap";
+                btnPractice.className = "flex-1 sm:flex-none px-6 md:px-10 py-3 rounded-full text-sm font-bold text-slate-500 hover:text-slate-900 transition-all duration-300 whitespace-nowrap";
+            }
+
+            renderListings();
+        }
+
+        function renderListings() {
+            const listContainer = document.getElementById('active-list');
+            const dataToRender = currentActiveTab === 'practice' ? dbPractice : dbMock;
+            
+            const themeColor = currentActiveTab === 'practice' ? 'emerald' : 'indigo';
+            const themeBg = currentActiveTab === 'practice' ? 'bg-emerald-50' : 'bg-indigo-50';
+            const themeText = currentActiveTab === 'practice' ? 'text-emerald-700' : 'text-indigo-700';
+
+            if (dataToRender.length === 0) {
+                listContainer.innerHTML = `<div class="col-span-full py-12 text-center"><p class="text-slate-500 font-medium">No ${currentActiveTab} assessments currently active.</p></div>`;
+                return;
+            }
+
+            listContainer.innerHTML = dataToRender.map(t => `
+                <div class="group relative p-6 bg-white rounded-[1.5rem] border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col cursor-pointer" onclick="openTestDetails('${t.testId}')">
                     <div class="flex justify-between items-start mb-4">
-                        <div class="inline-flex px-3 py-1 bg-indigo-50 border border-indigo-100 text-[10px] font-bold text-indigo-700 rounded-full uppercase tracking-wider">Proctored Mock</div>
-                        <span class="text-xs font-bold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">${t.duration}m</span>
+                        <div class="inline-flex px-3 py-1 ${themeBg} border border-${themeColor}-100 text-[10px] font-bold ${themeText} rounded-lg uppercase tracking-wider">${t.domain || 'General'}</div>
+                        <span class="flex items-center gap-1 text-xs font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
+                            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            ${t.duration || 60}m
+                        </span>
                     </div>
-                    <h3 class="text-lg font-black text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors">${t.title}</h3>
-                    <p class="text-slate-500 text-sm font-medium">${(t.skills || []).join(', ')} • Scheduled Exam</p>
+                    <h3 class="text-lg font-black text-slate-900 mb-2 group-hover:text-${themeColor}-600 transition-colors leading-tight">${t.title}</h3>
+                    <p class="text-slate-500 text-sm font-medium line-clamp-2 mb-6 flex-1">${t.description || 'Standard assessment module to evaluate core competencies.'}</p>
+                    
+                    <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-sm font-bold text-slate-700 group-hover:text-${themeColor}-600 transition-colors">
+                        <span>View Details</span>
+                        <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+                    </div>
                 </div>
             `).join('');
         }
@@ -516,21 +562,41 @@
         }
 
         function closeModals() {
+            document.getElementById('modal-test-details').classList.add('hidden');
             document.getElementById('modal-practice').classList.add('hidden');
             document.getElementById('modal-mock').classList.add('hidden');
             document.getElementById('modal-schedule').classList.add('hidden');
         }
 
-        function openPracticeModal(id) {
-            currentTest = dbPractice.find(t => t.testId === id);
-            document.getElementById('modal-practice').classList.remove('hidden');
+        function openTestDetails(id) {
+            const dataSource = currentActiveTab === 'practice' ? dbPractice : dbMock;
+            currentTest = dataSource.find(t => t.testId === id);
+            
+            if(!currentTest) return;
+
+            document.getElementById('detail-title').textContent = currentTest.title;
+            document.getElementById('detail-domain').textContent = currentTest.domain || 'General';
+            document.getElementById('detail-duration').textContent = `${currentTest.duration || 60} Mins`;
+            document.getElementById('detail-type').textContent = currentActiveTab === 'practice' ? 'Practice Mode' : 'Proctored Mock';
+            
+            document.getElementById('detail-desc').textContent = currentTest.description || 'This assessment evaluates your proficiency in key domain concepts. Ensure you have a stable connection before beginning.';
+            
+            const skillsContainer = document.getElementById('detail-skills');
+            const skills = currentTest.skills || ['General Aptitude'];
+            skillsContainer.innerHTML = skills.map(s => `<span class="px-3 py-1.5 bg-slate-100 text-slate-600 text-xs font-bold rounded-lg border border-slate-200">${s}</span>`).join('');
+
+            document.getElementById('modal-test-details').classList.remove('hidden');
         }
 
-        function openMockModal(id) {
-            currentTest = dbMock.find(t => t.testId === id);
-            document.getElementById('modal-mock').classList.remove('hidden');
-            document.getElementById('mock-msg').classList.add('hidden');
-            document.getElementById('btn-get-voucher').style.display = 'flex';
+        function proceedToRegistration() {
+            closeModals();
+            if (currentActiveTab === 'practice') {
+                document.getElementById('modal-practice').classList.remove('hidden');
+            } else {
+                document.getElementById('modal-mock').classList.remove('hidden');
+                document.getElementById('mock-msg').classList.add('hidden');
+                document.getElementById('btn-get-voucher').style.display = 'flex';
+            }
         }
 
         function openScheduleModal() {
