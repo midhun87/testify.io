@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SME - Test Attempts | Hire With Us</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+    </style>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <div class="hidden md:flex flex-col w-64 bg-gray-900 text-white h-full">
+        <div class="flex items-center justify-center h-20 border-b border-gray-800">
+            <h1 class="text-xl font-bold tracking-wider">HIRE WITH US</h1>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-2">
+            <a href="sme-dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors"><span>Dashboard</span></a>
+            <a href="sme-create-public-test.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors"><span>Create Test</span></a>
+            <a href="sme-manage-public-tests.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-lg transition-colors"><span>Manage Tests</span></a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto">
+        <header class="bg-white shadow-sm px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+            <div class="flex items-center gap-4">
+                <a href="sme-manage-public-tests.html" class="text-gray-500 hover:text-gray-800">&larr; Back</a>
+                <h2 class="text-2xl font-bold text-gray-800">Test Attempts</h2>
+            </div>
+            <button onclick="downloadCSV()" id="download-btn" class="hidden bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Download Response Sheet
+            </button>
+        </header>
+
+        <main class="p-8 max-w-7xl mx-auto w-full">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-gray-200">
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-600">Candidate Name</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-600">Email</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-600">Score</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-600">Total Qs</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-600">Percentage</th>
+                                <th class="px-6 py-4 text-sm font-semibold text-gray-600">Date Attempted</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attempts-table-body" class="divide-y divide-gray-100">
+                            <tr>
+                                <td colspan="6" class="px-6 py-8 text-center text-gray-500">Loading attempts...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const testId = urlParams.get('testId');
+        let attemptsData = [];
+
+        document.addEventListener('DOMContentLoaded', fetchAttempts);
+
+        async function fetchAttempts() {
+            if (!testId) {
+                document.getElementById('attempts-table-body').innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">Invalid Test ID.</td></tr>`;
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+            const tbody = document.getElementById('attempts-table-body');
+            
+            try {
+                const response = await fetch(`/api/sme/public-tests/${testId}/attempts`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch attempts');
+
+                const data = await response.json();
+                attemptsData = data.attempts || [];
+                
+                if (attemptsData.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">No attempts found for this test yet.</td></tr>`;
+                    return;
+                }
+
+                // Show download button
+                document.getElementById('download-btn').classList.remove('hidden');
+
+                tbody.innerHTML = attemptsData.map(attempt => {
+                    const score = attempt.score || 0;
+                    const totalQs = attempt.totalQuestions || 1;
+                    const percentage = ((score / totalQs) * 100).toFixed(1);
+                    const date = new Date(attempt.createdAt || attempt.timestamp).toLocaleString();
+
+                    return `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 font-medium text-gray-900">${attempt.studentName || 'Anonymous'}</td>
+                        <td class="px-6 py-4 text-gray-600">${attempt.studentEmail || 'N/A'}</td>
+                        <td class="px-6 py-4 text-gray-900 font-semibold">${score}</td>
+                        <td class="px-6 py-4 text-gray-600">${totalQs}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 rounded-full text-xs font-medium ${percentage >= 50 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                ${percentage}%
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${date}</td>
+                    </tr>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error("API Error:", error);
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">Error loading test attempts.</td></tr>`;
+            }
+        }
+
+        function downloadCSV() {
+            if (attemptsData.length === 0) return;
+
+            const headers = ["Candidate Name", "Email", "Score", "Total Questions", "Percentage", "Date Attempted"];
+            
+            const rows = attemptsData.map(attempt => {
+                const score = attempt.score || 0;
+                const totalQs = attempt.totalQuestions || 1;
+                const percentage = ((score / totalQs) * 100).toFixed(1);
+                const date = new Date(attempt.createdAt || attempt.timestamp).toLocaleString();
+                
+                // Escape quotes and wrap in quotes for CSV safety
+                return [
+                    `"${(attempt.studentName || 'Anonymous').replace(/"/g, '""')}"`,
+                    `"${(attempt.studentEmail || 'N/A').replace(/"/g, '""')}"`,
+                    score,
+                    totalQs,
+                    `${percentage}%`,
+                    `"${date.replace(/"/g, '""')}"`
+                ];
+            });
+
+            let csvContent = "data:text/csv;charset=utf-8," 
+                + headers.join(",") + "\n" 
+                + rows.map(e => e.join(",")).join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Test_Attempts_${testId}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>

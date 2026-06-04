@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SME - Manage Public Tests | Hire With Us</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .loader {
+            border: 3px solid #f3f3f3; border-top: 3px solid #4F46E5;
+            border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <div class="hidden md:flex flex-col w-64 bg-gray-900 text-white shadow-xl flex-shrink-0">
+        <div class="flex items-center justify-center h-20 border-b border-gray-800">
+            <h1 class="text-2xl font-bold tracking-wider text-indigo-400">HIRE WITH US</h1>
+        </div>
+        <div class="px-4 py-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">SME Portal</div>
+        <nav id="sidebar-nav" class="flex-1 px-4 space-y-2 overflow-y-auto"></nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+        
+        <!-- Header -->
+        <header class="bg-white shadow-sm h-20 flex items-center justify-between px-8 flex-shrink-0 z-10">
+            <h2 class="text-2xl font-bold text-gray-800">Manage Assessments</h2>
+            <div id="user-profile-container"></div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="flex-1 overflow-y-auto p-8 bg-slate-50">
+            <div class="max-w-7xl mx-auto space-y-6">
+                
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900">Your Active Tests</h3>
+                        <p class="text-sm text-gray-500">View, edit, and delete the tests you have published to the public portal.</p>
+                    </div>
+                    <a href="sme-create-public-test.html" class="px-5 py-2.5 bg-indigo-600 text-white font-bold rounded-lg shadow-sm hover:bg-indigo-700 transition flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        Create New Test
+                    </a>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loader" class="flex flex-col items-center justify-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="loader mb-4"></div>
+                    <p class="text-gray-500 font-medium">Fetching your assessments...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="hidden flex flex-col items-center justify-center py-16 bg-white rounded-xl shadow-sm border border-gray-100 text-center">
+                    <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    <h3 class="text-lg font-semibold text-gray-800">No Tests Found</h3>
+                    <p class="text-gray-500 mt-2">You haven't created any assessments yet.</p>
+                </div>
+
+                <!-- Results Table -->
+                <div id="table-container" class="hidden bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Test Details</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Created On</th>
+                                    <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body" class="bg-white divide-y divide-gray-200">
+                                <!-- JS Injected Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- SME Common Logic -->
+    <script src="sme-common.js"></script>
+    <script>
+        const token = localStorage.getItem('token');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+            if(typeof initializeSmePage === 'function') {
+                initializeSmePage('Manage Tests');
+            }
+            fetchMyTests();
+        });
+
+        async function fetchMyTests() {
+            showState('loading');
+            try {
+                const res = await fetch('/api/sme/my-tests', { 
+                    headers: { 'x-auth-token': token }
+                });
+
+                if (!res.ok) throw new Error("Failed to load tests.");
+                const data = await res.json();
+                
+                renderTests(data.tests || []);
+            } catch (err) {
+                alert("Error fetching tests: " + err.message);
+                showState('empty');
+            }
+        }
+
+        function renderTests(tests) {
+            if (tests.length === 0) {
+                showState('empty');
+                return;
+            }
+
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            tests.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).forEach(test => {
+                const dateObj = new Date(test.createdAt);
+                const formattedDate = dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+                
+                const typeBadge = test.type === 'mock' 
+                    ? `<span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-md bg-purple-100 text-purple-800">Premium Mock</span>`
+                    : `<span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-md bg-emerald-100 text-emerald-800">Practice</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-6 py-5 whitespace-nowrap">
+                        <div class="text-sm font-bold text-gray-900">${test.title}</div>
+                        <div class="text-xs text-gray-500 mt-1">${test.domain || 'General Domain'}</div>
+                    </td>
+                    <td class="px-6 py-5 whitespace-nowrap">${typeBadge}</td>
+                    <td class="px-6 py-5 whitespace-nowrap text-sm text-gray-500 font-medium">${formattedDate}</td>
+                    <td class="px-6 py-5 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex items-center justify-end space-x-3">
+                            <a href="sme-create-public-test.html?edit=true&id=${test.testId}" class="text-indigo-600 hover:text-indigo-900 flex items-center transition-colors">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                Edit
+                            </a>
+                            <span class="text-gray-300">|</span>
+                            <button onclick="deleteTest('${test.testId}')" class="text-red-600 hover:text-red-900 flex items-center transition-colors">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                Delete
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            showState('table');
+        }
+
+        async function deleteTest(testId) {
+            if (!confirm("Are you sure you want to delete this test? This action cannot be undone.")) return;
+            
+            try {
+                const res = await fetch(`/api/sme/public-tests/${testId}`, {
+                    method: 'DELETE',
+                    headers: { 'x-auth-token': token }
+                });
+
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.message || 'Failed to delete test');
+                }
+
+                // Refresh table
+                fetchMyTests();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        function showState(state) {
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('loader').classList.add('hidden');
+            document.getElementById('table-container').classList.add('hidden');
+
+            if (state === 'empty') document.getElementById('empty-state').classList.remove('hidden');
+            else if (state === 'loading') document.getElementById('loader').classList.remove('hidden');
+            else if (state === 'table') document.getElementById('table-container').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

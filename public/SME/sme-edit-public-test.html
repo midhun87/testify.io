@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SME - Edit Public Test | Hire With Us</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .sidebar-link:hover { background-color: #4338CA; }
+        .sidebar-link.active { background-color: #4F46E5; font-weight: 600; }
+    </style>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <div class="hidden md:flex flex-col w-64 bg-gray-900 text-white h-full">
+        <div class="flex items-center justify-center h-20 border-b border-gray-800">
+            <h1 class="text-xl font-bold tracking-wider">HIRE WITH US</h1>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-2">
+            <a href="sme-dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors"><span>Dashboard</span></a>
+            <a href="sme-create-public-test.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors"><span>Create Test</span></a>
+            <a href="sme-manage-public-tests.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-lg transition-colors"><span>Manage Tests</span></a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto">
+        <header class="bg-white shadow-sm px-8 py-4 flex justify-between items-center sticky top-0 z-10">
+            <div class="flex items-center gap-4">
+                <a href="sme-manage-public-tests.html" class="text-gray-500 hover:text-gray-800">&larr; Back</a>
+                <h2 class="text-2xl font-bold text-gray-800">Edit Test</h2>
+            </div>
+        </header>
+
+        <main class="p-8 max-w-4xl mx-auto w-full">
+            <div id="loading" class="text-center py-10 text-gray-500">Loading test data...</div>
+
+            <form id="edit-test-form" class="space-y-6 hidden">
+                <!-- Test Basics -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Basic Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Test Title</label>
+                            <input type="text" id="test-title" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+                            <input type="number" id="test-duration" required min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sections-container" class="space-y-6"></div>
+
+                <div class="flex items-center justify-between">
+                    <button type="button" onclick="addSection()" class="text-indigo-600 font-medium hover:text-indigo-800 flex items-center gap-1">+ Add Section</button>
+                    <button type="submit" id="submit-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-2.5 rounded-lg font-semibold transition-colors shadow-sm">
+                        Update Test
+                    </button>
+                </div>
+                <div id="form-message" class="text-center mt-4"></div>
+            </form>
+        </main>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const testId = urlParams.get('testId');
+        let sectionCount = 0;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!testId) {
+                document.getElementById('loading').textContent = "Invalid Test ID.";
+                return;
+            }
+            await fetchTestData();
+        });
+
+        async function fetchTestData() {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch(`/api/sme/public-tests/${testId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Failed to fetch test data');
+                const data = await response.json();
+                populateForm(data.test);
+            } catch (error) {
+                console.error(error);
+                document.getElementById('loading').textContent = "Error loading test details.";
+            }
+        }
+
+        function populateForm(test) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('edit-test-form').classList.remove('hidden');
+
+            document.getElementById('test-title').value = test.title;
+            document.getElementById('test-duration').value = test.duration;
+
+            if (test.sections && test.sections.length > 0) {
+                test.sections.forEach(section => {
+                    const secId = addSection(section.sectionTitle);
+                    section.questions.forEach(q => {
+                        addQuestion(secId, q);
+                    });
+                });
+            } else {
+                addSection(); // Add empty if none
+            }
+        }
+
+        function addSection(title = '') {
+            sectionCount++;
+            const secId = `section-${sectionCount}`;
+            const container = document.getElementById('sections-container');
+            
+            const html = `
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 section-block" id="${secId}">
+                    <div class="flex justify-between items-center mb-4">
+                        <input type="text" placeholder="Section Title (e.g. Logical Reasoning)" value="${title}" class="section-title text-lg font-bold border-b border-gray-300 focus:border-indigo-500 outline-none px-2 py-1 w-2/3" required>
+                        <button type="button" onclick="document.getElementById('${secId}').remove()" class="text-red-500 text-sm hover:underline">Remove Section</button>
+                    </div>
+                    <div class="questions-container space-y-4"></div>
+                    <button type="button" onclick="addQuestion('${secId}')" class="mt-4 text-sm text-blue-600 font-medium hover:text-blue-800">+ Add Question</button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+            return secId;
+        }
+
+        function addQuestion(sectionId, qData = null) {
+            const container = document.querySelector(`#${sectionId} .questions-container`);
+            const qId = `q-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+            
+            const html = `
+                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 question-block" id="${qId}">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-sm font-semibold text-gray-600">Question</span>
+                        <button type="button" onclick="document.getElementById('${qId}').remove()" class="text-red-400 hover:text-red-600 text-xs">Remove Q</button>
+                    </div>
+                    <textarea class="q-text w-full px-3 py-2 border border-gray-300 rounded-md mb-3 text-sm" placeholder="Enter question text here..." required>${qData ? qData.question : ''}</textarea>
+                    
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <input type="text" class="opt-a px-3 py-1.5 border border-gray-300 rounded text-sm" placeholder="Option A" value="${qData ? qData.options.A : ''}" required>
+                        <input type="text" class="opt-b px-3 py-1.5 border border-gray-300 rounded text-sm" placeholder="Option B" value="${qData ? qData.options.B : ''}" required>
+                        <input type="text" class="opt-c px-3 py-1.5 border border-gray-300 rounded text-sm" placeholder="Option C" value="${qData ? qData.options.C : ''}" required>
+                        <input type="text" class="opt-d px-3 py-1.5 border border-gray-300 rounded text-sm" placeholder="Option D" value="${qData ? qData.options.D : ''}" required>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-gray-600 font-medium">Correct Answer:</label>
+                        <select class="correct-opt px-3 py-1.5 border border-gray-300 rounded text-sm outline-none" required>
+                            <option value="A" ${qData && qData.correctAnswer === 'A' ? 'selected' : ''}>A</option>
+                            <option value="B" ${qData && qData.correctAnswer === 'B' ? 'selected' : ''}>B</option>
+                            <option value="C" ${qData && qData.correctAnswer === 'C' ? 'selected' : ''}>C</option>
+                            <option value="D" ${qData && qData.correctAnswer === 'D' ? 'selected' : ''}>D</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        document.getElementById('edit-test-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submit-btn');
+            const msg = document.getElementById('form-message');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Updating...';
+
+            const payload = {
+                title: document.getElementById('test-title').value,
+                duration: parseInt(document.getElementById('test-duration').value),
+                testType: 'Aptitude', // Adjust if needed
+                sections: []
+            };
+
+            document.querySelectorAll('.section-block').forEach(secNode => {
+                const sectionData = {
+                    sectionTitle: secNode.querySelector('.section-title').value,
+                    questions: []
+                };
+
+                secNode.querySelectorAll('.question-block').forEach(qNode => {
+                    sectionData.questions.push({
+                        question: qNode.querySelector('.q-text').value,
+                        options: {
+                            A: qNode.querySelector('.opt-a').value,
+                            B: qNode.querySelector('.opt-b').value,
+                            C: qNode.querySelector('.opt-c').value,
+                            D: qNode.querySelector('.opt-d').value
+                        },
+                        correctAnswer: qNode.querySelector('.correct-opt').value
+                    });
+                });
+                payload.sections.push(sectionData);
+            });
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`/api/sme/public-tests/${testId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error('Failed to update test');
+
+                msg.textContent = 'Test updated successfully!';
+                msg.className = 'text-sm font-medium text-green-600 mt-4 bg-green-50 p-2 rounded';
+                setTimeout(() => window.location.href = 'sme-manage-public-tests.html', 1500);
+            } catch (error) {
+                console.error(error);
+                msg.textContent = error.message;
+                msg.className = 'text-sm font-medium text-red-600 mt-4 bg-red-50 p-2 rounded';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Update Test';
+            }
+        });
+    </script>
+</body>
+</html>

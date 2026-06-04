@@ -82,16 +82,15 @@
 
                 <!-- Results Table -->
                 <div id="results-container" class="hidden bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto pb-4">
                         <table id="results-table" class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Candidate Name</th>
                                     <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Email Address</th>
-                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Attempted On</th>
-                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Score</th>
-                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status/Violations</th>
-                                    <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Score / Status</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Violations</th>
+                                    <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="results-tbody" class="bg-white divide-y divide-gray-200">
@@ -108,10 +107,16 @@
     <!-- Hidden Template for Individual PDF Generation -->
     <div id="pdf-template-container" class="hidden">
         <div id="pdf-content" style="padding: 40px; font-family: 'Helvetica', 'Arial', sans-serif; color: #333; background: #fff;">
-            <div style="border-bottom: 2px solid #4F46E5; padding-bottom: 20px; margin-bottom: 30px;">
-                <h1 style="color: #4F46E5; margin: 0 0 10px 0; font-size: 28px;">HIRE WITH US</h1>
-                <h2 style="margin: 0; color: #4b5563; font-size: 20px;">Candidate Assessment Report</h2>
+            
+            <!-- Company Logos Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #4F46E5; padding-bottom: 20px; margin-bottom: 30px;">
+                <img src="https://res.cloudinary.com/djdwpjm7x/image/upload/v1771001520/Xeta_Header_wfw12w.png" style="height: 40px; object-fit: contain;" crossorigin="anonymous" alt="Xeta Tech Solutions">
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" style="height: 60px; object-fit: contain;" crossorigin="anonymous" alt="Testify">
+                <img src="https://res.cloudinary.com/dzuxwvamy/image/upload/v1780483593/Credex_szkzcq.png" style="height: 35px; object-fit: contain;" crossorigin="anonymous" alt="Credex">
             </div>
+            
+            <!-- Assessment Details -->
+            <h2 id="pdf-main-title" style="margin: 0 0 20px 0; color: #4b5563; font-size: 20px; text-align: center;">Candidate Assessment Report</h2>
             
             <table style="width: 100%; margin-bottom: 30px; border-collapse: collapse;">
                 <tr>
@@ -136,18 +141,43 @@
                 </tr>
             </table>
 
-            <div style="background: #f8fafc; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; margin-bottom: 30px;">
-                <h3 style="margin: 0 0 10px 0; color: #64748b; font-size: 16px; text-transform: uppercase;">Overall Score</h3>
-                <div id="pdf-score" style="font-size: 48px; font-weight: bold; color: #4F46E5;">0%</div>
+            <!-- SCORE CARD ONLY SECTION -->
+            <div id="score-card-content">
+                <div style="background: #f8fafc; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; margin-bottom: 30px;">
+                    <h3 style="margin: 0 0 10px 0; color: #64748b; font-size: 16px; text-transform: uppercase;">Overall Score</h3>
+                    <div id="pdf-score" style="font-size: 48px; font-weight: bold; color: #4F46E5;">0%</div>
+                </div>
+
+                <!-- SECTION SCORES INJECTED HERE -->
+                <div id="pdf-section-scores-container" style="margin-bottom: 30px;">
+                    <h3 style="margin: 0 0 10px 0; color: #4b5563; font-size: 16px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px;">Section-wise Performance</h3>
+                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                        <thead>
+                            <tr style="background: #f3f4f6;">
+                                <th style="padding: 10px; border: 1px solid #e5e7eb; color:#64748b; font-size:14px;">Section Name</th>
+                                <th style="padding: 10px; border: 1px solid #e5e7eb; color:#64748b; font-size:14px;">Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pdf-section-scores-body">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="pdf-violation-box" style="display: none; background: #fef2f2; border: 1px solid #fecaca; padding: 15px; border-radius: 6px; margin-bottom: 30px;">
+                    <h4 style="margin: 0 0 5px 0; color: #dc2626;">Proctoring Flag</h4>
+                    <p id="pdf-violation" style="margin: 0; color: #991b1b; font-size: 14px;"></p>
+                </div>
             </div>
 
-            <div id="pdf-violation-box" style="display: none; background: #fef2f2; border: 1px solid #fecaca; padding: 15px; border-radius: 6px; margin-bottom: 30px;">
-                <h4 style="margin: 0 0 5px 0; color: #dc2626;">Proctoring Flag</h4>
-                <p id="pdf-violation" style="margin: 0; color: #991b1b; font-size: 14px;"></p>
+            <!-- DYNAMIC RESPONSE SHEET (FULL REPORT ONLY) -->
+            <div id="pdf-response-sheet" style="display: none; margin-top: 40px; padding-top: 20px; border-top: 2px dashed #cbd5e1;">
+                <h3 style="color: #4F46E5; margin-bottom: 20px;">Candidate Response Sheet</h3>
+                <div id="pdf-questions-container"></div>
             </div>
 
             <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-top: 50px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
-                Generated securely by Hire With Us Assessment Portal on <span id="pdf-gen-date"></span>.
+                Generated securely by Assessment Portal on <span id="pdf-gen-date"></span>.
             </p>
         </div>
     </div>
@@ -155,12 +185,10 @@
     <!-- SME Common Logic -->
     <script src="sme-common.js"></script>
     <script>
-        // Global variables to hold data
         let currentTests = [];
         let currentResults = [];
         const token = localStorage.getItem('token');
 
-        // Initialize Page securely
         document.addEventListener('DOMContentLoaded', () => {
             if (!token) {
                 document.getElementById('empty-msg-text').innerHTML = `<span class="text-red-500 font-bold">Authentication missing. Please log in again.</span>`;
@@ -171,13 +199,10 @@
 
             if(typeof initializeSmePage === 'function') {
                 initializeSmePage('Test Results');
-            } else {
-                console.warn("sme-common.js script is missing or failed to load. Authentication logic bypassed for UI preview.");
             }
             fetchMyTests();
         });
 
-        // Safe JSON Parse Helper to prevent "Unexpected token <" errors
         async function safeFetchJson(response) {
             if (response.status === 401 || response.status === 403) {
                 alert("Your session is invalid or has expired. Please log in again.");
@@ -190,16 +215,12 @@
             if (contentType && contentType.includes("application/json")) {
                 return await response.json();
             } else {
-                const text = await response.text();
-                console.error("Server Returned HTML/Text instead of JSON:", text);
-                throw new Error(`Server Error: Not returning JSON. Check backend terminal logs.`);
+                throw new Error(`Server Error: Not returning JSON.`);
             }
         }
 
-        // 1. Fetch SME's created tests to populate the dropdown
         async function fetchMyTests() {
             try {
-                // CHANGED: Removed http://localhost:3000 to use relative routing
                 const res = await fetch('/api/sme/my-tests', { 
                     headers: { 'x-auth-token': token }
                 });
@@ -210,8 +231,7 @@
                 currentTests = data.tests;
                 populateTestDropdown();
             } catch (err) {
-                console.error("API Error (My Tests):", err);
-                document.getElementById('empty-msg-text').textContent = "Failed to load tests from server. " + err.message;
+                document.getElementById('empty-msg-text').textContent = "Failed to load tests. " + err.message;
                 showState('empty');
             }
         }
@@ -226,24 +246,20 @@
                 selector.appendChild(opt);
             });
 
-            // Listen for selection changes
             selector.addEventListener('change', (e) => {
-                if (e.target.value) {
-                    fetchResultsForTest(e.target.value);
-                } else {
+                if (e.target.value) fetchResultsForTest(e.target.value);
+                else {
                     showState('empty');
                     document.getElementById('export-controls').classList.add('hidden');
                 }
             });
         }
 
-        // 2. Fetch Results for selected test
         async function fetchResultsForTest(testId) {
             showState('loading');
             document.getElementById('export-controls').classList.add('hidden');
 
             try {
-                // CHANGED: Removed http://localhost:3000 to use relative routing
                 const res = await fetch(`/api/sme/tests/${testId}/results`, {
                     headers: { 'x-auth-token': token }
                 });
@@ -254,8 +270,7 @@
                 currentResults = data.results;
                 renderResults();
             } catch (err) {
-                console.error("API Error (Test Results):", err);
-                document.getElementById('empty-msg-text').textContent = "Server encountered an error while fetching results. " + err.message;
+                document.getElementById('empty-msg-text').textContent = "Server error fetching results. " + err.message;
                 showState('empty');
             }
         }
@@ -274,16 +289,18 @@
                 const dateObj = new Date(res.date);
                 const formattedDate = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 
-                // Color coding for score
                 const scoreVal = parseFloat(res.score);
                 let scoreColor = 'text-green-600';
                 if(scoreVal < 50) scoreColor = 'text-red-600';
                 else if (scoreVal < 70) scoreColor = 'text-yellow-600';
 
-                // Status Badge
                 let statusBadge = res.violation 
                     ? `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800" title="${res.violation}">Flagged</span>` 
                     : `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Clear</span>`;
+
+                const qualifiedBadge = res.isQualified 
+                    ? `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded bg-emerald-100 text-emerald-800 ml-2">Pass</span>`
+                    : `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded bg-rose-100 text-rose-800 ml-2">Fail</span>`;
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 transition-colors";
@@ -299,14 +316,32 @@
                         </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${res.userEmail}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formattedDate}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${scoreColor}">${res.score}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-bold ${scoreColor}">${res.score}%</div>
+                        <div class="text-xs text-gray-400 mt-1">${formattedDate} ${qualifiedBadge}</div>
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button onclick="downloadIndividualPDF(${index})" class="text-indigo-600 hover:text-indigo-900 flex items-center justify-end w-full">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                            Report
-                        </button>
+                        <div class="flex flex-col gap-2 items-end">
+                            <div class="flex gap-2">
+                                <button onclick="downloadIndividualPDF(${index}, false)" id="dl-score-btn-${index}" class="text-xs border border-indigo-200 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded hover:bg-indigo-100 transition whitespace-nowrap flex items-center">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Download Score
+                                </button>
+                                <button onclick="downloadIndividualPDF(${index}, true)" id="dl-full-btn-${index}" class="text-xs border border-emerald-200 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded hover:bg-emerald-100 transition whitespace-nowrap flex items-center">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Full Details
+                                </button>
+                            </div>
+                            <div class="flex gap-2 border-t border-gray-100 pt-2 mt-1 w-full justify-end">
+                                <button onclick="releaseDocument('${res.resultId}', 'scorecard', ${index})" id="rel-sc-${index}" class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded shadow hover:bg-blue-700 transition whitespace-nowrap flex items-center">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg> ${res.scoreCardReleased ? 'Re-send Score Card' : 'Email Score Card'}
+                                </button>
+                                ${res.isQualified ? `
+                                    <button onclick="releaseDocument('${res.resultId}', 'certificate', ${index})" id="rel-cert-${index}" class="text-xs bg-purple-600 text-white px-3 py-1.5 rounded shadow hover:bg-purple-700 transition whitespace-nowrap flex items-center">
+                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg> ${res.certificateReleased ? 'Re-issue Cert' : 'Email Certificate'}
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -316,9 +351,206 @@
             document.getElementById('export-controls').classList.remove('hidden');
         }
 
-        // --- Export Functions ---
+        async function releaseDocument(resultId, docType, index) {
+            const btnId = docType === 'certificate' ? `rel-cert-${index}` : `rel-sc-${index}`;
+            const btn = document.getElementById(btnId);
+            const originalHtml = btn.innerHTML;
+            
+            btn.innerHTML = `<span class="loader border-[2px] border-white border-t-transparent inline-block w-3 h-3 mr-1"></span> Sending...`;
+            btn.disabled = true;
 
-        // Overall List to CSV
+            try {
+                const res = await fetch(`/api/sme/results/${resultId}/release`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                    body: JSON.stringify({ docType })
+                });
+
+                const data = await safeFetchJson(res);
+                if (!res.ok) throw new Error(data.message || 'Failed to release document');
+
+                // Success - Reset to "Re-send/Re-issue"
+                if (docType === 'scorecard') {
+                    currentResults[index].scoreCardReleased = true;
+                    btn.innerHTML = `<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Re-send Score Card`;
+                }
+                if (docType === 'certificate') {
+                    currentResults[index].certificateReleased = true;
+                    btn.innerHTML = `<svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Re-issue Cert`;
+                }
+
+                // Briefly show success green class then revert
+                btn.classList.add('bg-green-600');
+                setTimeout(() => btn.classList.remove('bg-green-600'), 2000);
+
+            } catch(err) {
+                console.error(err);
+                alert(err.message);
+                btn.innerHTML = originalHtml;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // Generate PDF (Handles both Score Card and Full Response Sheet separately)
+        async function downloadIndividualPDF(resultIndex, includeResponseSheet = true) {
+            const result = currentResults[resultIndex];
+            const testTitle = document.getElementById('test-selector').options[document.getElementById('test-selector').selectedIndex].text;
+            
+            const btnId = includeResponseSheet ? `dl-full-btn-${resultIndex}` : `dl-score-btn-${resultIndex}`;
+            const btn = document.getElementById(btnId);
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<span class="loader border-[2px] border-current border-t-transparent inline-block w-3 h-3 mr-1"></span>...`;
+            btn.disabled = true;
+
+            try {
+                // Fetch Detailed Results (Answers + Test Schema) to calculate section scores properly
+                const res = await fetch(`/api/sme/results/${result.resultId}/response-sheet`, {
+                    headers: { 'x-auth-token': token }
+                });
+
+                const detailedData = await safeFetchJson(res);
+                if (!res.ok) throw new Error(detailedData.message || 'Failed to fetch details');
+
+                const fullResult = detailedData.result;
+                const testSchema = detailedData.test;
+
+                // Populate Base Info
+                document.getElementById('pdf-name').textContent = result.userName;
+                document.getElementById('pdf-email').textContent = result.userEmail;
+                document.getElementById('pdf-test-title').textContent = testTitle;
+                document.getElementById('pdf-date').textContent = new Date(result.date).toLocaleString();
+                document.getElementById('pdf-id').textContent = result.resultId || 'N/A';
+                document.getElementById('pdf-score').textContent = result.score + '%';
+                document.getElementById('pdf-gen-date').textContent = new Date().toLocaleString();
+
+                const vBox = document.getElementById('pdf-violation-box');
+                if (result.violation) {
+                    vBox.style.display = 'block';
+                    document.getElementById('pdf-violation').textContent = result.violation;
+                } else {
+                    vBox.style.display = 'none';
+                }
+
+                const mainTitle = document.getElementById('pdf-main-title');
+                const scoreCardSection = document.getElementById('score-card-content');
+                const responseSheetSection = document.getElementById('pdf-response-sheet');
+
+                if (includeResponseSheet) {
+                    // --- FULL REPORT MODE ---
+                    mainTitle.textContent = "Detailed Response Sheet";
+                    scoreCardSection.style.display = 'none';
+                    responseSheetSection.style.display = 'block';
+                    
+                    const qContainer = document.getElementById('pdf-questions-container');
+                    qContainer.innerHTML = ''; 
+
+                    if (fullResult.answers) {
+                        let qCount = 1;
+                        testSchema.sections.forEach((sec, secIdx) => {
+                            const secDiv = document.createElement('div');
+                            secDiv.innerHTML = `<h4 style="background: #f1f5f9; padding: 10px 15px; border-radius: 4px; margin: 25px 0 15px 0; color: #334155;">Section: ${sec.title}</h4>`;
+                            qContainer.appendChild(secDiv);
+
+                            sec.questions.forEach((q, qIdx) => {
+                                const qDiv = document.createElement('div');
+                                qDiv.style.cssText = "margin-bottom: 20px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; page-break-inside: avoid;";
+
+                                const candAns = fullResult.answers[`${secIdx}_${qIdx}`];
+                                let isCorrect = false;
+
+                                if (q.type === 'single' && candAns === q.correct) isCorrect = true;
+                                else if (q.type === 'multi') isCorrect = (JSON.stringify(candAns?.sort()) === JSON.stringify(q.correct?.sort()));
+                                else if (q.type === 'fill') isCorrect = q.correctAnswers?.includes(candAns?.toString().toLowerCase().trim());
+
+                                let candAnsDisplay = '<span style="color:#94a3b8; font-style:italic;">Not Answered</span>';
+                                if (candAns !== undefined && candAns !== null) {
+                                    if (Array.isArray(candAns)) candAnsDisplay = candAns.map(i => q.options ? q.options[i] : i).join(', ');
+                                    else if (q.type === 'single') candAnsDisplay = q.options[candAns];
+                                    else candAnsDisplay = candAns;
+                                }
+
+                                let correctAnsDisplay = '';
+                                if (q.type === 'single') correctAnsDisplay = q.options[q.correct];
+                                else if (q.type === 'multi') correctAnsDisplay = q.correct.map(i => q.options[i]).join(', ');
+                                else if (q.type === 'fill') correctAnsDisplay = q.correctAnswers.join(' OR ');
+
+                                const statusText = candAns !== undefined ? (isCorrect ? '<span style="color:#16a34a; font-weight:bold;"> (Correct ✓)</span>' : '<span style="color:#dc2626; font-weight:bold;"> (Incorrect ✗)</span>') : '';
+
+                                qDiv.innerHTML = `
+                                    <p style="font-weight: bold; margin-bottom: 12px; color: #1e293b;">Q${qCount}. ${q.text}</p>
+                                    <div style="font-size: 14px; line-height: 1.6;">
+                                        <p style="margin: 0; color: #475569;"><strong>Candidate Answer:</strong> ${candAnsDisplay} ${statusText}</p>
+                                        <p style="margin: 0; color: #475569;"><strong>Correct Answer:</strong> ${correctAnsDisplay}</p>
+                                    </div>
+                                `;
+                                qContainer.appendChild(qDiv);
+                                qCount++;
+                            });
+                        });
+                    }
+                } else {
+                    // --- SCORE CARD MODE ---
+                    mainTitle.textContent = "Candidate Score Card";
+                    scoreCardSection.style.display = 'block';
+                    responseSheetSection.style.display = 'none';
+
+                    // Dynamically calculate and build the Section Scores table
+                    const sectionBody = document.getElementById('pdf-section-scores-body');
+                    sectionBody.innerHTML = '';
+                    
+                    if (testSchema.sections && fullResult.answers) {
+                        testSchema.sections.forEach((sec, secIdx) => {
+                            let secTotal = 0;
+                            let secCorrect = 0;
+                            sec.questions.forEach((q, qIdx) => {
+                                secTotal++;
+                                const candAns = fullResult.answers[`${secIdx}_${qIdx}`];
+                                let isCorrect = false;
+                                
+                                if (candAns !== undefined && candAns !== null) {
+                                    if (q.type === 'single' && candAns === q.correct) isCorrect = true;
+                                    else if (q.type === 'multi' && JSON.stringify(candAns?.sort()) === JSON.stringify(q.correct?.sort())) isCorrect = true;
+                                    else if (q.type === 'fill' && q.correctAnswers?.includes(candAns?.toString().toLowerCase().trim())) isCorrect = true;
+                                }
+                                if (isCorrect) secCorrect++;
+                            });
+                            
+                            const secScore = secTotal > 0 ? Math.round((secCorrect / secTotal) * 100) : 0;
+                            sectionBody.innerHTML += `
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #e5e7eb; color: #4b5563;">${sec.title}</td>
+                                    <td style="padding: 10px; border: 1px solid #e5e7eb; font-weight: bold; color: #4F46E5;">${secScore}%</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                }
+
+                // Initiate PDF Generation
+                const element = document.getElementById('pdf-content');
+                const fileNamePrefix = includeResponseSheet ? 'Full_Response_Sheet' : 'Score_Card';
+                const opt = {
+                    margin: [0.5, 0.5, 0.5, 0.5],
+                    filename: `${result.userName.replace(/\s+/g, '_')}_${fileNamePrefix}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true }, 
+                    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+                    pagebreak: { mode: 'avoid-all' }
+                };
+
+                await html2pdf().set(opt).from(element).save();
+
+            } catch (err) {
+                console.error(err);
+                alert("An error occurred while generating the report. Make sure your session is active.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // CSV Export logic
         function exportOverallCSV() {
             if(!currentResults.length) return;
             const testTitle = document.getElementById('test-selector').options[document.getElementById('test-selector').selectedIndex].text;
@@ -343,16 +575,13 @@
             document.body.removeChild(link);
         }
 
-        // Overall List to PDF using html2pdf
         function exportOverallPDF() {
             const testTitle = document.getElementById('test-selector').options[document.getElementById('test-selector').selectedIndex].text;
-            
-            // Clone table and remove the action column for PDF
             const tableClone = document.getElementById('results-table').cloneNode(true);
             const ths = tableClone.querySelectorAll('th');
-            ths[ths.length - 1].remove(); // Remove Actions Header
+            ths[ths.length - 1].remove(); 
             const trs = tableClone.querySelectorAll('tbody tr');
-            trs.forEach(tr => tr.lastElementChild.remove()); // Remove Actions Cells
+            trs.forEach(tr => tr.lastElementChild.remove());
 
             const container = document.createElement('div');
             container.innerHTML = `
@@ -374,42 +603,6 @@
             html2pdf().set(opt).from(container).save();
         }
 
-        // Individual Detailed Report PDF
-        function downloadIndividualPDF(resultIndex) {
-            const result = currentResults[resultIndex];
-            const testTitle = document.getElementById('test-selector').options[document.getElementById('test-selector').selectedIndex].text;
-            
-            // Populate hidden template
-            document.getElementById('pdf-name').textContent = result.userName;
-            document.getElementById('pdf-email').textContent = result.userEmail;
-            document.getElementById('pdf-test-title').textContent = testTitle;
-            document.getElementById('pdf-date').textContent = new Date(result.date).toLocaleString();
-            document.getElementById('pdf-id').textContent = result.resultId || 'N/A';
-            document.getElementById('pdf-score').textContent = result.score + '%';
-            document.getElementById('pdf-gen-date').textContent = new Date().toLocaleString();
-
-            const vBox = document.getElementById('pdf-violation-box');
-            if (result.violation) {
-                vBox.style.display = 'block';
-                document.getElementById('pdf-violation').textContent = result.violation;
-            } else {
-                vBox.style.display = 'none';
-            }
-
-            const element = document.getElementById('pdf-content');
-            
-            const opt = {
-                margin: 0.5,
-                filename: `${result.userName.replace(/\s+/g, '_')}_Report.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-
-            html2pdf().set(opt).from(element).save();
-        }
-
-        // UI State Manager
         function showState(state) {
             document.getElementById('empty-state').classList.add('hidden');
             document.getElementById('results-loader').classList.add('hidden');
