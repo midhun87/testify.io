@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SME - Test Results | Hire With Us</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- html2pdf for generating detailed PDF reports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .loader {
+            border: 3px solid #f3f3f3; border-top: 3px solid #4F46E5;
+            border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <div class="hidden md:flex flex-col w-64 bg-gray-900 text-white shadow-xl flex-shrink-0">
+        <div class="flex items-center justify-center h-20 border-b border-gray-800">
+            <h1 class="text-2xl font-bold tracking-wider text-indigo-400">HIRE WITH US</h1>
+        </div>
+        <div class="px-4 py-6 text-xs font-semibold text-gray-500 uppercase tracking-wider">SME Portal</div>
+        <nav id="sidebar-nav" class="flex-1 px-4 space-y-2 overflow-y-auto"></nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+        
+        <!-- Header -->
+        <header class="bg-white shadow-sm h-20 flex items-center justify-between px-8 flex-shrink-0 z-10">
+            <h2 class="text-2xl font-bold text-gray-800">Candidate Test Results</h2>
+            <div id="user-profile-container"></div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="flex-1 overflow-y-auto p-8 bg-slate-50">
+            <div class="max-w-7xl mx-auto space-y-6">
+                
+                <!-- Controls Section -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div class="w-full md:w-1/3">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Select Assessment Test</label>
+                        <select id="test-selector" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none shadow-sm bg-gray-50">
+                            <option value="">Loading your tests...</option>
+                        </select>
+                    </div>
+                    
+                    <div id="export-controls" class="hidden flex gap-3">
+                        <button onclick="exportOverallCSV()" class="flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Export List (CSV)
+                        </button>
+                        <button onclick="exportOverallPDF()" class="flex items-center bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            Export List (PDF)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="results-loader" class="hidden flex flex-col items-center justify-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="loader mb-4"></div>
+                    <p class="text-gray-500 font-medium">Fetching candidate results...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty-state" class="hidden flex flex-col items-center justify-center py-16 bg-white rounded-xl shadow-sm border border-gray-100 text-center">
+                    <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                    <h3 class="text-lg font-semibold text-gray-800">No Results Found</h3>
+                    <p class="text-gray-500 max-w-md mx-auto mt-2" id="empty-msg-text">No candidates have attempted this test yet, or please select a test from the dropdown above to view its results.</p>
+                </div>
+
+                <!-- Results Table -->
+                <div id="results-container" class="hidden bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table id="results-table" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Candidate Name</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Email Address</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Attempted On</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Score</th>
+                                    <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status/Violations</th>
+                                    <th scope="col" class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="results-tbody" class="bg-white divide-y divide-gray-200">
+                                <!-- Results rows injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Hidden Template for Individual PDF Generation -->
+    <div id="pdf-template-container" class="hidden">
+        <div id="pdf-content" style="padding: 40px; font-family: 'Helvetica', 'Arial', sans-serif; color: #333; background: #fff;">
+            <div style="border-bottom: 2px solid #4F46E5; padding-bottom: 20px; margin-bottom: 30px;">
+                <h1 style="color: #4F46E5; margin: 0 0 10px 0; font-size: 28px;">HIRE WITH US</h1>
+                <h2 style="margin: 0; color: #4b5563; font-size: 20px;">Candidate Assessment Report</h2>
+            </div>
+            
+            <table style="width: 100%; margin-bottom: 30px; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb; background: #f9fafb; font-weight: bold; width: 30%;">Candidate Name</td>
+                    <td id="pdf-name" style="padding: 10px; border: 1px solid #e5e7eb;"></td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb; background: #f9fafb; font-weight: bold;">Email Address</td>
+                    <td id="pdf-email" style="padding: 10px; border: 1px solid #e5e7eb;"></td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb; background: #f9fafb; font-weight: bold;">Test Name</td>
+                    <td id="pdf-test-title" style="padding: 10px; border: 1px solid #e5e7eb;"></td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb; background: #f9fafb; font-weight: bold;">Completion Date</td>
+                    <td id="pdf-date" style="padding: 10px; border: 1px solid #e5e7eb;"></td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #e5e7eb; background: #f9fafb; font-weight: bold;">Result ID</td>
+                    <td id="pdf-id" style="padding: 10px; border: 1px solid #e5e7eb; font-family: monospace;"></td>
+                </tr>
+            </table>
+
+            <div style="background: #f8fafc; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; text-align: center; margin-bottom: 30px;">
+                <h3 style="margin: 0 0 10px 0; color: #64748b; font-size: 16px; text-transform: uppercase;">Overall Score</h3>
+                <div id="pdf-score" style="font-size: 48px; font-weight: bold; color: #4F46E5;">0%</div>
+            </div>
+
+            <div id="pdf-violation-box" style="display: none; background: #fef2f2; border: 1px solid #fecaca; padding: 15px; border-radius: 6px; margin-bottom: 30px;">
+                <h4 style="margin: 0 0 5px 0; color: #dc2626;">Proctoring Flag</h4>
+                <p id="pdf-violation" style="margin: 0; color: #991b1b; font-size: 14px;"></p>
+            </div>
+
+            <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-top: 50px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+                Generated securely by Hire With Us Assessment Portal on <span id="pdf-gen-date"></span>.
+            </p>
+        </div>
+    </div>
+
+    <!-- SME Common Logic -->
+    <script src="sme-common.js"></script>
+    <script>
+        // Global variables to hold data
+        let currentTests = [];
+        let currentResults = [];
+        const token = localStorage.getItem('token');
+
+        // Initialize Page securely
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!token) {
+                document.getElementById('empty-msg-text').innerHTML = `<span class="text-red-500 font-bold">Authentication missing. Please log in again.</span>`;
+                showState('empty');
+                setTimeout(() => window.location.href = '/login', 2500);
+                return;
+            }
+
+            if(typeof initializeSmePage === 'function') {
+                initializeSmePage('Test Results');
+            } else {
+                console.warn("sme-common.js script is missing or failed to load. Authentication logic bypassed for UI preview.");
+            }
+            fetchMyTests();
+        });
+
+        // Safe JSON Parse Helper to prevent "Unexpected token <" errors
+        async function safeFetchJson(response) {
+            if (response.status === 401 || response.status === 403) {
+                alert("Your session is invalid or has expired. Please log in again.");
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+                throw new Error("Unauthorized");
+            }
+            
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                return await response.json();
+            } else {
+                const text = await response.text();
+                console.error("Server Returned HTML/Text instead of JSON:", text);
+                throw new Error(`Server Error: Not returning JSON. Check backend terminal logs.`);
+            }
+        }
+
+        // 1. Fetch SME's created tests to populate the dropdown
+        async function fetchMyTests() {
+            try {
+                // CHANGED: Removed http://localhost:3000 to use relative routing
+                const res = await fetch('/api/sme/my-tests', { 
+                    headers: { 'x-auth-token': token }
+                });
+
+                const data = await safeFetchJson(res);
+                if (!res.ok) throw new Error(data.message || 'API request rejected.');
+                
+                currentTests = data.tests;
+                populateTestDropdown();
+            } catch (err) {
+                console.error("API Error (My Tests):", err);
+                document.getElementById('empty-msg-text').textContent = "Failed to load tests from server. " + err.message;
+                showState('empty');
+            }
+        }
+
+        function populateTestDropdown() {
+            const selector = document.getElementById('test-selector');
+            selector.innerHTML = '<option value="">-- Select an Assessment --</option>';
+            currentTests.forEach(test => {
+                const opt = document.createElement('option');
+                opt.value = test.testId;
+                opt.textContent = test.title;
+                selector.appendChild(opt);
+            });
+
+            // Listen for selection changes
+            selector.addEventListener('change', (e) => {
+                if (e.target.value) {
+                    fetchResultsForTest(e.target.value);
+                } else {
+                    showState('empty');
+                    document.getElementById('export-controls').classList.add('hidden');
+                }
+            });
+        }
+
+        // 2. Fetch Results for selected test
+        async function fetchResultsForTest(testId) {
+            showState('loading');
+            document.getElementById('export-controls').classList.add('hidden');
+
+            try {
+                // CHANGED: Removed http://localhost:3000 to use relative routing
+                const res = await fetch(`/api/sme/tests/${testId}/results`, {
+                    headers: { 'x-auth-token': token }
+                });
+
+                const data = await safeFetchJson(res);
+                if (!res.ok) throw new Error(data.message || 'API request rejected.');
+                
+                currentResults = data.results;
+                renderResults();
+            } catch (err) {
+                console.error("API Error (Test Results):", err);
+                document.getElementById('empty-msg-text').textContent = "Server encountered an error while fetching results. " + err.message;
+                showState('empty');
+            }
+        }
+
+        function renderResults() {
+            const tbody = document.getElementById('results-tbody');
+            tbody.innerHTML = '';
+
+            if (!currentResults || currentResults.length === 0) {
+                document.getElementById('empty-msg-text').textContent = "No candidates have attempted this test yet.";
+                showState('empty');
+                return;
+            }
+
+            currentResults.forEach((res, index) => {
+                const dateObj = new Date(res.date);
+                const formattedDate = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                // Color coding for score
+                const scoreVal = parseFloat(res.score);
+                let scoreColor = 'text-green-600';
+                if(scoreVal < 50) scoreColor = 'text-red-600';
+                else if (scoreVal < 70) scoreColor = 'text-yellow-600';
+
+                // Status Badge
+                let statusBadge = res.violation 
+                    ? `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800" title="${res.violation}">Flagged</span>` 
+                    : `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Clear</span>`;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold text-sm">
+                                ${res.userName.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${res.userName}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${res.userEmail}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formattedDate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${scoreColor}">${res.score}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button onclick="downloadIndividualPDF(${index})" class="text-indigo-600 hover:text-indigo-900 flex items-center justify-end w-full">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Report
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            showState('results');
+            document.getElementById('export-controls').classList.remove('hidden');
+        }
+
+        // --- Export Functions ---
+
+        // Overall List to CSV
+        function exportOverallCSV() {
+            if(!currentResults.length) return;
+            const testTitle = document.getElementById('test-selector').options[document.getElementById('test-selector').selectedIndex].text;
+            
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Candidate Name,Email,Score,Attempt Date,Status,Violation Reason\r\n";
+            
+            currentResults.forEach(r => {
+                const safeName = r.userName.replace(/,/g, '');
+                const status = r.violation ? "Flagged" : "Clear";
+                const vReason = r.violation ? r.violation.replace(/,/g, ' ') : "N/A";
+                const dt = new Date(r.date).toLocaleString();
+                csvContent += `${safeName},${r.userEmail},${r.score},${dt},${status},${vReason}\r\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Results_${testTitle.replace(/\s+/g, '_')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Overall List to PDF using html2pdf
+        function exportOverallPDF() {
+            const testTitle = document.getElementById('test-selector').options[document.getElementById('test-selector').selectedIndex].text;
+            
+            // Clone table and remove the action column for PDF
+            const tableClone = document.getElementById('results-table').cloneNode(true);
+            const ths = tableClone.querySelectorAll('th');
+            ths[ths.length - 1].remove(); // Remove Actions Header
+            const trs = tableClone.querySelectorAll('tbody tr');
+            trs.forEach(tr => tr.lastElementChild.remove()); // Remove Actions Cells
+
+            const container = document.createElement('div');
+            container.innerHTML = `
+                <div style="padding: 20px; font-family: sans-serif;">
+                    <h2 style="color: #4F46E5; margin-bottom: 5px;">${testTitle}</h2>
+                    <p style="color: #666; margin-bottom: 20px;">Overall Candidate Results - Generated on ${new Date().toLocaleDateString()}</p>
+                    ${tableClone.outerHTML}
+                </div>
+            `;
+
+            const opt = {
+                margin: 0.5,
+                filename: `Overall_Results_${testTitle.replace(/\s+/g, '_')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(container).save();
+        }
+
+        // Individual Detailed Report PDF
+        function downloadIndividualPDF(resultIndex) {
+            const result = currentResults[resultIndex];
+            const testTitle = document.getElementById('test-selector').options[document.getElementById('test-selector').selectedIndex].text;
+            
+            // Populate hidden template
+            document.getElementById('pdf-name').textContent = result.userName;
+            document.getElementById('pdf-email').textContent = result.userEmail;
+            document.getElementById('pdf-test-title').textContent = testTitle;
+            document.getElementById('pdf-date').textContent = new Date(result.date).toLocaleString();
+            document.getElementById('pdf-id').textContent = result.resultId || 'N/A';
+            document.getElementById('pdf-score').textContent = result.score + '%';
+            document.getElementById('pdf-gen-date').textContent = new Date().toLocaleString();
+
+            const vBox = document.getElementById('pdf-violation-box');
+            if (result.violation) {
+                vBox.style.display = 'block';
+                document.getElementById('pdf-violation').textContent = result.violation;
+            } else {
+                vBox.style.display = 'none';
+            }
+
+            const element = document.getElementById('pdf-content');
+            
+            const opt = {
+                margin: 0.5,
+                filename: `${result.userName.replace(/\s+/g, '_')}_Report.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+
+        // UI State Manager
+        function showState(state) {
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('results-loader').classList.add('hidden');
+            document.getElementById('results-container').classList.add('hidden');
+
+            if (state === 'empty') document.getElementById('empty-state').classList.remove('hidden');
+            else if (state === 'loading') document.getElementById('results-loader').classList.remove('hidden');
+            else if (state === 'results') document.getElementById('results-container').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
