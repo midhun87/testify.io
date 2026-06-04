@@ -303,7 +303,6 @@
             const success = document.getElementById('success-state');
 
             // --- DEV PREVIEW MOCKUP OVERRIDE ---
-            // If running in the previewer without a certId, show the beautiful preview anyway.
             const isPreviewEnv = !certId || certId === '';
             
             if (isPreviewEnv) {
@@ -323,7 +322,7 @@
                     height: 64,
                     colorDark : "#0f172a",
                     colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.H // Higher error correction for smaller QRs
+                    correctLevel : QRCode.CorrectLevel.H 
                 });
 
                 loading.classList.add('hidden');
@@ -340,10 +339,16 @@
                 // Standard production fetch logic
                 const response = await fetch(`/api/public/certificate/${certId}`);
                 
-                // Fallback for demo purposes if API fails in real environment
                 if (!response.ok) {
-                    throw new Error("Certificate not found.");
+                    // Try to extract exact API error if it fails on live server
+                    let errMessage = "This credential could not be authenticated in the central registry.";
+                    try {
+                        const errData = await response.json();
+                        if (errData && errData.message) errMessage = errData.message;
+                    } catch(e) {} // ignore JSON parse errors on hard 500s
+                    throw new Error(errMessage);
                 }
+                
                 const data = await response.json();
 
                 // Populate DOM
@@ -400,8 +405,6 @@
                     margin:       0,
                     filename:     `Testify_Certificate_${certId || 'Official'}.pdf`,
                     image:        { type: 'jpeg', quality: 1 },
-                    // Clean white background for PDF generation, explicit bounds to stop cutoff
-                    // Scale increased to 4 for HD rendering of logos and text
                     html2canvas:  { 
                         scale: 4, 
                         useCORS: true, 
@@ -414,7 +417,6 @@
                         scrollY: 0,
                         scrollX: 0
                     }, 
-                    // Changed format to 'a4' and unit to 'mm' for true, global standard A4 printing sizes
                     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape', compress: true }
                 };
                 
@@ -433,7 +435,7 @@
                     scaleCertificate();
                     alert("Failed to generate PDF. Please try again.");
                 });
-            }, 500); // 500ms guarantees the DOM layout is repainted before capture
+            }, 500);
         }
 
         // Initialize
