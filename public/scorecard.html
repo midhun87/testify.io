@@ -3,33 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Candidate Score Card | Hire With Us</title>
+    <title>Official Score Report | Credex & Testify</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
-        body { background-color: #f1f5f9; font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh; }
+        body { background-color: #e2e8f0; font-family: 'Inter', sans-serif; margin: 0; min-height: 100vh; }
         .cert-wrapper { width: 100%; display: flex; justify-content: center; padding: 2rem 0; overflow: hidden;}
         
         #scorecard-node {
-            width: 800px !important; 
-            min-height: 900px;
+            width: 850px !important; 
+            min-height: 1100px;
             background-color: #ffffff; 
             position: relative;
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             flex-shrink: 0;
             transform-origin: top center; 
             box-sizing: border-box;
-            padding: 40px;
+            color: #1e293b; /* Strict dark slate */
         }
 
         .watermark {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 400px; opacity: 0.03; pointer-events: none; z-index: 0; filter: grayscale(100%);
+            width: 450px; opacity: 0.03; pointer-events: none; z-index: 0; filter: grayscale(100%);
         }
 
-        .content-layer { position: relative; z-index: 10; }
+        .content-layer { position: relative; z-index: 10; padding: 40px 50px; height: 100%; display: flex; flex-direction: column; }
+        
+        .mono { font-family: 'Roboto Mono', monospace; }
+
+        /* Official Report Grid Lines */
+        .report-table th, .report-table td {
+            border: 1px solid #cbd5e1;
+            padding: 10px 14px;
+        }
+        
+        .report-table th {
+            background-color: #f1f5f9;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #475569;
+        }
+
+        /* Performance Bar styling */
+        .perf-bar-bg { width: 100%; height: 8px; background-color: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 4px;}
+        .perf-bar-fill { height: 100%; background-color: #0f172a; border-radius: 4px; transition: width 0.5s ease-in-out;}
+        .perf-pass { background-color: #059669; }
+        .perf-fail { background-color: #dc2626; }
 
         @media print {
             body { background: white; }
@@ -42,122 +64,147 @@
 </head>
 <body class="flex flex-col items-center">
 
-    <!-- Loading / Error States -->
-    <div id="loading-state" class="flex flex-col items-center justify-center min-h-screen w-full">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-indigo-600 mb-4"></div>
-        <p class="text-gray-600 font-medium">Retrieving Score Report...</p>
+    <!-- Loading State -->
+    <div id="loading-state" class="flex flex-col items-center justify-center min-h-screen w-full bg-slate-100">
+        <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-slate-800 mb-4"></div>
+        <p class="text-slate-600 font-medium text-sm uppercase tracking-widest">Retrieving Score Report...</p>
     </div>
 
-    <div id="error-state" class="hidden flex-col items-center justify-center min-h-screen w-full text-center px-4">
-        <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6">
-            <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+    <!-- Error State -->
+    <div id="error-state" class="hidden flex-col items-center justify-center min-h-screen w-full text-center px-4 bg-slate-100">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4 border border-red-200">
+            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
         </div>
-        <h2 class="text-2xl font-bold text-gray-900 mb-2">Report Not Found</h2>
-        <p class="text-gray-600 mb-6" id="error-message">This result ID is invalid or unavailable.</p>
-        <button onclick="window.location.href='/'" class="px-6 py-2 bg-indigo-600 text-white rounded-lg font-bold shadow hover:bg-indigo-700">Go Home</button>
+        <h2 class="text-2xl font-bold text-slate-900 mb-2">Report Not Found</h2>
+        <p class="text-sm text-slate-600 mb-6 max-w-md mx-auto" id="error-message">This result ID is invalid or the report is currently unavailable.</p>
+        <button onclick="window.location.href='/'" class="px-6 py-2 bg-slate-800 text-white text-sm rounded font-medium shadow hover:bg-slate-900 transition-colors">Return to Home</button>
     </div>
 
-    <!-- Success State -->
+    <!-- Success State (The Report UI) -->
     <div id="success-state" class="hidden w-full flex-col items-center pb-12">
         
-        <!-- Top Toolbar -->
-        <div class="no-print w-full bg-white border-b border-gray-200 shadow-sm px-4 py-4 sticky top-0 z-50">
-            <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <!-- Web Toolbar (Hidden in PDF) -->
+        <div class="no-print w-full bg-slate-900 text-white border-b border-slate-800 shadow-md px-4 py-3 sticky top-0 z-50">
+            <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </div>
-                    <div>
-                        <h2 class="text-sm font-bold text-gray-800 leading-tight">Official Score Report</h2>
-                        <p class="text-xs text-gray-500">Hire With Us Assessment</p>
-                    </div>
+                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <h2 class="text-sm font-semibold tracking-wide">Testify Examination Report</h2>
                 </div>
-                <button id="download-btn" onclick="downloadPDF()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-semibold shadow transition flex items-center gap-2">
+                <button id="download-btn" onclick="downloadPDF()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded text-sm font-semibold shadow transition-all flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    Download PDF Report
+                    Download Official PDF
                 </button>
             </div>
         </div>
 
         <div class="cert-wrapper no-print-overflow" id="cert-scale-wrapper">
-            <!-- IMPORTANT: Keep this wrapper clean for cloning -->
+            <!-- IMPORTANT: The Node that gets converted to PDF -->
             <div id="scorecard-node">
                 
+                <!-- HD Watermark -->
                 <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png" class="watermark" crossorigin="anonymous">
-                <div class="absolute top-0 left-0 w-full h-2 bg-indigo-600"></div>
 
                 <div class="content-layer">
                     
-                    <!-- Logos -->
-                    <div class="flex items-center justify-between border-b-2 border-indigo-600 pb-6 mb-8">
-                        <img src="https://res.cloudinary.com/djdwpjm7x/image/upload/v1771001520/Xeta_Header_wfw12w.png" style="height: 35px; object-fit: contain;" crossorigin="anonymous">
-                        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" style="height: 50px; object-fit: contain;" crossorigin="anonymous">
-                        <img src="https://res.cloudinary.com/dzuxwvamy/image/upload/v1780483593/Credex_szkzcq.png" style="height: 30px; object-fit: contain;" crossorigin="anonymous">
-                    </div>
-
-                    <h1 class="text-3xl font-bold text-gray-800 text-center mb-8 uppercase tracking-wide">Candidate Score Report</h1>
-
-                    <!-- Basic Details -->
-                    <div class="grid grid-cols-2 gap-4 mb-8">
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Candidate Name</p>
-                            <p class="text-base font-semibold text-gray-900" id="ui-name">Loading...</p>
+                    <!-- Official Header -->
+                    <div class="flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-6">
+                        <div>
+                            <h1 class="text-2xl font-black tracking-tight text-slate-900 uppercase">Examination Score Report</h1>
+                            <p class="text-xs text-slate-500 font-semibold tracking-widest uppercase mt-1">Official & Verified Document</p>
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Email Address</p>
-                            <p class="text-base font-semibold text-gray-900 truncate" id="ui-email">Loading...</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Assessment Name</p>
-                            <p class="text-base font-semibold text-gray-900 truncate" id="ui-test">Loading...</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Date Attempted</p>
-                            <p class="text-base font-semibold text-gray-900" id="ui-date">Loading...</p>
+                        <div class="flex flex-col items-end gap-3">
+                            <div class="flex items-center gap-4">
+                                <img src="https://res.cloudinary.com/dzuxwvamy/image/upload/v1780483593/Credex_szkzcq.png" style="height: 24px; object-fit: contain;" crossorigin="anonymous">
+                                <img src="https://res.cloudinary.com/djdwpjm7x/image/upload/v1771001520/Xeta_Header_wfw12w.png" style="height: 28px; object-fit: contain;" crossorigin="anonymous">
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Highlight Boxes -->
-                    <div class="flex gap-6 mb-10">
-                        <div class="flex-1 bg-indigo-50 border border-indigo-100 rounded-xl p-6 text-center">
-                            <p class="text-sm font-bold text-indigo-800 uppercase tracking-widest mb-2">Overall Score</p>
-                            <p class="text-5xl font-black text-indigo-600" id="ui-score">0%</p>
+                    <!-- Registration & Assessment Information (AWS Style Grid) -->
+                    <table class="w-full text-left border-collapse report-table mb-6">
+                        <tbody>
+                            <tr>
+                                <th class="w-1/4">Candidate Name</th>
+                                <td class="w-1/4 font-semibold text-slate-900" id="ui-name">Loading...</td>
+                                <th class="w-1/4">Examination Title</th>
+                                <td class="w-1/4 font-semibold text-slate-900" id="ui-test">Loading...</td>
+                            </tr>
+                            <tr>
+                                <th>Candidate Email</th>
+                                <td class="mono text-xs text-slate-700" id="ui-email">Loading...</td>
+                                <th>Date Completed</th>
+                                <td class="mono text-xs text-slate-700" id="ui-date">Loading...</td>
+                            </tr>
+                            <tr>
+                                <th>Registration ID</th>
+                                <td class="mono text-xs text-slate-700 uppercase" id="ui-id">Loading...</td>
+                                <th>Minimum Passing Score</th>
+                                <td class="font-bold text-slate-900" id="ui-passing-score">60%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Overall Result Block -->
+                    <div class="border-2 border-slate-800 p-6 flex items-center justify-between mb-8 bg-slate-50">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Overall Examination Result</p>
+                            <div id="ui-status-badge">
+                                <!-- Status injected here -->
+                            </div>
                         </div>
-                        <div class="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-6 text-center flex flex-col justify-center">
-                            <p class="text-sm font-bold text-gray-600 uppercase tracking-widest mb-2">Status</p>
-                            <div id="ui-status-badge"></div>
+                        <div class="text-right border-l-2 border-slate-200 pl-8">
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Candidate Score</p>
+                            <p class="text-4xl font-black text-slate-900 mono tracking-tighter" id="ui-score">0%</p>
                         </div>
                     </div>
 
-                    <!-- Section Scores -->
-                    <div class="mb-10">
-                        <h3 class="text-lg font-bold text-gray-800 mb-4 border-b border-gray-200 pb-2">Section-wise Breakdown</h3>
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr>
-                                    <th class="py-3 px-4 bg-gray-100 font-semibold text-sm text-gray-600 rounded-tl-lg">Section Name</th>
-                                    <th class="py-3 px-4 bg-gray-100 font-semibold text-sm text-gray-600 text-right">Raw Score</th>
-                                    <th class="py-3 px-4 bg-gray-100 font-semibold text-sm text-gray-600 rounded-tr-lg text-right w-32">Percentage</th>
-                                </tr>
-                            </thead>
-                            <tbody id="ui-sections-body">
-                                <!-- Injected dynamically -->
-                            </tbody>
-                        </table>
+                    <!-- Violation Notice (If any) -->
+                    <div id="ui-violation-box" class="hidden border border-red-300 bg-red-50 p-4 mb-8 text-sm">
+                        <div class="flex items-center font-bold text-red-800 mb-2 uppercase tracking-wide text-xs">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            Academic Integrity Notice
+                        </div>
+                        <p class="text-red-700 font-medium" id="ui-violation-text"></p>
                     </div>
 
-                    <div id="ui-violation-box" class="hidden bg-red-50 border border-red-200 rounded-lg p-5 mb-8">
-                        <h4 class="font-bold text-red-800 mb-1 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                            Proctoring Notice
-                        </h4>
-                        <p class="text-sm text-red-700" id="ui-violation-text"></p>
+                    <!-- Performance Breakdown (Domain level) -->
+                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wide mb-3">Domain Performance Breakdown</h3>
+                    <table class="w-full text-left border-collapse report-table mb-8">
+                        <thead>
+                            <tr>
+                                <th class="w-1/2">Assessment Section / Domain</th>
+                                <th class="w-1/4 text-center">Score %</th>
+                                <th class="w-1/4">Competency Indicator</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ui-sections-body">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+
+                    <!-- The Formal "Exam Conditions" Checklist (Replaces Paragraphs) -->
+                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wide mb-3">Examination Information & Code of Conduct</h3>
+                    <div class="border-t-2 border-slate-800 pt-4 mb-auto text-xs text-slate-700 leading-relaxed text-justify">
+                        <p class="mb-3">
+                            <strong>Candidate Code of Conduct:</strong> By completing this examination, the candidate has affirmed adherence to the strict Candidate Code of Conduct. The candidate is expected to maintain the confidentiality and security of all examination contents. This assessment was rigorously monitored via <strong>Proctorix Enterprise AI</strong>, enforcing continuous audio/video tracking, browser lockdown, and environment security to ensure academic integrity.
+                        </p>
+                        <p class="mb-3">
+                            <strong>Scoring Methodology:</strong> This examination employs a compensatory scoring model, meaning a candidate is not required to pass individual sections to achieve an overall passing score. The overall pass/fail determination is based solely on the total examination score.
+                        </p>
+                        <p>
+                            <strong>Performance Feedback:</strong> The section-level breakdown provided above is intended solely to offer general feedback regarding the candidate's strengths and weaknesses. <em>Meets Competence</em> indicates performance aligned with the expectations of a passing candidate, while <em>Needs Improvement</em> highlights areas requiring further study.
+                        </p>
                     </div>
 
-                    <div class="mt-16 pt-6 border-t border-gray-200 text-center text-xs text-gray-400">
-                        <p class="mb-1 font-mono">Report ID: <span id="ui-id" class="font-bold text-gray-500"></span></p>
-                        <!-- UPDATED FOOTER TEXT -->
-                        <p>Generated securely by Credex & Testify Portal</p>
+                    <!-- Footer Details -->
+                    <div class="mt-10 pt-4 border-t border-slate-300 flex justify-between items-center text-xs text-slate-500">
+                        <div>
+                            <p class="font-bold text-slate-700">Testify Certification Authority</p>
+                            <p class="mt-1">This report is electronically generated and requires no physical signature.</p>
+                        </div>
+                        <div class="text-right">
+                            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" class="h-10 opacity-70 ml-auto mb-1 grayscale" crossorigin="anonymous">
+                        </div>
                     </div>
 
                 </div>
@@ -176,7 +223,7 @@
             if(!wrapper || !node) return;
 
             const screenWidth = window.innerWidth;
-            const targetWidth = 800; // Fixed width for scorecard
+            const targetWidth = 850; 
             const padding = screenWidth < 640 ? 32 : 64; 
             
             let scaleRatio = (screenWidth - padding) / targetWidth;
@@ -198,7 +245,7 @@
             }
 
             try {
-                // Ensure this fetch URL matches exactly what you added in backend.js
+                // Fetch URL exactly as defined in the backend
                 const response = await fetch(`/api/public/scorecard/${resultId}`);
                 const data = await response.json();
 
@@ -209,39 +256,69 @@
                 document.getElementById('ui-name').textContent = data.userName || data.name;
                 document.getElementById('ui-email').textContent = data.userEmail || data.email;
                 document.getElementById('ui-test').textContent = data.testTitle;
-                document.getElementById('ui-date').textContent = new Date(data.submittedAt || data.date).toLocaleString();
+                
+                // Format date cleanly
+                const dateObj = new Date(data.submittedAt || data.date);
+                const dateOptions = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' };
+                document.getElementById('ui-date').textContent = dateObj.toLocaleDateString('en-US', dateOptions);
+                
                 document.getElementById('ui-id').textContent = data.resultId;
                 document.getElementById('ui-score').textContent = `${data.score}%`;
+                
+                const passScore = data.passingScore || 60;
+                document.getElementById('ui-passing-score').textContent = `${passScore}%`;
 
-                // Status Badge
+                // Status Badge styling - strict AWS style
                 const badgeContainer = document.getElementById('ui-status-badge');
-                if (data.isQualified || data.result === 'Pass' || data.score >= 60) {
-                    badgeContainer.innerHTML = `<span class="inline-block bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full font-bold text-lg">PASS</span>`;
+                if (data.isQualified || data.result === 'Pass' || data.score >= passScore) {
+                    badgeContainer.innerHTML = `<span class="text-2xl font-black tracking-widest text-green-700 uppercase">PASS</span>`;
                 } else {
-                    badgeContainer.innerHTML = `<span class="inline-block bg-rose-100 text-rose-800 px-4 py-2 rounded-full font-bold text-lg">FAIL</span>`;
+                    badgeContainer.innerHTML = `<span class="text-2xl font-black tracking-widest text-red-700 uppercase">FAIL</span>`;
                 }
 
-                // Violation
+                // Violation Box
                 if (data.violationReason || data.violation) {
                     document.getElementById('ui-violation-box').classList.remove('hidden');
                     document.getElementById('ui-violation-text').textContent = data.violationReason || data.violation;
                 }
 
-                // Section Scores
+                // Section Scores Table - AWS Competency Style
                 const tbody = document.getElementById('ui-sections-body');
                 tbody.innerHTML = ''; 
                 if (data.sectionScores && data.sectionScores.length > 0) {
-                    data.sectionScores.forEach((sec, idx) => {
+                    data.sectionScores.forEach((sec) => {
+                        const score = parseInt(sec.score);
+                        
+                        // Competency Logic
+                        let compText = "Needs Improvement";
+                        let compColor = "text-red-600";
+                        let barColor = "perf-fail";
+                        
+                        if (score >= 80) {
+                            compText = "Highly Competent";
+                            compColor = "text-green-700";
+                            barColor = "perf-pass";
+                        } else if (score >= passScore) {
+                            compText = "Meets Competence";
+                            compColor = "text-slate-800";
+                            barColor = "perf-pass";
+                        }
+
                         tbody.innerHTML += `
-                            <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
-                                <td class="py-3 px-4 border-t border-gray-100 text-gray-800">${sec.title}</td>
-                                <td class="py-3 px-4 border-t border-gray-100 text-right text-gray-600">${sec.score}%</td>
-                                <td class="py-3 px-4 border-t border-gray-100 text-right font-bold text-indigo-600">${sec.score}%</td>
+                            <tr>
+                                <td class="font-medium text-slate-800 text-sm">${sec.title || sec.sectionTitle}</td>
+                                <td class="text-center font-bold mono text-sm">${score}%</td>
+                                <td>
+                                    <div class="text-xs font-bold uppercase ${compColor}">${compText}</div>
+                                    <div class="perf-bar-bg">
+                                        <div class="perf-bar-fill ${barColor}" style="width: ${score}%"></div>
+                                    </div>
+                                </td>
                             </tr>
                         `;
                     });
                 } else {
-                    tbody.innerHTML = `<tr><td colspan="3" class="py-4 text-center text-gray-500 italic border-t border-gray-100">Detailed section scores are unavailable for this assessment.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="3" class="text-center text-slate-500 italic text-sm">Detailed competency breakdown is not available for this specific assessment.</td></tr>`;
                 }
 
                 document.getElementById('loading-state').classList.add('hidden');
@@ -263,7 +340,7 @@
             if(!reportData) return;
             const btn = document.getElementById('download-btn');
             const originalHtml = btn.innerHTML;
-            btn.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating...`;
+            btn.innerHTML = `<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating PDF...`;
             btn.disabled = true;
 
             await document.fonts.ready;
@@ -277,12 +354,14 @@
             // Wait briefly for UI to re-render without scale
             setTimeout(() => {
                 const safeName = (reportData.userName || reportData.name || 'Candidate').replace(/\s+/g, '_');
+                
+                // Extremely High Definition PDF render (Scale 3)
                 const opt = {
                     margin:       0,
-                    filename:     `${safeName}_Score_Report.pdf`,
+                    filename:     `${safeName}_Exam_Score_Report.pdf`,
                     image:        { type: 'jpeg', quality: 1 },
-                    html2canvas:  { scale: 2, useCORS: true, logging: false }, 
-                    jsPDF:        { unit: 'px', format: [800, element.offsetHeight], orientation: 'portrait' }
+                    html2canvas:  { scale: 3, useCORS: true, logging: false, backgroundColor: '#ffffff' }, 
+                    jsPDF:        { unit: 'px', format: [850, element.offsetHeight], orientation: 'portrait' }
                 };
                 
                 html2pdf().set(opt).from(element).save().then(() => {
