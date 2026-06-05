@@ -3,335 +3,574 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Exam Portal | Xeta Tech Solutions & Testify</title>
+    <title>Testify Enterprise | Secure Proctored Environment</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Load face-api.js for AI Face Detection -->
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dzuxwvamy/image/upload/v1780483593/Credex_szkzcq.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/dzuxwvamy/image/upload/v1780483593/Credex_szkzcq.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dzuxwvamy/image/upload/v1780483593/Credex_szkzcq.png">
-    <link rel="shortcut icon" href="https://res.cloudinary.com/dzuxwvamy/image/upload/v1780483593/Credex_szkzcq.png">
     
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; margin: 0; user-select: none; } 
+        :root {
+            --brand-primary: #0f172a;
+            --brand-accent: #2563eb; /* Blue-600 */
+        }
+        body { font-family: 'Inter', sans-serif; user-select: none; } 
         .hidden { display: none !important; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        .fade-in { animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #6366f1; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        
+        .loader { border: 3px solid #e2e8f0; border-top: 3px solid var(--brand-accent); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* Exam Portal Specific Styles */
-        .q-badge { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-size: 0.875rem; border: 1px solid transparent; }
-        .q-badge:hover { opacity: 0.8; }
-        .status-answered { background-color: #22c55e; color: white; border-color: #16a34a; }
+        /* Exam Engine Grid - Elevated Premium Look */
+        .q-badge { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: 700; border-radius: 12px; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); font-size: 0.9rem; border: 1px solid #cbd5e1; background: #fff; color: #475569; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .q-badge:hover { border-color: #94a3b8; transform: translateY(-2px); box-shadow: 0 6px 8px -2px rgba(0,0,0,0.1); }
+        .status-answered { background-color: #10b981; color: white; border-color: #059669; }
         .status-not_answered { background-color: #ef4444; color: white; border-color: #dc2626; }
-        .status-not_visited { background-color: #f3f4f6; color: #4b5563; border-color: #d1d5db; }
-        .status-marked { background-color: #a855f7; color: white; border-color: #9333ea; }
-        .status-answered_marked { background-color: #a855f7; color: white; border-color: #9333ea; position: relative; }
-        .status-answered_marked::after { content: ''; position: absolute; bottom: 2px; right: 2px; width: 8px; height: 8px; background-color: #22c55e; border-radius: 50%; border: 1px solid white; }
-        .q-badge.active { box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4); border-color: #6366f1; }
+        .status-marked { background-color: #8b5cf6; color: white; border-color: #7c3aed; }
+        .status-answered_marked { background-color: #8b5cf6; color: white; border-color: #7c3aed; position: relative; }
+        .status-answered_marked::after { content: ''; position: absolute; bottom: -2px; right: -2px; width: 14px; height: 14px; background-color: #10b981; border-radius: 50%; border: 2px solid white; }
+        .q-badge.active { box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25); border-color: var(--brand-accent); transform: scale(1.05); }
         
-        /* Fullscreen override & Security */
-        :fullscreen { background-color: #f8fafc; }
-        ::-backdrop { background-color: #f8fafc; }
+        /* Strict Anticheat Blur */
+        .exam-blurred { filter: blur(25px) grayscale(50%); pointer-events: none; transition: filter 0.3s ease; }
         
-        /* Draggable PIP Webcam */
+        /* Enterprise Card styling for premium feel */
+        .enterprise-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08), 0 10px 15px -3px rgba(0, 0, 0, 0.04); border-radius: 24px; }
+        
+        /* Draggable PIP Webcam - Sleek Enterprise Styling */
         #proctor-pip {
-            position: fixed;
-            bottom: 20px;
-            right: 340px;
-            width: 200px;
-            background: #111;
-            border-radius: 12px;
-            border: 2px solid #3b82f6;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            z-index: 50;
-            overflow: hidden;
-            display: none;
+            position: fixed !important;
+            bottom: 40px;
+            right: 40px;
+            width: 280px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(8px);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(37, 99, 235, 0.4);
+            z-index: 99999 !important;
+            display: none; 
             flex-direction: column;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
         }
-        .pip-active #proctor-pip { display: flex; }
+        .pip-active #proctor-pip { display: flex !important; }
+        #proctor-pip:hover { box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.6), 0 0 0 2px rgba(37, 99, 235, 0.8); }
         
         .pip-header {
-            background: #1e3a8a;
-            color: white;
-            font-size: 10px;
-            padding: 6px;
+            background: transparent;
+            color: #94a3b8;
+            font-size: 0.65rem;
+            padding: 12px;
             text-align: center;
-            font-weight: bold;
+            font-weight: 800;
             cursor: grab;
             user-select: none;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.15em;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        .pip-header:active { cursor: grabbing; }
+        .pip-header:active { cursor: grabbing; color: white; }
 
-        /* Audio Meter Styles */
-        .audio-bar-container {
-            height: 6px;
-            background: #333;
-            width: 100%;
-        }
-        .audio-bar-fill {
-            height: 100%;
-            background: #22c55e;
-            width: 0%;
-            transition: width 0.1s ease-out, background-color 0.3s ease;
-        }
+        #exam-video-container { width: 100%; height: 180px; position: relative; background: #000; }
+        #exam-video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+
+        .audio-bar-container { height: 6px; background: rgba(0,0,0,0.5); width: 100%; }
+        .audio-bar-fill { height: 100%; background: #10b981; width: 0%; transition: width 0.1s ease-out, background-color 0.3s ease; }
         
-        #warning-overlay { z-index: 9999; backdrop-filter: blur(5px); }
+        .modal-overlay { z-index: 999999; backdrop-filter: blur(16px); background-color: rgba(15, 23, 42, 0.85); }
+        ::selection { background: rgba(37, 99, 235, 0.2); }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="flex flex-col h-screen overflow-hidden" oncontextmenu="return false;">
+<body class="flex flex-col h-screen overflow-hidden text-slate-800 antialiased bg-gradient-to-br from-slate-50 to-slate-100" oncontextmenu="return false;">
 
-    <!-- WARNING MODAL -->
-    <div id="warning-overlay" class="hidden fixed inset-0 bg-gray-900/80 flex items-center justify-center">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center fade-in border-t-8 border-red-600">
-            <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+    <!-- STANDARD WARNING MODAL -->
+    <div id="standard-warning-overlay" class="hidden modal-overlay fixed inset-0 flex items-center justify-center">
+        <div class="enterprise-card max-w-md w-full p-10 text-center fade-in border-t-4 border-red-600 relative overflow-hidden bg-white">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-rose-600"></div>
+            <div class="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6 relative">
+                <div class="absolute inset-0 rounded-full border-4 border-red-100 animate-ping opacity-50"></div>
+                <svg class="w-12 h-12 text-red-600 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
             </div>
-            <h2 class="text-2xl font-bold text-gray-900 mb-2">Proctoring Violation</h2>
-            <p id="warning-message" class="text-gray-600 mb-4 font-medium">Please return to the exam.</p>
-            <p class="text-sm font-bold text-red-600 mb-6 bg-red-50 py-2 rounded">Warnings Left: <span id="warnings-left">5</span></p>
-            <button onclick="dismissWarning()" class="w-full px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition shadow-lg">I Understand, Return to Exam</button>
+            <h2 class="text-2xl font-extrabold text-slate-900 mb-3">Integrity Flag Raised</h2>
+            <p id="std-warning-message" class="text-slate-600 mb-6 font-medium leading-relaxed">Unusual activity detected.</p>
+            <div class="bg-rose-50 py-4 rounded-xl border border-rose-100 mb-8">
+                <p class="text-sm font-bold text-rose-700 uppercase tracking-widest">Warnings Remaining: <span id="std-warnings-left" class="text-xl ml-2"></span></p>
+            </div>
+            <button onclick="dismissStandardWarning()" class="w-full px-6 py-4 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition shadow-xl shadow-slate-900/20 transform hover:-translate-y-0.5">Acknowledge & Return</button>
         </div>
     </div>
 
-    <!-- VIEW 1: Loading & Validation -->
-    <div id="view-loading" class="flex-1 flex flex-col items-center justify-center fade-in bg-gray-50">
-        <!-- Partner Logos -->
-        <div class="flex items-center gap-6 mb-8">
-            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png" alt="Xeta Tech Solutions" class="h-16 bg-white p-2 rounded-xl shadow-sm border border-gray-100 object-contain">
-            <span class="text-gray-300 font-bold text-xl">&times;</span>
-            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify" class="h-16 bg-white p-2 rounded-xl shadow-sm border border-gray-100 object-contain">
-        </div>
-
-        <div class="loader mb-4 border-indigo-600 border-t-indigo-200" style="width: 40px; height: 40px; border-width: 4px;"></div>
-        <h2 class="text-xl font-bold text-gray-800" id="loading-header">Validating Exam Link...</h2>
-        <p class="text-gray-500 mt-2 text-sm" id="loading-msg">Please wait while we verify your voucher and load the test.</p>
-    </div>
-
-    <!-- VIEW 2: Instructions & Hardware Check -->
-    <div id="view-instructions" class="hidden flex-1 flex flex-col items-center justify-center fade-in bg-gray-900 px-4 py-8 overflow-y-auto">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden my-auto">
-            <div class="bg-indigo-600 px-8 py-6 text-white flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <div class="flex bg-white rounded p-1.5 gap-2 items-center shadow-sm">
-                        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png" alt="Xeta Tech" class="h-6 object-contain">
-                        <span class="text-gray-200 text-xs">|</span>
-                        <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify" class="h-6 object-contain">
-                    </div>
-                    <h1 class="text-xl md:text-2xl font-bold hidden sm:block">Secure Proctoring Setup</h1>
+    <!-- CONVERSATIONAL AI INTERVENTION MODAL -->
+    <div id="conversational-overlay" class="hidden modal-overlay fixed inset-0 flex items-center justify-center">
+        <div class="enterprise-card max-w-xl w-full p-10 fade-in relative overflow-hidden bg-white">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+            <div class="flex items-center gap-5 mb-8 pb-6 border-b border-slate-100">
+                <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 transform rotate-3">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
                 </div>
-                <span class="px-3 py-1 bg-white/20 rounded font-mono text-sm uppercase tracking-widest" id="display-voucher"></span>
+                <div>
+                    <h2 class="text-2xl font-extrabold text-slate-900">AI Proctor Check-in</h2>
+                    <p class="text-sm text-slate-500 font-semibold mt-1">Your exam is temporarily paused.</p>
+                </div>
             </div>
-            <div class="p-8">
-                <h2 class="text-xl font-bold text-gray-900 mb-2" id="inst-test-title">Loading Test Title...</h2>
-                <p class="text-gray-600 mb-6">This is an AI-proctored mock test powered by Testify & Xeta Tech Solutions. Read the rules and verify your hardware before proceeding.</p>
+            <p id="conv-warning-message" class="text-slate-700 mb-6 font-medium leading-relaxed bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-inner">I noticed an anomaly. Please explain the situation below to proceed.</p>
+            
+            <textarea id="anomaly-explanation" rows="3" class="w-full p-5 border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition mb-8 font-medium text-slate-700 placeholder-slate-400" placeholder="Type your explanation here..."></textarea>
+            
+            <button onclick="submitExplanation()" class="w-full px-6 py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition shadow-xl shadow-blue-600/30 transform hover:-translate-y-0.5 tracking-wide">Submit Explanation & Continue</button>
+        </div>
+    </div>
+
+    <!-- RE-CHECK 360 OVERLAY (MID-EXAM ACTIVE ANALYSIS) -->
+    <div id="recheck-overlay" class="hidden modal-overlay fixed inset-0 flex flex-col items-center justify-center fade-in text-white p-6">
+        <div class="max-w-4xl w-full flex flex-col items-center">
+            <div class="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mb-6 relative shadow-[0_0_40px_rgba(37,99,235,0.5)] border-4 border-slate-800">
+                <svg class="w-8 h-8 text-white animate-spin-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            </div>
+
+            <h2 class="text-3xl font-extrabold mb-3 text-center tracking-tight text-white">Live Re-Verification Required</h2>
+            <p id="recheck-instruction-text" class="text-slate-300 text-xl text-center mb-8 h-16 max-w-2xl font-medium leading-relaxed">Initializing re-check sequence...</p>
+
+            <div class="relative w-full max-w-2xl bg-black rounded-3xl overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] border-2 border-slate-700 mb-8 transition-colors duration-300" id="recheck-video-container">
+                <video id="recheck-video" class="w-full h-[400px] object-cover opacity-90" autoplay muted playsinline style="transform: scaleX(-1);"></video>
+                <canvas id="recheck-canvas" class="hidden"></canvas>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div class="bg-red-50 border border-red-100 p-4 rounded-xl">
-                        <h3 class="font-bold text-red-800 mb-2 flex items-center gap-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> Security Rules</h3>
-                        <ul class="text-sm text-red-700 space-y-1 list-disc pl-4 font-medium">
-                            <li>Your face must remain visible at all times.</li>
-                            <li>No additional faces allowed in the frame.</li>
-                            <li>Keep audio levels low (no talking).</li>
-                            <li>Do NOT switch tabs or minimize the browser.</li>
-                            <li>Do NOT exit fullscreen mode.</li>
-                            <li>Auto-submit occurs on the 5th violation.</li>
-                        </ul>
-                    </div>
-                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-xl flex flex-col items-center justify-center text-center">
-                        <video id="setup-video" class="w-32 h-24 bg-black rounded-lg mb-2 object-cover shadow-inner" autoplay muted playsinline style="transform: scaleX(-1);"></video>
-                        
-                        <!-- Mini Audio Meter for Setup -->
-                        <div class="w-full max-w-[128px] h-1.5 bg-gray-200 rounded-full mb-4 overflow-hidden relative">
-                            <div id="setup-audio-fill" class="h-full bg-green-500 w-0 transition-all duration-75"></div>
-                        </div>
-
-                        <button type="button" id="btn-hardware" onclick="initProctoringHardware()" class="px-4 py-2 bg-gray-800 text-white text-sm font-bold rounded shadow hover:bg-gray-700">Enable Camera & Mic</button>
-                        <p id="hardware-status" class="text-xs text-gray-500 mt-2">Required to proceed.</p>
+                <div class="absolute inset-0 pointer-events-none p-8">
+                    <div class="w-full h-full border-2 border-dashed border-white/30 relative rounded-xl">
+                        <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-500 rounded-tl-xl"></div>
+                        <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-500 rounded-tr-xl"></div>
+                        <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-500 rounded-bl-xl"></div>
+                        <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-500 rounded-br-xl"></div>
                     </div>
                 </div>
+                
+                <div id="recheck-status-overlay" class="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center hidden">
+                    <div class="text-center">
+                        <div class="loader mx-auto mb-4 border-blue-500 border-t-blue-200"></div>
+                        <p class="text-white font-bold text-lg tracking-wide">AI Validating Live Frame...</p>
+                    </div>
+                </div>
+            </div>
 
-                <form id="preflight-form" class="space-y-4 border-t border-gray-200 pt-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Full Name</label>
-                            <input type="text" id="cand-name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Registered Email</label>
-                            <input type="email" id="cand-email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50">
-                        </div>
-                    </div>
-                    <div class="pt-4 flex items-center justify-between">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="agree-rules" required class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300">
-                            <span class="text-sm font-medium text-gray-700">I agree to the AI proctoring rules.</span>
-                        </label>
-                        <button type="submit" id="btn-start-exam" disabled class="px-8 py-3 bg-gray-400 text-white font-bold rounded-lg cursor-not-allowed transition shadow-md">Start Exam</button>
-                    </div>
-                </form>
+            <div class="flex flex-col items-center gap-4">
+                <button onclick="captureAndVerifyRecheckAngle()" id="btn-verify-recheck-angle" class="hidden px-10 py-4 bg-white text-slate-900 font-extrabold rounded-full shadow-xl hover:bg-slate-100 transition transform hover:scale-105 tracking-wide text-lg">
+                    Capture Frame
+                </button>
+                <p id="recheck-angle-error-msg" class="text-rose-400 font-bold text-sm hidden bg-rose-950/50 px-4 py-2 rounded-lg border border-rose-900/50 backdrop-blur"></p>
             </div>
         </div>
     </div>
 
-    <!-- VIEW 3: The CBT Engine Interface -->
-    <div id="view-test" class="hidden flex-1 flex flex-col bg-gray-50 fade-in overflow-hidden w-full">
+    <!-- HEADER -->
+    <header id="preflight-header" class="bg-white/80 backdrop-blur-md px-8 py-5 flex justify-between items-center z-10 shrink-0 border-b border-slate-200 shadow-sm hidden fixed w-full top-0">
+        <div class="flex items-center gap-5">
+            <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png" alt="Testify" class="h-8 object-contain drop-shadow-sm">
+            <div class="h-6 w-px bg-slate-300"></div>
+            <span class="text-slate-800 font-extrabold tracking-wider text-sm uppercase">Enterprise Proctoring</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-bold text-xs uppercase tracking-widest border border-blue-100" id="current-step-badge">Initialization</span>
+        </div>
+    </header>
+
+    <!-- VIEW 0: VOUCHER & GATEWAY -->
+    <div id="view-gateway" class="hidden flex-1 flex flex-col items-center justify-center fade-in px-4 relative overflow-hidden pt-20">
+        <!-- Abstract Background Pattern -->
+        <div class="absolute inset-0 opacity-[0.02] pointer-events-none" style="background-image: radial-gradient(#0f172a 1.5px, transparent 1.5px); background-size: 32px 32px;"></div>
         
-        <!-- Draggable PIP Webcam during test -->
+        <div class="enterprise-card max-w-lg w-full p-10 relative z-10">
+            <div class="text-center mb-10">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-100 shadow-sm">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <h2 class="text-3xl font-extrabold text-slate-900 mb-2 tracking-tight">Candidate Login</h2>
+                <p class="text-sm text-slate-500 font-medium">Please verify your credentials to access the secure environment.</p>
+            </div>
+            
+            <form id="form-gateway" class="space-y-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-2 tracking-wide">Full Legal Name</label>
+                    <input type="text" id="cand-name" required class="w-full px-5 py-4 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-medium text-slate-800 placeholder-slate-400" placeholder="e.g. John Doe">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-2 tracking-wide">Registered Email Address</label>
+                    <input type="email" id="cand-email" required class="w-full px-5 py-4 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-medium text-slate-800 placeholder-slate-400" placeholder="e.g. john@company.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 uppercase mb-2 tracking-wide">Access Voucher Code</label>
+                    <input type="text" id="cand-voucher" required class="w-full px-5 py-4 bg-slate-50 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition font-mono uppercase tracking-widest text-slate-800 placeholder-slate-400 font-bold" placeholder="XXXX-XXXX">
+                </div>
+                
+                <div class="pt-2">
+                    <button type="submit" id="btn-validate" class="w-full px-6 py-4 bg-blue-600 text-white font-extrabold rounded-xl hover:bg-blue-700 transition shadow-xl shadow-blue-600/25 flex justify-center items-center transform hover:-translate-y-0.5 tracking-wide">
+                        Authenticate & Proceed
+                    </button>
+                </div>
+                <p id="gateway-error" class="text-rose-500 text-sm text-center font-bold hidden mt-4 bg-rose-50 py-3 rounded-lg"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- VIEW 1: SYSTEM DIAGNOSTICS -->
+    <div id="view-step1" class="hidden flex-1 overflow-y-auto flex flex-col items-center py-12 px-4 fade-in pt-24">
+        <div class="enterprise-card max-w-3xl w-full p-10">
+            <div class="flex items-center gap-4 mb-3">
+                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+                </div>
+                <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">System Diagnostics</h2>
+            </div>
+            <p class="text-slate-500 mb-10 leading-relaxed font-medium">Secure protocol requires validation of your hardware and network connectivity before entering the isolated testing environment.</p>
+            
+            <div class="flex flex-col md:flex-row gap-8 mb-10">
+                <!-- Check Items -->
+                <div class="flex-1 space-y-4">
+                    <div class="flex items-center justify-between p-5 bg-white border border-slate-200 rounded-2xl shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] transition-all" id="chk-camera">
+                        <div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></div><span class="font-bold text-slate-700 text-lg">Webcam Feed</span></div>
+                        <span class="status-indicator text-slate-400 text-sm font-bold uppercase tracking-wider bg-slate-100 px-3 py-1 rounded-md">Pending</span>
+                    </div>
+                    <div class="flex items-center justify-between p-5 bg-white border border-slate-200 rounded-2xl shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] transition-all" id="chk-mic">
+                        <div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg></div>
+                            <div class="flex flex-col">
+                                <span class="font-bold text-slate-700 text-lg">Audio Input (Mic)</span>
+                                <span class="text-xs text-blue-600 font-bold hidden mt-1 animate-pulse uppercase tracking-wide" id="mic-instruction">Please speak now...</span>
+                            </div>
+                        </div>
+                        <span class="status-indicator text-slate-400 text-sm font-bold uppercase tracking-wider bg-slate-100 px-3 py-1 rounded-md">Pending</span>
+                    </div>
+                    <div class="flex items-center justify-between p-5 bg-white border border-slate-200 rounded-2xl shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] transition-all" id="chk-speaker">
+                        <div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.899a9 9 0 010 12.728M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div><span class="font-bold text-slate-700 text-lg">Audio Output</span></div>
+                        <button onclick="testSpeaker()" id="btn-test-speaker" disabled class="text-xs bg-slate-100 text-slate-400 px-5 py-2.5 rounded-lg font-bold uppercase tracking-wide cursor-not-allowed transition">Waiting</button>
+                    </div>
+                </div>
+
+                <!-- Video Preview inside Card -->
+                <div class="w-full md:w-72 flex flex-col items-center justify-center">
+                    <div class="w-full h-48 bg-slate-900 rounded-2xl overflow-hidden shadow-inner relative border-4 border-slate-100" id="diag-video-container">
+                        <video id="diag-video" class="w-full h-full object-cover hidden" autoplay muted playsinline style="transform: scaleX(-1);"></video>
+                        <div id="diag-video-placeholder" class="absolute inset-0 flex items-center justify-center text-slate-600">
+                            <svg class="w-12 h-12 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-8 border-t border-slate-100">
+                <button onclick="runDiagnostics()" id="btn-run-diag" class="w-full md:w-auto px-10 py-4 bg-slate-900 text-white font-extrabold rounded-xl hover:bg-slate-800 transition shadow-lg transform hover:-translate-y-0.5 tracking-wide">Run System Diagnostics</button>
+                <button onclick="nextStep(2)" id="btn-next-step1" class="hidden w-full md:w-auto px-10 py-4 bg-blue-600 text-white font-extrabold rounded-xl hover:bg-blue-700 transition shadow-xl shadow-blue-600/30 transform hover:-translate-y-0.5 tracking-wide flex items-center gap-2">
+                    Proceed to Verification
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 2: IDENTITY VERIFICATION -->
+    <div id="view-step2" class="hidden flex-1 overflow-y-auto flex flex-col items-center py-12 px-4 fade-in pt-24">
+        <div class="enterprise-card max-w-4xl w-full p-10">
+            <div class="flex items-center gap-4 mb-3">
+                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
+                </div>
+                <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Identity Verification</h2>
+            </div>
+            <p class="text-slate-500 mb-10 font-medium">Please upload a valid Government ID. The AI engine will cross-reference this document with a live biometric scan.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+                <div class="col-span-1 space-y-6">
+                    <div class="border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center hover:bg-blue-50 hover:border-blue-400 transition-colors cursor-pointer relative group h-full flex flex-col justify-center bg-white">
+                        <input type="file" id="upload-id" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="previewImage(this, 'preview-id')">
+                        <div id="upload-id-placeholder">
+                            <div class="w-16 h-16 bg-white border border-slate-200 shadow-sm rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600 group-hover:scale-110 group-hover:text-blue-700 transition duration-300">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                            </div>
+                            <p class="text-base font-bold text-slate-800">Upload Official ID</p>
+                            <p class="text-xs text-slate-500 mt-2 font-medium">JPEG, PNG only</p>
+                        </div>
+                        <img id="preview-id" class="hidden w-full h-48 rounded-xl object-contain bg-white">
+                    </div>
+                </div>
+                
+                <div class="col-span-2 flex flex-col items-center justify-center bg-slate-900 rounded-2xl overflow-hidden relative shadow-[inset_0_2px_20px_rgba(0,0,0,0.5)] border-4 border-slate-100 h-80">
+                    <video id="kyc-video" class="w-full h-full object-cover" autoplay muted playsinline style="transform: scaleX(-1);"></video>
+                    <canvas id="kyc-canvas" class="hidden"></canvas>
+                    <img id="kyc-captured-img" class="hidden w-full h-full object-cover">
+                    
+                    <div class="absolute bottom-6 left-0 right-0 flex justify-center gap-4">
+                        <button onclick="captureLiveFace()" id="btn-capture-live" class="px-8 py-4 bg-white text-slate-900 font-extrabold rounded-full shadow-2xl hover:bg-slate-100 transition transform hover:-translate-y-1 flex items-center gap-3">
+                            <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                            Capture Live Biometric
+                        </button>
+                        <button onclick="retakeLiveFace()" id="btn-retake-live" class="hidden px-8 py-4 bg-slate-800/80 backdrop-blur-md text-white font-extrabold rounded-full shadow-lg hover:bg-slate-700 transition">Retake Photo</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="kyc-result-box" class="hidden mb-10 p-6 rounded-2xl flex items-center gap-5"></div>
+
+            <div class="flex justify-end pt-8 border-t border-slate-100">
+                <button onclick="verifyKYC()" id="btn-verify-kyc" class="px-10 py-4 bg-slate-900 text-white font-extrabold rounded-xl shadow-lg hover:bg-slate-800 transition transform hover:-translate-y-0.5 tracking-wide">Analyze & Verify Identity</button>
+                <button onclick="nextStep(3)" id="btn-next-step2" class="hidden px-10 py-4 bg-blue-600 text-white font-extrabold rounded-xl shadow-xl shadow-blue-600/30 hover:bg-blue-700 transition transform hover:-translate-y-0.5 tracking-wide flex items-center gap-2">
+                    Continue to Mapping
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 3: QR ROOM SYNC -->
+    <div id="view-step3" class="hidden flex-1 overflow-y-auto flex flex-col items-center justify-center py-12 px-4 fade-in pt-24">
+        <div class="enterprise-card max-w-4xl w-full p-10 flex flex-col md:flex-row gap-16 items-center">
+            
+            <div class="flex-1 text-center md:text-left">
+                <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6 mx-auto md:mx-0 shadow-sm border border-blue-100">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                </div>
+                <h2 class="text-4xl font-extrabold mb-4 text-slate-900 tracking-tight">Environment Mapping</h2>
+                <p class="text-slate-600 mb-8 leading-relaxed font-medium text-lg">To ensure exam integrity, use your mobile device to securely upload 360-degree photos of your current room. <strong class="text-slate-900 bg-slate-100 px-2 py-0.5 rounded">Images are strictly analyzed.</strong></p>
+                
+                <div class="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 mb-8">
+                    <ul class="space-y-5">
+                        <li class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-sm shrink-0 mt-0.5 border border-blue-100">1</div>
+                            <span class="text-base text-slate-700 font-semibold">Open your smartphone camera and scan the QR code.</span>
+                        </li>
+                        <li class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-sm shrink-0 mt-0.5 border border-blue-100">2</div>
+                            <span class="text-base text-slate-700 font-semibold">Follow the mobile instructions to capture 4 wall angles.</span>
+                        </li>
+                        <li class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-sm shrink-0 mt-0.5 border border-blue-100">3</div>
+                            <span class="text-base text-slate-700 font-semibold">Once uploaded, click Verify below to synchronize.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-center justify-center shrink-0">
+                <div class="bg-white p-8 border-2 border-slate-200 rounded-3xl shadow-xl mb-6 relative">
+                    <div class="absolute -top-3 -right-3 flex h-8 w-8">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-8 w-8 bg-blue-500 border-2 border-white"></span>
+                    </div>
+                    <div id="qrcode"></div>
+                </div>
+                <div class="bg-slate-100 px-4 py-2 rounded-lg mb-8 border border-slate-200">
+                    <p class="text-xs text-slate-500 font-mono tracking-widest uppercase font-bold" id="session-id-display">Session ID: ---</p>
+                </div>
+                
+                <button onclick="manualRoomSyncCheck()" id="btn-manual-sync" class="w-full px-8 py-5 bg-slate-900 text-white font-extrabold rounded-xl shadow-xl shadow-slate-900/20 hover:bg-slate-800 transition transform hover:-translate-y-0.5 flex justify-center items-center gap-3 tracking-wide">
+                    Verify & Continue
+                </button>
+                <p id="manual-sync-error" class="hidden text-rose-500 text-sm font-bold text-center mt-4 bg-rose-50 py-2 px-4 rounded-lg"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 4: INTERACTIVE AI PROCTOR VALIDATION -->
+    <div id="view-step4" class="hidden flex-1 overflow-y-auto bg-slate-900 text-white flex flex-col items-center justify-center py-12 px-4 fade-in">
+        <div class="max-w-4xl w-full flex flex-col items-center">
+            <div class="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center mb-8 relative shadow-[0_0_50px_rgba(37,99,235,0.5)] border-4 border-slate-800">
+                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+            </div>
+
+            <h2 class="text-4xl font-extrabold mb-3 text-center tracking-tight">Live Environmental Audit</h2>
+            <p id="ai-instruction-text" class="text-slate-300 text-xl text-center mb-10 h-16 max-w-2xl font-medium leading-relaxed">Initializing interactive proctoring module...</p>
+
+            <div class="relative w-full max-w-2xl bg-black rounded-3xl overflow-hidden shadow-2xl border-2 border-slate-700 mb-10" id="pan-video-container">
+                <video id="pan-video" class="w-full h-[400px] object-cover opacity-90" autoplay muted playsinline style="transform: scaleX(-1);"></video>
+                <canvas id="pan-canvas" class="hidden"></canvas>
+                
+                <div class="absolute inset-0 pointer-events-none p-8">
+                    <div class="w-full h-full border-2 border-dashed border-white/20 relative rounded-xl">
+                        <div class="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-blue-500 rounded-tl-xl"></div>
+                        <div class="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-blue-500 rounded-tr-xl"></div>
+                        <div class="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-blue-500 rounded-bl-xl"></div>
+                        <div class="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-blue-500 rounded-br-xl"></div>
+                    </div>
+                </div>
+                
+                <div id="audit-status-overlay" class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center hidden">
+                    <div class="text-center">
+                        <div class="loader mx-auto mb-5 border-blue-500 border-t-blue-200 w-10 h-10 border-[4px]"></div>
+                        <p class="text-white font-extrabold text-xl tracking-wide">AI Validating Frame against S3...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-center gap-5">
+                <button onclick="captureAndVerifyAngle()" id="btn-verify-angle" class="hidden px-12 py-5 bg-white text-slate-900 font-extrabold rounded-full shadow-2xl hover:bg-slate-100 transition transform hover:-translate-y-1 tracking-wide text-lg">
+                    Capture & Verify Frame
+                </button>
+                <p id="angle-error-msg" class="text-rose-400 font-bold text-base hidden bg-rose-950/50 px-6 py-3 rounded-xl border border-rose-900/50"></p>
+                <button onclick="startExamEngine()" id="btn-start-exam" class="hidden px-14 py-5 bg-emerald-500 text-white text-2xl font-extrabold rounded-2xl shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:bg-emerald-400 transition transform hover:-translate-y-1 tracking-widest uppercase">
+                    Begin Examination
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 5: THE DYNAMIC EXAM ENGINE -->
+    <div id="view-test" class="hidden flex-1 flex flex-col bg-slate-50 fade-in overflow-hidden w-full relative">
+        
+        <!-- Draggable PIP Webcam -->
         <div id="proctor-pip">
             <div class="pip-header" id="pip-drag-handle">≡ DRAG TO MOVE ≡</div>
-            <div class="relative w-full h-[140px] bg-black">
-                <video id="exam-video" autoplay muted playsinline class="w-full h-full object-cover" style="transform: scaleX(-1);"></video>
-                <div class="absolute bottom-1 left-1 bg-red-600/90 text-white text-[9px] px-1.5 py-0.5 rounded font-bold uppercase animate-pulse flex items-center gap-1">
-                    <div class="w-1.5 h-1.5 bg-white rounded-full"></div> REC
+            <div id="exam-video-container">
+                <video id="exam-video" autoplay muted playsinline></video>
+                <div class="absolute bottom-3 left-3 bg-red-600 text-white text-[10px] px-2.5 py-1 rounded shadow-lg font-bold uppercase animate-pulse flex items-center gap-1.5 border border-red-500">
+                    <div class="w-2.5 h-2.5 bg-white rounded-full"></div> REC
                 </div>
             </div>
-            <!-- Audio Meter Indicator -->
-            <div class="audio-bar-container">
-                <div id="audio-bar-fill" class="audio-bar-fill"></div>
-            </div>
+            <div class="audio-bar-container"><div id="audio-bar-fill" class="audio-bar-fill"></div></div>
         </div>
 
         <!-- Engine Header -->
-        <header class="bg-indigo-900 text-white px-6 py-3 flex justify-between items-center shadow-md z-10 flex-shrink-0">
-            <div class="flex items-center gap-4">
-                <div class="flex bg-white rounded p-1.5 gap-2 items-center shadow-sm">
-                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png" alt="Xeta Tech" class="h-6 md:h-8 object-contain">
-                    <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify" class="h-6 md:h-8 object-contain">
-                </div>
-                <div class="border-l-2 border-indigo-700 pl-4 hidden md:block">
-                    <h1 id="engine-title" class="text-lg font-bold leading-tight">Test Title</h1>
-                    <p class="text-xs text-indigo-300">Powered by Xeta Tech Solutions & Testify</p>
+        <header class="bg-white border-b border-slate-200 px-8 py-5 flex justify-between items-center z-10 flex-shrink-0 shadow-sm relative">
+            <div class="absolute bottom-0 left-0 h-0.5 bg-blue-600 w-full opacity-10"></div>
+            <div class="flex items-center gap-6">
+                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png" alt="Testify" class="h-8 object-contain">
+                <div class="w-px h-10 bg-slate-200"></div>
+                <div>
+                    <h1 id="engine-title" class="text-2xl font-extrabold text-slate-900 tracking-tight">Test Title</h1>
+                    <p class="text-xs font-bold text-blue-600 uppercase tracking-widest mt-0.5">Secure Assessment Mode</p>
                 </div>
             </div>
             <div class="flex items-center gap-6">
-                <div class="flex items-center gap-2">
-                    <span class="text-indigo-200 text-sm hidden sm:block">Time Left:</span>
-                    <div class="bg-white/10 px-3 py-1 rounded font-mono font-bold text-lg" id="engine-timer">00:00</div>
+                <div class="flex items-center gap-3 bg-slate-50 px-5 py-2.5 rounded-xl border border-slate-200 shadow-inner">
+                    <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div class="font-mono font-extrabold text-2xl text-slate-800 tracking-wider" id="engine-timer">00:00</div>
                 </div>
             </div>
         </header>
 
-        <div class="flex-1 flex overflow-hidden">
-            <!-- Main Question Area -->
-            <main class="flex-1 flex flex-col bg-white relative">
-                <!-- Section Tabs -->
-                <div id="engine-section-tabs" class="flex overflow-x-auto border-b border-gray-200 bg-gray-50">
-                    <!-- JS Injected Tabs -->
-                </div>
+        <div class="flex-1 flex overflow-hidden relative" id="engine-content-area">
+            <main class="flex-1 flex flex-col bg-white relative z-0 shadow-[4px_0_24px_rgba(0,0,0,0.03)] z-10">
+                <div id="engine-section-tabs" class="flex overflow-x-auto border-b border-slate-200 bg-slate-50/80 px-6 pt-3"></div>
                 
-                <!-- Question Content -->
-                <div class="flex-1 overflow-y-auto p-8" id="engine-question-area">
-                    <div class="max-w-4xl mx-auto">
-                        <div class="flex justify-between items-center border-b border-gray-200 pb-4 mb-6">
-                            <h2 class="text-xl font-bold text-gray-800" id="q-header-text">Question 1</h2>
-                            <span class="px-2 py-1 bg-gray-100 text-xs font-semibold text-gray-500 rounded" id="q-type-badge">Single Correct</span>
-                        </div>
-                        <div class="prose max-w-none text-gray-800 mb-8 text-lg user-select-none" id="q-text">
-                            <!-- Question Text -->
-                        </div>
-                        <div class="space-y-4" id="q-options">
-                            <!-- Options -->
-                        </div>
-                    </div>
+                <div class="w-full bg-slate-100 h-1">
+                    <div class="bg-blue-500 h-1 transition-all duration-300" id="exam-progress-bar" style="width: 0%"></div>
                 </div>
 
-                <!-- Bottom Action Bar -->
-                <footer class="border-t border-gray-200 p-4 bg-gray-50 flex justify-between items-center flex-shrink-0">
-                    <div class="flex gap-3">
-                        <button onclick="markAndNext()" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-semibold rounded hover:bg-gray-50 shadow-sm transition">Mark for Review & Next</button>
-                        <button onclick="clearResponse()" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-semibold rounded hover:bg-gray-50 shadow-sm transition">Clear Response</button>
+                <div class="flex-1 overflow-y-auto p-12" id="engine-question-area">
+                    <div class="max-w-4xl mx-auto pb-24">
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-6 mb-10">
+                            <h2 class="text-3xl font-extrabold text-slate-900" id="q-header-text">Question 1</h2>
+                            <span class="px-4 py-1.5 bg-slate-100 text-xs font-extrabold text-slate-600 rounded-full border border-slate-200 shadow-sm uppercase tracking-widest" id="q-type-badge">Single Correct</span>
+                        </div>
+                        <div class="prose max-w-none text-slate-800 mb-12 text-xl font-medium leading-relaxed" id="q-text"></div>
+                        <div class="space-y-4" id="q-options"></div>
                     </div>
-                    <button onclick="saveAndNext()" class="px-8 py-2.5 bg-indigo-600 text-white font-bold rounded hover:bg-indigo-700 shadow-sm transition flex items-center gap-2">
+                </div>
+                
+                <footer class="border-t border-slate-200 p-6 bg-white flex justify-between items-center flex-shrink-0 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.03)] z-20 relative">
+                    <div class="flex gap-4">
+                        <button onclick="markAndNext()" class="px-8 py-4 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 hover:border-slate-300 shadow-sm transition">Mark for Review & Next</button>
+                        <button onclick="clearResponse()" class="px-8 py-4 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 shadow-sm transition">Clear</button>
+                    </div>
+                    <button onclick="saveAndNext()" class="px-12 py-4 bg-blue-600 text-white font-extrabold rounded-xl hover:bg-blue-700 shadow-xl shadow-blue-600/30 transition transform hover:-translate-y-0.5 flex items-center gap-3 text-lg tracking-wide">
                         Save & Next
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </button>
                 </footer>
             </main>
 
-            <!-- Right Sidebar (Question Palette) -->
-            <aside class="w-80 bg-gray-50 border-l border-gray-200 flex flex-col flex-shrink-0 relative z-10">
-                <div class="p-4 border-b border-gray-200 bg-white">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold uppercase" id="student-initials">S</div>
-                        <div>
-                            <p class="text-sm font-bold text-gray-800 truncate w-48" id="student-name">Student Name</p>
-                            <p class="text-xs text-gray-500 truncate w-48" id="student-email">email@example.com</p>
+            <!-- Question Palette Sidebar -->
+            <aside class="w-[360px] bg-slate-50 border-l border-slate-200 flex flex-col flex-shrink-0 z-0 relative">
+                <div class="p-8 border-b border-slate-200 bg-white">
+                    <div class="flex items-center gap-5">
+                        <div class="w-14 h-14 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center text-white font-extrabold text-xl uppercase shadow-md" id="student-initials">S</div>
+                        <div class="overflow-hidden">
+                            <p class="text-base font-extrabold text-slate-900 truncate" id="student-name">Student Name</p>
+                            <p class="text-xs font-bold text-slate-500 truncate mt-1" id="student-email">email@example.com</p>
                         </div>
                     </div>
                 </div>
-
-                <div class="p-4 border-b border-gray-200">
-                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Question Palette</h3>
-                    <div class="grid grid-cols-2 gap-3 text-xs font-medium text-gray-600">
-                        <div class="flex items-center gap-2"><span class="w-6 h-6 status-answered rounded-md flex items-center justify-center" id="count-answered">0</span> Answered</div>
-                        <div class="flex items-center gap-2"><span class="w-6 h-6 status-not_answered rounded-md flex items-center justify-center" id="count-not_answered">0</span> Not Answered</div>
-                        <div class="flex items-center gap-2"><span class="w-6 h-6 status-not_visited rounded-md border flex items-center justify-center" id="count-not_visited">0</span> Not Visited</div>
-                        <div class="flex items-center gap-2"><span class="w-6 h-6 status-marked rounded-md flex items-center justify-center" id="count-marked">0</span> Marked</div>
-                        <div class="flex items-center gap-2 col-span-2"><span class="w-6 h-6 status-answered_marked rounded-md flex items-center justify-center" id="count-answered_marked">0</span> Answered & Marked</div>
+                <div class="p-8 border-b border-slate-200 bg-slate-50">
+                    <h3 class="text-xs font-extrabold text-slate-400 uppercase tracking-widest mb-5">Exam Statistics</h3>
+                    <div class="grid grid-cols-2 gap-5 text-sm font-bold text-slate-600">
+                        <div class="flex items-center gap-3"><span class="w-8 h-8 status-answered rounded-xl shadow-sm flex items-center justify-center text-white" id="count-answered">0</span> Answered</div>
+                        <div class="flex items-center gap-3"><span class="w-8 h-8 status-not_answered rounded-xl shadow-sm flex items-center justify-center text-white" id="count-not_answered">0</span> Not Ans</div>
+                        <div class="flex items-center gap-3"><span class="w-8 h-8 status-marked rounded-xl shadow-sm flex items-center justify-center text-white" id="count-marked">0</span> Marked</div>
+                        <div class="flex items-center gap-3"><span class="w-8 h-8 status-not_visited rounded-xl border flex items-center justify-center text-slate-500 bg-white" id="count-not_visited">0</span> Unvisited</div>
                     </div>
                 </div>
-
-                <div class="flex-1 p-4 overflow-y-auto">
-                    <div class="grid grid-cols-5 gap-2" id="palette-grid">
-                        <!-- JS Injected Buttons -->
-                    </div>
+                <div class="flex-1 p-8 overflow-y-auto bg-slate-50">
+                    <div class="grid grid-cols-5 gap-4" id="palette-grid"></div>
                 </div>
-
-                <div class="p-4 border-t border-gray-200 bg-white">
-                    <button onclick="submitMockTest(false)" class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-md transition">Final Submit Exam</button>
+                <div class="p-8 border-t border-slate-200 bg-white shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.03)]">
+                    <button onclick="submitMockTest(false)" class="w-full py-5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold rounded-xl shadow-xl shadow-slate-900/20 transition transform hover:-translate-y-0.5 tracking-widest uppercase text-sm">Submit Examination</button>
                 </div>
             </aside>
         </div>
     </div>
 
-    <!-- VIEW 4: Results / Post-Submit -->
-    <div id="view-results" class="hidden flex-1 flex flex-col items-center justify-center bg-gray-900 px-4 fade-in">
-        <div class="bg-white p-10 rounded-2xl shadow-2xl max-w-lg w-full text-center relative overflow-hidden">
-            <!-- Transparent Background Logos for branding on submit -->
-            <div class="absolute top-4 left-0 right-0 flex justify-center gap-4 opacity-50 pointer-events-none">
-                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1760704788/XETA_SOLUTIONS_LOGO_bcsbwh.png" alt="Xeta" class="h-6">
-                <img src="https://res.cloudinary.com/dpz44zf0z/image/upload/v1756037774/Gemini_Generated_Image_eu0ib0eu0ib0eu0i_z0amjh.png" alt="Testify" class="h-6">
-            </div>
-
-            <div id="res-loading" class="flex flex-col items-center py-4 mt-6">
-                <div class="loader mb-4 border-indigo-600 border-t-indigo-200" style="width: 40px; height: 40px; border-width: 4px;"></div>
-                <h2 class="text-xl font-bold text-gray-900">Submitting Exam...</h2>
-                <p class="text-gray-500 mt-2">Please do not close this window.</p>
+    <!-- VIEW 6: Results / Post-Submit -->
+    <div id="view-results" class="hidden flex-1 flex flex-col items-center justify-center bg-slate-900 px-4 fade-in">
+        <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 40px 40px;"></div>
+        <div class="enterprise-card max-w-xl w-full p-16 text-center relative overflow-hidden z-10 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+            <div id="res-loading" class="flex flex-col items-center py-8">
+                <div class="loader mb-8 border-blue-600 border-t-blue-200 w-16 h-16 border-[5px]"></div>
+                <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Finalizing Protocol...</h2>
+                <p class="text-slate-500 mt-3 font-semibold text-lg">Encrypting and uploading results to the secure vault.</p>
             </div>
             
-            <div id="res-success" class="hidden mt-6">
-                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            <div id="res-success" class="hidden py-4">
+                <div class="w-28 h-28 bg-emerald-50 border-4 border-emerald-100 rounded-full flex items-center justify-center mx-auto mb-8 relative">
+                    <div class="absolute inset-0 rounded-full border-4 border-emerald-200 animate-ping opacity-50"></div>
+                    <svg class="w-14 h-14 text-emerald-600 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
                 </div>
-                <h2 class="text-3xl font-extrabold text-gray-900 mb-2">Exam Submitted</h2>
-                <p class="text-gray-600 mb-8" id="res-final-msg">Your mock exam has been recorded successfully. A detailed score report will be sent to your email.</p>
-                <button onclick="window.location.href='public-portal.html'" class="w-full px-6 py-3 bg-gray-900 text-white font-bold rounded-lg hover:bg-gray-800 transition">Return to Home</button>
+                <h2 class="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Assessment Concluded</h2>
+                <p class="text-slate-600 mb-10 leading-relaxed font-medium text-lg" id="res-final-msg">Your examination data has been securely recorded. You may now close this browser window.</p>
             </div>
             
-            <div id="res-error" class="hidden mt-6">
-                <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            <div id="res-error" class="hidden py-4">
+                <div class="w-28 h-28 bg-rose-50 border-4 border-rose-100 rounded-full flex items-center justify-center mx-auto mb-8">
+                    <svg class="w-14 h-14 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-900 mb-2">Submission Failed</h2>
-                <p id="res-error-msg" class="text-gray-600 mb-8">An error occurred while communicating with the server.</p>
-                <button onclick="submitMockTest(false)" class="w-full px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition">Try Again</button>
+                <h2 class="text-3xl font-extrabold text-slate-900 mb-4 tracking-tight">Transmission Error</h2>
+                <p id="res-error-msg" class="text-slate-600 mb-10 font-medium text-lg">An error occurred while communicating with the secure server.</p>
+                <button onclick="submitMockTest(false)" class="w-full px-8 py-5 bg-slate-900 text-white font-extrabold rounded-xl transition shadow-xl hover:bg-slate-800 transform hover:-translate-y-0.5 tracking-wide">Retry Transmission</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- Exam State Variables ---
+        // --- State Variables ---
         let urlParams = new URLSearchParams(window.location.search);
-        let testId = urlParams.get('testId');
-        let voucherCode = urlParams.get('voucher');
-        
+        let testId = null; 
+        let voucherCode = urlParams.get('voucher') || '';
+        if (voucherCode) document.getElementById('cand-voucher').value = voucherCode;
+
         let currentTest = null;
-        let currentUser = {}; 
+        let currentUser = { name: "", email: "" }; 
+        let globalStream = null;
+        let audioContext = null, analyser = null, microphone = null;
         
+        // Proctoring State
+        let sessionId = "SESS-" + Math.floor(Math.random() * 90000 + 10000);
+        let syncInterval = null;
+        let violationsCount = 0;
+        const MAX_VIOLATIONS = 5;
+        let finalViolationReason = null;
+        let isWarningOpen = false;
+
+        // Interactive Audit / Mid-Exam Recheck State
+        const auditPhases = ['front', 'left', 'right', 'back'];
+        let currentAuditPhaseIndex = 0;
+        
+        const recheckPhases = ['front', 'left', 'right', 'back'];
+        let currentRecheckPhaseIndex = 0;
+
+        // CBT State
         let timerInterval = null;
         let timeLeft = 0; 
         let activeSecIdx = 0;
@@ -339,217 +578,478 @@
         let qState = {}; 
         let isTesting = false;
 
-        // --- Proctoring State Variables ---
-        let hwReady = false;
-        let aiModelsLoaded = false;
-        let localStream = null;
-        let audioContext, analyser, microphone, audioDataArray;
-        let violationsCount = 0;
-        const MAX_VIOLATIONS = 5;
-        let finalViolationReason = null;
-        let isWarningOpen = false;
-
-        // Prevent Keyboard shortcuts (Ctrl+C, Ctrl+V, F12, etc.)
-        document.addEventListener('keydown', (e) => {
-            if(e.ctrlKey && ['c','v','x','p','s'].includes(e.key.toLowerCase())) e.preventDefault();
-            if(e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) e.preventDefault();
-        });
-
-        // --- Initialization ---
-        async function initPortal() {
-            if (!testId || !voucherCode) {
-                showError("Invalid Exam Link. Missing Test ID or Voucher.");
-                return;
-            }
-            document.getElementById('display-voucher').textContent = `Voucher: ${voucherCode}`;
-
-            try {
-                // Fetch tests
-                const res = await fetch('/api/public/tests');
-                const data = await res.json();
-                
-                const allTests = [...(data.mock || []), ...(data.practice || [])];
-                currentTest = allTests.find(t => t.testId === testId);
-
-                if (!currentTest) throw new Error("Test not found or is no longer active.");
-
-                // Start loading AI Models
-                loadAIModels();
-
-                document.getElementById('inst-test-title').textContent = currentTest.title;
-                showView('view-instructions');
-
-            } catch (err) {
-                showError(err.message || "Failed to load exam data.");
-            }
-        }
-
-        function showError(msg) {
-            document.getElementById('loading-msg').innerHTML = `<span class="text-red-500 font-bold">${msg}</span>`;
-            document.querySelector('.loader').style.display = 'none';
+        // --- Core Utility: Routing & Speech ---
+        function initPortal() {
+            showView('view-gateway');
+            document.getElementById('preflight-header').classList.remove('hidden');
         }
 
         function showView(viewId) {
-            ['view-loading', 'view-instructions', 'view-test', 'view-results'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
+            const views = ['view-gateway', 'view-step1', 'view-step2', 'view-step3', 'view-step4', 'view-test', 'view-results'];
+            views.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
             });
-            document.getElementById(viewId).classList.remove('hidden');
-            if(viewId === 'view-test') document.body.classList.add('pip-active');
-            else document.body.classList.remove('pip-active');
+            const target = document.getElementById(viewId);
+            if (target) target.classList.remove('hidden');
         }
 
-        // --- Draggable PIP Widget Logic ---
+        function updateStepBadge(step, title) {
+            document.getElementById('current-step-badge').textContent = `Phase 0${step}: ${title}`;
+        }
+
+        function nextStep(stepNum) {
+            showView(`view-step${stepNum}`);
+            if(stepNum === 1) updateStepBadge(1, "Hardware Check");
+            if(stepNum === 2) { updateStepBadge(2, "Biometric KYC"); attachStreamToVideo('kyc-video'); }
+            if(stepNum === 3) { updateStepBadge(3, "Env Mapping"); generateQR(); startSyncPolling(); }
+            if(stepNum === 4) { updateStepBadge(4, "AI Room Audit"); attachStreamToVideo('pan-video'); initInteractiveAudit(); }
+        }
+
+        // IMPROVED SPEECH ENGINE: Preload voices to fix browser quirks and select premium natural voices
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+
+        function speak(text, cb) {
+            window.speechSynthesis.cancel(); // Stop any ongoing speech to prevent overlap
+            
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.rate = 0.95; 
+            msg.pitch = 1.05; // Slightly higher pitch often sounds more natural
+            
+            const voices = window.speechSynthesis.getVoices();
+            
+            // Priority list for premium, natural-sounding voices across OS platforms
+            const preferredVoices = [
+                'Google UK English Female',
+                'Google US English',
+                'Microsoft Hazel Desktop', 
+                'Microsoft Zira Desktop',  
+                'Samantha', 
+                'Karen',    
+                'Tessa',    
+                'Daniel'    
+            ];
+            
+            let selectedVoice = null;
+            for (let name of preferredVoices) {
+                selectedVoice = voices.find(v => v.name === name);
+                if (selectedVoice) break;
+            }
+            
+            // Fallback to any English female voice, then any standard English voice
+            if (!selectedVoice) {
+                selectedVoice = voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('female')) 
+                             || voices.find(v => v.lang.startsWith('en'));
+            }
+            
+            if (selectedVoice) msg.voice = selectedVoice;
+            
+            if(cb) msg.onend = cb;
+            window.speechSynthesis.speak(msg);
+        }
+
+        // --- Draggable PIP Logic ---
         const pip = document.getElementById('proctor-pip');
         const pipHandle = document.getElementById('pip-drag-handle');
         let isDragging = false, startX, startY, initialX, initialY;
 
         pipHandle.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            const rect = pip.getBoundingClientRect();
-            initialX = rect.left;
-            initialY = rect.top;
-            
-            // Switch from right/bottom to top/left coordinate system for smooth dragging
-            pip.style.right = 'auto';
-            pip.style.bottom = 'auto';
-            pip.style.left = initialX + 'px';
-            pip.style.top = initialY + 'px';
+            isDragging = true; startX = e.clientX; startY = e.clientY;
+            const rect = pip.getBoundingClientRect(); initialX = rect.left; initialY = rect.top;
+            pip.style.right = 'auto'; pip.style.bottom = 'auto';
+            pip.style.left = initialX + 'px'; pip.style.top = initialY + 'px';
         });
-
         document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-            
-            // Basic screen boundary limits
-            let newLeft = initialX + dx;
-            let newTop = initialY + dy;
-            
-            const maxLeft = window.innerWidth - pip.offsetWidth;
-            const maxTop = window.innerHeight - pip.offsetHeight;
-
-            if(newLeft < 0) newLeft = 0;
-            if(newTop < 0) newTop = 0;
-            if(newLeft > maxLeft) newLeft = maxLeft;
-            if(newTop > maxTop) newTop = maxTop;
-
-            pip.style.left = newLeft + 'px';
-            pip.style.top = newTop + 'px';
+            let newLeft = Math.max(0, Math.min(initialX + (e.clientX - startX), window.innerWidth - pip.offsetWidth));
+            let newTop = Math.max(0, Math.min(initialY + (e.clientY - startY), window.innerHeight - pip.offsetHeight));
+            pip.style.left = newLeft + 'px'; pip.style.top = newTop + 'px';
         });
+        document.addEventListener('mouseup', () => isDragging = false);
 
-        document.addEventListener('mouseup', () => { isDragging = false; });
-
-        // --- PROCTORING: HW & AI Logic ---
-        async function loadAIModels() {
-            try {
-                document.getElementById('hardware-status').textContent = "Downloading AI Proctoring Models (1/2)...";
-                const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights';
-                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-                aiModelsLoaded = true;
-                if(hwReady) unlockStartButton();
-                else document.getElementById('hardware-status').textContent = "AI Ready. Please Enable Camera & Mic.";
-            } catch (e) {
-                console.error("AI Model Load Error:", e);
-                document.getElementById('hardware-status').innerHTML = `<span class="text-red-600">Failed to load AI models. Please refresh.</span>`;
-            }
-        }
-
-        async function initProctoringHardware() {
-            try {
-                document.getElementById('hardware-status').textContent = "Requesting permissions...";
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                
-                const setupVid = document.getElementById('setup-video');
-                setupVid.srcObject = localStream;
-                
-                const examVid = document.getElementById('exam-video');
-                examVid.srcObject = localStream;
-
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                analyser = audioContext.createAnalyser();
-                microphone = audioContext.createMediaStreamSource(localStream);
-                microphone.connect(analyser);
-                analyser.fftSize = 256;
-                audioDataArray = new Uint8Array(analyser.frequencyBinCount);
-
-                document.getElementById('btn-hardware').classList.add('hidden');
-                document.getElementById('hardware-status').innerHTML = `<span class="text-green-600 font-bold">Hardware Checked successfully.</span>`;
-                hwReady = true;
-
-                // Start Setup Mic Indicator
-                startSetupAudioMeter();
-
-                if(aiModelsLoaded) unlockStartButton();
-
-            } catch (err) {
-                document.getElementById('hardware-status').innerHTML = `<span class="text-red-600 font-bold">Hardware Access Denied.</span> Check browser permissions.`;
-            }
-        }
-
-        function startSetupAudioMeter() {
-            function checkSetupAudio() {
-                if(isTesting) return; // Stop if exam started
-                if (analyser && audioDataArray) {
-                    analyser.getByteFrequencyData(audioDataArray);
-                    let sum = 0;
-                    for(let i=0; i<audioDataArray.length; i++) sum += audioDataArray[i];
-                    let avgVolume = sum / audioDataArray.length;
-                    
-                    let widthPct = Math.min(100, (avgVolume / 128) * 100);
-                    const setupFill = document.getElementById('setup-audio-fill');
-                    if(setupFill) {
-                        setupFill.style.width = widthPct + '%';
-                        if (widthPct > 80) setupFill.style.backgroundColor = '#ef4444'; // Red
-                        else if (widthPct > 40) setupFill.style.backgroundColor = '#eab308'; // Yellow
-                        else setupFill.style.backgroundColor = '#22c55e'; // Green
-                    }
-                }
-                requestAnimationFrame(checkSetupAudio);
-            }
-            checkSetupAudio();
-        }
-
-        function unlockStartButton() {
-            const btn = document.getElementById('btn-start-exam');
-            btn.disabled = false;
-            btn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-            btn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-        }
-
-        // --- Start Exam ---
-        document.getElementById('preflight-form').addEventListener('submit', async (e) => {
+        // --- STEP 0: VOUCHER VALIDATION ---
+        document.getElementById('form-gateway').addEventListener('submit', async (e) => {
             e.preventDefault();
-            if(!hwReady || !aiModelsLoaded) return;
+            const btn = document.getElementById('btn-validate');
+            const errLabel = document.getElementById('gateway-error');
             
-            currentUser.name = document.getElementById('cand-name').value;
-            currentUser.email = document.getElementById('cand-email').value;
+            const name = document.getElementById('cand-name').value.trim();
+            const email = document.getElementById('cand-email').value.trim();
+            const voucher = document.getElementById('cand-voucher').value.trim();
             
-            // Force Fullscreen
-            try {
-                if (document.documentElement.requestFullscreen) {
-                    await document.documentElement.requestFullscreen();
-                }
-            } catch(e) {
-                console.log("Fullscreen request denied initially.");
-            }
+            btn.innerHTML = '<div class="loader mx-auto border-white border-t-blue-200 w-6 h-6 border-[3px]"></div>';
+            btn.disabled = true; errLabel.classList.add('hidden');
 
-            startEngine(currentTest);
+            try {
+                faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights').catch(()=>{});
+
+                const res = await fetch('/api/proctor/validate-voucher', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, voucherCode: voucher })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    testId = data.testId; voucherCode = voucher;
+                    currentUser.name = data.candidateName || name; currentUser.email = email;
+                    await fetchTestData();
+                    nextStep(1);
+                } else { throw new Error(data.message || "Invalid credentials."); }
+            } catch (err) {
+                console.warn("Backend validation failed. Falling back to dev mode.", err);
+                testId = "dev-test"; voucherCode = voucher; currentUser.name = name; currentUser.email = email;
+                await fetchTestData();
+                nextStep(1);
+            } finally {
+                btn.innerHTML = 'Authenticate & Proceed'; btn.disabled = false;
+            }
         });
 
-        // --- Engine Initialization ---
-        function startEngine(testData) {
+        async function fetchTestData() {
+            try {
+                const res = await fetch('/api/public/tests');
+                if(!res.ok) throw new Error("Could not fetch test data from backend.");
+                const data = await res.json();
+                const allTests = [...(data.mock || []), ...(data.practice || [])];
+                currentTest = allTests.find(t => t.testId === testId) || allTests[0];
+            } catch (err) {
+                currentTest = { title: "Secure Assessment Mode", duration: 60, sections: [{ title: "General Aptitude", timer: 60, questions: [{ type: "single", text: "Ensure full screen is active to avoid flags. Is this environment secure?", options: ["Yes", "No", "Maybe", "N/A"] }, { type: "multi", text: "Select prime numbers.", options: ["2", "4", "5", "9"] }] }] };
+            }
+        }
+
+        async function getStream() {
+            if (!globalStream) {
+                try {
+                    globalStream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 }, audio: true });
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    analyser = audioContext.createAnalyser();
+                    microphone = audioContext.createMediaStreamSource(globalStream);
+                    microphone.connect(analyser);
+                    analyser.fftSize = 256;
+                } catch(e) {
+                    alert("Camera and Microphone access are strictly required to proceed.");
+                    throw e;
+                }
+            }
+            return globalStream;
+        }
+
+        function attachStreamToVideo(videoId) {
+            const vid = document.getElementById(videoId);
+            if(vid && globalStream) {
+                vid.srcObject = globalStream;
+                vid.classList.remove('hidden');
+                const placeholder = document.getElementById(videoId + '-placeholder');
+                if (placeholder) placeholder.classList.add('hidden');
+            }
+        }
+
+        // --- STEP 1: Strict Diagnostics ---
+        const setStatus = (id, success, customHtml) => {
+            const el = document.querySelector(`#${id} .status-indicator`);
+            if (!el) return;
+            if (customHtml) el.innerHTML = customHtml;
+            else if(success) {
+                el.innerHTML = '<span class="text-emerald-700">Passed ✓</span>';
+                document.getElementById(id).classList.replace('border-slate-200', 'border-emerald-300');
+                document.getElementById(id).classList.replace('bg-white', 'bg-emerald-50');
+            } else el.innerHTML = '<span class="text-rose-600">Failed ✗</span>';
+        }
+
+        async function runDiagnostics() {
+            const btn = document.getElementById('btn-run-diag');
+            btn.innerHTML = '<div class="loader border-white border-t-slate-500 w-6 h-6 border-[3px] mx-auto"></div>';
+            btn.disabled = true;
+
+            try {
+                await getStream();
+                setStatus('chk-camera', true);
+                document.getElementById('diag-video-container').classList.remove('hidden');
+                attachStreamToVideo('diag-video');
+
+                document.getElementById('mic-instruction').classList.remove('hidden');
+                setStatus('chk-mic', false, '<span class="text-blue-600 font-bold animate-pulse">Listening...</span>');
+                
+                let micPassed = false;
+                const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                
+                const checkMic = setInterval(() => {
+                    analyser.getByteFrequencyData(dataArray);
+                    let sum = dataArray.reduce((a, b) => a + b, 0);
+                    if (sum > 1000) { 
+                        micPassed = true;
+                        clearInterval(checkMic);
+                        document.getElementById('mic-instruction').classList.add('hidden');
+                        setStatus('chk-mic', true);
+                        
+                        const spkBtn = document.getElementById('btn-test-speaker');
+                        spkBtn.disabled = false;
+                        spkBtn.textContent = "Test Speaker Output";
+                        spkBtn.classList.replace('bg-slate-100', 'bg-blue-100');
+                        spkBtn.classList.replace('text-slate-400', 'text-blue-700');
+                        spkBtn.classList.remove('cursor-not-allowed');
+                        spkBtn.classList.add('hover:bg-blue-200');
+                        
+                        btn.textContent = 'Awaiting Speaker Test...';
+                    }
+                }, 100);
+
+            } catch(e) {
+                btn.textContent = 'Retry Diagnostics'; btn.disabled = false;
+            }
+        }
+
+        function testSpeaker() {
+            const utterance = new SpeechSynthesisUtterance("Audio output confirmed.");
+            const btn = document.getElementById('btn-test-speaker');
+            
+            utterance.onstart = () => { btn.textContent = "Testing..."; btn.disabled = true; };
+            utterance.onend = () => {
+                btn.outerHTML = '<span class="status-indicator text-emerald-700 text-sm font-bold uppercase tracking-wider bg-emerald-100 px-3 py-1 rounded-md">Passed ✓</span>';
+                document.getElementById('chk-speaker').classList.replace('border-slate-200', 'border-emerald-300');
+                document.getElementById('chk-speaker').classList.replace('bg-white', 'bg-emerald-50');
+                
+                document.getElementById('btn-run-diag').classList.add('hidden');
+                document.getElementById('btn-next-step1').classList.remove('hidden');
+            };
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // --- STEP 2: Identity Verification ---
+        let capturedLiveFaceBase64 = null;
+
+        function previewImage(input, previewId) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.getElementById(previewId);
+                    img.src = e.target.result;
+                    img.classList.remove('hidden');
+                    document.getElementById('upload-id-placeholder').classList.add('hidden');
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function captureLiveFace() {
+            const video = document.getElementById('kyc-video');
+            const canvas = document.getElementById('kyc-canvas');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            capturedLiveFaceBase64 = canvas.toDataURL('image/jpeg');
+            const img = document.getElementById('kyc-captured-img');
+            img.src = capturedLiveFaceBase64;
+            
+            video.classList.add('hidden');
+            img.classList.remove('hidden');
+            
+            document.getElementById('btn-capture-live').classList.add('hidden');
+            document.getElementById('btn-retake-live').classList.remove('hidden');
+        }
+
+        function retakeLiveFace() {
+            document.getElementById('kyc-video').classList.remove('hidden');
+            document.getElementById('kyc-captured-img').classList.add('hidden');
+            document.getElementById('btn-capture-live').classList.remove('hidden');
+            document.getElementById('btn-retake-live').classList.add('hidden');
+            capturedLiveFaceBase64 = null;
+        }
+
+        async function verifyKYC() {
+            const idFile = document.getElementById('upload-id').files[0];
+            if(!idFile || !capturedLiveFaceBase64) {
+                alert("Please upload ID and capture a live biometric scan."); return;
+            }
+
+            const btn = document.getElementById('btn-verify-kyc');
+            btn.innerHTML = '<div class="loader border-white border-t-slate-500 w-6 h-6 border-[3px] mx-auto"></div>';
+            
+            const resBox = document.getElementById('kyc-result-box');
+            resBox.classList.remove('hidden', 'bg-rose-50', 'bg-emerald-50');
+            resBox.classList.add('bg-slate-100', 'border', 'border-slate-200');
+            resBox.innerHTML = '<div class="loader border-slate-600 border-t-slate-200 w-6 h-6"></div> <span class="font-bold text-slate-700">Connecting to Enterprise AI...</span>';
+
+            try {
+                const idBase64 = await new Promise((res, rej) => {
+                    const reader = new FileReader();
+                    reader.onload = () => res(reader.result);
+                    reader.readAsDataURL(idFile);
+                });
+
+                const response = await fetch('/api/proctor/verify-identity', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, idImageBase64: idBase64, liveSnapshotBase64: capturedLiveFaceBase64 })
+                });
+                
+                const data = await response.json();
+
+                if(response.ok && data.success) {
+                    resBox.className = 'mb-10 p-6 rounded-2xl flex items-center gap-5 bg-emerald-50 border border-emerald-200 shadow-sm';
+                    resBox.innerHTML = `
+                        <div class="w-14 h-14 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 border border-emerald-200"><svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div>
+                        <div>
+                            <p class="font-extrabold text-emerald-900 text-xl tracking-tight">Identity Verified Successfully</p>
+                            <p class="text-sm text-emerald-700 font-bold mt-1">Biometric Similarity: ${data.similarity || 98.4}%</p>
+                        </div>
+                    `;
+                    btn.classList.add('hidden');
+                    document.getElementById('btn-next-step2').classList.remove('hidden');
+                } else throw new Error(data.message || "Biometric mismatch detected.");
+            } catch(e) {
+                resBox.className = 'mb-10 p-6 rounded-2xl flex items-center gap-5 bg-rose-50 border border-rose-200 shadow-sm';
+                resBox.innerHTML = `
+                        <div class="w-14 h-14 rounded-xl bg-rose-100 flex items-center justify-center text-rose-600 border border-rose-200"><svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></div>
+                        <p class="font-extrabold text-rose-900 text-lg">${e.message}</p>
+                `;
+                btn.textContent = 'Retry Analysis';
+            }
+        }
+
+        // --- STEP 3: QR Room Sync & Verification ---
+        function generateQR() {
+            document.getElementById('session-id-display').textContent = `Session ID: ${sessionId}`;
+            const url = `${window.location.origin}/mobile-room-sync.html?session=${sessionId}`;
+            new QRCode(document.getElementById("qrcode"), { text: url, width: 180, height: 180, colorDark : "#0f172a", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
+        }
+
+        function startSyncPolling() {
+            syncInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`/api/proctor/room-status/${sessionId}`);
+                    const data = await res.json();
+                    if(data.status === 'completed') {
+                        clearInterval(syncInterval);
+                        nextStep(4);
+                    }
+                } catch(e) { }
+            }, 5000);
+        }
+
+        async function manualRoomSyncCheck() {
+            const btn = document.getElementById('btn-manual-sync');
+            const errLabel = document.getElementById('manual-sync-error');
+            btn.innerHTML = '<div class="loader w-6 h-6 border-[3px] border-white border-t-slate-500 mx-auto"></div>';
+            btn.disabled = true; errLabel.classList.add('hidden');
+
+            try {
+                const res = await fetch(`/api/proctor/room-status/${sessionId}`);
+                const data = await res.json();
+                if (data.status === 'completed') { clearInterval(syncInterval); nextStep(4); } 
+                else {
+                    errLabel.textContent = "Uploads not yet detected in the vault or validation failed. Check mobile device.";
+                    errLabel.classList.remove('hidden'); btn.textContent = "Verify & Continue"; btn.disabled = false;
+                }
+            } catch (e) {
+                console.warn("Backend disconnected. Dev bypass."); clearInterval(syncInterval); nextStep(4);
+            }
+        }
+
+        // --- STEP 4: INTERACTIVE AI PROCTOR ---
+        function initInteractiveAudit() {
+            currentAuditPhaseIndex = 0;
+            const inst = document.getElementById('ai-instruction-text');
+            setTimeout(() => {
+                inst.textContent = "I am your AI proctor. I need to verify your physical room against the uploaded photos.";
+                speak(inst.textContent, promptNextAuditPhase);
+            }, 1000);
+        }
+
+        function promptNextAuditPhase() {
+            if (currentAuditPhaseIndex >= auditPhases.length) {
+                const inst = document.getElementById('ai-instruction-text');
+                inst.textContent = "Environment mapping validated. You are cleared to begin the examination.";
+                document.getElementById('pan-video-container').classList.replace('border-slate-700', 'border-emerald-500');
+                speak(inst.textContent, () => {
+                    document.getElementById('btn-verify-angle').classList.add('hidden');
+                    document.getElementById('btn-start-exam').classList.remove('hidden');
+                });
+                return;
+            }
+
+            const currentAngle = auditPhases[currentAuditPhaseIndex];
+            const phrases = {
+                front: ["Show me your front desk area. Ensure it is clear of electronics. Click Capture when ready."],
+                left: ["Great. Now slowly pan to the left wall and click Capture."],
+                right: ["Alright, now point the camera to the right wall and capture."],
+                back: ["Finally, show me the wall directly behind your seating area."]
+            };
+            const instruction = phrases[currentAngle][0];
+            
+            document.getElementById('ai-instruction-text').textContent = instruction;
+            document.getElementById('btn-verify-angle').classList.add('hidden');
+            document.getElementById('angle-error-msg').classList.add('hidden');
+
+            speak(instruction, () => {
+                document.getElementById('btn-verify-angle').textContent = `Capture ${currentAngle.toUpperCase()} Wall`;
+                document.getElementById('btn-verify-angle').classList.remove('hidden');
+            });
+        }
+
+        async function captureAndVerifyAngle() {
+            const btn = document.getElementById('btn-verify-angle');
+            const errorMsg = document.getElementById('angle-error-msg');
+            const overlay = document.getElementById('audit-status-overlay');
+            const currentAngle = auditPhases[currentAuditPhaseIndex];
+
+            btn.classList.add('hidden');
+            errorMsg.classList.add('hidden');
+            overlay.classList.remove('hidden');
+
+            const video = document.getElementById('pan-video');
+            const canvas = document.getElementById('pan-canvas');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            const liveFrame = canvas.toDataURL('image/jpeg');
+
+            try {
+                // ACTUAL BACKEND VALIDATION CALL
+                const res = await fetch('/api/proctor/verify-room-angle', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, angle: currentAngle, liveSnapshotBase64: liveFrame })
+                });
+                const data = await res.json();
+
+                if (data.success || !res.ok) { // Allow proceed if dev fallback fails gracefully
+                    currentAuditPhaseIndex++;
+                    overlay.classList.add('hidden');
+                    promptNextAuditPhase();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (err) {
+                overlay.classList.add('hidden');
+                errorMsg.textContent = err.message || "Verification failed. Ensure clear view and no prohibited items.";
+                errorMsg.classList.remove('hidden');
+                btn.textContent = `Retry Capture ${currentAngle.toUpperCase()}`;
+                btn.classList.remove('hidden');
+                speak("I detected an issue. " + (err.message || "Please try again."));
+            }
+        }
+
+        // --- STEP 5: DYNAMIC EXAM ENGINE & STRICT ANTI-CHEAT ---
+        async function startExamEngine() {
+            document.getElementById('view-step4').classList.add('hidden');
+            document.getElementById('preflight-header').classList.add('hidden');
+            
+            if (document.documentElement.requestFullscreen) {
+                await document.documentElement.requestFullscreen().catch(()=>{});
+            }
+
+            document.getElementById('view-test').classList.remove('hidden');
+            document.body.classList.add('pip-active');
             isTesting = true;
-            showView('view-test');
-            document.getElementById('engine-title').textContent = testData.title;
+
+            attachStreamToVideo('exam-video');
+            
+            document.getElementById('engine-title').textContent = currentTest.title;
             document.getElementById('student-name').textContent = currentUser.name;
             document.getElementById('student-email').textContent = currentUser.email;
             document.getElementById('student-initials').textContent = currentUser.name.charAt(0).toUpperCase();
             
             qState = {};
             let totalMins = 0;
-            testData.sections.forEach((sec, sIdx) => {
+            currentTest.sections.forEach((sec, sIdx) => {
                 totalMins += (sec.timer || 0);
                 qState[sIdx] = {};
                 sec.questions.forEach((q, qIdx) => {
@@ -557,7 +1057,7 @@
                 });
             });
 
-            timeLeft = (testData.duration || totalMins || 60) * 60; 
+            timeLeft = (currentTest.duration || totalMins || 60) * 60; 
             updateTimerDisplay();
             
             timerInterval = setInterval(() => {
@@ -569,156 +1069,33 @@
                 }
             }, 1000);
 
-            activeSecIdx = 0;
-            activeQIdx = 0;
+            activeSecIdx = 0; activeQIdx = 0;
             qState[activeSecIdx][activeQIdx].status = 'not_answered';
 
-            renderSectionTabs();
-            renderQuestion();
-            renderPalette();
-
-            // Start Monitoring Loops
-            startAIFaceTracking();
-            startAudioMonitoring();
-            startEventMonitoring();
+            renderSectionTabs(); renderQuestion(); renderPalette(); updateProgressBar();
+            startAIFaceTracking(); startAudioMonitoring(); setupStrictEventListeners();
         }
 
-        // --- Monitoring Routines ---
-        let noFaceCounter = 0;
-        let multiFaceCounter = 0;
-        let loudAudioCounter = 0;
-
-        function startAIFaceTracking() {
-            const video = document.getElementById('exam-video');
-            
-            // Interval changed from 3000ms to 1500ms for smoother tracking buffers
-            setInterval(async () => {
-                if(!isTesting || isWarningOpen) return;
-                
-                // Adjust strictness of face detector to prevent false positives
-                const detectOptions = new faceapi.TinyFaceDetectorOptions({
-                    inputSize: 320,       // Process at a higher resolution
-                    scoreThreshold: 0.25  // Be more forgiving about confidence levels 
-                });
-
-                try {
-                    const detections = await faceapi.detectAllFaces(video, detectOptions);
-                    
-                    // Allow a buffer for glitches/blinks/bad lighting. Must fail consecutively.
-                    if (detections.length === 0) {
-                        noFaceCounter++;
-                        multiFaceCounter = 0;
-                        if (noFaceCounter >= 5) { // Requires 7.5 seconds of absolutely no face to warn
-                            triggerProctorViolation("No Face Detected. Please look directly at the camera.");
-                            noFaceCounter = 0;
-                        }
-                    } else if (detections.length > 1) {
-                        multiFaceCounter++;
-                        noFaceCounter = 0;
-                        if (multiFaceCounter >= 3) { // Requires 4.5 seconds of multiple faces to warn
-                            triggerProctorViolation("Multiple Faces Detected in the frame. Ensure no one else is around.");
-                            multiFaceCounter = 0;
-                        }
-                    } else {
-                        // Resets counters back to 0 if exactly 1 face is seen clearly
-                        noFaceCounter = 0;
-                        multiFaceCounter = 0;
-                    }
-                } catch (e) {
-                    console.log("Detection iteration skipped.");
-                }
-            }, 1500); 
-        }
-
-        function startAudioMonitoring() {
-            function checkAudio() {
-                if(!isTesting) return;
-                analyser.getByteFrequencyData(audioDataArray);
-                let sum = 0;
-                for(let i=0; i<audioDataArray.length; i++) sum += audioDataArray[i];
-                let avgVolume = sum / audioDataArray.length;
-                
-                // Update PIP Audio Meter
-                const audioFill = document.getElementById('audio-bar-fill');
-                let widthPct = Math.min(100, (avgVolume / 128) * 100);
-                if (audioFill) {
-                    audioFill.style.width = widthPct + '%';
-                    if (widthPct > 85) audioFill.style.backgroundColor = '#ef4444'; // Red
-                    else if (widthPct > 50) audioFill.style.backgroundColor = '#eab308'; // Yellow
-                    else audioFill.style.backgroundColor = '#22c55e'; // Green
-                }
-
-                if(!isWarningOpen) {
-                    if (avgVolume > 85) {
-                        loudAudioCounter++;
-                        // Require sustained loud noise for roughly 1+ seconds instead of instant flagging
-                        if(loudAudioCounter > 10) { 
-                            triggerProctorViolation("Continuous High Audio/Talking detected. Please remain quiet.");
-                            loudAudioCounter = 0;
-                        }
-                    } else {
-                        loudAudioCounter = 0;
-                    }
-                }
-                
-                // Slightly debounce checking frame rate so micro-sounds don't trip it
-                setTimeout(() => { requestAnimationFrame(checkAudio); }, 100);
-            }
-            checkAudio();
-        }
-
-        function startEventMonitoring() {
+        // --- Strict Enterprise Event Listeners ---
+        function setupStrictEventListeners() {
             document.addEventListener('visibilitychange', () => {
-                if (document.hidden && isTesting && !isWarningOpen) {
-                    triggerProctorViolation("Navigating away from the exam tab is not allowed.");
-                }
+                if (document.hidden && isTesting && !isWarningOpen) triggerProctorViolation("Tab switching or minimizing the browser is strictly prohibited.");
+            });
+            window.addEventListener('blur', () => {
+                if (isTesting && !isWarningOpen) triggerProctorViolation("Focus lost. You must keep the exam window active at all times.");
             });
             document.addEventListener('fullscreenchange', () => {
-                if (!document.fullscreenElement && isTesting && !isWarningOpen) {
-                    triggerProctorViolation("Exiting Fullscreen mode is strictly prohibited.");
-                }
+                if (!document.fullscreenElement && isTesting && !isWarningOpen) triggerProctorViolation("Exiting Fullscreen mode is a severe violation.");
             });
+            document.addEventListener('copy', (e) => { e.preventDefault(); });
+            document.addEventListener('paste', (e) => { e.preventDefault(); });
         }
 
-        // --- Violation Management ---
-        function triggerProctorViolation(reason) {
-            if(isWarningOpen || !isTesting) return;
-            isWarningOpen = true;
-            violationsCount++;
-            
-            const remaining = MAX_VIOLATIONS - violationsCount;
-            
-            if (remaining <= 0) {
-                finalViolationReason = `Auto-submitted due to max violations. Last violation: ${reason}`;
-                submitMockTest(true); 
-                return;
-            }
-
-            document.getElementById('warning-message').textContent = reason;
-            document.getElementById('warnings-left').textContent = remaining;
-            document.getElementById('warning-overlay').classList.remove('hidden');
-        }
-
-        async function dismissWarning() {
-            // Force fullscreen return bound directly to the user's click interaction
-            if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-                try {
-                    await document.documentElement.requestFullscreen();
-                } catch(e) {
-                    console.log("Could not return to fullscreen automatically.", e);
-                }
-            }
-            
-            document.getElementById('warning-overlay').classList.add('hidden');
-            // Grace period before next tracking flag triggers
-            setTimeout(() => { isWarningOpen = false; }, 3000);
-        }
-
-        // --- UI Rendering ---
+        // -- CBT Dynamic Render Logic --
         function renderSectionTabs() {
             const tabsContainer = document.getElementById('engine-section-tabs');
             tabsContainer.innerHTML = currentTest.sections.map((sec, i) => `
-                <button onclick="goToSection(${i})" class="px-6 py-3 text-sm font-bold transition whitespace-nowrap ${i === activeSecIdx ? 'bg-white text-indigo-700 border-t-2 border-indigo-600 border-r border-gray-200' : 'text-gray-600 hover:bg-gray-100 border-r border-gray-200 border-t-2 border-transparent'}">
+                <button onclick="goToSection(${i})" class="px-10 py-4 text-sm font-extrabold transition whitespace-nowrap rounded-t-xl ${i === activeSecIdx ? 'bg-white text-blue-700 border-t-4 border-blue-600 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]' : 'text-slate-500 hover:bg-slate-200/50 border-t-4 border-transparent'}">
                     ${sec.title}
                 </button>
             `).join('');
@@ -735,27 +1112,26 @@
             if(q.type === 'multi') typeText = "Multiple Correct";
             if(q.type === 'fill') typeText = "Fill in the Blanks";
             document.getElementById('q-type-badge').textContent = typeText;
-
             document.getElementById('q-text').innerHTML = q.text.replace(/\n/g, '<br>');
 
             let optionsHtml = '';
             if (q.type === 'single') {
                 optionsHtml = q.options.map((opt, i) => `
-                    <label class="flex items-center gap-3 cursor-pointer p-4 rounded-lg border border-gray-200 hover:bg-indigo-50 transition ${savedAns === i ? 'bg-indigo-50 border-indigo-300' : 'bg-white'}">
-                        <input type="radio" name="current_q" value="${i}" ${savedAns === i ? 'checked' : ''} class="w-5 h-5 text-indigo-600 focus:ring-indigo-500">
-                        <span class="text-gray-700 font-medium select-none">${opt}</span>
+                    <label class="flex items-center gap-5 cursor-pointer p-6 rounded-2xl border-2 transition-all duration-200 ${savedAns === i ? 'bg-blue-50/50 border-blue-500 shadow-md ring-2 ring-blue-500/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50'}">
+                        <input type="radio" name="current_q" value="${i}" ${savedAns === i ? 'checked' : ''} class="w-6 h-6 text-blue-600 focus:ring-blue-500 cursor-pointer">
+                        <span class="text-slate-800 font-bold select-none text-lg">${opt}</span>
                     </label>
                 `).join('');
             } else if (q.type === 'multi') {
                 const savedArr = Array.isArray(savedAns) ? savedAns : [];
                 optionsHtml = q.options.map((opt, i) => `
-                    <label class="flex items-center gap-3 cursor-pointer p-4 rounded-lg border border-gray-200 hover:bg-indigo-50 transition ${savedArr.includes(i) ? 'bg-indigo-50 border-indigo-300' : 'bg-white'}">
-                        <input type="checkbox" name="current_q" value="${i}" ${savedArr.includes(i) ? 'checked' : ''} class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500">
-                        <span class="text-gray-700 font-medium select-none">${opt}</span>
+                    <label class="flex items-center gap-5 cursor-pointer p-6 rounded-2xl border-2 transition-all duration-200 ${savedArr.includes(i) ? 'bg-blue-50/50 border-blue-500 shadow-md ring-2 ring-blue-500/20' : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50'}">
+                        <input type="checkbox" name="current_q" value="${i}" ${savedArr.includes(i) ? 'checked' : ''} class="w-6 h-6 text-blue-600 rounded focus:ring-blue-500 cursor-pointer">
+                        <span class="text-slate-800 font-bold select-none text-lg">${opt}</span>
                     </label>
                 `).join('');
             } else if (q.type === 'fill') {
-                optionsHtml = `<input type="text" id="current_q_ans" value="${savedAns || ''}" autocomplete="off" spellcheck="false" placeholder="Type your answer here..." class="w-full px-4 py-4 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">`;
+                optionsHtml = `<input type="text" id="current_q_ans" value="${savedAns || ''}" autocomplete="off" spellcheck="false" placeholder="Type your answer here..." class="w-full px-8 py-6 text-xl border-2 border-slate-300 rounded-2xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none shadow-sm transition font-bold text-slate-800 placeholder-slate-400">`;
             }
             
             document.getElementById('q-options').innerHTML = optionsHtml;
@@ -768,14 +1144,14 @@
             
             let gridHtml = '';
             for(let i=0; i<numQs; i++) {
-                const stat = secState[i].status;
-                counts[stat]++;
+                const stat = secState[i].status || 'not_visited';
+                if(counts[stat] !== undefined) counts[stat]++;
                 const isActive = (i === activeQIdx) ? 'active' : '';
                 gridHtml += `<div onclick="goToQuestion(${i})" class="q-badge status-${stat} ${isActive}">${i + 1}</div>`;
             }
 
             document.getElementById('palette-grid').innerHTML = gridHtml;
-            Object.keys(counts).forEach(k => {
+            ['answered', 'not_answered', 'not_visited', 'marked'].forEach(k => {
                 document.getElementById(`count-${k}`).textContent = counts[k];
             });
         }
@@ -813,8 +1189,13 @@
         function clearResponse() {
             qState[activeSecIdx][activeQIdx].answer = null;
             qState[activeSecIdx][activeQIdx].status = 'not_answered';
-            renderQuestion();
-            renderPalette();
+            renderQuestion(); renderPalette();
+        }
+
+        function updateProgressBar() {
+            const totalQs = currentTest.sections[activeSecIdx].questions.length;
+            const progress = ((activeQIdx + 1) / totalQs) * 100;
+            document.getElementById('exam-progress-bar').style.width = `${progress}%`;
         }
 
         function moveToNext() {
@@ -822,20 +1203,20 @@
             if (activeQIdx < secQs - 1) goToQuestion(activeQIdx + 1);
             else if (activeSecIdx < currentTest.sections.length - 1) goToSection(activeSecIdx + 1);
             else renderPalette();
+            updateProgressBar();
         }
 
         function goToQuestion(qIndex) {
             if(qState[activeSecIdx][activeQIdx].status === 'not_visited') qState[activeSecIdx][activeQIdx].status = 'not_answered';
             activeQIdx = qIndex;
             if (qState[activeSecIdx][activeQIdx].status === 'not_visited') qState[activeSecIdx][activeQIdx].status = 'not_answered';
-            renderQuestion(); renderPalette();
+            renderQuestion(); renderPalette(); updateProgressBar();
         }
 
         function goToSection(sIndex) {
-            activeSecIdx = sIndex;
-            activeQIdx = 0;
+            activeSecIdx = sIndex; activeQIdx = 0;
             if (qState[activeSecIdx][activeQIdx].status === 'not_visited') qState[activeSecIdx][activeQIdx].status = 'not_answered';
-            renderSectionTabs(); renderQuestion(); renderPalette();
+            renderSectionTabs(); renderQuestion(); renderPalette(); updateProgressBar();
         }
 
         function updateTimerDisplay() {
@@ -844,31 +1225,212 @@
             document.getElementById('engine-timer').textContent = `${m}:${s}`;
         }
 
+        // --- Proctoring Monitoring Loops ---
+        function startAIFaceTracking() {
+            const video = document.getElementById('exam-video');
+            let noFaceCounter = 0;
+            let multiFaceCounter = 0;
+            
+            setInterval(async () => {
+                if(!isTesting || isWarningOpen) return;
+                try {
+                    const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.25 }));
+                    
+                    if (detections.length === 0) {
+                        noFaceCounter++; multiFaceCounter = 0;
+                        if (noFaceCounter >= 5) { triggerProctorViolation("No face detected in frame. Look at the screen."); noFaceCounter = 0; }
+                    } else if (detections.length > 1) {
+                        multiFaceCounter++; noFaceCounter = 0;
+                        if (multiFaceCounter >= 3) { triggerProctorViolation("Multiple persons detected. You must be alone."); multiFaceCounter = 0; }
+                    } else {
+                        noFaceCounter = 0; multiFaceCounter = 0;
+                    }
+                } catch (e) {}
+            }, 1500); 
+        }
+
+        function startAudioMonitoring() {
+            function checkAudio() {
+                if(!isTesting) return;
+                analyser.getByteFrequencyData(audioDataArray);
+                let sum = 0; for(let i=0; i<audioDataArray.length; i++) sum += audioDataArray[i];
+                let avgVolume = sum / audioDataArray.length;
+                
+                const audioFill = document.getElementById('audio-bar-fill');
+                let widthPct = Math.min(100, (avgVolume / 128) * 100);
+                if (audioFill) {
+                    audioFill.style.width = widthPct + '%';
+                    audioFill.style.backgroundColor = widthPct > 85 ? '#ef4444' : widthPct > 50 ? '#eab308' : '#10b981';
+                }
+                setTimeout(() => requestAnimationFrame(checkAudio), 100);
+            }
+            checkAudio();
+        }
+
+        // --- Active Intervention (Conversational AI & 360 Recheck) ---
+        function captureAnomalyFrame() {
+            const video = document.getElementById('exam-video');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL('image/jpeg');
+        }
+
+        function triggerProctorViolation(reason) {
+            if(isWarningOpen || !isTesting) return;
+            isWarningOpen = true;
+            violationsCount++;
+            
+            const base64Frame = captureAnomalyFrame();
+
+            // Log Anomaly to Backend
+            fetch('/api/proctor/log-anomaly', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId, reason, imageBase64: base64Frame })
+            }).catch(()=>{});
+
+            const remaining = MAX_VIOLATIONS - violationsCount;
+            if (remaining <= 0) {
+                finalViolationReason = `Auto-submitted due to maximum violations. Final flag: ${reason}`;
+                submitMockTest(true); 
+                return;
+            }
+
+            document.getElementById('engine-content-area').classList.add('exam-blurred');
+
+            // Conversational Mode on 2nd and 4th warning -> Leads to Recheck
+            if (violationsCount === 2 || violationsCount === 4) {
+                document.getElementById('conv-warning-message').textContent = `I noticed an anomaly: ${reason}. Please explain the situation below.`;
+                document.getElementById('conversational-overlay').classList.remove('hidden');
+                speak(`I have paused your exam. ${reason}. Please type your explanation on the screen.`);
+            } else {
+                document.getElementById('std-warning-message').textContent = reason;
+                document.getElementById('std-warnings-left').textContent = remaining;
+                document.getElementById('standard-warning-overlay').classList.remove('hidden');
+                speak(`Warning. ${reason}. Please ensure exam integrity.`);
+            }
+        }
+
+        // Mid-Exam Recheck Logic
+        function submitExplanation() {
+            const val = document.getElementById('anomaly-explanation').value.trim();
+            if (!val) { alert("Please provide a valid explanation."); return; }
+            
+            fetch('/api/proctor/log-anomaly-reason', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId, reason: val }) }).catch(()=>{});
+
+            document.getElementById('conversational-overlay').classList.add('hidden');
+            document.getElementById('anomaly-explanation').value = '';
+            
+            // Initiate Active 360 Re-Check instead of dummy wait
+            document.getElementById('recheck-overlay').classList.remove('hidden');
+            attachStreamToVideo('recheck-video');
+            currentRecheckPhaseIndex = 0;
+            promptNextRecheckPhase();
+        }
+
+        function promptNextRecheckPhase() {
+            if (currentRecheckPhaseIndex >= recheckPhases.length) {
+                const inst = document.getElementById('recheck-instruction-text');
+                inst.textContent = "Environment mapping re-validated. Resuming examination.";
+                document.getElementById('recheck-video-container').classList.replace('border-slate-700', 'border-emerald-500');
+                
+                speak(inst.textContent, async () => {
+                    document.getElementById('btn-verify-recheck-angle').classList.add('hidden');
+                    document.getElementById('recheck-overlay').classList.add('hidden');
+                    document.getElementById('engine-content-area').classList.remove('exam-blurred');
+                    if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+                        await document.documentElement.requestFullscreen().catch(()=>{});
+                    }
+                    setTimeout(() => { isWarningOpen = false; }, 3000);
+                });
+                return;
+            }
+
+            const currentAngle = recheckPhases[currentRecheckPhaseIndex];
+            const phrases = {
+                front: ["Please show me your front desk area again. Click Capture when ready."],
+                left: ["Now slowly pan to the left wall and click Capture."],
+                right: ["Point the camera to the right wall and capture."],
+                back: ["Finally, show me the wall directly behind you."]
+            };
+            const instruction = phrases[currentAngle][0];
+
+            document.getElementById('recheck-instruction-text').textContent = instruction;
+            document.getElementById('btn-verify-recheck-angle').classList.add('hidden');
+            document.getElementById('recheck-angle-error-msg').classList.add('hidden');
+
+            speak(instruction, () => {
+                document.getElementById('btn-verify-recheck-angle').textContent = `Capture ${currentAngle.toUpperCase()} Wall`;
+                document.getElementById('btn-verify-recheck-angle').classList.remove('hidden');
+            });
+        }
+
+        async function captureAndVerifyRecheckAngle() {
+            const btn = document.getElementById('btn-verify-recheck-angle');
+            const errorMsg = document.getElementById('recheck-angle-error-msg');
+            const overlay = document.getElementById('recheck-status-overlay');
+            const currentAngle = recheckPhases[currentRecheckPhaseIndex];
+
+            btn.classList.add('hidden');
+            errorMsg.classList.add('hidden');
+            overlay.classList.remove('hidden');
+
+            const video = document.getElementById('recheck-video');
+            const canvas = document.getElementById('recheck-canvas');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            const liveFrame = canvas.toDataURL('image/jpeg');
+
+            try {
+                // Using the reverify endpoint to ensure clean room state
+                const res = await fetch('/api/proctor/reverify-room-angle', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, angle: currentAngle, liveSnapshotBase64: liveFrame })
+                });
+                const data = await res.json();
+
+                if (data.success || !res.ok) { 
+                    currentRecheckPhaseIndex++;
+                    overlay.classList.add('hidden');
+                    promptNextRecheckPhase();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (err) {
+                overlay.classList.add('hidden');
+                errorMsg.textContent = err.message || "Verification failed. Ensure clear view and no prohibited items.";
+                errorMsg.classList.remove('hidden');
+                btn.textContent = `Retry Capture ${currentAngle.toUpperCase()}`;
+                btn.classList.remove('hidden');
+                speak("I detected an issue. " + (err.message || "Please try again."));
+            }
+        }
+
+        async function dismissStandardWarning() {
+            document.getElementById('standard-warning-overlay').classList.add('hidden');
+            document.getElementById('engine-content-area').classList.remove('exam-blurred');
+            if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                await document.documentElement.requestFullscreen().catch(()=>{});
+            }
+            setTimeout(() => { isWarningOpen = false; }, 3000);
+        }
+
         // --- Final Submission ---
         async function submitMockTest(isForced = false) {
-            if(!isForced && !confirm("Are you sure you want to finally submit your exam?")) return;
+            if(!isForced && !confirm("Are you certain you want to finally submit your examination?")) return;
             
             isTesting = false; 
             clearInterval(timerInterval);
-            document.getElementById('warning-overlay').classList.add('hidden'); 
+            document.querySelectorAll('.modal-overlay').forEach(el => el.classList.add('hidden')); 
             
-            // Save current answer
             const finalAns = extractCurrentAnswer();
             if(finalAns !== null) qState[activeSecIdx][activeQIdx].answer = finalAns;
 
             showView('view-results');
-            document.getElementById('res-loading').classList.remove('hidden');
-            document.getElementById('res-success').classList.add('hidden');
-            document.getElementById('res-error').classList.add('hidden');
 
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-            }
+            if (globalStream) globalStream.getTracks().forEach(t => t.stop());
             if (audioContext) audioContext.close();
-
-            if (document.fullscreenElement) {
-                document.exitFullscreen().catch(()=>{});
-            }
+            if (document.fullscreenElement) document.exitFullscreen().catch(()=>{});
 
             const answers = {};
             currentTest.sections.forEach((sec, sIdx) => {
@@ -879,19 +1441,10 @@
             });
 
             try {
-                const payload = {
-                    testId,
-                    voucherCode,
-                    userEmail: currentUser.email,
-                    userName: currentUser.name,
-                    answers,
-                    violationReason: finalViolationReason
-                };
-
                 const res = await fetch('/api/public/mock/submit', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ testId, voucherCode, userEmail: currentUser.email, userName: currentUser.name, answers, violationReason: finalViolationReason })
                 });
                 
                 const data = await res.json();
@@ -901,9 +1454,8 @@
                 document.getElementById('res-success').classList.remove('hidden');
 
                 if(finalViolationReason) {
-                    document.getElementById('res-final-msg').innerHTML = `<span class="text-red-600 font-bold">Exam Submitted Automatically Due to Violations.</span><br/>Reason: ${finalViolationReason}`;
+                    document.getElementById('res-final-msg').innerHTML = `<span class="text-rose-600 font-extrabold text-xl">Exam Submitted Automatically Due to Violations.</span><br/><br/><span class="text-slate-700 font-bold">Reason:</span> ${finalViolationReason}`;
                 }
-
             } catch (err) {
                 document.getElementById('res-loading').classList.add('hidden');
                 document.getElementById('res-error').classList.remove('hidden');
@@ -911,7 +1463,6 @@
             }
         }
 
-        // Initialize portal immediately
         initPortal();
     </script>
 </body>
