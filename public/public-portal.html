@@ -1,354 +1,543 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Public Assessments | Hire With Us</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Credex</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dzuxwvamy/image/upload/v1780483593/Credex_szkzcq.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/dzuxwvamy/image/upload/v1780483593/Credex_szkzcq.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://res.cloudinary.com/dzuxwvamy/image/upload/v1780483593/Credex_szkzcq.png">
+    <link rel="shortcut icon" href="https://res.cloudinary.com/dzuxwvamy/image/upload/v1780483593/Credex_szkzcq.png">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f4f7f6; margin: 0; }
-        .glass-modal { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.2); }
-        .hidden { display: none !important; }
-        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        .loader { border: 3px solid #e2e8f0; border-top: 3px solid #4f46e5; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc; /* Lighter, cleaner background */
+            margin: 0; 
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
         
-        /* Premium Gradients & Shadows */
-        .hero-gradient { background: linear-gradient(135deg, #1e1b4b 0%, #4338ca 100%); }
-        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
+        .glass-modal { 
+            background: rgba(255, 255, 255, 0.98); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(226, 232, 240, 0.8); 
+        }
+        
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(15px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        
+        .loader { 
+            border: 3px solid #f1f5f9; 
+            border-top: 3px solid #4f46e5; 
+            border-radius: 50%; 
+            width: 24px; 
+            height: 24px; 
+            animation: spin 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite; 
+        }
+        
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+        
+        .hero-gradient { 
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); 
+        }
+        
         .input-icon-wrapper { position: relative; }
-        .input-icon-wrapper svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; width: 20px; height: 20px; }
-        .input-with-icon { padding-left: 44px !important; }
+        .input-icon-wrapper svg { 
+            position: absolute; left: 16px; top: 50%; transform: translateY(-50%); 
+            color: #94a3b8; width: 20px; height: 20px; transition: color 0.3s;
+        }
+        .input-icon-wrapper input:focus + svg { color: #4f46e5; }
+        .input-with-icon { padding-left: 48px !important; }
 
-        /* Exam Portal Specific Styles */
-        .q-badge { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: 600; border-radius: 10px; cursor: pointer; transition: all 0.2s; font-size: 0.875rem; border: 1px solid transparent; }
-        .q-badge:hover { opacity: 0.8; transform: scale(1.05); }
-        .status-answered { background-color: #22c55e; color: white; border-color: #16a34a; shadow: 0 2px 4px rgba(34,197,94,0.3); }
-        .status-not_answered { background-color: #ef4444; color: white; border-color: #dc2626; }
-        .status-not_visited { background-color: #f1f5f9; color: #64748b; border-color: #cbd5e1; }
-        .status-marked { background-color: #a855f7; color: white; border-color: #9333ea; }
-        .status-answered_marked { background-color: #a855f7; color: white; border-color: #9333ea; position: relative; }
-        .status-answered_marked::after { content: ''; position: absolute; bottom: 2px; right: 2px; width: 10px; height: 10px; background-color: #22c55e; border-radius: 50%; border: 2px solid white; }
-        .q-badge.active { box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.3); border-color: #4f46e5; }
+        /* Custom Scrollbars for overflowing content */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Segmented Control Tabs */
+        .tab-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .tab-active {
+            background-color: white;
+            color: #1e293b;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .tab-inactive {
+            color: #64748b;
+        }
+        .tab-inactive:hover {
+            color: #334155;
+        }
+
+        /* CBT Engine specific */
+        .q-badge { 
+            width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; 
+            font-weight: 700; border-radius: 12px; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            font-size: 0.875rem; border: 2px solid transparent; 
+        }
+        .q-badge:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .status-answered { background-color: #10b981; color: white; border-color: #059669; box-shadow: 0 2px 10px rgba(16,185,129,0.2); }
+        .status-not_answered { background-color: #ef4444; color: white; border-color: #dc2626; box-shadow: 0 2px 10px rgba(239,68,68,0.2); }
+        .status-not_visited { background-color: #f8fafc; color: #64748b; border-color: #e2e8f0; }
+        .status-marked { background-color: #8b5cf6; color: white; border-color: #7c3aed; box-shadow: 0 2px 10px rgba(139,92,246,0.2); }
+        .status-answered_marked { background-color: #8b5cf6; color: white; border-color: #7c3aed; position: relative; }
+        .status-answered_marked::after { 
+            content: ''; position: absolute; bottom: -2px; right: -2px; width: 14px; height: 14px; 
+            background-color: #10b981; border-radius: 50%; border: 3px solid white; 
+        }
+        .q-badge.active { 
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2); border-color: #4f46e5; transform: scale(1.05);
+        }
+        
+        /* Card Hover Effects */
+        .test-card-hover { transition: all 0.3s ease; }
+        .test-card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -8px rgba(0,0,0,0.1); }
     </style>
 </head>
-<body>
+<body class="text-slate-800 selection:bg-indigo-100 selection:text-indigo-900">
 
-    <!-- Main Navigation -->
-    <nav class="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-40" id="main-nav">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+    <nav class="bg-white/90 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-40 transition-all duration-300" id="main-nav">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 md:h-20 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-200">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                <div class="relative overflow-hidden rounded-xl bg-slate-50 p-1.5 border border-slate-200 flex-shrink-0 flex items-center justify-center">
+                    <img class="h-6 w-auto object-contain" src="https://res.cloudinary.com/dzuxwvamy/image/upload/v1780483593/Credex_szkzcq.png" alt="Credex Logo">
                 </div>
-                <span class="text-2xl font-black text-gray-900 tracking-tight">HIRE WITH US</span>
+                <span class="text-lg md:text-xl font-black text-slate-900 tracking-tight hidden sm:block">CREDEX</span>
             </div>
-            <div class="space-x-4">
-                <button onclick="openScheduleModal()" class="px-5 py-2.5 bg-white border border-gray-200 text-sm font-semibold text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-300 shadow-sm transition-all flex items-center gap-2">
-                    <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
+            <div class="flex items-center gap-3">
+                <button onclick="openScheduleModal()" class="px-4 py-2 md:px-5 md:py-2.5 bg-white border border-slate-200 text-xs md:text-[13px] font-bold text-slate-700 rounded-full hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-2 uppercase tracking-wide">
+                    <svg class="w-4 h-4 text-indigo-600 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
                     Have a Voucher?
                 </button>
             </div>
         </div>
     </nav>
 
-    <!-- VIEW 1: Listing View -->
     <div id="view-listing" class="fade-in">
         <!-- Hero Section -->
-        <div class="hero-gradient text-white py-20 px-6 relative overflow-hidden">
-            <!-- Decorative background elements -->
-            <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20">
-                <div class="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-indigo-500 blur-3xl"></div>
-                <div class="absolute top-1/2 right-10 w-64 h-64 rounded-full bg-purple-500 blur-3xl"></div>
+        <div class="hero-gradient text-white pt-16 pb-24 md:pt-20 md:pb-32 px-4 relative overflow-hidden">
+            <div class="absolute inset-0 overflow-hidden pointer-events-none">
+                <div class="absolute top-0 right-0 w-[80vw] md:w-[40vw] h-[80vw] md:h-[40vw] rounded-full bg-indigo-600/20 blur-[100px] translate-x-1/2 -translate-y-1/2"></div>
+                <div class="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#f8fafc] to-transparent"></div>
             </div>
             
-            <div class="relative z-10 max-w-4xl mx-auto text-center">
-                <span class="inline-block py-1 px-3 rounded-full bg-indigo-500/30 border border-indigo-400/30 text-indigo-100 text-sm font-semibold mb-6 tracking-wide uppercase">Assessment Portal</span>
-                <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 leading-tight">Validate Your Expertise <br/><span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-300">Stand Out to Employers</span></h1>
-                <p class="text-lg md:text-xl text-indigo-100/80 max-w-2xl mx-auto font-light leading-relaxed">Take industry-standard practice exams or schedule premium mock interviews to prove your skills.</p>
+            <div class="relative z-10 max-w-3xl mx-auto text-center">
+                <span class="inline-flex items-center justify-center px-3 py-1 mb-4 md:mb-6 text-[10px] md:text-[11px] font-bold tracking-widest text-indigo-200 bg-white/10 rounded-full border border-white/10 backdrop-blur-md uppercase">
+                    Public Assessment Portal
+                </span>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-4 md:mb-6 leading-[1.1]">
+                    Validate Your Skills. <br/>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-300">Stand Out.</span>
+                </h1>
+                <p class="text-sm md:text-base lg:text-lg text-slate-300 max-w-xl mx-auto font-medium leading-relaxed px-2">
+                    Take practice exams or schedule premium proctored interviews to benchmark your expertise against industry standards.
+                </p>
             </div>
         </div>
 
-        <div class="max-w-7xl mx-auto px-6 py-16">
-            <div id="loading-tests" class="flex flex-col items-center justify-center py-20 text-gray-500">
-                <div class="loader mb-4"></div>
-                <p class="font-medium">Fetching latest assessments from database...</p>
+        <div class="max-w-3xl mx-auto px-4 py-8 md:py-12 -mt-16 md:-mt-20 relative z-20">
+            
+            <!-- Segmented Control for Tabs -->
+            <div class="flex justify-center mb-8 md:mb-10">
+                <div class="bg-slate-200/60 p-1.5 rounded-2xl inline-flex relative w-full sm:w-auto shadow-sm backdrop-blur-md">
+                    <button id="tab-btn-practice" onclick="switchTab('practice')" class="tab-btn flex-1 sm:w-48 py-2.5 md:py-3 px-4 rounded-xl text-sm md:text-[15px] font-bold text-center tab-active flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Practice Tests
+                    </button>
+                    <button id="tab-btn-mock" onclick="switchTab('mock')" class="tab-btn flex-1 sm:w-48 py-2.5 md:py-3 px-4 rounded-xl text-sm md:text-[15px] font-bold text-center tab-inactive flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                        Premium Mocks
+                    </button>
+                </div>
             </div>
 
-            <div id="tests-container" class="grid grid-cols-1 lg:grid-cols-2 gap-16 hidden">
-                <!-- Practice Tests -->
-                <div>
-                    <div class="flex items-center space-x-4 mb-8 border-b border-gray-200 pb-4">
-                        <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shadow-sm">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        </div>
-                        <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Free Practice Tests</h2>
-                    </div>
-                    <div class="space-y-5" id="practice-list"></div>
-                </div>
+            <!-- Loading State -->
+            <div id="loading-tests" class="flex flex-col items-center justify-center py-20 text-slate-500 bg-white rounded-3xl border border-slate-200 shadow-sm">
+                <div class="loader mb-4"></div>
+                <p class="font-medium text-sm">Loading assessments...</p>
+            </div>
 
-                <!-- Mock Tests -->
-                <div>
-                    <div class="flex items-center space-x-4 mb-8 border-b border-gray-200 pb-4">
-                        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600 shadow-sm">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                        </div>
-                        <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Premium Mock Tests</h2>
-                    </div>
-                    <div class="space-y-5" id="mock-list"></div>
-                </div>
+            <!-- Tab Content: Practice -->
+            <div id="tab-content-practice" class="hidden space-y-4 md:space-y-6">
+                <div id="practice-list" class="space-y-4 md:space-y-6"></div>
+            </div>
+
+            <!-- Tab Content: Mock -->
+            <div id="tab-content-mock" class="hidden space-y-4 md:space-y-6">
+                <div id="mock-list" class="space-y-4 md:space-y-6"></div>
             </div>
         </div>
     </div>
 
-    <!-- MODALS -->
+    <!-- Test Details Modal (FIXED FOR OVERFLOW) -->
+    <div id="modal-test-details" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4 py-6 md:py-10">
+        <!-- 
+            CRITICAL FIX: 
+            Added flex, flex-col, max-h-[90vh] to the main wrapper. 
+            This ensures the modal never grows taller than 90% of the screen.
+        -->
+        <div class="bg-white w-full max-w-2xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col relative overflow-hidden fade-in border border-slate-200">
+            
+            <!-- HEADER (Fixed height at top) -->
+            <div class="flex-shrink-0 relative border-b border-slate-100 p-5 md:p-6 bg-white z-10">
+                <div id="td-accent" class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-500 to-blue-500"></div>
+                
+                <button onclick="closeModals()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full p-2 transition-colors">
+                    <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                
+                <div class="flex items-start gap-4 md:gap-5 pr-10">
+                    <div id="td-icon" class="w-12 h-12 md:w-14 md:h-14 rounded-2xl flex flex-shrink-0 items-center justify-center shadow-sm border mt-1">
+                        <svg class="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex flex-wrap items-center gap-2 mb-1.5">
+                            <span id="td-domain" class="px-2 py-0.5 text-[9px] md:text-[10px] font-bold rounded-md tracking-widest uppercase bg-slate-100 text-slate-600">Domain</span>
+                            <span id="td-type-badge" class="px-2 py-0.5 text-[9px] md:text-[10px] font-bold rounded-md tracking-widest uppercase border">Type</span>
+                        </div>
+                        <h3 id="td-title" class="text-lg md:text-2xl font-bold text-slate-900 tracking-tight leading-tight">Assessment Title</h3>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- BODY (Scrollable area) -->
+            <!-- 
+                CRITICAL FIX: 
+                overflow-y-auto allows vertical scrolling inside this container.
+                flex-1 tells it to take up remaining space between header and footer.
+            -->
+            <div class="flex-1 overflow-y-auto p-5 md:p-6 bg-[#fafafa] space-y-6 custom-scrollbar">
+                
+                <!-- Stats Row -->
+                <div class="grid grid-cols-2 gap-3 md:gap-4">
+                    <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm">
+                        <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center mb-2">
+                            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                        <span id="td-time" class="text-base md:text-lg font-black text-slate-900">-- Mins</span>
+                        <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Duration</span>
+                    </div>
+                    <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm">
+                         <div class="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center mb-2">
+                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        </div>
+                        <span id="td-qs" class="text-base md:text-lg font-black text-slate-900">--</span>
+                        <span class="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Questions</span>
+                    </div>
+                </div>
+
+                <!-- Description Block with its own internal max-height if needed -->
+                <div>
+                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Assessment Overview</h4>
+                    <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                        <!-- If description is extremely long, it will scroll within the parent div gracefully -->
+                        <p id="td-desc" class="text-xs md:text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">No description provided.</p>
+                    </div>
+                </div>
+
+                <!-- Skills Block -->
+                <div>
+                     <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Skills Covered</h4>
+                    <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                        <!-- flex-wrap ensures skills flow to next line instead of overflowing -->
+                        <div id="td-skills" class="flex flex-wrap gap-2">
+                            <!-- Skills injected here -->
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            
+            <!-- FOOTER (Fixed height at bottom) -->
+            <div class="flex-shrink-0 border-t border-slate-100 p-5 md:p-6 bg-white" id="td-action-container">
+                <!-- Action button injected here -->
+            </div>
+        </div>
+    </div>
 
     <!-- Registration Modal (Practice) -->
-    <div id="modal-practice" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-gray-900/60 backdrop-blur-sm px-4">
-        <div class="glass-modal w-full max-w-md rounded-2xl shadow-2xl p-8 fade-in relative">
-            <button onclick="closeModals()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition">
+    <div id="modal-practice" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4 py-6">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 md:p-8 fade-in relative overflow-y-auto max-h-[90vh]">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-indigo-500"></div>
+            <button onclick="closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-full p-2 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
-            <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mb-5 shadow-inner">
+            <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-5 border border-indigo-100">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900 mb-1">Start Practice Test</h3>
-            <p class="text-sm text-gray-500 mb-6">Please provide your details to begin the assessment.</p>
+            <h3 class="text-xl md:text-2xl font-bold text-slate-900 mb-1 tracking-tight">Practice Session</h3>
+            <p class="text-xs md:text-sm text-slate-500 mb-6 font-medium">Verify your details to initiate securely.</p>
             
             <form id="form-practice" class="space-y-4">
-                <div class="input-icon-wrapper">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    <input type="text" id="p-name" placeholder="Full Name" required class="input-with-icon w-full py-3 pr-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition shadow-sm">
+                <div class="input-icon-wrapper group">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="group-focus-within:text-indigo-600"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    <input type="text" id="p-name" placeholder="Full Name" required class="input-with-icon w-full py-3 pr-4 bg-[#f8fafc] border border-slate-200 text-slate-900 text-sm rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all">
                 </div>
-                <div class="input-icon-wrapper">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                    <input type="email" id="p-email" placeholder="Email Address" required class="input-with-icon w-full py-3 pr-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition shadow-sm">
+                <div class="input-icon-wrapper group">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="group-focus-within:text-indigo-600"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    <input type="email" id="p-email" placeholder="Email Address" required class="input-with-icon w-full py-3 pr-4 bg-[#f8fafc] border border-slate-200 text-slate-900 text-sm rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all">
                 </div>
-                <div class="input-icon-wrapper">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                    <input type="tel" id="p-mobile" placeholder="Mobile Number" required class="input-with-icon w-full py-3 pr-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition shadow-sm">
+                <div class="input-icon-wrapper group">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="group-focus-within:text-indigo-600"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                    <input type="tel" id="p-mobile" placeholder="Mobile Number" required class="input-with-icon w-full py-3 pr-4 bg-[#f8fafc] border border-slate-200 text-slate-900 text-sm rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all">
                 </div>
-                <div class="input-icon-wrapper">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                    <input type="text" id="p-org" placeholder="Organization / College" required class="input-with-icon w-full py-3 pr-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition shadow-sm">
+                <div class="input-icon-wrapper group">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="group-focus-within:text-indigo-600"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    <input type="text" id="p-org" placeholder="Organization / College" required class="input-with-icon w-full py-3 pr-4 bg-[#f8fafc] border border-slate-200 text-slate-900 text-sm rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all">
                 </div>
-                <button type="submit" class="w-full mt-4 px-4 py-3.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-all transform hover:-translate-y-0.5">Start Assessment</button>
+                <button type="submit" class="w-full mt-2 px-4 py-3.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-600/20 transition-all flex justify-center items-center gap-2">
+                    Begin Assessment
+                </button>
             </form>
         </div>
     </div>
 
-    <!-- Registration Modal (Mock - Generate Voucher) -->
-    <div id="modal-mock" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-gray-900/60 backdrop-blur-sm px-4">
-        <div class="glass-modal w-full max-w-md rounded-2xl shadow-2xl p-8 fade-in relative">
-            <button onclick="closeModals()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition">
+    <!-- Registration Modal (Mock) -->
+    <div id="modal-mock" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4 py-6">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 md:p-8 fade-in relative overflow-y-auto max-h-[90vh]">
+             <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+            <button onclick="closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-full p-2 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
-            <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-5 shadow-inner">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
+            <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mb-5 border border-purple-100">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900 mb-1">Mock Exam Registration</h3>
-            <p class="text-sm text-gray-500 mb-6">Register to receive a unique scheduling voucher.</p>
+            <h3 class="text-xl md:text-2xl font-bold text-slate-900 mb-1 tracking-tight">Premium Setup</h3>
+            <p class="text-xs md:text-sm text-slate-500 mb-6 font-medium">Generate your unique scheduling voucher.</p>
             
             <form id="form-mock" class="space-y-4">
-                <div class="input-icon-wrapper">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    <input type="text" id="m-name" placeholder="Full Name" required class="input-with-icon w-full py-3 pr-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition shadow-sm">
+                <div class="input-icon-wrapper group">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="group-focus-within:text-purple-600"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    <input type="text" id="m-name" placeholder="Full Name" required class="input-with-icon w-full py-3 pr-4 bg-[#f8fafc] border border-slate-200 text-slate-900 text-sm rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all">
                 </div>
-                <div class="input-icon-wrapper">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                    <input type="email" id="m-email" placeholder="Email Address" required class="input-with-icon w-full py-3 pr-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition shadow-sm">
+                <div class="input-icon-wrapper group">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="group-focus-within:text-purple-600"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    <input type="email" id="m-email" placeholder="Email Address" required class="input-with-icon w-full py-3 pr-4 bg-[#f8fafc] border border-slate-200 text-slate-900 text-sm rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all">
                 </div>
-                <div class="input-icon-wrapper">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                    <input type="tel" id="m-mobile" placeholder="Mobile Number" required class="input-with-icon w-full py-3 pr-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition shadow-sm">
+                <div class="input-icon-wrapper group">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="group-focus-within:text-purple-600"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                    <input type="tel" id="m-mobile" placeholder="Mobile Number" required class="input-with-icon w-full py-3 pr-4 bg-[#f8fafc] border border-slate-200 text-slate-900 text-sm rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all">
                 </div>
-                <div class="input-icon-wrapper">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                    <input type="text" id="m-org" placeholder="Organization / College" required class="input-with-icon w-full py-3 pr-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition shadow-sm">
+                <div class="input-icon-wrapper group">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="group-focus-within:text-purple-600"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    <input type="text" id="m-org" placeholder="Organization / College" required class="input-with-icon w-full py-3 pr-4 bg-[#f8fafc] border border-slate-200 text-slate-900 text-sm rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 outline-none transition-all">
                 </div>
                 
-                <div id="mock-msg" class="text-sm font-medium hidden bg-gray-50 p-3 rounded-lg border"></div>
+                <div id="mock-msg" class="text-sm font-medium hidden"></div>
                 
-                <button type="submit" id="btn-get-voucher" class="w-full mt-4 px-4 py-3.5 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 shadow-md shadow-purple-200 transition-all transform hover:-translate-y-0.5 flex justify-center items-center gap-2">
+                <button type="submit" id="btn-get-voucher" class="w-full mt-2 px-4 py-3.5 bg-purple-600 text-white text-sm font-bold rounded-xl hover:bg-purple-700 shadow-md shadow-purple-600/20 transition-all flex justify-center items-center gap-2">
                     Request Voucher
                 </button>
             </form>
         </div>
     </div>
 
-    <!-- Schedule Modal (Voucher validation) -->
-    <div id="modal-schedule" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-gray-900/60 backdrop-blur-sm px-4">
-        <div class="glass-modal w-full max-w-md rounded-2xl shadow-2xl p-8 fade-in relative">
-            <button onclick="closeModals()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-full p-2 transition">
+    <!-- Schedule Modal -->
+    <div id="modal-schedule" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4 py-6">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 md:p-8 fade-in relative overflow-y-auto max-h-[90vh]">
+             <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-slate-800 to-slate-600"></div>
+            <button onclick="closeModals()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-full p-2 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
-            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-5 shadow-inner">
+            <div class="w-12 h-12 bg-slate-100 text-slate-700 rounded-2xl flex items-center justify-center mb-5 border border-slate-200">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900 mb-1">Schedule Exam</h3>
-            <p class="text-sm text-gray-500 mb-6">Enter your email and voucher code to book your slot.</p>
+            <h3 class="text-xl md:text-2xl font-bold text-slate-900 mb-1 tracking-tight">Schedule Exam</h3>
+            <p class="text-xs md:text-sm text-slate-500 mb-6 font-medium">Authenticate your voucher to lock in your slot.</p>
             
             <form id="form-schedule" class="space-y-4">
-                <div class="input-icon-wrapper">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                    <input type="email" id="s-email" placeholder="Registered Email" required class="input-with-icon w-full py-3 pr-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition shadow-sm">
+                <div class="input-icon-wrapper group">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="group-focus-within:text-slate-900"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    <input type="email" id="s-email" placeholder="Registered Email" required class="input-with-icon w-full py-3 pr-4 bg-[#f8fafc] border border-slate-200 text-slate-900 text-sm rounded-xl focus:bg-white focus:ring-2 focus:ring-slate-900/20 focus:border-slate-900 outline-none transition-all">
                 </div>
-                <div class="input-icon-wrapper">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
-                    <input type="text" id="s-voucher" placeholder="Voucher Code" required class="input-with-icon w-full py-3 pr-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none uppercase transition shadow-sm">
+                <div class="input-icon-wrapper group">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="group-focus-within:text-slate-900"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
+                    <input type="text" id="s-voucher" placeholder="Voucher Code" required class="input-with-icon w-full py-3 pr-4 bg-[#f8fafc] border border-slate-200 text-slate-900 text-sm font-bold uppercase rounded-xl focus:bg-white focus:ring-2 focus:ring-slate-900/20 focus:border-slate-900 outline-none transition-all placeholder:normal-case placeholder:font-medium">
                 </div>
-                <div class="input-icon-wrapper">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <input type="datetime-local" id="s-time" required class="input-with-icon w-full py-3 pr-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition shadow-sm text-gray-600">
+                <div class="input-icon-wrapper group">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="group-focus-within:text-slate-900"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <input type="datetime-local" id="s-time" required class="input-with-icon w-full py-3 pr-4 bg-[#f8fafc] border border-slate-200 text-slate-700 text-sm rounded-xl focus:bg-white focus:ring-2 focus:ring-slate-900/20 focus:border-slate-900 outline-none transition-all">
                 </div>
                 
-                <div id="schedule-msg" class="text-sm font-medium hidden bg-gray-50 p-3 rounded-lg border"></div>
+                <div id="schedule-msg" class="text-sm font-medium hidden"></div>
                 
-                <button type="submit" id="btn-schedule" class="w-full mt-4 px-4 py-3.5 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 shadow-md shadow-blue-200 transition-all transform hover:-translate-y-0.5">
-                    Confirm Schedule
+                <button type="submit" id="btn-schedule" class="w-full mt-2 px-4 py-3.5 bg-slate-900 text-white text-sm font-bold rounded-xl hover:bg-slate-800 shadow-md shadow-slate-900/20 transition-all flex justify-center items-center">
+                    Confirm Slot
                 </button>
             </form>
         </div>
     </div>
 
 
-    <!-- VIEW 2: The Test Engine Interface (Exam Portal) -->
-    <!-- (Retained exactly as original but with slight UI border-radius polish) -->
-    <div id="view-test" class="hidden h-screen flex flex-col bg-gray-50 fade-in overflow-hidden">
+    <div id="view-test" class="hidden h-[100dvh] flex flex-col bg-[#f8fafc] fade-in overflow-hidden">
         <!-- Engine Header -->
-        <header class="bg-indigo-900 text-white px-6 py-4 flex justify-between items-center shadow-md z-10 flex-shrink-0">
-            <div>
-                <h1 id="engine-title" class="text-xl font-bold tracking-tight">Test Title</h1>
+        <header class="bg-slate-900 text-white px-4 md:px-6 py-3 md:py-3.5 flex justify-between items-center z-10 flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="hidden sm:flex items-center justify-center px-1.5 h-7 rounded-md bg-white/10 border border-white/20">
+                    <img class="h-4 w-auto object-contain" src="https://res.cloudinary.com/dzuxwvamy/image/upload/v1780483593/Credex_szkzcq.png" alt="Credex Logo">
+                </div>
+                <h1 id="engine-title" class="text-base md:text-lg font-bold tracking-tight text-slate-100 truncate max-w-[200px] sm:max-w-xs md:max-w-md">Test Title</h1>
             </div>
-            <div class="flex items-center gap-6">
-                <div class="flex items-center gap-2 bg-indigo-950/50 px-4 py-2 rounded-lg border border-indigo-800">
-                    <span class="text-indigo-300 text-sm font-medium uppercase tracking-wider">Time Left</span>
-                    <div class="font-mono font-bold text-xl tracking-wider text-white" id="engine-timer">00:00</div>
+            <div class="flex items-center">
+                <div class="flex items-center gap-2 bg-slate-800/80 px-3 py-1.5 md:px-4 md:py-2 rounded-lg border border-slate-700/50">
+                    <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest hidden sm:block">Time Left</span>
+                    <svg class="w-3.5 h-3.5 text-slate-400 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div class="font-mono font-bold text-base md:text-lg tracking-wider text-white" id="engine-timer">00:00</div>
                 </div>
             </div>
         </header>
 
-        <div class="flex-1 flex overflow-hidden">
+        <div class="flex-1 flex overflow-hidden flex-col md:flex-row relative">
+            
+            <!-- Mobile Sidebar Toggle -->
+            <button id="mobile-palette-toggle" class="md:hidden absolute bottom-20 right-4 z-20 w-12 h-12 bg-indigo-600 text-white rounded-full shadow-xl flex items-center justify-center">
+                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+
             <!-- Main Question Area -->
-            <main class="flex-1 flex flex-col bg-white">
+            <main class="flex-1 flex flex-col bg-white border-r border-slate-200 z-10 shadow-lg min-w-0">
                 <!-- Section Tabs -->
-                <div id="engine-section-tabs" class="flex overflow-x-auto border-b border-gray-200 bg-gray-50/50">
+                <div id="engine-section-tabs" class="flex overflow-x-auto border-b border-slate-200 bg-[#f8fafc] hide-scrollbar">
                     <!-- JS Injected Tabs -->
                 </div>
                 
                 <!-- Question Content -->
-                <div class="flex-1 overflow-y-auto p-8 lg:p-12" id="engine-question-area">
-                    <div class="max-w-4xl mx-auto">
-                        <div class="flex justify-between items-center border-b border-gray-100 pb-4 mb-8">
-                            <h2 class="text-2xl font-bold text-gray-800" id="q-header-text">Question 1</h2>
-                            <span class="px-3 py-1.5 bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-wider rounded-md border border-indigo-100" id="q-type-badge">Single Correct</span>
+                <div class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-10" id="engine-question-area">
+                    <div class="max-w-3xl mx-auto">
+                        <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-6">
+                            <h2 class="text-lg md:text-xl font-black text-slate-900 tracking-tight" id="q-header-text">Question 1</h2>
+                            <span class="px-2.5 py-1 bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase tracking-widest rounded-md border border-indigo-100" id="q-type-badge">Single Correct</span>
                         </div>
-                        <div class="prose max-w-none text-gray-800 mb-10 text-lg leading-relaxed" id="q-text">
+                        <div class="prose prose-slate max-w-none text-slate-800 mb-8 text-sm md:text-base leading-relaxed font-medium" id="q-text">
                             <!-- Question Text -->
                         </div>
-                        <div class="space-y-4" id="q-options">
+                        <div class="space-y-3" id="q-options">
                             <!-- Options -->
                         </div>
                     </div>
                 </div>
 
                 <!-- Bottom Action Bar -->
-                <footer class="border-t border-gray-200 p-5 bg-white flex justify-between items-center flex-shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]">
-                    <div class="flex gap-3">
-                        <button onclick="markAndNext()" class="px-6 py-3 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 hover:text-indigo-600 hover:border-indigo-300 transition-all">Mark for Review & Next</button>
-                        <button onclick="clearResponse()" class="px-6 py-3 bg-white border border-gray-300 text-gray-500 font-semibold rounded-lg hover:bg-gray-50 hover:text-red-600 transition-all">Clear Response</button>
+                <footer class="border-t border-slate-200 p-3 md:p-5 bg-white flex flex-col sm:flex-row justify-between items-center flex-shrink-0 gap-3">
+                    <div class="flex w-full sm:w-auto gap-2">
+                        <button onclick="markAndNext()" class="flex-1 sm:flex-none px-4 py-2.5 bg-white border border-slate-200 text-slate-600 text-xs md:text-sm font-bold rounded-lg hover:bg-slate-50 transition-all shadow-sm">Mark & Next</button>
+                        <button onclick="clearResponse()" class="flex-1 sm:flex-none px-4 py-2.5 bg-white border border-slate-200 text-slate-500 text-xs md:text-sm font-bold rounded-lg hover:bg-red-50 hover:text-red-600 transition-all shadow-sm">Clear</button>
                     </div>
-                    <button onclick="saveAndNext()" class="px-8 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-all flex items-center gap-2 transform hover:-translate-y-0.5">
+                    <button onclick="saveAndNext()" class="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 text-white text-xs md:text-sm font-bold rounded-lg hover:bg-indigo-700 shadow-sm transition-all flex justify-center items-center gap-2">
                         Save & Next
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </button>
                 </footer>
             </main>
 
             <!-- Right Sidebar (Question Palette) -->
-            <aside class="w-80 bg-gray-50 border-l border-gray-200 flex flex-col flex-shrink-0">
-                <div class="p-5 border-b border-gray-200 bg-white">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-700 font-black text-xl shadow-inner" id="student-initials">S</div>
-                        <div>
-                            <p class="text-sm font-bold text-gray-900" id="student-name">Student Name</p>
-                            <p class="text-xs text-gray-500 truncate w-48" id="student-email">email@example.com</p>
+            <!-- Mobile logic: absolute positioned, toggleable via JS -->
+            <aside id="palette-sidebar" class="absolute md:relative right-0 top-0 bottom-0 w-72 md:w-80 bg-slate-50 flex flex-col flex-shrink-0 border-l border-slate-200 z-30 transform translate-x-full md:translate-x-0 transition-transform duration-300 shadow-2xl md:shadow-none">
+                
+                <div class="p-4 border-b border-slate-200 bg-white flex justify-between items-center">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-10 h-10 rounded-lg bg-indigo-100 flex-shrink-0 flex items-center justify-center text-indigo-700 font-black text-lg border border-indigo-50" id="student-initials">S</div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-bold text-slate-900 truncate" id="student-name">Student Name</p>
+                            <p class="text-[10px] font-medium text-slate-500 truncate" id="student-email">email@example.com</p>
                         </div>
                     </div>
+                    <button id="close-palette" class="md:hidden p-1 text-slate-400 hover:text-slate-700">
+                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                 </div>
 
-                <div class="p-5 border-b border-gray-200 bg-gray-50/80">
-                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Question Palette</h3>
-                    <div class="grid grid-cols-2 gap-y-3 gap-x-2 text-xs font-semibold text-gray-600">
-                        <div class="flex items-center gap-2"><span class="w-6 h-6 status-answered rounded-md flex items-center justify-center shadow-sm" id="count-answered">0</span> Answered</div>
-                        <div class="flex items-center gap-2"><span class="w-6 h-6 status-not_answered rounded-md flex items-center justify-center shadow-sm" id="count-not_answered">0</span> Not Answered</div>
-                        <div class="flex items-center gap-2"><span class="w-6 h-6 status-not_visited rounded-md border flex items-center justify-center shadow-sm bg-white" id="count-not_visited">0</span> Not Visited</div>
-                        <div class="flex items-center gap-2"><span class="w-6 h-6 status-marked rounded-md flex items-center justify-center shadow-sm" id="count-marked">0</span> Marked</div>
-                        <div class="flex items-center gap-2 col-span-2"><span class="w-6 h-6 status-answered_marked rounded-md flex items-center justify-center shadow-sm" id="count-answered_marked">0</span> Answered & Marked</div>
+                <div class="p-4 border-b border-slate-200 bg-[#f8fafc]">
+                    <h3 class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3">Palette Legend</h3>
+                    <div class="grid grid-cols-2 gap-y-2 gap-x-1 text-[10px] font-bold text-slate-600">
+                        <div class="flex items-center gap-2"><span class="w-4 h-4 status-answered rounded flex items-center justify-center text-[8px]" id="count-answered">0</span> Answered</div>
+                        <div class="flex items-center gap-2"><span class="w-4 h-4 status-not_answered rounded flex items-center justify-center text-[8px]" id="count-not_answered">0</span> Not Answered</div>
+                        <div class="flex items-center gap-2"><span class="w-4 h-4 status-not_visited rounded border flex items-center justify-center text-[8px]" id="count-not_visited">0</span> Not Visited</div>
+                        <div class="flex items-center gap-2"><span class="w-4 h-4 status-marked rounded flex items-center justify-center text-[8px]" id="count-marked">0</span> Marked</div>
+                        <div class="flex items-center gap-2 col-span-2 mt-0.5"><span class="w-4 h-4 status-answered_marked rounded flex items-center justify-center text-[8px]" id="count-answered_marked">0</span> Ans & Marked</div>
                     </div>
                 </div>
 
-                <div class="flex-1 p-5 overflow-y-auto bg-white">
+                <div class="flex-1 p-4 overflow-y-auto bg-white border-b border-slate-200 custom-scrollbar">
                     <div class="grid grid-cols-5 gap-2.5" id="palette-grid">
                         <!-- JS Injected Buttons -->
                     </div>
                 </div>
 
-                <div class="p-5 border-t border-gray-200 bg-white">
-                    <button onclick="submitPracticeTest()" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-lg rounded-xl shadow-md shadow-emerald-200 transition-all transform hover:-translate-y-0.5">Submit Assessment</button>
+                <div class="p-4 bg-[#f8fafc]">
+                    <button onclick="submitPracticeTest()" class="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-xl shadow-md transition-all">Submit Test</button>
                 </div>
             </aside>
+            
+            <!-- Mobile Sidebar Overlay -->
+            <div id="palette-overlay" class="md:hidden fixed inset-0 bg-slate-900/50 z-20 hidden backdrop-blur-sm transition-opacity"></div>
         </div>
     </div>
 
-    <!-- VIEW 3: Results -->
-    <div id="view-results" class="hidden h-screen flex items-center justify-center bg-gray-50 fade-in px-4">
-        <div class="bg-white p-10 rounded-2xl shadow-xl max-w-lg w-full text-center border border-gray-100">
-            <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+    <div id="view-results" class="hidden h-screen flex items-center justify-center bg-slate-900 fade-in px-4 relative overflow-hidden">
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
+            <div class="w-64 h-64 md:w-96 md:h-96 bg-emerald-500/30 rounded-full blur-[100px]"></div>
+        </div>
+
+        <div class="bg-white p-8 md:p-10 rounded-3xl shadow-2xl max-w-sm w-full text-center relative z-10">
+            <div class="w-16 h-16 md:w-20 md:h-20 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-emerald-100">
+                <svg class="w-8 h-8 md:w-10 md:h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
             </div>
-            <h2 class="text-3xl font-extrabold text-gray-900 mb-2">Assessment Completed</h2>
+            <h2 class="text-2xl md:text-3xl font-black text-slate-900 mb-2 tracking-tight">Saved</h2>
             
             <div id="res-loading" class="flex flex-col items-center py-6">
-                <div class="loader mb-3"></div>
-                <p class="text-gray-500 font-medium">Evaluating your answers securely...</p>
+                <div class="loader mb-3" style="border-top-color: #10b981;"></div>
+                <p class="text-slate-500 font-medium text-xs">Evaluating securely...</p>
             </div>
             
-            <div id="res-score-box" class="bg-gray-50 rounded-xl p-8 mb-8 border border-gray-200 hidden shadow-inner">
-                <p class="text-sm text-gray-500 font-bold uppercase tracking-wider mb-2">Your Final Score</p>
-                <p class="text-6xl font-black text-indigo-600" id="res-score">--</p>
-                <div class="mt-6 pt-4 border-t border-gray-200">
-                    <p class="text-xs font-mono text-gray-500">Reference ID: <span class="font-bold text-gray-700" id="res-id">pending...</span></p>
+            <div id="res-score-box" class="bg-[#f8fafc] rounded-2xl p-6 mb-6 border border-slate-200 hidden mt-4">
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2">Final Score</p>
+                <p class="text-5xl md:text-6xl font-black text-slate-900 tracking-tighter" id="res-score">--</p>
+                <div class="mt-4 pt-4 border-t border-slate-200">
+                    <p class="text-[9px] font-mono text-slate-400 uppercase tracking-widest">Ref ID: <br/><span class="font-bold text-slate-700 text-xs mt-0.5 inline-block" id="res-id">pending...</span></p>
                 </div>
             </div>
 
-            <button onclick="location.reload()" class="w-full px-6 py-4 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 shadow-lg transition-all transform hover:-translate-y-0.5">Return to Portal</button>
+            <button onclick="location.reload()" class="w-full px-4 py-3.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 shadow-md transition-all">Return to Portal</button>
         </div>
     </div>
 
     <script>
-        // --- DYNAMIC DATA ARRAYS ---
+        // --- DATA ---
         let dbPractice = [];
         let dbMock = [];
-        
         let currentTest = null;
-        let currentUser = {}; // stores {name, email, mobile, org}
+        let currentUser = {}; 
         
-        // --- CBT Engine State ---
         let timerInterval = null;
         let timeLeft = 0; 
         let activeSecIdx = 0;
         let activeQIdx = 0;
         let qState = {}; 
 
-        // --- URL Hash Listener for Scheduling ---
+        // --- INIT ---
         window.addEventListener('DOMContentLoaded', () => {
             if (window.location.hash === '#schedule') {
                 openScheduleModal();
             }
             fetchTests();
+            setupMobilePalette();
         });
 
         window.addEventListener('hashchange', () => {
@@ -357,9 +546,64 @@
             }
         });
 
-        // --- Fetch Data from Backend ---
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            const btnPractice = document.getElementById('tab-btn-practice');
+            const btnMock = document.getElementById('tab-btn-mock');
+            const contentPractice = document.getElementById('tab-content-practice');
+            const contentMock = document.getElementById('tab-content-mock');
+
+            if (tabId === 'practice') {
+                btnPractice.classList.replace('tab-inactive', 'tab-active');
+                btnMock.classList.replace('tab-active', 'tab-inactive');
+                contentPractice.classList.remove('hidden');
+                contentPractice.classList.add('fade-in');
+                contentMock.classList.add('hidden');
+                contentMock.classList.remove('fade-in');
+            } else {
+                btnMock.classList.replace('tab-inactive', 'tab-active');
+                btnPractice.classList.replace('tab-active', 'tab-inactive');
+                contentMock.classList.remove('hidden');
+                contentMock.classList.add('fade-in');
+                contentPractice.classList.add('hidden');
+                contentPractice.classList.remove('fade-in');
+            }
+        }
+
+        // Mobile Palette Toggle Logic
+        function setupMobilePalette() {
+            const toggleBtn = document.getElementById('mobile-palette-toggle');
+            const sidebar = document.getElementById('palette-sidebar');
+            const overlay = document.getElementById('palette-overlay');
+            const closeBtn = document.getElementById('close-palette');
+
+            function openSidebar() {
+                sidebar.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+            }
+
+            function closeSidebar() {
+                sidebar.classList.add('translate-x-full');
+                overlay.classList.add('hidden');
+            }
+
+            if(toggleBtn) toggleBtn.addEventListener('click', openSidebar);
+            if(closeBtn) closeBtn.addEventListener('click', closeSidebar);
+            if(overlay) overlay.addEventListener('click', closeSidebar);
+            
+            // Auto close sidebar when a question is clicked on mobile
+            document.getElementById('palette-grid').addEventListener('click', (e) => {
+                if(e.target.classList.contains('q-badge') && window.innerWidth < 768) {
+                    closeSidebar();
+                }
+            });
+        }
+
+
+        // --- FETCH & RENDER LISTINGS ---
         async function fetchTests() {
             try {
+                // Untouched backend API call
                 const res = await fetch('/api/public/tests');
                 const data = await res.json();
                 
@@ -367,45 +611,68 @@
                 dbMock = data.mock || [];
 
                 document.getElementById('loading-tests').classList.add('hidden');
-                document.getElementById('tests-container').classList.remove('hidden');
                 
                 renderListings();
+                // Initialize default tab after loading
+                switchTab('practice');
+                
             } catch (err) {
-                document.getElementById('loading-tests').innerHTML = `<p class="text-red-500 font-medium bg-red-50 px-4 py-2 rounded-lg border border-red-200">Failed to load assessments from server.</p>`;
+                document.getElementById('loading-tests').innerHTML = `<p class="text-red-500 font-medium bg-red-50 px-6 py-4 rounded-xl text-sm">Failed to load assessments from server.</p>`;
             }
         }
 
         function renderListings() {
             const pList = document.getElementById('practice-list');
-            if (dbPractice.length === 0) pList.innerHTML = '<p class="text-gray-500 italic p-6 text-center bg-white rounded-xl border border-dashed border-gray-300">No practice tests currently active.</p>';
-            else pList.innerHTML = dbPractice.map(t => `
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-lg hover:border-indigo-300 transition-all cursor-pointer transform hover:-translate-y-1" onclick="openPracticeModal('${t.testId}')">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="inline-block px-3 py-1 bg-gray-100 text-xs font-bold text-gray-600 rounded-md tracking-wide uppercase">${t.domain || 'General'}</div>
-                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">Free</span>
+            if (dbPractice.length === 0) {
+                pList.innerHTML = '<div class="p-8 text-center bg-white rounded-2xl border border-slate-200"><p class="text-slate-400 font-medium text-sm">No practice tests currently active.</p></div>';
+            } else {
+                pList.innerHTML = dbPractice.map(t => `
+                    <div class="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 test-card-hover cursor-pointer relative overflow-hidden" onclick="openTestDetails('${t.testId}', 'practice')">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="inline-flex items-center px-2 py-1 bg-slate-100 text-[10px] font-bold text-slate-600 rounded uppercase tracking-widest">${t.domain || 'General'}</span>
+                            <span class="inline-flex items-center px-2 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded uppercase tracking-widest border border-emerald-100">Free Access</span>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold text-slate-900 mb-2 leading-tight">${t.title}</h3>
+                        <div class="flex flex-wrap gap-1.5 mb-3">
+                            ${(t.skills || []).slice(0,4).map(s => `<span class="bg-slate-50 border border-slate-100 px-2 py-0.5 rounded text-[10px] text-slate-500 font-medium">${s}</span>`).join('')}
+                            ${(t.skills && t.skills.length > 4) ? `<span class="bg-slate-50 border border-slate-100 px-2 py-0.5 rounded text-[10px] text-slate-400 font-medium">+${t.skills.length - 4}</span>` : ''}
+                        </div>
+                        <p class="text-slate-500 text-xs line-clamp-2 leading-relaxed mb-4">${t.description || 'Standardized assessment environment.'}</p>
+                        <div class="text-xs font-bold text-indigo-600 flex items-center">
+                            View Details & Start <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </div>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">${t.title}</h3>
-                    <p class="text-gray-500 text-sm">${(t.skills || []).join(' • ')}</p>
-                </div>
-            `).join('');
+                `).join('');
+            }
 
             const mList = document.getElementById('mock-list');
-            if (dbMock.length === 0) mList.innerHTML = '<p class="text-gray-500 italic p-6 text-center bg-white rounded-xl border border-dashed border-gray-300">No mock tests currently active.</p>';
-            else mList.innerHTML = dbMock.map(t => `
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-lg hover:border-purple-300 transition-all cursor-pointer transform hover:-translate-y-1" onclick="openMockModal('${t.testId}')">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="inline-block px-3 py-1 bg-purple-50 text-xs font-bold text-purple-700 rounded-md tracking-wide uppercase">Premium Mock</div>
+            if (dbMock.length === 0) {
+                mList.innerHTML = '<div class="p-8 text-center bg-white rounded-2xl border border-slate-200"><p class="text-slate-400 font-medium text-sm">No premium mocks currently active.</p></div>';
+            } else {
+                mList.innerHTML = dbMock.map(t => `
+                    <div class="bg-white rounded-2xl border border-purple-100 shadow-sm p-5 md:p-6 test-card-hover cursor-pointer relative overflow-hidden" onclick="openTestDetails('${t.testId}', 'mock')">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-purple-50 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start mb-3">
+                                <span class="inline-flex items-center px-2 py-1 bg-slate-100 text-[10px] font-bold text-slate-600 rounded uppercase tracking-widest">${t.domain || 'Premium'}</span>
+                                <span class="inline-flex items-center px-2 py-1 bg-purple-50 text-purple-600 text-[10px] font-bold rounded uppercase tracking-widest border border-purple-100 flex gap-1"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> Proctored</span>
+                            </div>
+                            <h3 class="text-lg md:text-xl font-bold text-slate-900 mb-2 leading-tight">${t.title}</h3>
+                            <div class="flex flex-wrap gap-1.5 mb-3">
+                                ${(t.skills || []).slice(0,4).map(s => `<span class="bg-purple-50/50 border border-purple-100/50 px-2 py-0.5 rounded text-[10px] text-purple-600/70 font-medium">${s}</span>`).join('')}
+                                ${(t.skills && t.skills.length > 4) ? `<span class="bg-slate-50 border border-slate-100 px-2 py-0.5 rounded text-[10px] text-slate-400 font-medium">+${t.skills.length - 4}</span>` : ''}
+                            </div>
+                            <p class="text-slate-500 text-xs line-clamp-2 leading-relaxed mb-4">${t.description || 'Proctored real-world assessment environment.'}</p>
+                            <div class="text-xs font-bold text-purple-600 flex items-center">
+                                View Details & Request <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            </div>
+                        </div>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">${t.title}</h3>
-                    <p class="text-gray-500 text-sm flex items-center gap-2">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Scheduled Exam
-                    </p>
-                </div>
-            `).join('');
+                `).join('');
+            }
         }
 
-        // --- View Handlers ---
+        // --- MODALS ---
         function showView(viewId) {
             ['view-listing', 'view-test', 'view-results'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
@@ -416,38 +683,107 @@
         }
 
         function closeModals() {
+            document.getElementById('modal-test-details').classList.add('hidden');
             document.getElementById('modal-practice').classList.add('hidden');
             document.getElementById('modal-mock').classList.add('hidden');
             document.getElementById('modal-schedule').classList.add('hidden');
             
-            // Remove hash if closing schedule modal to prevent auto-reopen on refresh
             if(window.location.hash === '#schedule') {
                 history.replaceState(null, null, ' ');
             }
         }
 
+        // --- STREAMING_CHUNK:Populating the fixed modal... ---
+        function openTestDetails(id, type) {
+            closeModals();
+            currentTest = type === 'practice' ? dbPractice.find(t => t.testId === id) : dbMock.find(t => t.testId === id);
+            if(!currentTest) return;
+
+            // Calculate metadata
+            let totalMins = 0;
+            let totalQs = 0;
+            if(currentTest.sections) {
+                currentTest.sections.forEach(sec => {
+                    totalMins += (sec.timer || 0);
+                    totalQs += (sec.questions ? sec.questions.length : 0);
+                });
+            }
+            if(totalMins === 0) totalMins = currentTest.duration || '--';
+
+            // Populate UI
+            document.getElementById('td-title').textContent = currentTest.title;
+            document.getElementById('td-domain').textContent = currentTest.domain || (type === 'practice' ? 'General' : 'Premium');
+            
+            // Handle Description
+            document.getElementById('td-desc').textContent = currentTest.description || 'No description provided for this assessment.';
+            
+            document.getElementById('td-time').textContent = `${totalMins} Mins`;
+            document.getElementById('td-qs').textContent = totalQs;
+            
+            // Skills (Wrapped beautifully)
+            const skillsContainer = document.getElementById('td-skills');
+            if(currentTest.skills && currentTest.skills.length > 0) {
+                skillsContainer.innerHTML = currentTest.skills.map(s => `<span class="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md text-[10px] md:text-xs font-bold border border-slate-200">${s}</span>`).join('');
+            } else {
+                skillsContainer.innerHTML = '<span class="text-slate-400 text-xs italic">Not specified</span>';
+            }
+
+            // Theming
+            const accent = document.getElementById('td-accent');
+            const iconWrap = document.getElementById('td-icon');
+            const typeBadge = document.getElementById('td-type-badge');
+            const actionContainer = document.getElementById('td-action-container');
+
+            if(type === 'practice') {
+                accent.className = 'absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-400 to-indigo-500';
+                iconWrap.className = 'w-12 h-12 md:w-14 md:h-14 rounded-2xl flex flex-shrink-0 items-center justify-center shadow-sm border bg-indigo-50 text-indigo-600 border-indigo-100 mt-1';
+                typeBadge.className = 'px-2 py-0.5 text-[9px] md:text-[10px] font-bold rounded-md tracking-widest uppercase bg-emerald-50 text-emerald-600 border border-emerald-100';
+                typeBadge.textContent = 'Free Access';
+                actionContainer.innerHTML = `
+                    <button onclick="openPracticeModal()" class="w-full px-4 py-3 md:py-3.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 shadow-md transition-all flex justify-center items-center gap-2">
+                        Proceed to Assessment
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </button>
+                `;
+            } else {
+                accent.className = 'absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-500 to-pink-500';
+                iconWrap.className = 'w-12 h-12 md:w-14 md:h-14 rounded-2xl flex flex-shrink-0 items-center justify-center shadow-sm border bg-purple-50 text-purple-600 border-purple-100 mt-1';
+                typeBadge.className = 'px-2 py-0.5 text-[9px] md:text-[10px] font-bold rounded-md tracking-widest uppercase bg-purple-50 text-purple-600 border border-purple-100 flex items-center gap-1';
+                typeBadge.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> Proctored';
+                actionContainer.innerHTML = `
+                    <button onclick="openMockModal()" class="w-full px-4 py-3 md:py-3.5 bg-purple-600 text-white text-sm font-bold rounded-xl hover:bg-purple-700 shadow-md transition-all flex justify-center items-center gap-2">
+                        Request Mock Voucher
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </button>
+                `;
+            }
+
+            document.getElementById('modal-test-details').classList.remove('hidden');
+        }
+
         function openPracticeModal(id) {
-            currentTest = dbPractice.find(t => t.testId === id);
+            closeModals();
+            if(id) currentTest = dbPractice.find(t => t.testId === id);
             document.getElementById('modal-practice').classList.remove('hidden');
         }
 
         function openMockModal(id) {
-            currentTest = dbMock.find(t => t.testId === id);
+            closeModals();
+            if(id) currentTest = dbMock.find(t => t.testId === id);
             document.getElementById('modal-mock').classList.remove('hidden');
             document.getElementById('mock-msg').classList.add('hidden');
             document.getElementById('btn-get-voucher').style.display = 'flex';
         }
 
         function openScheduleModal() {
-            closeModals(); // Close others first
+            closeModals(); 
             document.getElementById('modal-schedule').classList.remove('hidden');
             document.getElementById('schedule-msg').classList.add('hidden');
             document.getElementById('btn-schedule').style.display = 'block';
         }
 
-        // --- Modals Form Submissions ---
+        // --- FORM HANDLERS (Untouched API logic) ---
         
-        // Practice Submit Handler
         document.getElementById('form-practice').addEventListener('submit', (e) => {
             e.preventDefault();
             currentUser.name = document.getElementById('p-name').value;
@@ -459,7 +795,6 @@
             startEngine(currentTest);
         });
 
-        // Mock Register Handler
         document.getElementById('form-mock').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-get-voucher');
@@ -474,7 +809,7 @@
             };
 
             btn.disabled = true;
-            btn.innerHTML = `<div class="loader" style="width: 20px; height: 20px; border-width: 3px; border-top-color: white;"></div>`;
+            btn.innerHTML = `<div class="loader" style="width: 20px; height: 20px; border-width: 3px; border-top-color: white; border-color: rgba(255,255,255,0.3);"></div>`;
             
             try {
                 const res = await fetch('/api/public/mock/register', {
@@ -484,26 +819,25 @@
                 const data = await res.json();
                 if(!res.ok) throw new Error(data.message);
                 
-                msg.innerHTML = '<span class="text-green-700 font-bold block">Success!</span> A scheduling voucher has been sent to your email.';
-                msg.className = 'text-sm font-medium block mt-4 bg-green-50 border border-green-200 p-3 rounded-lg text-green-800';
+                msg.innerHTML = '<span class="text-emerald-700 font-bold block mb-1">Success!</span> A scheduling voucher has been sent to your email.';
+                msg.className = 'text-xs font-medium block mt-4 bg-emerald-50 border border-emerald-200 p-3 rounded-lg text-emerald-800';
                 btn.style.display = 'none';
             } catch (err) {
                 msg.textContent = err.message || 'Error generating voucher';
-                msg.className = 'text-sm font-bold block mt-4 bg-red-50 border border-red-200 p-3 rounded-lg text-red-700';
+                msg.className = 'text-xs font-bold block mt-4 bg-red-50 border border-red-200 p-3 rounded-lg text-red-700';
                 btn.disabled = false; 
                 btn.innerHTML = 'Request Voucher';
             }
             msg.classList.remove('hidden');
         });
 
-        // Mock Schedule Handler
         document.getElementById('form-schedule').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-schedule');
             const msg = document.getElementById('schedule-msg');
             
             btn.disabled = true; 
-            btn.innerHTML = `<div class="loader" style="width: 20px; height: 20px; border-width: 3px; border-top-color: white;"></div>`;
+            btn.innerHTML = `<div class="loader" style="width: 20px; height: 20px; border-width: 3px; border-top-color: white; border-color: rgba(255,255,255,0.3);"></div>`;
             
             try {
                 const res = await fetch('/api/public/mock/schedule', {
@@ -517,23 +851,20 @@
                 const data = await res.json();
                 if(!res.ok) throw new Error(data.message);
                 
-                msg.innerHTML = '<span class="text-green-700 font-bold block">Scheduled!</span> Your secure exam link has been sent to your email.';
-                msg.className = 'text-sm font-medium block mt-4 bg-green-50 border border-green-200 p-3 rounded-lg text-green-800';
+                msg.innerHTML = '<span class="text-emerald-700 font-bold block mb-1">Scheduled!</span> Your secure exam link has been sent to your email.';
+                msg.className = 'text-xs font-medium block mt-4 bg-emerald-50 border border-emerald-200 p-3 rounded-lg text-emerald-800';
                 btn.style.display = 'none';
             } catch (err) {
                 msg.textContent = err.message || 'Error validating voucher';
-                msg.className = 'text-sm font-bold block mt-4 bg-red-50 border border-red-200 p-3 rounded-lg text-red-700';
+                msg.className = 'text-xs font-bold block mt-4 bg-red-50 border border-red-200 p-3 rounded-lg text-red-700';
                 btn.disabled = false; 
-                btn.textContent = 'Confirm Schedule';
+                btn.textContent = 'Confirm Slot';
             }
             msg.classList.remove('hidden');
         });
 
 
-        // ==========================================
-        // CBT TEST ENGINE LOGIC
-        // ==========================================
-        
+        // --- ENGINE LOGIC (UI updated for mobile spacing) ---
         function startEngine(testData) {
             showView('view-test');
             document.getElementById('engine-title').textContent = testData.title;
@@ -541,7 +872,6 @@
             document.getElementById('student-email').textContent = currentUser.email;
             document.getElementById('student-initials').textContent = currentUser.name.charAt(0).toUpperCase();
             
-            // 1. Initialize State
             qState = {};
             let totalMins = 0;
             testData.sections.forEach((sec, sIdx) => {
@@ -561,7 +891,6 @@
                 if(timeLeft <= 0) submitPracticeTest();
             }, 1000);
 
-            // 2. Set first question active
             activeSecIdx = 0;
             activeQIdx = 0;
             qState[activeSecIdx][activeQIdx].status = 'not_answered';
@@ -574,7 +903,7 @@
         function renderSectionTabs() {
             const tabsContainer = document.getElementById('engine-section-tabs');
             tabsContainer.innerHTML = currentTest.sections.map((sec, i) => `
-                <button onclick="goToSection(${i})" class="px-8 py-3.5 text-sm font-bold transition-colors whitespace-nowrap ${i === activeSecIdx ? 'bg-white text-indigo-700 border-t-4 border-indigo-600 border-r border-l border-gray-200' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800 border-r border-gray-200 border-t-4 border-transparent'}">
+                <button onclick="goToSection(${i})" class="px-5 py-3 md:px-8 md:py-4 text-xs md:text-[13px] font-bold transition-all whitespace-nowrap outline-none ${i === activeSecIdx ? 'bg-white text-indigo-700 border-t-2 border-t-indigo-600 border-r border-l border-slate-200 shadow-[0_-2px_0_0_rgba(79,70,229,1)_inset]' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800 border-r border-slate-200 border-t-2 border-t-transparent shadow-[0_-1px_0_0_#e2e8f0_inset]'}">
                     ${sec.title}
                 </button>
             `).join('');
@@ -597,21 +926,30 @@
             let optionsHtml = '';
             if (q.type === 'single') {
                 optionsHtml = q.options.map((opt, i) => `
-                    <label class="flex items-center gap-4 cursor-pointer p-5 rounded-xl border border-gray-200 hover:bg-indigo-50 hover:border-indigo-200 transition-all ${savedAns === i ? 'bg-indigo-50 border-indigo-400 shadow-sm shadow-indigo-100' : 'bg-white'}">
-                        <input type="radio" name="current_q" value="${i}" ${savedAns === i ? 'checked' : ''} class="w-5 h-5 text-indigo-600 focus:ring-indigo-500 border-gray-300">
-                        <span class="text-gray-800 font-medium text-lg leading-snug">${opt}</span>
+                    <label class="flex items-start md:items-center gap-3 md:gap-4 cursor-pointer p-4 md:p-5 rounded-xl border border-slate-200 hover:bg-indigo-50/50 hover:border-indigo-300 transition-all group ${savedAns === i ? 'bg-indigo-50 border-indigo-400 ring-1 ring-indigo-400' : 'bg-white'}">
+                        <div class="relative flex items-center justify-center w-5 h-5 flex-shrink-0 mt-0.5 md:mt-0">
+                            <input type="radio" name="current_q" value="${i}" ${savedAns === i ? 'checked' : ''} class="peer sr-only">
+                            <div class="w-4 h-4 md:w-5 md:h-5 rounded-full border-2 border-slate-300 peer-checked:border-indigo-600 peer-checked:bg-indigo-600 transition-colors"></div>
+                            <div class="absolute w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-white scale-0 peer-checked:scale-100 transition-transform"></div>
+                        </div>
+                        <span class="text-slate-700 font-semibold text-sm md:text-base leading-snug group-hover:text-slate-900 ${savedAns === i ? 'text-indigo-900' : ''}">${opt}</span>
                     </label>
                 `).join('');
             } else if (q.type === 'multi') {
                 const savedArr = Array.isArray(savedAns) ? savedAns : [];
                 optionsHtml = q.options.map((opt, i) => `
-                    <label class="flex items-center gap-4 cursor-pointer p-5 rounded-xl border border-gray-200 hover:bg-indigo-50 hover:border-indigo-200 transition-all ${savedArr.includes(i) ? 'bg-indigo-50 border-indigo-400 shadow-sm shadow-indigo-100' : 'bg-white'}">
-                        <input type="checkbox" name="current_q" value="${i}" ${savedArr.includes(i) ? 'checked' : ''} class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300">
-                        <span class="text-gray-800 font-medium text-lg leading-snug">${opt}</span>
+                    <label class="flex items-start md:items-center gap-3 md:gap-4 cursor-pointer p-4 md:p-5 rounded-xl border border-slate-200 hover:bg-indigo-50/50 hover:border-indigo-300 transition-all group ${savedArr.includes(i) ? 'bg-indigo-50 border-indigo-400 ring-1 ring-indigo-400' : 'bg-white'}">
+                         <div class="relative flex items-center justify-center w-5 h-5 flex-shrink-0 mt-0.5 md:mt-0">
+                            <input type="checkbox" name="current_q" value="${i}" ${savedArr.includes(i) ? 'checked' : ''} class="peer sr-only">
+                            <div class="w-4 h-4 md:w-5 md:h-5 rounded border-2 border-slate-300 peer-checked:border-indigo-600 peer-checked:bg-indigo-600 transition-colors flex items-center justify-center">
+                                <svg class="w-2.5 h-2.5 md:w-3 md:h-3 text-white scale-0 peer-checked:scale-100 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                        </div>
+                        <span class="text-slate-700 font-semibold text-sm md:text-base leading-snug group-hover:text-slate-900 ${savedArr.includes(i) ? 'text-indigo-900' : ''}">${opt}</span>
                     </label>
                 `).join('');
             } else if (q.type === 'fill') {
-                optionsHtml = `<input type="text" id="current_q_ans" value="${savedAns || ''}" placeholder="Type your answer here..." class="w-full px-6 py-5 text-xl font-medium border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition shadow-sm">`;
+                optionsHtml = `<input type="text" id="current_q_ans" value="${savedAns || ''}" placeholder="Type your answer here..." class="w-full px-5 py-4 text-base md:text-lg font-semibold border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all shadow-sm text-slate-800 placeholder:text-slate-400">`;
             }
             
             document.getElementById('q-options').innerHTML = optionsHtml;
@@ -634,13 +972,11 @@
 
             document.getElementById('palette-grid').innerHTML = gridHtml;
             
-            // Update Legend Counters
             Object.keys(counts).forEach(k => {
                 document.getElementById(`count-${k}`).textContent = counts[k];
             });
         }
 
-        // --- Engine Actions ---
         function extractCurrentAnswer() {
             const q = currentTest.sections[activeSecIdx].questions[activeQIdx];
             let ans = null;
@@ -717,17 +1053,16 @@
             const s = (Math.max(0, timeLeft) % 60).toString().padStart(2, '0');
             document.getElementById('engine-timer').textContent = `${m}:${s}`;
             
-            if(timeLeft < 300) { // last 5 mins turn red
-                document.getElementById('engine-timer').classList.add('text-red-400');
+            if(timeLeft < 300) { 
+                document.getElementById('engine-timer').classList.add('text-rose-400');
                 document.getElementById('engine-timer').classList.remove('text-white');
             }
         }
 
-        // --- Submit ---
+        // --- SUBMIT TEST ---
         async function submitPracticeTest() {
             clearInterval(timerInterval);
             
-            // Save current answer before submitting
             const finalAns = extractCurrentAnswer();
             if(finalAns !== null) qState[activeSecIdx][activeQIdx].answer = finalAns;
 
@@ -743,17 +1078,17 @@
                 });
             });
 
-            // UPDATED PAYLOAD: Sending Mobile and Org to the backend
             const payload = {
                 testId: currentTest.testId,
                 userEmail: currentUser.email,
                 userName: currentUser.name,
-                userMobile: currentUser.mobile, // NEW
-                userOrg: currentUser.org,       // NEW
+                userMobile: currentUser.mobile,
+                userOrg: currentUser.org,
                 answers: answers
             };
 
             try {
+                // Untouched backend API call
                 const res = await fetch('/api/public/practice/submit', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -769,7 +1104,7 @@
                 document.getElementById('res-id').textContent = data.resultId;
 
             } catch (err) {
-                document.getElementById('res-loading').innerHTML = `<p class="text-red-500 font-bold bg-red-50 px-4 py-3 rounded-lg border border-red-200">Error: ${err.message}</p>`;
+                document.getElementById('res-loading').innerHTML = `<p class="text-rose-600 font-bold bg-rose-50 px-4 py-3 rounded-xl border border-rose-200 mt-4 text-xs">Error: ${err.message}</p>`;
             }
         }
     </script>
