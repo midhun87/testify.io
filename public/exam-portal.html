@@ -576,6 +576,8 @@
         let globalStream = null;
         let audioContext = null, analyser = null, microphone = null, audioDataArray = null;
         
+        let isAISpeaking = false; // Add flag to track TTS status
+
         // Proctoring State
         let sessionId = "SESS-" + Math.floor(Math.random() * 90000 + 10000);
         let violationsCount = 0;
@@ -638,7 +640,16 @@
             msg.rate = 0.95; // Slightly slower for clearer diction
             msg.pitch = 1.0;
             
-            if(cb) msg.onend = cb;
+            // Manage isAISpeaking state 
+            msg.onstart = () => { isAISpeaking = true; };
+            msg.onend = () => { 
+                // Wait briefly after speaking finishes to let room echo dissipate before tracking audio again
+                setTimeout(() => { isAISpeaking = false; }, 500);
+                if(cb) cb(); 
+            };
+            msg.onerror = () => { isAISpeaking = false; };
+            msg.oncancel = () => { isAISpeaking = false; };
+
             window.speechSynthesis.speak(msg);
         }
 
@@ -1367,7 +1378,9 @@
         let loudNoiseDuration = 0;
         function startAudioMonitoring() {
             function checkAudio() {
-                if(!isTesting || isWarningOpen) {
+                // Bypass checking if exam isn't active, warning is open, or AI is actively speaking
+                if(!isTesting || isWarningOpen || isAISpeaking) {
+                    loudNoiseDuration = 0; // Reset counter so trailing echo won't trigger violation
                     setTimeout(() => requestAnimationFrame(checkAudio), 100);
                     return;
                 }
@@ -1622,12 +1635,6 @@
                 errorMsg.classList.remove('hidden');
                 btn.textContent = `Retry ${currentAngle.toUpperCase()}`;
                 btn.classList.remove('hidden');
-                
-                // Optional: If you want immediate failure on first bad mid-scan, uncomment below
-                /* document.getElementById('mid-exam-audit-overlay').classList.add('hidden');
-                finalViolationReason = `Auto-submitted. Failed mandatory mid-exam security audit: ${err.message}`;
-                submitMockTest(true); 
-                */
             }
         }
 
