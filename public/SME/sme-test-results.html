@@ -43,7 +43,7 @@
         </header>
 
         <!-- Main Body -->
-        <main class="flex-1 overflow-y-auto p-8 bg-slate-50">
+        <main class="flex-1 overflow-y-auto p-8 bg-slate-50 relative">
             <div class="max-w-7xl mx-auto space-y-6">
                 
                 <!-- Controls Section -->
@@ -101,6 +101,50 @@
                 </div>
 
             </div>
+            
+            <!-- Evidence Modal -->
+            <div id="evidence-modal" class="hidden fixed inset-0 z-[99999] bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 backdrop-blur-sm">
+                <div class="bg-white rounded-2xl max-w-5xl w-full max-h-[95vh] flex flex-col overflow-hidden shadow-2xl">
+                    <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                            Candidate Proctoring Evidence
+                        </h3>
+                        <button onclick="closeEvidenceModal()" class="text-gray-400 hover:text-gray-800 transition bg-white rounded-full p-1 border shadow-sm">&times;</button>
+                    </div>
+                    <div class="p-6 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-2 gap-8 bg-white">
+                        <div class="space-y-3">
+                            <h4 class="font-bold text-gray-700 flex justify-between">Uploaded Government ID <span class="text-xs text-gray-400 font-normal">KYC Match</span></h4>
+                            <div class="bg-slate-100 rounded-xl h-64 flex items-center justify-center overflow-hidden border border-slate-200 shadow-inner">
+                                <img id="modal-id-img" class="max-w-full max-h-full object-contain" src="" alt="No ID Image Available">
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <h4 class="font-bold text-gray-700 flex justify-between">Live Exam Snapshot <span class="text-xs text-gray-400 font-normal">Start Frame</span></h4>
+                            <div class="bg-slate-100 rounded-xl h-64 flex items-center justify-center overflow-hidden border border-slate-200 shadow-inner">
+                                <img id="modal-live-img" class="max-w-full max-h-full object-contain" src="" alt="No Live Image Available">
+                            </div>
+                        </div>
+                        <div id="modal-flag-container" class="md:col-span-2 hidden mt-4 border-t border-red-100 pt-6">
+                            <h4 class="font-bold text-red-600 mb-3 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                AI Violation Captured
+                            </h4>
+                            <div class="bg-red-50 rounded-xl h-80 flex items-center justify-center overflow-hidden border-2 border-red-200 shadow-inner relative">
+                                <img id="modal-flag-img" class="max-w-full max-h-full object-contain" src="" alt="No Violation Image">
+                            </div>
+                            <div class="mt-3 p-4 bg-red-100 rounded-lg border border-red-200">
+                                <p class="text-red-800 text-sm font-semibold tracking-wide uppercase">Trigger Reason:</p>
+                                <p id="modal-flag-reason" class="text-red-900 mt-1"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-5 border-t border-gray-100 bg-gray-50 flex justify-end">
+                        <button onclick="closeEvidenceModal()" class="px-6 py-2 bg-gray-800 text-white font-semibold rounded-lg hover:bg-gray-900 transition shadow-sm">Close Evidence Viewer</button>
+                    </div>
+                </div>
+            </div>
+            
         </main>
     </div>
 
@@ -301,6 +345,9 @@
                 const qualifiedBadge = res.isQualified 
                     ? `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded bg-emerald-100 text-emerald-800 ml-2">Pass</span>`
                     : `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded bg-rose-100 text-rose-800 ml-2">Fail</span>`;
+                    
+                const blockedBadge = res.isBlocked
+                    ? `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded bg-red-800 text-white ml-2 shadow-sm">Blocked (Invalid ID)</span>` : '';
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 transition-colors";
@@ -317,28 +364,38 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${res.userEmail}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-bold ${scoreColor}">${res.score}%</div>
-                        <div class="text-xs text-gray-400 mt-1">${formattedDate} ${qualifiedBadge}</div>
+                        <div class="text-sm font-bold ${scoreColor}">${res.isBlocked ? 'N/A' : res.score + '%'}</div>
+                        <div class="text-xs text-gray-400 mt-1">${formattedDate} ${res.isBlocked ? blockedBadge : qualifiedBadge}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">${statusBadge}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div class="flex flex-col gap-2 items-end">
                             <div class="flex gap-2">
+                                <button onclick="viewEvidence(${index})" class="text-xs border border-gray-300 bg-white text-gray-700 px-3 py-1.5 rounded shadow-sm hover:bg-gray-100 transition whitespace-nowrap flex items-center">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> View Evidence
+                                </button>
                                 <button onclick="downloadIndividualPDF(${index}, false)" id="dl-score-btn-${index}" class="text-xs border border-indigo-200 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded hover:bg-indigo-100 transition whitespace-nowrap flex items-center">
-                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Download Score
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Score
                                 </button>
                                 <button onclick="downloadIndividualPDF(${index}, true)" id="dl-full-btn-${index}" class="text-xs border border-emerald-200 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded hover:bg-emerald-100 transition whitespace-nowrap flex items-center">
-                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Full Details
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Details
                                 </button>
                             </div>
+                            
+                            <!-- Email / Block actions -->
                             <div class="flex gap-2 border-t border-gray-100 pt-2 mt-1 w-full justify-end">
-                                <button onclick="releaseDocument('${res.resultId}', 'scorecard', ${index})" id="rel-sc-${index}" class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded shadow hover:bg-blue-700 transition whitespace-nowrap flex items-center">
-                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg> ${res.scoreCardReleased ? 'Re-send Score Card' : 'Email Score Card'}
-                                </button>
-                                ${res.isQualified ? `
-                                    <button onclick="releaseDocument('${res.resultId}', 'certificate', ${index})" id="rel-cert-${index}" class="text-xs bg-purple-600 text-white px-3 py-1.5 rounded shadow hover:bg-purple-700 transition whitespace-nowrap flex items-center">
-                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg> ${res.certificateReleased ? 'Re-issue Cert' : 'Email Certificate'}
+                                ${!res.isBlocked ? `
+                                    <button onclick="blockCandidateResult('${res.resultId}', ${index})" id="block-btn-${index}" class="text-xs bg-red-600 text-white px-3 py-1.5 rounded shadow hover:bg-red-700 transition whitespace-nowrap flex items-center">
+                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg> Block Result
                                     </button>
+                                    <button onclick="releaseDocument('${res.resultId}', 'scorecard', ${index})" id="rel-sc-${index}" class="text-xs bg-blue-600 text-white px-3 py-1.5 rounded shadow hover:bg-blue-700 transition whitespace-nowrap flex items-center">
+                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg> ${res.scoreCardReleased ? 'Re-send Score Card' : 'Email Score Card'}
+                                    </button>
+                                    ${res.isQualified ? `
+                                        <button onclick="releaseDocument('${res.resultId}', 'certificate', ${index})" id="rel-cert-${index}" class="text-xs bg-purple-600 text-white px-3 py-1.5 rounded shadow hover:bg-purple-700 transition whitespace-nowrap flex items-center">
+                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path></svg> ${res.certificateReleased ? 'Re-issue Cert' : 'Email Certificate'}
+                                        </button>
+                                    ` : ''}
                                 ` : ''}
                             </div>
                         </div>
@@ -349,6 +406,71 @@
 
             showState('results');
             document.getElementById('export-controls').classList.remove('hidden');
+        }
+
+        // --- Evidence Viewer Logic ---
+        function viewEvidence(index) {
+            const res = currentResults[index];
+            const modal = document.getElementById('evidence-modal');
+            const idImg = document.getElementById('modal-id-img');
+            const liveImg = document.getElementById('modal-live-img');
+            const flagContainer = document.getElementById('modal-flag-container');
+            const flagImg = document.getElementById('modal-flag-img');
+            const flagReason = document.getElementById('modal-flag-reason');
+
+            idImg.src = res.idImage || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1pbWFnZS1vZmYiPjxsaW5lIHgxPSIzIiB5MT0iMyIgeDI9IjIxIiB5Mj0iMjEiPjwvbGluZT48cGF0aCBkPSJNMTAuNSA0LTVIMTlhMiAyIDAgMCAxIDIgMnYxMy41Ij48L3BhdGg+PHBhdGggZD0iTTIyIDIyaC0xMmwtNC00SC41bDMgM0gyMiI+PC9wYXRoPjwvc3ZnPg==';
+            liveImg.src = res.liveImage || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1pbWFnZS1vZmYiPjxsaW5lIHgxPSIzIiB5MT0iMyIgeDI9IjIxIiB5Mj0iMjEiPjwvbGluZT48cGF0aCBkPSJNMTAuNSA0LTVIMTlhMiAyIDAgMCAxIDIgMnYxMy41Ij48L3BhdGg+PHBhdGggZD0iTTIyIDIyaC0xMmwtNC00SC41bDMgM0gyMiI+PC9wYXRoPjwvc3ZnPg==';
+
+            if (res.violation && res.flaggedImage) {
+                flagContainer.classList.remove('hidden');
+                flagImg.src = res.flaggedImage;
+                flagReason.textContent = res.violation;
+            } else {
+                flagContainer.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeEvidenceModal() {
+            document.getElementById('evidence-modal').classList.add('hidden');
+        }
+
+        // --- Block Candidate Result Logic ---
+        async function blockCandidateResult(resultId, index) {
+            if (!confirm("Are you sure you want to block this result?\n\nAn email will be sent automatically to the candidate stating that the ID proof submitted was invalid and the results have been blocked. This action cannot be easily undone.")) {
+                return;
+            }
+            
+            const btn = document.getElementById(`block-btn-${index}`);
+            const originalHtml = btn.innerHTML;
+            
+            btn.innerHTML = `<span class="loader border-[2px] border-white border-t-transparent inline-block w-3 h-3 mr-1"></span> Blocking...`;
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`/api/sme/results/${resultId}/block`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': token }
+                });
+
+                const data = await safeFetchJson(res);
+                if (!res.ok) throw new Error(data.message || 'Failed to block result');
+
+                // Mark locally as blocked & re-render
+                currentResults[index].isBlocked = true;
+                currentResults[index].isQualified = false;
+                renderResults(); 
+                
+                // Show brief success alert
+                alert("Result successfully blocked. Candidate has been notified.");
+
+            } catch(err) {
+                console.error(err);
+                alert("Action Failed: " + err.message);
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
         }
 
         async function releaseDocument(resultId, docType, index) {
@@ -421,11 +543,14 @@
                 document.getElementById('pdf-test-title').textContent = testTitle;
                 document.getElementById('pdf-date').textContent = new Date(result.date).toLocaleString();
                 document.getElementById('pdf-id').textContent = result.resultId || 'N/A';
-                document.getElementById('pdf-score').textContent = result.score + '%';
+                document.getElementById('pdf-score').textContent = result.isBlocked ? 'BLOCKED' : result.score + '%';
                 document.getElementById('pdf-gen-date').textContent = new Date().toLocaleString();
 
                 const vBox = document.getElementById('pdf-violation-box');
-                if (result.violation) {
+                if (result.isBlocked) {
+                    vBox.style.display = 'block';
+                    document.getElementById('pdf-violation').textContent = "BLOCKED BY EXAMINER: The government ID or verification evidence submitted during the exam was reviewed and deemed invalid/mismatched.";
+                } else if (result.violation) {
                     vBox.style.display = 'block';
                     document.getElementById('pdf-violation').textContent = result.violation;
                 } else {
@@ -445,7 +570,7 @@
                     const qContainer = document.getElementById('pdf-questions-container');
                     qContainer.innerHTML = ''; 
 
-                    if (fullResult.answers) {
+                    if (fullResult.answers && !result.isBlocked) {
                         let qCount = 1;
                         testSchema.sections.forEach((sec, secIdx) => {
                             const secDiv = document.createElement('div');
@@ -488,6 +613,8 @@
                                 qCount++;
                             });
                         });
+                    } else if (result.isBlocked) {
+                         qContainer.innerHTML = '<p style="color: #dc2626; font-weight: bold; text-align: center; padding: 20px;">Response sheet is inaccessible. The exam result has been blocked due to invalid identity verification.</p>';
                     }
                 } else {
                     // --- SCORE CARD MODE ---
@@ -499,7 +626,7 @@
                     const sectionBody = document.getElementById('pdf-section-scores-body');
                     sectionBody.innerHTML = '';
                     
-                    if (testSchema.sections && fullResult.answers) {
+                    if (testSchema.sections && fullResult.answers && !result.isBlocked) {
                         testSchema.sections.forEach((sec, secIdx) => {
                             let secTotal = 0;
                             let secCorrect = 0;
@@ -524,6 +651,8 @@
                                 </tr>
                             `;
                         });
+                    } else if (result.isBlocked) {
+                         sectionBody.innerHTML = `<tr><td colspan="2" style="padding: 15px; text-align:center; color: #dc2626; font-weight: bold;">Section scores voided due to blocked result.</td></tr>`;
                     }
                 }
 
@@ -560,10 +689,11 @@
             
             currentResults.forEach(r => {
                 const safeName = r.userName.replace(/,/g, '');
-                const status = r.violation ? "Flagged" : "Clear";
-                const vReason = r.violation ? r.violation.replace(/,/g, ' ') : "N/A";
+                let status = r.isBlocked ? "Blocked" : (r.violation ? "Flagged" : "Clear");
+                const vReason = r.isBlocked ? "Invalid ID Uploaded" : (r.violation ? r.violation.replace(/,/g, ' ') : "N/A");
                 const dt = new Date(r.date).toLocaleString();
-                csvContent += `${safeName},${r.userEmail},${r.score},${dt},${status},${vReason}\r\n`;
+                const score = r.isBlocked ? "N/A" : r.score;
+                csvContent += `${safeName},${r.userEmail},${score},${dt},${status},${vReason}\r\n`;
             });
 
             const encodedUri = encodeURI(csvContent);
