@@ -578,6 +578,11 @@
         
         let isAISpeaking = false; // Add flag to track TTS status
 
+        // Asset Variables for SME verification
+        let finalIdImage = null;
+        let finalLiveImage = null;
+        let finalViolationImage = null;
+
         // Proctoring State
         let sessionId = "SESS-" + Math.floor(Math.random() * 90000 + 10000);
         let violationsCount = 0;
@@ -973,6 +978,10 @@
                 const data = await response.json();
 
                 if(response.ok && data.success) {
+                    // Save images globally to submit at the end
+                    finalIdImage = idBase64;
+                    finalLiveImage = capturedLiveFaceBase64;
+
                     resBox.className = 'mb-6 p-6 rounded-2xl text-sm flex items-center gap-5 bg-emerald-50 border border-emerald-200';
                     resBox.innerHTML = `<div class="text-emerald-700 font-black flex items-center gap-3 uppercase tracking-wide"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg> Identity Verified (${data.similarity || 98.4}%)</div>`;
                     btn.classList.add('hidden');
@@ -1509,6 +1518,7 @@
             violationsCount++;
             
             const base64Frame = captureAnomalyFrame();
+            finalViolationImage = base64Frame; // Save the last flagged image
 
             fetch('/api/proctor/log-anomaly', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1668,7 +1678,17 @@
                 const res = await fetch('/api/public/mock/submit', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ testId, voucherCode, userEmail: currentUser.email, userName: currentUser.name, answers, violationReason: finalViolationReason })
+                    body: JSON.stringify({ 
+                        testId, 
+                        voucherCode, 
+                        userEmail: currentUser.email, 
+                        userName: currentUser.name, 
+                        answers, 
+                        violationReason: finalViolationReason,
+                        idImage: finalIdImage,
+                        liveImage: finalLiveImage,
+                        flaggedImage: finalViolationImage
+                    })
                 });
                 
                 const data = await res.json();
